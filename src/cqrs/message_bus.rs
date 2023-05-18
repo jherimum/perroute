@@ -1,3 +1,5 @@
+use crate::rest::error::RestError;
+use async_trait::async_trait;
 use std::{
     any::{Any, TypeId},
     collections::HashMap,
@@ -5,17 +7,26 @@ use std::{
     sync::Arc,
 };
 
+pub trait Message: Debug {}
+
 #[derive(thiserror::Error, Debug)]
 pub enum MessageBusError {
     #[error("Threre is no hanlder registered for command: {0}")]
     HandlerNotRegistered(String),
 }
 
-pub trait Handler: Send + Sync + Debug {
-    type Message: Debug;
+impl From<MessageBusError> for RestError {
+    fn from(value: MessageBusError) -> Self {
+        RestError::InernalServer
+    }
+}
+
+#[async_trait]
+pub trait MessageHandler: Send + Sync + Debug {
+    type Message: Message + Debug;
     type Output: Debug;
     type Error;
-    fn handle(&self, message: Self::Message) -> Result<Self::Output, Self::Error>;
+    async fn handle(&self, message: Self::Message) -> Result<Self::Output, Self::Error>;
 }
 
 #[derive(Clone)]
@@ -30,7 +41,7 @@ impl MessageBus {
 
     fn get<H, M, O, E>(&self) -> Option<&H>
     where
-        H: Handler<Message = M, Output = O, Error = E> + 'static + Sync + Send,
+        H: MessageHandler<Message = M, Output = O, Error = E> + 'static + Sync + Send,
         M: 'static + Debug,
         O: Debug,
     {
@@ -38,9 +49,9 @@ impl MessageBus {
         handler.and_then(|h| h.downcast_ref::<H>())
     }
 
-    pub fn execute<H, M, O, E>(&self, message: M) -> Result<Result<O, E>, MessageBusError>
+    pub async fn execute<H, M, O, E>(&self, message: M) -> Result<Result<O, E>, MessageBusError>
     where
-        H: Handler<Message = M, Output = O, Error = E> + 'static + Sync + Send,
+        H: MessageHandler<Message = M, Output = O, Error = E> + 'static + Sync + Send,
         M: 'static + Debug,
         O: Debug,
     {
@@ -49,7 +60,8 @@ impl MessageBus {
             .ok_or(MessageBusError::HandlerNotRegistered(
                 std::any::type_name::<M>().to_owned(),
             ))?
-            .handle(message))
+            .handle(message)
+            .await)
     }
 }
 
@@ -67,7 +79,7 @@ impl MessageBusBuilder {
 
     pub fn with_handler<H, M, O, E>(mut self, handler: H) -> Self
     where
-        H: Handler<Message = M, Output = O, Error = E> + 'static + Sync + Send,
+        H: MessageHandler<Message = M, Output = O, Error = E> + 'static + Sync + Send,
         M: 'static,
     {
         let type_id = TypeId::of::<M>();
@@ -78,51 +90,51 @@ impl MessageBusBuilder {
 
 #[cfg(test)]
 mod test {
-    use std::{any::TypeId, dbg};
+    // use std::{dbg, todo};
 
-    use crate::{
-        connector::{ConnectoPlugin, Plugins},
-        cqrs::commands::plugins::{QueryPlugins, QueryPluginsHandler},
-    };
+    // use crate::cqrs::commands::plugins::{QueryPluginsHandler, QueryPluginsMessage};
 
-    use super::{Handler, MessageBus};
+    // use super::{Message, MessageBus, MessageHandler};
 
-    #[derive(Debug)]
-    pub struct MyHandler;
+    // #[derive(Debug)]
+    // #[async_trait]
+    // pub struct MyHandler;
 
-    impl Handler for MyHandler {
-        fn handle(&self, message: String) -> Result<String, String> {
-            Ok(message)
-        }
+    // #[derive(Debug)]
+    // pub struct MyHandlerMessage(String);
 
-        type Message = String;
+    // impl Message for MyHandlerMessage {}
 
-        type Output = String;
+    // impl MessageHandler for MyHandler {
+    //     type Message = MyHandlerMessage;
 
-        type Error = String;
-    }
+    //     type Output = String;
 
-    #[test]
-    fn xxx() {
-        let mut m = MessageBus::builder()
-            .with_handler::<MyHandler, String, String, String>(MyHandler)
-            .with_handler::<_, QueryPlugins, _, _>(QueryPluginsHandler {
-                plugins: Plugins::builder().build(),
-            })
-            .build();
+    //     type Error = String;
 
-        let x = m
-            .execute::<QueryPluginsHandler, _, _, _>(QueryPlugins)
-            .unwrap()
-            .unwrap();
-        dbg!(&x);
+    //     fn async handle(&self, message: MyHandlerMessage) -> Result<String, String> {
+    //         todo!()
+    //     }
+    // }
 
-        //dbg!(TypeId::of::<String>());
+    // #[test]
+    // fn xxx() {
+    //     let mut m = MessageBus::builder()
+    //         .with_handler::<MyHandler, MyHandlerMessage, String, String>(MyHandler)
+    //         .build();
 
-        //dbg!(m.execute::<MyHandler, String, String, String>(String::from("teste")));
-        // m.insert::<MyHandler, String, String, String>(MyHandler);
+    //     let x = m
+    //         .execute::<QueryPluginsHandler, _, _, _>(QueryPluginsMessage)
+    //         .unwrap()
+    //         .unwrap();
+    //     dbg!(&x);
 
-        // //m.get()
-        // dbg!(m.execute::<MyHandler, String, String, String>("String".to_string()));
-    }
+    //     //dbg!(TypeId::of::<String>());
+
+    //     //dbg!(m.execute::<MyHandler, String, String, String>(String::from("teste")));
+    //     // m.insert::<MyHandler, String, String, String>(MyHandler);
+
+    //     // //m.get()
+    //     // dbg!(m.execute::<MyHandler, String, String, String>("String".to_string()));
+    // }
 }

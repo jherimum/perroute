@@ -22,12 +22,19 @@ impl ErrorResponse {
 pub enum RestError {
     #[error("Not found")]
     NotFound(String),
+
+    #[error("Internal Server Error")]
+    InernalServer,
 }
 
 impl IntoResponse for RestError {
     fn into_response(self) -> axum::response::Response {
         match self {
             RestError::NotFound(_) => (StatusCode::NOT_FOUND, Json(self.as_error_response())),
+            RestError::InernalServer => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(self.as_error_response()),
+            ),
         }
         .into_response()
     }
@@ -39,6 +46,9 @@ impl RestError {
         match self {
             RestError::NotFound(detail) => {
                 ErrorResponse::new(StatusCode::NOT_FOUND, message, Some(detail))
+            }
+            RestError::InernalServer => {
+                ErrorResponse::new(StatusCode::INTERNAL_SERVER_ERROR, message, None)
             }
         }
     }

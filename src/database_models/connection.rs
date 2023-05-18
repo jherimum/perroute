@@ -1,3 +1,7 @@
+use std::todo;
+
+use crate::connector::ConnectoPlugin;
+
 use super::account::Account;
 use serde_json::Value;
 use sqlx::{Executor, FromRow};
@@ -7,7 +11,7 @@ pub struct Connection {
     pub id: uuid::Uuid,
     pub code: String,
     pub account_id: uuid::Uuid,
-    pub plugin_id: &'static str,
+    pub plugin_id: String,
     pub description: String,
     pub properties: Value,
 }
@@ -16,21 +20,29 @@ impl Connection {
     pub fn new(
         code: &str,
         account: &Account,
-        plugin_id: &'static str,
+        plugin: &dyn ConnectoPlugin,
         description: &str,
-        properties: Value,
+        properties: &Value,
     ) -> Self {
         Self {
             id: uuid::Uuid::new_v4(),
             code: code.to_owned(),
             account_id: account.id,
-            plugin_id,
+            plugin_id: plugin.id().to_owned(),
             description: description.to_owned(),
-            properties,
+            properties: properties.clone(),
         }
     }
 
     pub async fn save<'e, E: Executor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
         Ok(self)
+    }
+
+    pub async fn exists_by_account_id_and_code<'e, E: Executor<'e>>(
+        exec: E,
+        account_id: &uuid::Uuid,
+        code: &str,
+    ) -> Result<bool, sqlx::Error> {
+        todo!()
     }
 }
