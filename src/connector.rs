@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, fmt::Debug, sync::Arc, todo};
+use std::{collections::HashMap, fmt::Debug, sync::Arc};
 mod smtp;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Serialize, Hash)]
@@ -52,15 +52,11 @@ impl Plugins {
         PluginsBuilder::default()
     }
     pub fn get(&self, id: &str) -> Option<&'static dyn ConnectoPlugin> {
-        self.data.get(id).map(|p| *p)
+        self.data.get(id).copied()
     }
 
     pub fn all(&self) -> Vec<&'static dyn ConnectoPlugin> {
-        self.data
-            .values()
-            .map(|p| *p)
-            .to_owned()
-            .collect::<Vec<_>>()
+        self.data.values().copied().to_owned().collect::<Vec<_>>()
     }
 }
 

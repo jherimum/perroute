@@ -103,10 +103,12 @@ async fn delete_connection(
     State(message_bus): State<MessageBus>,
     Path(connection_id): Path<uuid::Uuid>,
 ) -> Result<(), RestError> {
-    message_bus.execute::<delete_connection::Handler, _, _>(delete_connection::Command {
-        id: connection_id,
-        account,
-    });
+    message_bus
+        .execute::<delete_connection::Handler, _, _>(delete_connection::Command {
+            id: connection_id,
+            account,
+        })
+        .await;
     todo!()
 }
 

@@ -1,11 +1,8 @@
-use std::todo;
-
+use crate::{errors::OmniMessageError, types::OmniResult};
 use argon2::{
     password_hash::{rand_core::OsRng, SaltString},
     Argon2, PasswordHash, PasswordHasher, PasswordVerifier,
 };
-
-use crate::{errors::OmniMessageError, types::OmniResult};
 
 #[derive(Debug, thiserror::Error)]
 pub enum CryptoError {

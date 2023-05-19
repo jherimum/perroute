@@ -1,7 +1,7 @@
-use std::collections::HashMap;
+// use std::collections::HashMap;
 
-use super::{Configuration, DispatcherPlugin, DispatcherType};
-use crate::connector::ConnectoPlugin;
+// use super::{Configuration, DispatcherPlugin, DispatcherType};
+// use crate::connector::ConnectoPlugin;
 
 // #[derive(Debug)]
 // pub struct SmtpPlugin;
