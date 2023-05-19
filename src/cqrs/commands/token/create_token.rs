@@ -2,7 +2,10 @@ use std::todo;
 
 use async_trait::async_trait;
 
-use crate::cqrs::message_bus::{Message, MessageHandler};
+use crate::{
+    cqrs::message_bus::{Message, MessageHandler},
+    types::OmniResult,
+};
 
 #[derive(Debug)]
 pub struct CreateTokenCommand {}
@@ -21,8 +24,7 @@ impl MessageHandler for CreateTokenHandler {
 
     type Output = String;
 
-    type Error = CreateTokenError;
-    async fn handle(&self, message: Self::Message) -> Result<Self::Output, Self::Error> {
+    async fn handle(&self, message: Self::Message) -> OmniResult<Self::Output> {
         todo!()
     }
 }

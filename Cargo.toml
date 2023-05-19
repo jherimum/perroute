@@ -17,6 +17,7 @@ serde_json = "1.0.96"
 sqlx = { version = "0.6.3", features = ["postgres", "runtime-tokio-rustls", "time", "uuid"] }
 strum = { version = "0.24.1", features = ["derive"] }
 strum_macros = "0.24.3"
+tap = "1.0.1"
 thiserror = "1.0.40"
 time = "0.3.21"
 tokio = { version = "1.28.1", features = ["macros", "rt", "rt-multi-thread"] }

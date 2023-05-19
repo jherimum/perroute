@@ -4,6 +4,7 @@ use sqlx::PgPool;
 use crate::{
     cqrs::message_bus::{Message, MessageHandler},
     database_models::account::Account,
+    types::OmniResult,
 };
 
 #[derive(Debug)]
@@ -28,9 +29,7 @@ impl MessageHandler for Handler {
 
     type Output = ();
 
-    type Error = Error;
-
-    async fn handle(&self, message: Self::Message) -> Result<Self::Output, Self::Error> {
+    async fn handle(&self, message: Self::Message) -> OmniResult<Self::Output> {
         todo!()
     }
 }

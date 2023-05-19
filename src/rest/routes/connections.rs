@@ -13,6 +13,7 @@ use crate::{
         },
         error::RestError,
     },
+    types::OmniResult,
 };
 use axum::{extract::Path, routing::delete};
 use axum::{
@@ -40,12 +41,12 @@ impl From<find_all_connections::Error> for RestError {
 async fn get_all_connections(
     account: Account,
     State(message_bus): State<MessageBus>,
-) -> Result<Json<Vec<ConnectionResource>>, RestError> {
-    message_bus
-        .execute::<find_all_connections::Handler, _, _, _>(find_all_connections::Query { account })
-        .await?
-        .map_err(RestError::from)
-        .map(|v| Json(v.into_iter().map(ConnectionResource::from).collect()))
+) -> OmniResult<Json<Vec<ConnectionResource>>> {
+    // message_bus
+    //     .execute::<find_all_connections::Handler, _, _>(find_all_connections::Query { account })
+    //     .await?
+    //     .map(|v| Json(v.into_iter().map(ConnectionResource::from).collect()))
+    todo!()
 }
 
 impl From<find_connection::Error> for RestError {
@@ -58,16 +59,17 @@ async fn get_connection(
     account: Account,
     State(message_bus): State<MessageBus>,
     Path(connection_id): Path<uuid::Uuid>,
-) -> Result<Json<ConnectionResource>, RestError> {
-    message_bus
-        .execute::<find_connection::Handler, _, _, _>(find_connection::Query {
-            id: connection_id,
-            account,
-        })
-        .await??
-        .ok_or(RestError::NotFound("()".to_owned()))
-        .map(ConnectionResource::from)
-        .map(Json::from)
+) -> OmniResult<Json<ConnectionResource>> {
+    //message_bus
+    // .execute::<find_connection::Handler, _, _, _>(find_connection::Query {
+    //     id: connection_id,
+    //     account,
+    // })
+    // .await??
+    // .ok_or(RestError::NotFound("()".to_owned()))
+    // .map(ConnectionResource::from)
+    // .map(Json::from)
+    todo!()
 }
 
 impl From<update_connection::Error> for RestError {
@@ -81,18 +83,19 @@ async fn update_connection(
     account: Account,
     Path(connection_id): Path<uuid::Uuid>,
     Json(req): Json<UpdateConnectionRequest>,
-) -> Result<Json<ConnectionResource>, RestError> {
-    message_bus
-        .execute::<update_connection::Handler, _, _, _>(update_connection::Command {
-            id: connection_id,
-            account,
-            description: req.description,
-            properties: req.properties,
-        })
-        .await?
-        .map(ConnectionResource::from)
-        .map(Json::from)
-        .map_err(RestError::from)
+) -> OmniResult<Json<ConnectionResource>> {
+    // message_bus
+    //     .execute::<update_connection::Handler, _, _>(update_connection::Command {
+    //         id: connection_id,
+    //         account,
+    //         description: req.description,
+    //         properties: req.properties,
+    //     })
+    //     .await?
+    //     .map(ConnectionResource::from)
+    //     .map(Json::from)
+    //     .map_err(RestError::from)
+    todo!()
 }
 
 async fn delete_connection(
@@ -100,7 +103,7 @@ async fn delete_connection(
     State(message_bus): State<MessageBus>,
     Path(connection_id): Path<uuid::Uuid>,
 ) -> Result<(), RestError> {
-    message_bus.execute::<delete_connection::Handler, _, _, _>(delete_connection::Command {
+    message_bus.execute::<delete_connection::Handler, _, _>(delete_connection::Command {
         id: connection_id,
         account,
     });
@@ -121,14 +124,15 @@ async fn create_connection(
     State(message_bus): State<MessageBus>,
     account: Account,
     Json(req): Json<CreateConnectionRequest>,
-) -> Result<Json<ConnectionResource>, RestError> {
-    message_bus
-        .execute::<create_connection::CommandHandler, _, _, _>(create_connection::Command::from((
-            account, req,
-        )))
-        .await?
-        .map(|c| Json(ConnectionResource::from(c)))
-        .map_err(RestError::from)
+) -> OmniResult<Json<ConnectionResource>> {
+    // message_bus
+    //     .execute::<create_connection::CommandHandler, _, _>(create_connection::Command::from((
+    //         account, req,
+    //     )))
+    //     .await?
+    //     .map(|c| Json(ConnectionResource::from(c)))
+    //     .map_err(RestError::from)
+    todo!()
 }
 
 impl From<(Account, CreateConnectionRequest)> for create_connection::Command {

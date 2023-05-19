@@ -2,6 +2,8 @@ use crate::{
     connector::Plugins,
     cqrs::message_bus::{Message, MessageHandler},
     database_models::{account::Account, connection::Connection},
+    errors::OmniMessageError,
+    types::OmniResult,
 };
 use async_trait::async_trait;
 use serde_json::Value;
@@ -37,15 +39,19 @@ pub enum Error {
     ConnectorCodeAlreadyExists(String),
 }
 
+impl From<Error> for OmniMessageError {
+    fn from(value: Error) -> Self {
+        todo!()
+    }
+}
+
 #[async_trait]
 impl MessageHandler for CommandHandler {
     type Message = Command;
 
     type Output = Connection;
 
-    type Error = Error;
-
-    async fn handle(&self, message: Self::Message) -> Result<Self::Output, Self::Error> {
+    async fn handle(&self, message: Self::Message) -> OmniResult<Self::Output> {
         let plugin = self
             .plugins
             .get(&message.plugin_id)
@@ -58,7 +64,7 @@ impl MessageHandler for CommandHandler {
         )
         .await?
         {
-            return Err(Error::ConnectorCodeAlreadyExists(message.code.to_owned()));
+            return Err(Error::ConnectorCodeAlreadyExists(message.code.to_owned()).into());
         }
         Connection::new(
             &message.code,
@@ -69,6 +75,6 @@ impl MessageHandler for CommandHandler {
         )
         .save(self.pool.as_ref())
         .await
-        .map_err(Error::from)
+        .map_err(OmniMessageError::from)
     }
 }

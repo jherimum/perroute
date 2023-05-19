@@ -1,11 +1,14 @@
-use crate::rest::error::RestError;
-use async_trait::async_trait;
 use std::{
     any::{Any, TypeId},
     collections::HashMap,
     fmt::Debug,
     sync::Arc,
+    todo,
 };
+
+use async_trait::async_trait;
+
+use crate::{errors::OmniMessageError, rest::error::RestError, types::OmniResult};
 
 pub trait Message: Debug {}
 
@@ -13,6 +16,12 @@ pub trait Message: Debug {}
 pub enum MessageBusError {
     #[error("Threre is no hanlder registered for command: {0}")]
     HandlerNotRegistered(String),
+}
+
+impl From<MessageBusError> for OmniMessageError {
+    fn from(value: MessageBusError) -> Self {
+        todo!()
+    }
 }
 
 impl From<MessageBusError> for RestError {
@@ -25,8 +34,7 @@ impl From<MessageBusError> for RestError {
 pub trait MessageHandler: Send + Sync + Debug {
     type Message: Message + Debug;
     type Output: Debug;
-    type Error;
-    async fn handle(&self, message: Self::Message) -> Result<Self::Output, Self::Error>;
+    async fn handle(&self, message: Self::Message) -> OmniResult<Self::Output>;
 }
 
 #[derive(Clone)]
@@ -39,9 +47,9 @@ impl MessageBus {
         MessageBusBuilder::default()
     }
 
-    fn get<H, M, O, E>(&self) -> Option<&H>
+    fn get<H, M, O>(&self) -> Option<&H>
     where
-        H: MessageHandler<Message = M, Output = O, Error = E> + 'static + Sync + Send,
+        H: MessageHandler<Message = M, Output = O> + 'static + Sync + Send,
         M: 'static + Debug,
         O: Debug,
     {
@@ -49,19 +57,18 @@ impl MessageBus {
         handler.and_then(|h| h.downcast_ref::<H>())
     }
 
-    pub async fn execute<H, M, O, E>(&self, message: M) -> Result<Result<O, E>, MessageBusError>
+    pub async fn execute<H, M, O>(&self, message: M) -> OmniResult<O>
     where
-        H: MessageHandler<Message = M, Output = O, Error = E> + 'static + Sync + Send,
+        H: MessageHandler<Message = M, Output = O> + 'static + Sync + Send,
         M: 'static + Debug,
         O: Debug,
     {
-        Ok(self
-            .get::<H, M, O, E>()
+        self.get::<H, M, O>()
             .ok_or(MessageBusError::HandlerNotRegistered(
                 std::any::type_name::<M>().to_owned(),
             ))?
             .handle(message)
-            .await)
+            .await
     }
 }
 
@@ -77,9 +84,9 @@ impl MessageBusBuilder {
         }
     }
 
-    pub fn with_handler<H, M, O, E>(mut self, handler: H) -> Self
+    pub fn with_handler<H, M, O>(mut self, handler: H) -> Self
     where
-        H: MessageHandler<Message = M, Output = O, Error = E> + 'static + Sync + Send,
+        H: MessageHandler<Message = M, Output = O> + 'static + Sync + Send,
         M: 'static,
     {
         let type_id = TypeId::of::<M>();

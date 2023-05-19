@@ -1,6 +1,7 @@
+use sqlx::PgExecutor;
 use std::todo;
 
-use sqlx::PgExecutor;
+use crate::types::OmniResult;
 
 #[derive(Debug)]
 pub struct Account {
@@ -19,18 +20,18 @@ impl Account {
     pub async fn find<'e, E: PgExecutor<'e>>(
         exec: E,
         id: &uuid::Uuid,
-    ) -> Result<Option<Account>, sqlx::Error> {
+    ) -> OmniResult<Option<Account>> {
         todo!()
     }
 
     pub async fn find_by_code<'e, E: PgExecutor<'e>>(
         exec: E,
         code: impl Into<String>,
-    ) -> Result<Option<Account>, sqlx::Error> {
+    ) -> OmniResult<Option<Account>> {
         todo!()
     }
 
-    pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Account, sqlx::Error> {
+    pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> OmniResult<Account> {
         todo!()
     }
 }

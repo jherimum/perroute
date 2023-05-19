@@ -3,6 +3,7 @@ use async_trait::async_trait;
 use crate::{
     connector::{ConnectoPlugin, Plugins},
     cqrs::message_bus::{Message, MessageHandler},
+    types::OmniResult,
 };
 
 #[derive(Debug)]
@@ -21,9 +22,7 @@ impl MessageHandler for QueryPluginsHandler {
 
     type Output = Vec<&'static dyn ConnectoPlugin>;
 
-    type Error = ();
-
-    async fn handle(&self, _: QueryPluginsMessage) -> Result<Vec<&'static dyn ConnectoPlugin>, ()> {
+    async fn handle(&self, _: QueryPluginsMessage) -> OmniResult<Vec<&'static dyn ConnectoPlugin>> {
         Ok(self.plugins.all())
     }
 }

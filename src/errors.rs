@@ -14,7 +14,7 @@ pub enum OmniMessageError {
     Rest(#[from] RestError),
 
     #[error(transparent)]
-    MessageBus(#[from] MessageBusError),
+    MessageBus(MessageBusError),
 }
 
 impl IntoResponse for OmniMessageError {
