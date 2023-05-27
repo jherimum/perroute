@@ -23,10 +23,10 @@ pub enum Error {}
 #[async_trait]
 impl MessageHandler for Handler {
     type Message = Command;
-
     type Output = ();
+    type Error = Error;
 
-    async fn handle(&self, message: Self::Message) -> OmniResult<Self::Output> {
+    async fn handle(&self, message: Self::Message) -> Result<Self::Output, Self::Error> {
         todo!()
     }
 }

@@ -16,16 +16,16 @@ pub struct QueryPluginsHandler {
     pub plugins: Plugins,
 }
 
+#[derive(Debug, thiserror::Error)]
+pub enum Error {}
+
 #[async_trait]
 impl MessageHandler for QueryPluginsHandler {
     type Message = QueryPluginsMessage;
-
     type Output = Vec<&'static dyn ConnectorPlugin>;
+    type Error = Error;
 
-    async fn handle(
-        &self,
-        _: QueryPluginsMessage,
-    ) -> OmniResult<Vec<&'static dyn ConnectorPlugin>> {
+    async fn handle(&self, _: QueryPluginsMessage) -> Result<Self::Output, Self::Error> {
         Ok(self.plugins.all())
     }
 }

@@ -34,15 +34,18 @@ impl Connection {
     pub async fn query<'e, E: Executor<'e>>(
         exec: E,
         query: ConnectionsQuery,
-    ) -> OmniResult<Vec<Connection>> {
+    ) -> Result<Vec<Connection>, sqlx::Error> {
         Ok(vec![])
     }
 
-    pub async fn save<'e, E: Executor<'e>>(self, exec: E) -> OmniResult<Self> {
+    pub async fn save<'e, E: Executor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
         Ok(self)
     }
 
-    pub async fn exists_code<'e, E: Executor<'e>>(exec: E, code: &str) -> OmniResult<bool> {
+    pub async fn exists_code<'e, E: Executor<'e>>(
+        exec: E,
+        code: &str,
+    ) -> Result<bool, sqlx::Error> {
         todo!()
     }
 }

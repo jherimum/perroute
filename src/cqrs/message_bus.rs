@@ -1,3 +1,5 @@
+use crate::{errors::OmniMessageError, rest::error::RestError};
+use async_trait::async_trait;
 use std::{
     any::{Any, TypeId},
     collections::HashMap,
@@ -5,16 +7,13 @@ use std::{
     sync::Arc,
     todo,
 };
-
-use async_trait::async_trait;
-
-use crate::{errors::OmniMessageError, rest::error::RestError, types::OmniResult};
+use tap::TapFallible;
 
 pub trait Message: Debug {}
 
 #[derive(thiserror::Error, Debug)]
 pub enum MessageBusError {
-    #[error("Threre is no hanlder registered for command: {0}")]
+    #[error("There is no hanlder registered for command: {0}")]
     HandlerNotRegistered(String),
 }
 
@@ -34,7 +33,8 @@ impl From<MessageBusError> for RestError {
 pub trait MessageHandler: Send + Sync + Debug {
     type Message: Message + Debug;
     type Output: Debug;
-    async fn handle(&self, message: Self::Message) -> OmniResult<Self::Output>;
+    type Error: std::error::Error;
+    async fn handle(&self, message: Self::Message) -> Result<Self::Output, Self::Error>;
 }
 
 #[derive(Clone)]
@@ -47,28 +47,32 @@ impl MessageBus {
         MessageBusBuilder::default()
     }
 
-    fn get<H, M, O>(&self) -> Option<&H>
+    fn get<H, M, O, E>(&self) -> Option<&H>
     where
-        H: MessageHandler<Message = M, Output = O> + 'static + Sync + Send,
+        H: MessageHandler<Message = M, Output = O, Error = E> + 'static + Sync + Send,
         M: 'static + Debug,
         O: Debug,
+        E: std::error::Error,
     {
         let handler = self.map.get(&TypeId::of::<M>());
         handler.and_then(|h| h.downcast_ref::<H>())
     }
 
-    pub async fn execute<H, M, O>(&self, message: M) -> OmniResult<O>
+    pub async fn execute<H, M, O, E>(&self, message: M) -> Result<Result<O, E>, MessageBusError>
     where
-        H: MessageHandler<Message = M, Output = O> + 'static + Sync + Send,
+        H: MessageHandler<Message = M, Output = O, Error = E> + 'static + Sync + Send,
         M: 'static + Debug,
         O: Debug,
+        E: std::error::Error,
     {
-        self.get::<H, M, O>()
+        Ok(self
+            .get::<H, M, O, E>()
             .ok_or(MessageBusError::HandlerNotRegistered(
                 std::any::type_name::<M>().to_owned(),
-            ))?
+            ))
+            .tap_err(|e| tracing::error!("Handler not found"))?
             .handle(message)
-            .await
+            .await)
     }
 }
 

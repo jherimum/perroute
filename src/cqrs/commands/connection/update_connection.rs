@@ -5,7 +5,6 @@ use sqlx::PgPool;
 use crate::{
     cqrs::message_bus::{Message, MessageHandler},
     storage::database_models::connection::Connection,
-    types::OmniResult,
 };
 
 #[derive(Debug)]
@@ -28,10 +27,9 @@ pub enum Error {}
 #[async_trait]
 impl MessageHandler for Handler {
     type Message = Command;
-
     type Output = Connection;
-
-    async fn handle(&self, message: Self::Message) -> OmniResult<Self::Output> {
+    type Error = Error;
+    async fn handle(&self, message: Self::Message) -> Result<Self::Output, Self::Error> {
         todo!()
     }
 }

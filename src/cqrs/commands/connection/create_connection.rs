@@ -1,10 +1,9 @@
 use crate::{
     connector::Plugins,
     cqrs::message_bus::{Message, MessageHandler},
-    errors::OmniMessageError,
     storage::database_models::connection::Connection,
-    types::OmniResult,
 };
+use anyhow::Context;
 use async_trait::async_trait;
 use serde_json::Value;
 use sqlx::PgPool;
@@ -29,7 +28,7 @@ pub struct CommandHandler {
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error(transparent)]
-    Database(#[from] sqlx::Error),
+    Unexpected(#[from] anyhow::Error),
 
     #[error("Plugin with id {0} does not exists")]
     PluginNotFound(String),
@@ -38,25 +37,22 @@ pub enum Error {
     ConnectorCodeAlreadyExists(String),
 }
 
-impl From<Error> for OmniMessageError {
-    fn from(value: Error) -> Self {
-        todo!()
-    }
-}
-
 #[async_trait]
 impl MessageHandler for CommandHandler {
     type Message = Command;
-
     type Output = Connection;
+    type Error = Error;
 
-    async fn handle(&self, message: Self::Message) -> OmniResult<Self::Output> {
+    async fn handle(&self, message: Self::Message) -> Result<Self::Output, Self::Error> {
         let plugin = self
             .plugins
             .get(&message.plugin_id)
             .ok_or(Error::PluginNotFound(message.plugin_id.to_owned()))?;
 
-        if Connection::exists_code(self.pool.as_ref(), &message.code).await? {
+        if Connection::exists_code(self.pool.as_ref(), &message.code)
+            .await
+            .with_context(|| "")?
+        {
             return Err(Error::ConnectorCodeAlreadyExists(message.code.to_owned()).into());
         }
         Connection::new(
@@ -67,6 +63,7 @@ impl MessageHandler for CommandHandler {
         )
         .save(self.pool.as_ref())
         .await
-        .map_err(OmniMessageError::from)
+        .with_context(|| "context")
+        .map_err(Error::from)
     }
 }

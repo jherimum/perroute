@@ -1,9 +1,11 @@
 use crate::{
     cqrs::message_bus::{Message, MessageHandler},
     errors::OmniMessageError,
+    rest::error,
     storage::database_models::connection::{Connection, ConnectionsQuery},
     types::OmniResult,
 };
+use anyhow::Context;
 use async_trait::async_trait;
 use sqlx::PgPool;
 
@@ -16,16 +18,23 @@ impl Message for Query {}
 pub struct Handler {
     pool: PgPool,
 }
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    #[error(transparent)]
+    Unexpected(#[from] anyhow::Error),
+}
 
 #[async_trait]
 impl MessageHandler for Handler {
     type Message = Query;
     type Output = Vec<Connection>;
+    type Error = Error;
 
-    async fn handle(&self, message: Self::Message) -> OmniResult<Self::Output> {
+    async fn handle(&self, message: Self::Message) -> Result<Self::Output, Self::Error> {
         Connection::query(&self.pool, message.into())
             .await
-            .map_err(OmniMessageError::from)
+            .with_context(|| "")
+            .map_err(Error::from)
     }
 }
 
