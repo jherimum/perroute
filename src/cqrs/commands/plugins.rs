@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 
 use crate::{
-    connector::{ConnectoPlugin, Plugins},
+    connector::{ConnectorPlugin, Plugins},
     cqrs::message_bus::{Message, MessageHandler},
     types::OmniResult,
 };
@@ -20,9 +20,12 @@ pub struct QueryPluginsHandler {
 impl MessageHandler for QueryPluginsHandler {
     type Message = QueryPluginsMessage;
 
-    type Output = Vec<&'static dyn ConnectoPlugin>;
+    type Output = Vec<&'static dyn ConnectorPlugin>;
 
-    async fn handle(&self, _: QueryPluginsMessage) -> OmniResult<Vec<&'static dyn ConnectoPlugin>> {
+    async fn handle(
+        &self,
+        _: QueryPluginsMessage,
+    ) -> OmniResult<Vec<&'static dyn ConnectorPlugin>> {
         Ok(self.plugins.all())
     }
 }

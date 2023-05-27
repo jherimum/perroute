@@ -31,7 +31,7 @@ pub struct Configuration<'p> {
     pub properties: &'p Vec<ConfigurationProperty>,
 }
 
-pub trait ConnectoPlugin: Sync + Send + Debug {
+pub trait ConnectorPlugin: Sync + Send + Debug {
     fn id(&self) -> &'static str;
     fn configuration(&self) -> Configuration;
     fn dispatchers(&self) -> HashMap<DispatcherType, &'static dyn DispatcherPlugin>;
@@ -44,29 +44,29 @@ pub trait DispatcherPlugin: Sync + Send + Debug {
 
 #[derive(Clone, Debug)]
 pub struct Plugins {
-    data: Arc<HashMap<&'static str, &'static dyn ConnectoPlugin>>,
+    data: Arc<HashMap<&'static str, &'static dyn ConnectorPlugin>>,
 }
 
 impl Plugins {
     pub fn builder() -> PluginsBuilder {
         PluginsBuilder::default()
     }
-    pub fn get(&self, id: &str) -> Option<&'static dyn ConnectoPlugin> {
+    pub fn get(&self, id: &str) -> Option<&'static dyn ConnectorPlugin> {
         self.data.get(id).copied()
     }
 
-    pub fn all(&self) -> Vec<&'static dyn ConnectoPlugin> {
+    pub fn all(&self) -> Vec<&'static dyn ConnectorPlugin> {
         self.data.values().copied().to_owned().collect::<Vec<_>>()
     }
 }
 
 #[derive(Debug, Default)]
 pub struct PluginsBuilder {
-    data: HashMap<&'static str, &'static dyn ConnectoPlugin>,
+    data: HashMap<&'static str, &'static dyn ConnectorPlugin>,
 }
 
 impl PluginsBuilder {
-    pub fn with_plugin(mut self, plugin: &'static dyn ConnectoPlugin) -> Self {
+    pub fn with_plugin(mut self, plugin: &'static dyn ConnectorPlugin) -> Self {
         self.data.insert(plugin.id(), plugin);
         self
     }

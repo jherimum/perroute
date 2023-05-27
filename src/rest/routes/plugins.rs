@@ -1,5 +1,5 @@
 use crate::{
-    connector::{ConnectoPlugin, DispatcherPlugin},
+    connector::{ConnectorPlugin, DispatcherPlugin},
     cqrs::message_bus::MessageBus,
     rest::{
         api_models::plugin::{ConnectorPluginResource, Dispatcher},
@@ -60,8 +60,8 @@ async fn find(
     todo!()
 }
 
-impl From<&dyn ConnectoPlugin> for ConnectorPluginResource {
-    fn from(value: &dyn ConnectoPlugin) -> Self {
+impl From<&dyn ConnectorPlugin> for ConnectorPluginResource {
+    fn from(value: &dyn ConnectorPlugin) -> Self {
         ConnectorPluginResource {
             id: value.id(),
             properties: value.configuration().properties.clone(),

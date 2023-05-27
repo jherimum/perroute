@@ -1,6 +1,6 @@
 use std::todo;
 
-use crate::connector::ConnectoPlugin;
+use crate::connector::ConnectorPlugin;
 
 use serde_json::Value;
 use sqlx::{Executor, FromRow};
@@ -17,7 +17,7 @@ pub struct Connection {
 impl Connection {
     pub fn new(
         code: &str,
-        plugin: &dyn ConnectoPlugin,
+        plugin: &dyn ConnectorPlugin,
         description: &str,
         properties: &Value,
     ) -> Self {
