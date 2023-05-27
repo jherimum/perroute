@@ -1,11 +1,6 @@
-use std::todo;
-
+use crate::cqrs::message_bus::{Message, MessageHandler};
 use async_trait::async_trait;
-
-use crate::{
-    cqrs::message_bus::{Message, MessageHandler},
-    types::OmniResult,
-};
+use std::todo;
 
 #[derive(Debug)]
 pub struct CreateTokenCommand {}

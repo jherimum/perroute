@@ -1,19 +1,11 @@
 use crate::{
-    cqrs::{
-        commands::connection::{
-            create_connection, delete_connection, find_all_connections, find_connection,
-            update_connection,
-        },
-        message_bus::MessageBus,
-    },
-    errors::OmniMessageError,
+    cqrs::{commands::connection::create_connection, message_bus::MessageBus},
     rest::{
         api_models::connection::{
             ConnectionResource, CreateConnectionRequest, UpdateConnectionRequest,
         },
         error::RestError,
     },
-    types::OmniResult,
 };
 use axum::{extract::Path, routing::delete};
 use axum::{
@@ -49,7 +41,7 @@ async fn get_all_connections(
 async fn create_connection(
     State(message_bus): State<MessageBus>,
     Json(req): Json<CreateConnectionRequest>,
-) -> OmniResult<Json<ConnectionResource>> {
+) -> Result<Json<ConnectionResource>, RestError> {
     // message_bus
     //     .execute::<create_connection::CommandHandler, _, _>(create_connection::Command::from(req))
     //     .await
@@ -61,7 +53,7 @@ async fn create_connection(
 async fn get_connection(
     State(message_bus): State<MessageBus>,
     Path(connection_id): Path<uuid::Uuid>,
-) -> OmniResult<Json<ConnectionResource>> {
+) -> Result<Json<ConnectionResource>, RestError> {
     // message_bus
     //     .execute::<find_connection::Handler, _, _>(find_connection::Query(connection_id))
     //     .await?
@@ -76,7 +68,7 @@ async fn update_connection(
     State(message_bus): State<MessageBus>,
     Path(connection_id): Path<uuid::Uuid>,
     Json(req): Json<UpdateConnectionRequest>,
-) -> OmniResult<Json<ConnectionResource>> {
+) -> Result<Json<ConnectionResource>, RestError> {
     // message_bus
     //     .execute::<update_connection::Handler, _, _>(update_connection::Command {
     //         id: connection_id,
@@ -92,7 +84,7 @@ async fn update_connection(
 async fn delete_connection(
     State(message_bus): State<MessageBus>,
     Path(connection_id): Path<uuid::Uuid>,
-) -> OmniResult<()> {
+) -> Result<(), RestError> {
     // message_bus
     //     .execute::<delete_connection::Handler, _, _>(delete_connection::Command {
     //         id: connection_id,

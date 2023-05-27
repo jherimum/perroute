@@ -53,7 +53,7 @@ impl MessageHandler for CommandHandler {
             .await
             .with_context(|| "")?
         {
-            return Err(Error::ConnectorCodeAlreadyExists(message.code.to_owned()).into());
+            return Err(Error::ConnectorCodeAlreadyExists(message.code.to_owned()));
         }
         Connection::new(
             message.code,

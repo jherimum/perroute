@@ -1,4 +1,4 @@
-use crate::{connector::ConnectorPlugin, types::OmniResult};
+use crate::connector::ConnectorPlugin;
 use serde_json::Value;
 use sqlx::{Executor, FromRow};
 use std::todo;

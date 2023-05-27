@@ -1,9 +1,6 @@
 use crate::{
     cqrs::message_bus::{Message, MessageHandler},
-    errors::OmniMessageError,
-    rest::error,
     storage::database_models::connection::{Connection, ConnectionsQuery},
-    types::OmniResult,
 };
 use anyhow::Context;
 use async_trait::async_trait;

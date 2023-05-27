@@ -1,7 +1,4 @@
-use crate::{
-    cqrs::message_bus::{Message, MessageHandler},
-    types::OmniResult,
-};
+use crate::cqrs::message_bus::{Message, MessageHandler};
 use async_trait::async_trait;
 use sqlx::PgPool;
 

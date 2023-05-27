@@ -1,10 +1,8 @@
-use async_trait::async_trait;
-
 use crate::{
     connector::{ConnectorPlugin, Plugins},
     cqrs::message_bus::{Message, MessageHandler},
-    types::OmniResult,
 };
+use async_trait::async_trait;
 
 #[derive(Debug)]
 pub struct QueryPluginsMessage;

@@ -1,13 +1,10 @@
-use std::todo;
-
-use async_trait::async_trait;
-use sqlx::PgPool;
-
 use crate::{
     cqrs::message_bus::{Message, MessageHandler},
     storage::database_models::connection::Connection,
-    types::OmniResult,
 };
+use async_trait::async_trait;
+use sqlx::PgPool;
+use std::todo;
 
 #[derive(Debug)]
 pub struct Query(pub uuid::Uuid);
