@@ -1,7 +1,7 @@
 use crate::{
     connector::Plugins,
     cqrs::message_bus::{Message, MessageHandler},
-    database_models::{account::Account, connection::Connection},
+    database_models::connection::Connection,
     errors::OmniMessageError,
     types::OmniResult,
 };
@@ -13,7 +13,6 @@ use std::sync::Arc;
 #[derive(Debug)]
 pub struct Command {
     pub code: String,
-    pub account: Account,
     pub plugin_id: String,
     pub properties: Value,
     pub description: String,
@@ -57,18 +56,11 @@ impl MessageHandler for CommandHandler {
             .get(&message.plugin_id)
             .ok_or(Error::PluginNotFound(message.plugin_id.to_owned()))?;
 
-        if Connection::exists_by_account_id_and_code(
-            self.pool.as_ref(),
-            &message.account.id,
-            &message.code,
-        )
-        .await?
-        {
+        if Connection::exists_by_account_id_and_code(self.pool.as_ref(), &message.code).await? {
             return Err(Error::ConnectorCodeAlreadyExists(message.code.to_owned()).into());
         }
         Connection::new(
             &message.code,
-            &message.account,
             plugin,
             &message.description,
             &message.properties,

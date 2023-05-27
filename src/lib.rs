@@ -4,4 +4,5 @@ pub mod crypto;
 pub mod database_models;
 pub mod errors;
 pub mod rest;
+pub mod tracing;
 pub mod types;

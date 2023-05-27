@@ -5,14 +5,12 @@ use sqlx::PgPool;
 
 use crate::{
     cqrs::message_bus::{Message, MessageHandler},
-    database_models::{account::Account, connection::Connection},
+    database_models::connection::Connection,
     types::OmniResult,
 };
 
 #[derive(Debug)]
-pub struct Query {
-    pub account: Account,
-}
+pub struct Query {}
 
 impl Message for Query {}
 

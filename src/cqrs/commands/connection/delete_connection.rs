@@ -1,16 +1,13 @@
-use async_trait::async_trait;
-use sqlx::PgPool;
-
 use crate::{
     cqrs::message_bus::{Message, MessageHandler},
-    database_models::account::Account,
     types::OmniResult,
 };
+use async_trait::async_trait;
+use sqlx::PgPool;
 
 #[derive(Debug)]
 pub struct Command {
     pub id: uuid::Uuid,
-    pub account: Account,
 }
 
 impl Message for Command {}

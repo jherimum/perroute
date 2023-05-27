@@ -6,7 +6,6 @@ use crate::{
         },
         message_bus::MessageBus,
     },
-    database_models::account::Account,
     rest::{
         api_models::connection::{
             ConnectionResource, CreateConnectionRequest, UpdateConnectionRequest,
@@ -39,7 +38,6 @@ impl From<find_all_connections::Error> for RestError {
 }
 
 async fn get_all_connections(
-    account: Account,
     State(message_bus): State<MessageBus>,
 ) -> OmniResult<Json<Vec<ConnectionResource>>> {
     // message_bus
@@ -56,7 +54,6 @@ impl From<find_connection::Error> for RestError {
 }
 
 async fn get_connection(
-    account: Account,
     State(message_bus): State<MessageBus>,
     Path(connection_id): Path<uuid::Uuid>,
 ) -> OmniResult<Json<ConnectionResource>> {
@@ -80,7 +77,6 @@ impl From<update_connection::Error> for RestError {
 
 async fn update_connection(
     State(message_bus): State<MessageBus>,
-    account: Account,
     Path(connection_id): Path<uuid::Uuid>,
     Json(req): Json<UpdateConnectionRequest>,
 ) -> OmniResult<Json<ConnectionResource>> {
@@ -99,14 +95,12 @@ async fn update_connection(
 }
 
 async fn delete_connection(
-    account: Account,
     State(message_bus): State<MessageBus>,
     Path(connection_id): Path<uuid::Uuid>,
 ) -> Result<(), RestError> {
     message_bus
         .execute::<delete_connection::Handler, _, _>(delete_connection::Command {
             id: connection_id,
-            account,
         })
         .await;
     todo!()
@@ -124,7 +118,6 @@ impl From<create_connection::Error> for RestError {
 
 async fn create_connection(
     State(message_bus): State<MessageBus>,
-    account: Account,
     Json(req): Json<CreateConnectionRequest>,
 ) -> OmniResult<Json<ConnectionResource>> {
     // message_bus
@@ -137,14 +130,13 @@ async fn create_connection(
     todo!()
 }
 
-impl From<(Account, CreateConnectionRequest)> for create_connection::Command {
-    fn from(value: (Account, CreateConnectionRequest)) -> Self {
+impl From<CreateConnectionRequest> for create_connection::Command {
+    fn from(value: CreateConnectionRequest) -> Self {
         create_connection::Command {
-            code: value.1.code,
-            account: value.0,
-            plugin_id: value.1.plugin_id,
-            properties: value.1.properties,
-            description: value.1.description,
+            code: value.code,
+            plugin_id: value.plugin_id,
+            properties: value.properties,
+            description: value.description,
         }
     }
 }
