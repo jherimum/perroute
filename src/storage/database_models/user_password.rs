@@ -1,3 +1,5 @@
+use crate::types::OmniResult;
+
 use super::user::User;
 use sqlx::PgExecutor;
 use time::OffsetDateTime;
@@ -19,7 +21,7 @@ impl UserPassword {
         }
     }
 
-    pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<UserPassword, sqlx::Error> {
+    pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> OmniResult<UserPassword> {
         todo!()
     }
 }

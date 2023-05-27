@@ -83,7 +83,6 @@ async fn update_connection(
         .await
         .map(ConnectionResource::from)
         .map(Json::from)
-        .map_err(OmniMessageError::from)
 }
 
 async fn delete_connection(

@@ -1,5 +1,7 @@
 use sqlx::PgExecutor;
 
+use crate::types::OmniResult;
+
 pub struct User {
     pub id: uuid::Uuid,
     pub email: String,
@@ -13,7 +15,7 @@ impl User {
         }
     }
 
-    pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<User, sqlx::Error> {
+    pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> OmniResult<User> {
         todo!()
     }
 }

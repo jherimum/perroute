@@ -1,9 +1,7 @@
-use std::todo;
-
-use crate::connector::ConnectorPlugin;
-
+use crate::{connector::ConnectorPlugin, types::OmniResult};
 use serde_json::Value;
 use sqlx::{Executor, FromRow};
+use std::todo;
 
 #[derive(Debug, FromRow)]
 pub struct Connection {
@@ -19,16 +17,16 @@ pub struct ConnectionsQuery;
 
 impl Connection {
     pub fn new(
-        code: &str,
+        code: impl Into<String>,
         plugin: &dyn ConnectorPlugin,
-        description: &str,
+        description: impl Into<String>,
         properties: &Value,
     ) -> Self {
         Self {
             id: uuid::Uuid::new_v4(),
-            code: code.to_owned(),
+            code: code.into(),
             plugin_id: plugin.id().to_owned(),
-            description: description.to_owned(),
+            description: description.into(),
             properties: properties.clone(),
         }
     }
@@ -36,18 +34,15 @@ impl Connection {
     pub async fn query<'e, E: Executor<'e>>(
         exec: E,
         query: ConnectionsQuery,
-    ) -> Result<Vec<Connection>, sqlx::Error> {
+    ) -> OmniResult<Vec<Connection>> {
         Ok(vec![])
     }
 
-    pub async fn save<'e, E: Executor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
+    pub async fn save<'e, E: Executor<'e>>(self, exec: E) -> OmniResult<Self> {
         Ok(self)
     }
 
-    pub async fn exists_code<'e, E: Executor<'e>>(
-        exec: E,
-        code: &str,
-    ) -> Result<bool, sqlx::Error> {
+    pub async fn exists_code<'e, E: Executor<'e>>(exec: E, code: &str) -> OmniResult<bool> {
         todo!()
     }
 }

@@ -60,9 +60,9 @@ impl MessageHandler for CommandHandler {
             return Err(Error::ConnectorCodeAlreadyExists(message.code.to_owned()).into());
         }
         Connection::new(
-            &message.code,
+            message.code,
             plugin,
-            &message.description,
+            message.description,
             &message.properties,
         )
         .save(self.pool.as_ref())

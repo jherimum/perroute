@@ -7,7 +7,7 @@ use argon2::{
 #[derive(Debug, thiserror::Error)]
 pub enum CryptoError {
     #[error(transparent)]
-    Argon2(#[from] argon2::password_hash::Error),
+    PasswordHash(#[from] argon2::password_hash::Error),
 }
 
 pub fn hash_password(clear_password: impl Into<String>) -> OmniResult<String> {
