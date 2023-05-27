@@ -6,6 +6,7 @@ use crate::{
         },
         message_bus::MessageBus,
     },
+    errors::OmniMessageError,
     rest::{
         api_models::connection::{
             ConnectionResource, CreateConnectionRequest, UpdateConnectionRequest,
@@ -23,56 +24,49 @@ use axum::{
 use std::todo;
 pub fn routes(message_bus: MessageBus) -> Router {
     Router::new()
+        .route("/", get(get_all_connections))
         .route("/", post(create_connection))
+        .route("/:id", get(get_connection))
         .route("/:id", patch(update_connection))
         .route("/:id", delete(delete_connection))
-        .route("/:id", get(get_connection))
-        .route("/", get(get_all_connections))
         .with_state(message_bus)
-}
-
-impl From<find_all_connections::Error> for RestError {
-    fn from(value: find_all_connections::Error) -> Self {
-        todo!()
-    }
 }
 
 async fn get_all_connections(
     State(message_bus): State<MessageBus>,
 ) -> OmniResult<Json<Vec<ConnectionResource>>> {
-    // message_bus
-    //     .execute::<find_all_connections::Handler, _, _>(find_all_connections::Query { account })
-    //     .await?
-    //     .map(|v| Json(v.into_iter().map(ConnectionResource::from).collect()))
-    todo!()
+    Ok(Json::from(
+        message_bus
+            .execute::<find_all_connections::Handler, _, _>(find_all_connections::Query {})
+            .await?
+            .into_iter()
+            .map(ConnectionResource::from)
+            .collect::<Vec<_>>(),
+    ))
 }
 
-impl From<find_connection::Error> for RestError {
-    fn from(value: find_connection::Error) -> Self {
-        todo!()
-    }
+async fn create_connection(
+    State(message_bus): State<MessageBus>,
+    Json(req): Json<CreateConnectionRequest>,
+) -> OmniResult<Json<ConnectionResource>> {
+    message_bus
+        .execute::<create_connection::CommandHandler, _, _>(create_connection::Command::from(req))
+        .await
+        .map(ConnectionResource::from)
+        .map(Json::from)
 }
 
 async fn get_connection(
     State(message_bus): State<MessageBus>,
     Path(connection_id): Path<uuid::Uuid>,
 ) -> OmniResult<Json<ConnectionResource>> {
-    //message_bus
-    // .execute::<find_connection::Handler, _, _, _>(find_connection::Query {
-    //     id: connection_id,
-    //     account,
-    // })
-    // .await??
-    // .ok_or(RestError::NotFound("()".to_owned()))
-    // .map(ConnectionResource::from)
-    // .map(Json::from)
-    todo!()
-}
-
-impl From<update_connection::Error> for RestError {
-    fn from(value: update_connection::Error) -> Self {
-        todo!()
-    }
+    message_bus
+        .execute::<find_connection::Handler, _, _>(find_connection::Query(connection_id))
+        .await?
+        .ok_or(RestError::NotFound("".to_owned()))
+        .map_err(OmniMessageError::from)
+        .map(ConnectionResource::from)
+        .map(Json::from)
 }
 
 async fn update_connection(
@@ -80,30 +74,27 @@ async fn update_connection(
     Path(connection_id): Path<uuid::Uuid>,
     Json(req): Json<UpdateConnectionRequest>,
 ) -> OmniResult<Json<ConnectionResource>> {
-    // message_bus
-    //     .execute::<update_connection::Handler, _, _>(update_connection::Command {
-    //         id: connection_id,
-    //         account,
-    //         description: req.description,
-    //         properties: req.properties,
-    //     })
-    //     .await?
-    //     .map(ConnectionResource::from)
-    //     .map(Json::from)
-    //     .map_err(RestError::from)
-    todo!()
+    message_bus
+        .execute::<update_connection::Handler, _, _>(update_connection::Command {
+            id: connection_id,
+            description: req.description,
+            properties: req.properties,
+        })
+        .await
+        .map(ConnectionResource::from)
+        .map(Json::from)
+        .map_err(OmniMessageError::from)
 }
 
 async fn delete_connection(
     State(message_bus): State<MessageBus>,
     Path(connection_id): Path<uuid::Uuid>,
-) -> Result<(), RestError> {
+) -> OmniResult<()> {
     message_bus
         .execute::<delete_connection::Handler, _, _>(delete_connection::Command {
             id: connection_id,
         })
-        .await;
-    todo!()
+        .await
 }
 
 impl From<create_connection::Error> for RestError {
@@ -114,20 +105,6 @@ impl From<create_connection::Error> for RestError {
             create_connection::Error::ConnectorCodeAlreadyExists(_) => todo!(),
         }
     }
-}
-
-async fn create_connection(
-    State(message_bus): State<MessageBus>,
-    Json(req): Json<CreateConnectionRequest>,
-) -> OmniResult<Json<ConnectionResource>> {
-    // message_bus
-    //     .execute::<create_connection::CommandHandler, _, _>(create_connection::Command::from((
-    //         account, req,
-    //     )))
-    //     .await?
-    //     .map(|c| Json(ConnectionResource::from(c)))
-    //     .map_err(RestError::from)
-    todo!()
 }
 
 impl From<CreateConnectionRequest> for create_connection::Command {

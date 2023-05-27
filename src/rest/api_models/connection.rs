@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::database_models::connection::Connection;
+use crate::storage::database_models::connection::Connection;
 
 #[derive(Serialize)]
 pub struct ConnectionResource {

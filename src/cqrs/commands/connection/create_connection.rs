@@ -1,8 +1,8 @@
 use crate::{
     connector::Plugins,
     cqrs::message_bus::{Message, MessageHandler},
-    database_models::connection::Connection,
     errors::OmniMessageError,
+    storage::database_models::connection::Connection,
     types::OmniResult,
 };
 use async_trait::async_trait;
@@ -56,7 +56,7 @@ impl MessageHandler for CommandHandler {
             .get(&message.plugin_id)
             .ok_or(Error::PluginNotFound(message.plugin_id.to_owned()))?;
 
-        if Connection::exists_by_account_id_and_code(self.pool.as_ref(), &message.code).await? {
+        if Connection::exists_code(self.pool.as_ref(), &message.code).await? {
             return Err(Error::ConnectorCodeAlreadyExists(message.code.to_owned()).into());
         }
         Connection::new(

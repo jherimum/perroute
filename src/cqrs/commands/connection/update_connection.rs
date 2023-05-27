@@ -4,7 +4,7 @@ use sqlx::PgPool;
 
 use crate::{
     cqrs::message_bus::{Message, MessageHandler},
-    database_models::connection::Connection,
+    storage::database_models::connection::Connection,
     types::OmniResult,
 };
 

@@ -14,6 +14,9 @@ pub struct Connection {
     pub properties: Value,
 }
 
+#[derive(Debug)]
+pub struct ConnectionsQuery;
+
 impl Connection {
     pub fn new(
         code: &str,
@@ -30,11 +33,18 @@ impl Connection {
         }
     }
 
+    pub async fn query<'e, E: Executor<'e>>(
+        exec: E,
+        query: ConnectionsQuery,
+    ) -> Result<Vec<Connection>, sqlx::Error> {
+        Ok(vec![])
+    }
+
     pub async fn save<'e, E: Executor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
         Ok(self)
     }
 
-    pub async fn exists_by_account_id_and_code<'e, E: Executor<'e>>(
+    pub async fn exists_code<'e, E: Executor<'e>>(
         exec: E,
         code: &str,
     ) -> Result<bool, sqlx::Error> {
