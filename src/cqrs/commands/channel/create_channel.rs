@@ -1,10 +1,10 @@
 use crate::{
     cqrs::message_bus::{Message, MessageHandler},
     storage::database_models::channel::Channel,
-    types::ArcPool,
 };
 use anyhow::Context;
 use async_trait::async_trait;
+use sqlx::PgPool;
 
 #[derive(Debug)]
 pub struct Command {
@@ -25,7 +25,7 @@ impl Message for Command {}
 
 #[derive(Debug)]
 pub struct Handler {
-    pool: ArcPool,
+    pool: PgPool,
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -46,7 +46,7 @@ impl MessageHandler for Handler {
     type Error = Error;
 
     async fn handle(&self, message: Self::Message) -> Result<Self::Output, Self::Error> {
-        if Channel::exists_by_code(self.pool.as_ref(), &message.code)
+        if Channel::exists_by_code(&self.pool, &message.code)
             .await
             .with_context(|| {
                 format!(
@@ -59,7 +59,7 @@ impl MessageHandler for Handler {
         }
 
         Ok(Channel::new(message.code, message.description)
-            .save(self.pool.as_ref())
+            .save(&self.pool)
             .await
             .unwrap())
     }

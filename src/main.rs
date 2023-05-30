@@ -1,8 +1,6 @@
 use axum::Router;
 use omni_message::{rest::routes::health, tracing as omni_tracing};
 use std::net::SocketAddr;
-use tower_http::trace::{self, TraceLayer};
-use tracing::Level;
 
 #[tokio::main]
 async fn main() {
