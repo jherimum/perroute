@@ -1,0 +1,66 @@
+use crate::{
+    cqrs::message_bus::{Message, MessageHandler},
+    storage::database_models::channel::Channel,
+    types::ArcPool,
+};
+use anyhow::Context;
+use async_trait::async_trait;
+use tap::{Tap, TapFallible};
+
+#[derive(Debug)]
+pub struct Command {
+    id: uuid::Uuid,
+    description: Option<String>,
+}
+
+impl Command {
+    pub fn new(id: uuid::Uuid, desc: Option<impl Into<String>>) -> Self {
+        Self {
+            id,
+            description: desc.map(Into::into),
+        }
+    }
+}
+
+impl Message for Command {}
+
+#[derive(Debug)]
+pub struct Handler {
+    pool: ArcPool,
+}
+
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error(transparent)]
+    Unexpected(#[from] anyhow::Error),
+
+    #[error("Channel with id {0} nor found")]
+    ChannelNotFound(uuid::Uuid),
+}
+
+#[async_trait]
+impl MessageHandler for Handler {
+    type Message = Command;
+    type Output = Channel;
+    type Error = Error;
+
+    async fn handle(&self, message: Self::Message) -> Result<Self::Output, Self::Error> {
+        Ok(Channel::find(self.pool.as_ref(), &message.id)
+            .await
+            .tap_err(|e| {
+                tracing::error!(
+                    "Error while retrieving channel {}. Error: {}",
+                    message.id,
+                    e
+                )
+            })
+            .map_err(anyhow::Error::new)?
+            .ok_or_else(|| Error::ChannelNotFound(message.id))?
+            .update(self.pool.as_ref(), message.description)
+            .await
+            .tap_err(|e| {
+                tracing::error!("Error while updating channel {}. Error: {}", message.id, e)
+            })
+            .map_err(anyhow::Error::new)?)
+    }
+}

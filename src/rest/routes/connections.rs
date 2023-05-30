@@ -1,5 +1,11 @@
 use crate::{
-    cqrs::{commands::connection::create_connection, message_bus::MessageBus},
+    cqrs::{
+        commands::connection::{
+            create_connection, delete_connection, find_all_connections, find_connection,
+            update_connection,
+        },
+        message_bus::MessageBus,
+    },
     rest::{
         api_models::connection::{
             ConnectionResource, CreateConnectionRequest, UpdateConnectionRequest,
@@ -14,6 +20,7 @@ use axum::{
     Json, Router,
 };
 use std::todo;
+
 pub fn routes(message_bus: MessageBus) -> Router {
     Router::new()
         .route("/", get(get_all_connections))
@@ -27,41 +34,46 @@ pub fn routes(message_bus: MessageBus) -> Router {
 async fn get_all_connections(
     State(message_bus): State<MessageBus>,
 ) -> Result<Json<Vec<ConnectionResource>>, RestError> {
-    // Ok(Json::from(
-    //     message_bus
-    //         .execute::<find_all_connections::Handler, _, _>(find_all_connections::Query {})
-    //         .await?
-    //         .into_iter()
-    //         .map(ConnectionResource::from)
-    //         .collect::<Vec<_>>(),
-    // ))
-    todo!()
+    Ok(message_bus
+        .execute::<find_all_connections::Handler, _, _, _>(find_all_connections::Query {})
+        .await
+        .unwrap()
+        .unwrap()
+        .into_iter()
+        .map(ConnectionResource::from)
+        .collect::<Vec<_>>()
+        .into())
 }
 
 async fn create_connection(
     State(message_bus): State<MessageBus>,
     Json(req): Json<CreateConnectionRequest>,
 ) -> Result<Json<ConnectionResource>, RestError> {
-    // message_bus
-    //     .execute::<create_connection::CommandHandler, _, _>(create_connection::Command::from(req))
-    //     .await
-    //     .map(ConnectionResource::from)
-    //     .map(Json::from)
-    todo!()
+    Ok(Json(
+        message_bus
+            .execute::<create_connection::CommandHandler, _, _, _>(
+                create_connection::Command::from(req),
+            )
+            .await
+            .unwrap()
+            .unwrap()
+            .into(),
+    ))
 }
 
 async fn get_connection(
     State(message_bus): State<MessageBus>,
     Path(connection_id): Path<uuid::Uuid>,
 ) -> Result<Json<ConnectionResource>, RestError> {
-    // message_bus
-    //     .execute::<find_connection::Handler, _, _>(find_connection::Query(connection_id))
-    //     .await?
-    //     .ok_or(RestError::NotFound("".to_owned()))
-    //     .map_err(OmniMessageError::from)
-    //     .map(ConnectionResource::from)
-    //     .map(Json::from)
-    todo!()
+    Ok(Json(
+        message_bus
+            .execute::<find_connection::Handler, _, _, _>(find_connection::Query(connection_id))
+            .await
+            .unwrap()
+            .unwrap()
+            .unwrap()
+            .into(),
+    ))
 }
 
 async fn update_connection(
@@ -69,28 +81,32 @@ async fn update_connection(
     Path(connection_id): Path<uuid::Uuid>,
     Json(req): Json<UpdateConnectionRequest>,
 ) -> Result<Json<ConnectionResource>, RestError> {
-    // message_bus
-    //     .execute::<update_connection::Handler, _, _>(update_connection::Command {
-    //         id: connection_id,
-    //         description: req.description,
-    //         properties: req.properties,
-    //     })
-    //     .await
-    //     .map(ConnectionResource::from)
-    //     .map(Json::from)
-    todo!()
+    Ok(Json(
+        message_bus
+            .execute::<update_connection::Handler, _, _, _>(update_connection::Command {
+                id: connection_id,
+                description: req.description,
+                properties: req.properties,
+            })
+            .await
+            .unwrap()
+            .unwrap()
+            .into(),
+    ))
 }
 
 async fn delete_connection(
     State(message_bus): State<MessageBus>,
     Path(connection_id): Path<uuid::Uuid>,
 ) -> Result<(), RestError> {
-    // message_bus
-    //     .execute::<delete_connection::Handler, _, _>(delete_connection::Command {
-    //         id: connection_id,
-    //     })
-    //     .await
-    todo!()
+    message_bus
+        .execute::<delete_connection::Handler, _, _, _>(delete_connection::Command {
+            id: connection_id,
+        })
+        .await
+        .unwrap()
+        .unwrap();
+    Ok(())
 }
 
 impl From<create_connection::Error> for RestError {

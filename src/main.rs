@@ -8,11 +8,7 @@ use tracing::Level;
 async fn main() {
     omni_tracing::init();
 
-    let app = Router::new().nest("/healh", health::routes()).layer(
-        TraceLayer::new_for_http()
-            .make_span_with(trace::DefaultMakeSpan::new().level(Level::INFO))
-            .on_response(trace::DefaultOnResponse::new().level(Level::INFO)),
-    );
+    let app = Router::new().nest("/healh", health::routes());
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
     tracing::info!("listening on {}", addr);

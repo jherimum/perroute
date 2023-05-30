@@ -1,15 +1,14 @@
+use crate::storage::database_models::connection::Connection;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::storage::database_models::connection::Connection;
-
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 pub struct ConnectionResource {
-    id: uuid::Uuid,
-    code: String,
-    plugin_id: String,
-    description: String,
-    properties: Value,
+    pub id: uuid::Uuid,
+    pub code: String,
+    pub plugin_id: String,
+    pub description: String,
+    pub properties: Value,
 }
 
 impl From<Connection> for ConnectionResource {
@@ -24,7 +23,7 @@ impl From<Connection> for ConnectionResource {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct CreateConnectionRequest {
     pub code: String,
     pub plugin_id: String,
@@ -32,7 +31,7 @@ pub struct CreateConnectionRequest {
     pub description: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct UpdateConnectionRequest {
     pub properties: Option<Value>,
     pub description: Option<String>,
