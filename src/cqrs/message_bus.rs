@@ -7,7 +7,7 @@ use std::{
     sync::Arc,
     todo,
 };
-use tap::TapFallible;
+use tap::{TapFallible, TapOptional};
 
 pub trait Message: Debug {}
 
@@ -67,10 +67,15 @@ impl MessageBus {
     {
         Ok(self
             .get::<H, M, O, E>()
+            .tap_none(|| {
+                tracing::error!(
+                    "Handler {} not registered",
+                    std::any::type_name::<M>().to_owned()
+                )
+            })
             .ok_or(MessageBusError::HandlerNotRegistered(
                 std::any::type_name::<M>().to_owned(),
-            ))
-            .tap_err(|e| tracing::error!("Handler not found"))?
+            ))?
             .handle(message)
             .await)
     }
