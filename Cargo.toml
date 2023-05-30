@@ -28,7 +28,9 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json", "registry"] }
 tracing-bunyan-formatter = "0.3"
 tracing-log = "0.1"
-
+serde-aux = "4"
+temp-env = "0.3.3"
+config = "0.13.3"
 
 
 [dev-dependencies]

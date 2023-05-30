@@ -1,0 +1,15 @@
+application:
+  port: 8000
+  host: 0.0.0.0
+database:
+  host: "127.0.0.1"
+  port: 6543
+  username: "crab"
+  password: "crab"
+  database_name: "price"
+  require_ssl: false
+  pool:
+    max_connection: 10
+    max_lifetime: 20
+    idle_timeout: 20
+    acquire_timeout: 2

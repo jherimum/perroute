@@ -1,17 +1,17 @@
+use anyhow::{Context, Result};
 use axum::Router;
 use omni_message::{
-    cqrs::message_bus::{MessageBus, MessageBusBuilder},
-    rest::{
-        api_models::connection,
-        routes::{channels, connections, health},
-    },
+    configuration::Settings,
+    cqrs::message_bus::MessageBus,
+    rest::routes::{channels, connections, health},
     tracing as omni_tracing,
 };
 use std::net::SocketAddr;
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<()> {
     omni_tracing::init();
+    let settings = Settings::load().with_context(|| "");
 
     let message_bus = MessageBus::builder().build();
 
@@ -29,4 +29,6 @@ async fn main() {
         .serve(app.into_make_service())
         .await
         .unwrap();
+
+    Ok(())
 }
