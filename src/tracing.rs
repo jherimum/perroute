@@ -4,7 +4,7 @@ use tracing_log::LogTracer;
 use tracing_subscriber::{layer::SubscriberExt, EnvFilter, Registry};
 
 pub fn init() {
-    let env_filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info"));
+    let env_filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("debug"));
     let formatting_layer = BunyanFormattingLayer::new("omni".to_owned(), std::io::stdout);
     let subscriber = Registry::default()
         .with(env_filter)

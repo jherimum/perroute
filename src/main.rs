@@ -1,4 +1,4 @@
-use anyhow::{Context, Result};
+use anyhow::Result;
 use axum::Router;
 use omni_message::{
     configuration::Settings,
@@ -7,11 +7,14 @@ use omni_message::{
     tracing as omni_tracing,
 };
 use std::net::SocketAddr;
+use tap::TapFallible;
 
 #[tokio::main]
 async fn main() -> Result<()> {
     omni_tracing::init();
-    let settings = Settings::load().with_context(|| "");
+    let settings = Settings::load()
+        .tap_err(|e| tracing::error!("Error loading settings. Error: {e}"))
+        .map_err(anyhow::Error::from)?;
 
     let message_bus = MessageBus::builder().build();
 

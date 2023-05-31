@@ -4,9 +4,9 @@ application:
 database:
   host: "127.0.0.1"
   port: 6543
-  username: "crab"
-  password: "crab"
-  database_name: "price"
+  username: "omni-message"
+  password: "omni-message"
+  database_name: "omni-message"
   require_ssl: false
   pool:
     max_connection: 10

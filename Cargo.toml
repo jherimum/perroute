@@ -29,8 +29,9 @@ tracing-subscriber = { version = "0.3", features = ["env-filter", "json", "regis
 tracing-bunyan-formatter = "0.3"
 tracing-log = "0.1"
 serde-aux = "4"
-temp-env = "0.3.3"
-config = "0.13.3"
+temp-env = "0.3"
+config = "0.13"
+secrecy = { version = "0.8.0", features = ["serde"] }
 
 
 [dev-dependencies]
