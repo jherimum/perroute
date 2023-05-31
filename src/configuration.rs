@@ -2,6 +2,7 @@ use anyhow::Result;
 use secrecy::Secret;
 use serde::Deserialize;
 use serde_aux::prelude::deserialize_number_from_string;
+use sqlx::PgPool;
 use std::{
     net::{AddrParseError, SocketAddr},
     path::PathBuf,
@@ -12,14 +13,22 @@ use tap::{Tap, TapFallible};
 
 const APP_ENVIRONMENT_ENV_VAR_NAME: &str = "APP_ENVIRONMENT";
 
-impl TryFrom<Settings> for SocketAddr {
+impl TryFrom<&Settings> for SocketAddr {
     type Error = AddrParseError;
 
-    fn try_from(value: Settings) -> Result<Self, Self::Error> {
+    fn try_from(value: &Settings) -> Result<Self, Self::Error> {
         SocketAddr::from_str(&format!(
             "{}:{}",
             value.application.host, value.application.port
         ))
+    }
+}
+
+impl TryFrom<&Settings> for PgPool {
+    type Error = anyhow::Error;
+
+    fn try_from(value: &Settings) -> std::result::Result<Self, Self::Error> {
+        todo!()
     }
 }
 
