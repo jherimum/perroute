@@ -25,7 +25,9 @@ async fn main() -> Result<()> {
             .merge(Router::new().nest("/v1/channels", channels::routes(message_bus.clone()))),
     );
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+    let addr: SocketAddr = settings
+        .try_into()
+        .tap_err(|e| tracing::error!("Failed to create Socket address: {e}"))?;
     tracing::info!("listening on {}", addr);
 
     axum::Server::bind(&addr)

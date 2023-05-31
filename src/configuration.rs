@@ -2,11 +2,26 @@ use anyhow::Result;
 use secrecy::Secret;
 use serde::Deserialize;
 use serde_aux::prelude::deserialize_number_from_string;
-use std::{path::PathBuf, str::FromStr};
+use std::{
+    net::{AddrParseError, SocketAddr},
+    path::PathBuf,
+    str::FromStr,
+};
 use strum_macros::EnumString;
 use tap::{Tap, TapFallible};
 
 const APP_ENVIRONMENT_ENV_VAR_NAME: &str = "APP_ENVIRONMENT";
+
+impl TryFrom<Settings> for SocketAddr {
+    type Error = AddrParseError;
+
+    fn try_from(value: Settings) -> Result<Self, Self::Error> {
+        SocketAddr::from_str(&format!(
+            "{}:{}",
+            value.application.host, value.application.port
+        ))
+    }
+}
 
 #[derive(Deserialize, Clone, Debug)]
 pub struct Settings {
