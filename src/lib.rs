@@ -3,6 +3,7 @@ pub mod configuration;
 pub mod connector;
 pub mod cqrs;
 pub mod crypto;
+pub mod database;
 pub mod errors;
 pub mod rest;
 pub mod storage;

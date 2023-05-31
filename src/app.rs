@@ -1,4 +1,7 @@
-use std::net::SocketAddr;
+use std::{
+    net::{AddrParseError, SocketAddr},
+    str::FromStr,
+};
 
 use anyhow::Result;
 use axum::Router;
@@ -6,32 +9,34 @@ use sqlx::PgPool;
 use tokio::signal;
 
 use crate::{
-    configuration::Settings,
+    configuration::{ApplicationSettings, Settings},
     cqrs::message_bus::MessageBus,
     rest::routes::{channels, connections, health},
 };
 
+impl TryFrom<&ApplicationSettings> for SocketAddr {
+    type Error = AddrParseError;
+
+    fn try_from(value: &ApplicationSettings) -> Result<Self, Self::Error> {
+        SocketAddr::from_str(&format!("{}:{}", value.host, value.port))
+    }
+}
+
 pub struct App {
-    //pool: PgPool,
+    pool: PgPool,
     addr: SocketAddr,
 }
 
 impl App {
     pub fn from_settings(settings: &Settings) -> Result<Self> {
         Ok(Self {
-            addr: settings.try_into()?,
-            //      pool: settings.try_into()?,
+            addr: (&settings.application).try_into()?,
+            pool: (&settings.database).try_into()?,
         })
     }
 
-    pub fn new(
-        //pool: PgPool,
-        addr: SocketAddr,
-    ) -> Self {
-        Self {
-            //pool,
-            addr,
-        }
+    pub fn new(pool: PgPool, addr: SocketAddr) -> Self {
+        Self { pool, addr }
     }
 
     pub async fn init(self) -> Result<()> {
