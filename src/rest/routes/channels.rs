@@ -7,7 +7,7 @@ use crate::rest::api_models::channel::{
 };
 use crate::rest::error::RestError;
 use axum::extract::{Path, State};
-use axum::routing::{delete, get, patch, post};
+use axum::routing::{delete, get, post};
 use axum::{Json, Router};
 
 pub fn routes(message_bus: MessageBus) -> Router {
@@ -15,7 +15,7 @@ pub fn routes(message_bus: MessageBus) -> Router {
         .route("/", get(query))
         .route("/", post(create))
         .route("/:id", get(find))
-        .route("/:id", patch(update))
+        .route("/:id", post(update))
         .route("/:id", delete(delete_channel))
         .with_state(message_bus)
 }
@@ -51,7 +51,7 @@ async fn create(
 
 impl From<CreateChannelRequest> for create_channel::Command {
     fn from(value: CreateChannelRequest) -> Self {
-        create_channel::Command::new(value.code, value.description)
+        create_channel::Command::new(value.code, value.name)
     }
 }
 
@@ -87,7 +87,7 @@ async fn update(
 
 impl From<(uuid::Uuid, UpdateChannelRequest)> for update_channel::Command {
     fn from(value: (uuid::Uuid, UpdateChannelRequest)) -> Self {
-        update_channel::Command::new(value.0, value.1.description)
+        update_channel::Command::new(value.0, value.1.name)
     }
 }
 

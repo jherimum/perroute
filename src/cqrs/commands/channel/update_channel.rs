@@ -9,14 +9,14 @@ use tap::TapFallible;
 #[derive(Debug)]
 pub struct Command {
     id: uuid::Uuid,
-    description: Option<String>,
+    name: String,
 }
 
 impl Command {
-    pub fn new(id: uuid::Uuid, desc: Option<impl Into<String>>) -> Self {
+    pub fn new(id: uuid::Uuid, name: impl Into<String>) -> Self {
         Self {
             id,
-            description: desc.map(Into::into),
+            name: name.into(),
         }
     }
 }
@@ -44,22 +44,24 @@ impl MessageHandler for Handler {
     type Error = Error;
 
     async fn handle(&self, message: Self::Message) -> Result<Self::Output, Self::Error> {
-        Ok(Channel::find(&self.pool, &message.id)
-            .await
-            .tap_err(|e| {
-                tracing::error!(
-                    "Error while retrieving channel {}. Error: {}",
-                    message.id,
-                    e
-                )
-            })
-            .map_err(anyhow::Error::new)?
-            .ok_or_else(|| Error::ChannelNotFound(message.id))?
-            .update(&self.pool, message.description)
+        let mut channel = retrieve_channel(&self.pool, &message.id).await?;
+
+        channel.name = message.name;
+
+        Ok(channel
+            .update(&self.pool)
             .await
             .tap_err(|e| {
                 tracing::error!("Error while updating channel {}. Error: {}", message.id, e)
             })
-            .map_err(anyhow::Error::new)?)
+            .map_err(anyhow::Error::from)?)
     }
+}
+
+async fn retrieve_channel(pool: &PgPool, id: &uuid::Uuid) -> Result<Channel, Error> {
+    Channel::find(pool, id)
+        .await
+        .tap_err(|e| tracing::error!("Error while retrieving channel {}. Error: {}", id, e))
+        .map_err(anyhow::Error::new)?
+        .ok_or_else(|| Error::ChannelNotFound(*id))
 }
