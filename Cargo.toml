@@ -21,7 +21,7 @@ strum_macros = "0.24"
 tap = "1"
 thiserror = "1"
 time = "0.3"
-tokio = { version = "1", features = ["macros", "rt", "rt-multi-thread"] }
+tokio = { version = "1", features = ["macros", "rt", "rt-multi-thread", "signal"] }
 tower-http = { version = "0.4", features = ["trace"] }
 uuid = { version = "1", features = ["fast-rng", "v4", "v3", "serde"] }
 tracing = "0.1"
