@@ -9,14 +9,14 @@ use sqlx::PgPool;
 #[derive(Debug)]
 pub struct Command {
     code: String,
-    description: Option<String>,
+    name: String,
 }
 
 impl Command {
-    pub fn new(code: impl Into<String>, description: Option<impl Into<String>>) -> Self {
+    pub fn new(code: impl Into<String>, name: impl Into<String>) -> Self {
         Self {
             code: code.into(),
-            description: description.map(Into::into),
+            name: name.into(),
         }
     }
 }
@@ -58,7 +58,7 @@ impl MessageHandler for Handler {
             return Err(Error::CodeAlreadyExists(message.code));
         }
 
-        Ok(Channel::new(message.code, message.description)
+        Ok(Channel::new(message.code, message.name)
             .save(&self.pool)
             .await
             .unwrap())

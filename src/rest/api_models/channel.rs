@@ -6,7 +6,7 @@ use crate::storage::database_models::channel::Channel;
 pub struct ChannelResource {
     id: uuid::Uuid,
     code: String,
-    description: Option<String>,
+    name: String,
 }
 
 impl From<Channel> for ChannelResource {
@@ -14,7 +14,7 @@ impl From<Channel> for ChannelResource {
         ChannelResource {
             id: value.id,
             code: value.code,
-            description: value.description,
+            name: value.name,
         }
     }
 }
@@ -22,10 +22,10 @@ impl From<Channel> for ChannelResource {
 #[derive(Clone, Deserialize, Debug)]
 pub struct CreateChannelRequest {
     pub code: String,
-    pub description: Option<String>,
+    pub name: String,
 }
 
 #[derive(Clone, Deserialize, Debug)]
 pub struct UpdateChannelRequest {
-    pub description: Option<String>,
+    pub name: String,
 }
