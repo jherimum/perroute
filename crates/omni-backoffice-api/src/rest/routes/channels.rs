@@ -2,6 +2,7 @@ use crate::rest::api_models::channel::{
     ChannelResource, CreateChannelRequest, UpdateChannelRequest,
 };
 use crate::rest::error::RestError;
+use crate::types::W;
 use axum::extract::{Path, State};
 use axum::routing::{delete, get, post};
 use axum::{Json, Router};
@@ -75,22 +76,21 @@ async fn update(
     Path(id): Path<uuid::Uuid>,
     Json(req): Json<UpdateChannelRequest>,
 ) -> Result<Json<ChannelResource>, RestError> {
-    // Ok(Json(
-    //     message_bus
-    //         .execute::<update_channel::Handler, _, _, _>((id, req).into())
-    //         .await
-    //         .unwrap()
-    //         .unwrap()
-    //         .into(),
-    // ))
-    todo!()
+    Ok(Json(
+        message_bus
+            .execute::<update_channel::Handler, _, _, _>(W((id, req)).into())
+            .await
+            .unwrap()
+            .unwrap()
+            .into(),
+    ))
 }
 
-// impl From<(uuid::Uuid, UpdateChannelRequest)> for update_channel::Command {
-//     fn from(value: (uuid::Uuid, UpdateChannelRequest)) -> Self {
-//         update_channel::Command::new(value.0, value.1.name)
-//     }
-// }
+impl From<W<(uuid::Uuid, UpdateChannelRequest)>> for update_channel::Command {
+    fn from(value: W<(uuid::Uuid, UpdateChannelRequest)>) -> Self {
+        update_channel::Command::new(value.0 .0, value.0 .1.name)
+    }
+}
 
 async fn delete_channel(
     State(message_bus): State<MessageBus>,
