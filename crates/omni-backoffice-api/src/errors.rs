@@ -1,8 +1,6 @@
 use axum::response::IntoResponse;
-use omni_commons::crypto::CryptoError;
+use omni_commons::{crypto::CryptoError, rest::RestError};
 use omni_cqrs::message_bus::MessageBusError;
-
-use crate::rest::error::RestError;
 
 #[derive(Debug, thiserror::Error)]
 pub enum OmniMessageError {

@@ -1,16 +1,13 @@
+use crate::rest::api_models::plugin::{ConnectorPluginResource, Dispatcher};
 use axum::{
     extract::{Path, State},
     routing::get,
     Json, Router,
 };
+use omni_commons::rest::RestError;
 use omni_connectors::{ConnectorPlugin, DispatcherPlugin};
 use omni_cqrs::message_bus::MessageBus;
 use std::todo;
-
-use crate::rest::{
-    api_models::plugin::{ConnectorPluginResource, Dispatcher},
-    error::RestError,
-};
 
 pub fn routes(message_bus: MessageBus) -> Router {
     Router::new()

@@ -1,11 +1,12 @@
 use crate::rest::api_models::channel::{
     ChannelResource, CreateChannelRequest, UpdateChannelRequest,
 };
-use crate::rest::error::RestError;
+
 use crate::types::W;
 use axum::extract::{Path, State};
 use axum::routing::{delete, get, post};
 use axum::{Json, Router};
+use omni_commons::rest::RestError;
 use omni_cqrs::commands::channel::{
     create_channel, delete_channel, find_channel, query_channels, update_channel,
 };

@@ -810,7 +810,6 @@ dependencies = [
  "omni-connectors",
  "omni-cqrs",
  "omni-storage",
- "once_cell",
  "secrecy",
  "serde",
  "serde-aux",
@@ -832,6 +831,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "argon2",
+ "axum",
  "config",
  "secrecy",
  "serde",

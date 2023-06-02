@@ -13,7 +13,8 @@ use std::todo;
 use crate::rest::api_models::connection::{
     ConnectionResource, CreateConnectionRequest, UpdateConnectionRequest,
 };
-use crate::rest::error::RestError;
+use crate::types::W;
+use omni_commons::rest::RestError;
 
 pub fn routes(message_bus: MessageBus) -> Router {
     Router::new()
@@ -103,7 +104,7 @@ async fn delete_connection(
     Ok(())
 }
 
-impl From<create_connection::Error> for RestError {
+impl From<create_connection::Error> for W<RestError> {
     fn from(_value: create_connection::Error) -> Self {
         // match value {
         //     create_connection::Error::Database(_) => RestError::InernalServer,

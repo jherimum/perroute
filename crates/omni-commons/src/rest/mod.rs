@@ -8,16 +8,6 @@ pub struct ErrorResponse {
     pub detail: Option<String>,
 }
 
-impl ErrorResponse {
-    pub fn new(status: StatusCode, message: String, detail: Option<String>) -> Self {
-        Self {
-            status: status.into(),
-            message,
-            detail,
-        }
-    }
-}
-
 #[derive(Debug, thiserror::Error)]
 pub enum RestError {
     #[error("Not found")]
@@ -50,6 +40,16 @@ impl RestError {
             RestError::InernalServer => {
                 ErrorResponse::new(StatusCode::INTERNAL_SERVER_ERROR, message, None)
             }
+        }
+    }
+}
+
+impl ErrorResponse {
+    pub fn new(status: StatusCode, message: String, detail: Option<String>) -> Self {
+        Self {
+            status: status.into(),
+            message,
+            detail,
         }
     }
 }
