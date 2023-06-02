@@ -804,7 +804,6 @@ name = "omni-backoffice-api"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "argon2",
  "async-trait",
  "axum",
  "omni-commons",
@@ -832,6 +831,7 @@ name = "omni-commons"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "argon2",
  "config",
  "secrecy",
  "serde",
@@ -839,6 +839,7 @@ dependencies = [
  "strum",
  "strum_macros",
  "tap",
+ "thiserror",
  "tracing",
  "tracing-bunyan-formatter",
  "tracing-log",
@@ -875,6 +876,9 @@ dependencies = [
 name = "omni-storage"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "omni-commons",
+ "secrecy",
  "serde",
  "serde_json",
  "sqlx",

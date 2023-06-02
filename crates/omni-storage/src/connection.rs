@@ -1,4 +1,4 @@
-use crate::app::Settings;
+use anyhow::Result;
 use omni_commons::configuration::DatabaseSettings;
 use secrecy::ExposeSecret;
 use sqlx::{
@@ -7,18 +7,15 @@ use sqlx::{
 };
 use std::time::Duration;
 
-impl From<&Settings> for PgPool {
-    fn from(value: &Settings) -> Self {
-        let db_settings = &value.database;
-        let options = PgPoolOptions::new()
-            .max_connections(db_settings.pool.max_connection)
-            .max_lifetime(Some(Duration::from_secs(db_settings.pool.max_lifetime)))
-            .idle_timeout(Some(Duration::from_secs(db_settings.pool.idle_timeout)))
-            .acquire_timeout(Duration::from_secs(db_settings.pool.acquire_timeout))
-            .acquire_timeout(Duration::from_secs(1));
+pub fn build_pool(settings: &DatabaseSettings) -> Result<PgPool> {
+    let options = PgPoolOptions::new()
+        .max_connections(settings.pool.max_connection)
+        .max_lifetime(Some(Duration::from_secs(settings.pool.max_lifetime)))
+        .idle_timeout(Some(Duration::from_secs(settings.pool.idle_timeout)))
+        .acquire_timeout(Duration::from_secs(settings.pool.acquire_timeout))
+        .acquire_timeout(Duration::from_secs(1));
 
-        options.connect_lazy_with(with_db(db_settings))
-    }
+    Ok(options.connect_lazy_with(with_db(settings)))
 }
 
 pub fn with_db(database_settings: &DatabaseSettings) -> PgConnectOptions {
