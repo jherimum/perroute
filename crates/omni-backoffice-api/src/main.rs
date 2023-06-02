@@ -10,7 +10,7 @@ async fn main() -> Result<()> {
         .tap_err(|e| tracing::error!("Error loading settings. Error: {e}"))
         .map_err(anyhow::Error::from)?;
 
-    App::from_settings(&settings)?.init().await?;
+    App::from_settings(&settings).await?.init().await?;
 
     Ok(())
 }

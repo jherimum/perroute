@@ -3,7 +3,7 @@ use anyhow::Result;
 use axum::Router;
 use omni_commons::configuration::DatabaseSettings;
 use omni_cqrs::message_bus::MessageBus;
-use omni_storage::connection::build_pool;
+use omni_storage::connection_pool::OmniMessageConnectionManager;
 use serde::Deserialize;
 use serde_aux::prelude::deserialize_number_from_string;
 use sqlx::PgPool;
@@ -35,10 +35,10 @@ pub struct App {
 }
 
 impl App {
-    pub fn from_settings(settings: &Settings) -> Result<Self> {
+    pub async fn from_settings(settings: &Settings) -> Result<Self> {
         Ok(Self {
             addr: settings.try_into()?,
-            pool: build_pool(&settings.database)?,
+            pool: OmniMessageConnectionManager::new_pool(&settings.database, false).await?,
         })
     }
 
