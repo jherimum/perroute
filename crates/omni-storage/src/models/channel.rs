@@ -54,7 +54,7 @@ impl Channel {
             .map(|result| result.rows_affected() > 0)
     }
 
-    pub async fn find<'e, E: PgExecutor<'e>>(
+    pub async fn find_by_id<'e, E: PgExecutor<'e>>(
         exec: E,
         id: &uuid::Uuid,
     ) -> Result<Option<Self>, sqlx::Error> {

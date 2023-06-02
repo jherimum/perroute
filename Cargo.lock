@@ -807,7 +807,7 @@ dependencies = [
  "argon2",
  "async-trait",
  "axum",
- "config",
+ "omni-commons",
  "omni-connectors",
  "omni-cqrs",
  "omni-storage",
@@ -828,6 +828,21 @@ dependencies = [
  "tracing-log",
  "tracing-subscriber",
  "uuid",
+]
+
+[[package]]
+name = "omni-commons"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "config",
+ "secrecy",
+ "serde",
+ "serde-aux",
+ "strum",
+ "strum_macros",
+ "tap",
+ "tracing",
 ]
 
 [[package]]

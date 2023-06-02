@@ -1,4 +1,5 @@
-use crate::configuration::DatabaseSettings;
+use crate::app::Settings;
+use omni_commons::configuration::DatabaseSettings;
 use secrecy::ExposeSecret;
 use sqlx::{
     postgres::{PgConnectOptions, PgPoolOptions, PgSslMode},
@@ -6,16 +7,17 @@ use sqlx::{
 };
 use std::time::Duration;
 
-impl From<&DatabaseSettings> for PgPool {
-    fn from(value: &DatabaseSettings) -> Self {
+impl From<&Settings> for PgPool {
+    fn from(value: &Settings) -> Self {
+        let db_settings = &value.database;
         let options = PgPoolOptions::new()
-            .max_connections(value.pool.max_connection)
-            .max_lifetime(Some(Duration::from_secs(value.pool.max_lifetime)))
-            .idle_timeout(Some(Duration::from_secs(value.pool.idle_timeout)))
-            .acquire_timeout(Duration::from_secs(value.pool.acquire_timeout))
+            .max_connections(db_settings.pool.max_connection)
+            .max_lifetime(Some(Duration::from_secs(db_settings.pool.max_lifetime)))
+            .idle_timeout(Some(Duration::from_secs(db_settings.pool.idle_timeout)))
+            .acquire_timeout(Duration::from_secs(db_settings.pool.acquire_timeout))
             .acquire_timeout(Duration::from_secs(1));
 
-        options.connect_lazy_with(with_db(value))
+        options.connect_lazy_with(with_db(db_settings))
     }
 }
 

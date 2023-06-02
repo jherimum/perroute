@@ -37,7 +37,7 @@ impl MessageHandler for Handler {
     type Error = Error;
 
     async fn handle(&self, message: Self::Message) -> Result<Self::Output, Self::Error> {
-        Ok(Channel::find(&self.pool, &message.id)
+        Ok(Channel::find_by_id(&self.pool, &message.id)
             .await
             .with_context(|| format!("Error while retrieve channel {}", message.id))?)
     }

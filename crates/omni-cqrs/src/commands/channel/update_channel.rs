@@ -57,7 +57,7 @@ impl MessageHandler for Handler {
 }
 
 async fn retrieve_channel(pool: &PgPool, id: &uuid::Uuid) -> Result<Channel, Error> {
-    Channel::find(pool, id)
+    Channel::find_by_id(pool, id)
         .await
         .tap_err(|e| tracing::error!("Error while retrieving channel {}. Error: {}", id, e))
         .map_err(anyhow::Error::new)?

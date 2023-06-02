@@ -1,5 +1,4 @@
 pub mod app;
-pub mod configuration;
 pub mod crypto;
 pub mod database;
 pub mod errors;

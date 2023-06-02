@@ -1,23 +1,29 @@
+use crate::rest::routes::{channels, connections, health};
+use anyhow::Result;
+use axum::Router;
+use omni_commons::configuration::DatabaseSettings;
+use omni_cqrs::message_bus::MessageBus;
+use serde::Deserialize;
+use serde_aux::prelude::deserialize_number_from_string;
+use sqlx::PgPool;
 use std::{
     net::{AddrParseError, SocketAddr},
     str::FromStr,
 };
-
-use anyhow::Result;
-use axum::Router;
-use omni_cqrs::message_bus::MessageBus;
-use sqlx::PgPool;
 use tokio::signal;
 
-use crate::{
-    configuration::{ApplicationSettings, Settings},
-    rest::routes::{channels, connections, health},
-};
+#[derive(Deserialize, Clone, Debug)]
+pub struct Settings {
+    #[serde(deserialize_with = "deserialize_number_from_string")]
+    pub port: u16,
+    pub host: String,
+    pub database: DatabaseSettings,
+}
 
-impl TryFrom<&ApplicationSettings> for SocketAddr {
+impl TryFrom<&Settings> for SocketAddr {
     type Error = AddrParseError;
 
-    fn try_from(value: &ApplicationSettings) -> Result<Self, Self::Error> {
+    fn try_from(value: &Settings) -> Result<Self, Self::Error> {
         SocketAddr::from_str(&format!("{}:{}", value.host, value.port))
     }
 }
@@ -30,8 +36,8 @@ pub struct App {
 impl App {
     pub fn from_settings(settings: &Settings) -> Result<Self> {
         Ok(Self {
-            addr: (&settings.application).try_into()?,
-            pool: (&settings.database).try_into()?,
+            addr: settings.try_into()?,
+            pool: settings.try_into()?,
         })
     }
 

@@ -10,6 +10,7 @@ members = [
     "crates/omni-cqrs",
     "crates/omni-storage",
     "crates/omni-connectors",
+    "crates/omni-commons",
 ]
 
 [profile.release]

@@ -9,6 +9,7 @@ edition = "2021"
 omni-cqrs = {path = "../../crates/omni-cqrs"}
 omni-storage = {path = "../../crates/omni-storage"}
 omni-connectors = {path = "../../crates/omni-connectors"}
+omni-commons = {path = "../../crates/omni-commons"}
 anyhow = "1.0.71"
 argon2 = { version = "0.5", features = ["std"] }
 async-trait = "0.1"
@@ -29,5 +30,4 @@ tracing-subscriber = { version = "0.3", features = ["env-filter", "json", "regis
 tracing-bunyan-formatter = "0.3"
 tracing-log = "0.1"
 serde-aux = "4"
-config = "0.13"
 secrecy = { version = "0.8.0", features = ["serde"] }
