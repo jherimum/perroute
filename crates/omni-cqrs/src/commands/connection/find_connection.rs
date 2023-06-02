@@ -22,7 +22,7 @@ impl MessageHandler for Handler {
     type Output = Option<Connection>;
     type Error = Error;
 
-    async fn handle(&self, message: Self::Message) -> Result<Self::Output, Self::Error> {
+    async fn handle(&self, _message: Self::Message) -> Result<Self::Output, Self::Error> {
         todo!()
     }
 }

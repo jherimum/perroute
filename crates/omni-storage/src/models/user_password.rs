@@ -19,7 +19,7 @@ impl UserPassword {
         }
     }
 
-    pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<UserPassword, sqlx::Error> {
+    pub async fn save<'e, E: PgExecutor<'e>>(self, _exec: E) -> Result<UserPassword, sqlx::Error> {
         todo!()
     }
 }

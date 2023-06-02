@@ -34,7 +34,7 @@ impl From<Error> for RestError {
 }
 
 async fn all(
-    State(message_bus): State<MessageBus>,
+    State(_message_bus): State<MessageBus>,
 ) -> Result<Json<Vec<ConnectorPluginResource>>, RestError> {
     // Ok(Json(
     //     plugins
@@ -47,8 +47,8 @@ async fn all(
 }
 
 async fn find(
-    State(message_bus): State<MessageBus>,
-    Path(id): Path<String>,
+    State(_message_bus): State<MessageBus>,
+    Path(_id): Path<String>,
 ) -> Result<Json<ConnectorPluginResource>, RestError> {
     // Ok(Json(
     //     plugins

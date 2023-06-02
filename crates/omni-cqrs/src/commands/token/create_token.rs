@@ -19,7 +19,7 @@ impl MessageHandler for CreateTokenHandler {
     type Output = String;
     type Error = CreateTokenError;
 
-    async fn handle(&self, message: Self::Message) -> Result<Self::Output, Self::Error> {
+    async fn handle(&self, _message: Self::Message) -> Result<Self::Output, Self::Error> {
         todo!()
     }
 }

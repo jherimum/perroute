@@ -104,7 +104,7 @@ async fn delete_connection(
 }
 
 impl From<create_connection::Error> for RestError {
-    fn from(value: create_connection::Error) -> Self {
+    fn from(_value: create_connection::Error) -> Self {
         // match value {
         //     create_connection::Error::Database(_) => RestError::InernalServer,
         //     create_connection::Error::PluginNotFound(_) => RestError::InernalServer,
@@ -115,7 +115,7 @@ impl From<create_connection::Error> for RestError {
 }
 
 impl From<CreateConnectionRequest> for create_connection::Command {
-    fn from(value: CreateConnectionRequest) -> Self {
+    fn from(_value: CreateConnectionRequest) -> Self {
         // create_connection::Command {
         //     code: value.code,
         //     plugin_id: value.plugin_id,

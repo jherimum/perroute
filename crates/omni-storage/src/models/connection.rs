@@ -31,19 +31,19 @@ impl Connection {
     }
 
     pub async fn query<'e, E: Executor<'e>>(
-        exec: E,
-        query: ConnectionsQuery,
+        _exec: E,
+        _query: ConnectionsQuery,
     ) -> Result<Vec<Connection>, sqlx::Error> {
         Ok(vec![])
     }
 
-    pub async fn save<'e, E: Executor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
+    pub async fn save<'e, E: Executor<'e>>(self, _exec: E) -> Result<Self, sqlx::Error> {
         Ok(self)
     }
 
     pub async fn exists_code<'e, E: Executor<'e>>(
-        exec: E,
-        code: &str,
+        _exec: E,
+        _code: &str,
     ) -> Result<bool, sqlx::Error> {
         todo!()
     }

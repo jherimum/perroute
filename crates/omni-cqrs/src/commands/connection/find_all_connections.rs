@@ -34,7 +34,7 @@ impl MessageHandler for Handler {
 }
 
 impl From<Query> for ConnectionsQuery {
-    fn from(value: Query) -> Self {
+    fn from(_value: Query) -> Self {
         todo!()
     }
 }
