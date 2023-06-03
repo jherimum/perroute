@@ -26,3 +26,4 @@ uuid = { version = "1", features = ["fast-rng", "v4", "v3", "serde"] }
 tracing = "0.1"
 serde-aux = "4"
 secrecy = { version = "0.8.0", features = ["serde"] }
+dotenv = "0.15.0"

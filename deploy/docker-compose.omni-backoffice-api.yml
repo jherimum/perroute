@@ -1,0 +1,18 @@
+version: '3.9'
+
+services:
+  omni-backoffice-api:
+    container_name: omni-backoffice-api
+    build:
+      context: ..
+      dockerfile: crates/omni-backoffice-api/Dockerfile
+    volumes:
+      - /tmp/app:/var/log/app
+    ports:
+      - '8080:8080'
+    env_file:
+      - ../.env
+      - ../.env.docker
+    depends_on:
+      omni_message_postgres:
+        condition: service_healthy

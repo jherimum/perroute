@@ -1,0 +1,14 @@
+port: 8080
+host: 0.0.0.0
+database:
+  host: "omni_message_postgres"
+  port: 5432
+  username: "postgres"
+  password: "postgres"
+  database_name: "postgres"
+  require_ssl: false
+  pool:
+    max_connection: 10
+    max_lifetime: 20
+    idle_timeout: 20
+    acquire_timeout: 2

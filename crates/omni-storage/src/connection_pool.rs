@@ -17,15 +17,18 @@ impl OmniMessageConnectionManager {
         settings: &DatabaseSettings,
         run_migrations: bool,
     ) -> Result<OmniMessageConnectionPool> {
+        let options = Self::with_db(settings);
         let pool = PgPoolOptions::new()
             .max_connections(settings.pool.max_connection)
             .max_lifetime(Some(Duration::from_secs(settings.pool.max_lifetime)))
             .idle_timeout(Some(Duration::from_secs(settings.pool.idle_timeout)))
             .acquire_timeout(Duration::from_secs(settings.pool.acquire_timeout))
             .acquire_timeout(Duration::from_secs(1))
-            .connect_with(Self::with_db(settings))
+            .connect_with(options.clone())
             .await
-            .tap_err(|e| tracing::error!("Failed ro initialize database: {e}"))?;
+            .tap_err(|e| {
+                tracing::error!("Failed ro initialize database with options:{options:?}. {e}")
+            })?;
 
         if run_migrations {
             tracing::info!("migrations enabled, running...");

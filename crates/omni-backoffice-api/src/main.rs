@@ -5,6 +5,7 @@ use tap::TapFallible;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    dotenv::dotenv().ok();
     init_tracing();
     let settings = load_configuration::<Settings>()
         .tap_err(|e| tracing::error!("Error loading settings. Error: {e}"))
