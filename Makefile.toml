@@ -5,13 +5,20 @@ CARGO_MAKE_EXTEND_WORKSPACE_MAKEFILE = true
 default_to_workspace = false
 
 
-[tasks.dev-backoffice]
+[tasks.dev-backoffice-api]
 install_crate="cargo-watch"
 cwd = "./crates/omni-backoffice-api"
 command = "cargo"
 args = ["watch", "-x", "clippy", "-x", "run | bunyan"]
 dependencies = ["postgres"]
 
+
+[tasks.dev-message-api]
+install_crate="cargo-watch"
+cwd = "./crates/omni-backoffice-api"
+command = "cargo"
+args = ["watch", "-x", "clippy", "-x", "run | bunyan"]
+dependencies = ["postgres"]
 
 
 [tasks.format]
@@ -49,7 +56,6 @@ dependencies = [
 ]
 
 ## docker
-
 [tasks.postgres]
 command = "docker"
 args = [
@@ -57,6 +63,19 @@ args = [
     "-f", "./deploy/docker-compose.postgres.yml",
     "start"
 ]
+dependencies= ["postgres-up"]
+
+[tasks.postgres-up]
+command = "docker"
+args = [
+    "compose",
+    "-f", "./deploy/docker-compose.postgres.yml",
+    "-f", "./deploy/docker-compose.omni-backoffice-api.yml",
+    "up",
+    "--build"
+]
+
+
 
 [tasks.docker]
 command = "docker"

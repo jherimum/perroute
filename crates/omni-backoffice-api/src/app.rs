@@ -1,33 +1,12 @@
 use crate::rest::routes::{channels, connections, health};
-use anyhow::Result;
+use anyhow::{Context, Result};
 use axum::Router;
-use omni_commons::configuration::DatabaseSettings;
+use omni_commons::configuration::settings::Settings;
 use omni_cqrs::message_bus::MessageBus;
-use omni_storage::connection_pool::OmniMessageConnectionManager;
-use serde::Deserialize;
-use serde_aux::prelude::deserialize_number_from_string;
+use omni_storage::connection_pool::{MigrantionMode, OmniMessageConnectionManager};
 use sqlx::PgPool;
-use std::{
-    net::{AddrParseError, SocketAddr},
-    str::FromStr,
-};
+use std::net::SocketAddr;
 use tokio::signal;
-
-#[derive(Deserialize, Clone, Debug)]
-pub struct Settings {
-    #[serde(deserialize_with = "deserialize_number_from_string")]
-    pub port: u16,
-    pub host: String,
-    pub database: DatabaseSettings,
-}
-
-impl TryFrom<&Settings> for SocketAddr {
-    type Error = AddrParseError;
-
-    fn try_from(value: &Settings) -> Result<Self, Self::Error> {
-        SocketAddr::from_str(&format!("{}:{}", value.host, value.port))
-    }
-}
 
 pub struct App {
     pool: PgPool,
@@ -37,8 +16,13 @@ pub struct App {
 impl App {
     pub async fn from_settings(settings: &Settings) -> Result<Self> {
         Ok(Self {
-            addr: settings.try_into()?,
-            pool: OmniMessageConnectionManager::new_pool(&settings.database, false).await?,
+            addr: SocketAddr::try_from(&settings.server).context("context")?,
+            pool: OmniMessageConnectionManager::new_pool(
+                &settings.database,
+                MigrantionMode::Skip,
+                omni_storage::connection_pool::ConnectionBuild::WithDatabase,
+            )
+            .await?,
         })
     }
 
