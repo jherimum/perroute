@@ -3,7 +3,7 @@ use anyhow::{Context, Result};
 use axum::Router;
 use omni_commons::configuration::settings::Settings;
 use omni_cqrs::message_bus::MessageBus;
-use omni_storage::connection_pool::{MigrantionMode, OmniMessageConnectionManager};
+use omni_storage::connection_manager::{MigrantionMode, OmniMessageConnectionManager};
 use sqlx::PgPool;
 use std::net::SocketAddr;
 use tokio::signal;
@@ -20,7 +20,7 @@ impl App {
             pool: OmniMessageConnectionManager::new_pool(
                 &settings.database,
                 MigrantionMode::Skip,
-                omni_storage::connection_pool::ConnectionBuild::WithDatabase,
+                None,
             )
             .await?,
         })

@@ -26,6 +26,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "aho-corasick"
+version = "1.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "43f6cb1bf222025340178f382c426f13757b2960e89779dfcb319c32542a5a41"
+dependencies = [
+ "memchr",
+]
+
+[[package]]
 name = "android-tzdata"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -894,10 +903,14 @@ dependencies = [
  "argon2",
  "axum",
  "config",
+ "lazy_static",
+ "regex",
  "rstest",
  "secrecy",
  "serde",
  "serde-aux",
+ "serde_json",
+ "sqlx",
  "strum",
  "strum_macros",
  "tap",
@@ -922,6 +935,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
+ "omni-commons",
  "omni-connectors",
  "omni-storage",
  "once_cell",
@@ -948,6 +962,7 @@ dependencies = [
  "tap",
  "thiserror",
  "time",
+ "tokio",
  "tracing",
  "uuid",
 ]
@@ -1203,10 +1218,12 @@ dependencies = [
 
 [[package]]
 name = "regex"
-version = "1.8.3"
+version = "1.8.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "81ca098a9821bd52d6b24fd8b10bd081f47d39c22778cafaa75a2857a62c6390"
+checksum = "d0ab3ca65655bb1e41f2a8c8cd662eb4fb035e67c3f78da1d61dffe89d07300f"
 dependencies = [
+ "aho-corasick",
+ "memchr",
  "regex-syntax 0.7.2",
 ]
 
@@ -1771,6 +1788,7 @@ dependencies = [
  "libc",
  "mio",
  "num_cpus",
+ "parking_lot 0.12.1",
  "pin-project-lite",
  "signal-hook-registry",
  "socket2",

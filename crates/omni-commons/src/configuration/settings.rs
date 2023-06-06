@@ -35,7 +35,6 @@ impl TryFrom<&ServerSettings> for SocketAddr {
 pub struct DatabaseSettings {
     pub username: String,
     pub password: Secret<String>,
-    // #[serde(deserialize_with = "deserialize_number_from_string")]
     pub port: u16,
     pub host: String,
     pub database_name: String,
@@ -45,13 +44,9 @@ pub struct DatabaseSettings {
 
 #[derive(Deserialize, Clone, Debug)]
 pub struct PollSettings {
-    // #[serde(deserialize_with = "deserialize_number_from_string")]
     pub max_connection: u32,
-    // /#[serde(deserialize_with = "deserialize_number_from_string")]
     pub max_lifetime: u64,
-    // #[serde(deserialize_with = "deserialize_number_from_string")]
     pub idle_timeout: u64,
-    // #[serde(deserialize_with = "deserialize_number_from_string")]
     pub acquire_timeout: u64,
 }
 

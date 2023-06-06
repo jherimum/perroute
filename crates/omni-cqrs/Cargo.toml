@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 omni-storage = {path = "../../crates/omni-storage"}
 omni-connectors = {path = "../../crates/omni-connectors"}
+omni-commons = {path = "../../crates/omni-commons"}
 anyhow = "1.0.71"
 async-trait = "0.1"
 once_cell = "1"

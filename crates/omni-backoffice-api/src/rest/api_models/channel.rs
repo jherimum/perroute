@@ -1,10 +1,11 @@
+use omni_commons::types::code::Code;
 use omni_storage::models::channel::Channel;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Serialize)]
 pub struct ChannelResource {
     id: uuid::Uuid,
-    code: String,
+    code: Code,
     name: String,
 }
 
@@ -20,7 +21,7 @@ impl From<Channel> for ChannelResource {
 
 #[derive(Clone, Deserialize, Debug)]
 pub struct CreateChannelRequest {
-    pub code: String,
+    pub code: Code,
     pub name: String,
 }
 

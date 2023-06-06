@@ -21,6 +21,10 @@ tracing-subscriber = { version = "0.3", features = ["env-filter", "json", "regis
 thiserror = "1"
 argon2 = { version = "0.5", features = ["std"] }
 axum = "0.6"
+sqlx = { version = "0.6", features = ["postgres", "runtime-tokio-rustls", "time", "uuid"] }
+regex = "1"
+lazy_static = "1"
+serde_json = "1"
 
 
 [dev-dependencies]

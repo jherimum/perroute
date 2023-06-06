@@ -1,15 +1,16 @@
+use omni_commons::types::code::Code;
 use sqlx::{FromRow, PgExecutor};
 use tap::TapFallible;
 
 #[derive(Debug, FromRow)]
 pub struct Channel {
     pub id: uuid::Uuid,
-    pub code: String,
+    pub code: Code,
     pub name: String,
 }
 
 impl Channel {
-    pub fn new(code: impl Into<String>, name: impl Into<String>) -> Self {
+    pub fn new(code: Code, name: impl Into<String>) -> Self {
         Self {
             id: uuid::Uuid::new_v4(),
             code: code.into(),
@@ -19,7 +20,7 @@ impl Channel {
 
     pub async fn exists_by_code<'e, E: PgExecutor<'e>>(
         exec: E,
-        code: impl Into<String>,
+        code: &Code,
     ) -> Result<bool, sqlx::Error> {
         Ok(Self::find_by_code(exec, code)
             .await?
@@ -67,10 +68,10 @@ impl Channel {
 
     pub async fn find_by_code<'e, E: PgExecutor<'e>>(
         exec: E,
-        code: impl Into<String>,
+        code: &Code,
     ) -> Result<Option<Self>, sqlx::Error> {
         sqlx::query_as("SELECT * FROM channels WHERE code = $1")
-            .bind(code.into())
+            .bind(code)
             .fetch_optional(exec)
             .await
             .tap_err(|e| tracing::error!("Query error. {e}"))

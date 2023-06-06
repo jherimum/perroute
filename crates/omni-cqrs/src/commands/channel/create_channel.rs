@@ -1,5 +1,6 @@
 use anyhow::Context;
 use async_trait::async_trait;
+use omni_commons::types::code::Code;
 use omni_storage::models::channel::Channel;
 use sqlx::PgPool;
 
@@ -7,14 +8,14 @@ use crate::message_bus::{Message, MessageHandler};
 
 #[derive(Debug)]
 pub struct Command {
-    code: String,
+    code: Code,
     name: String,
 }
 
 impl Command {
-    pub fn new(code: impl Into<String>, name: impl Into<String>) -> Self {
+    pub fn new(code: Code, name: impl Into<String>) -> Self {
         Self {
-            code: code.into(),
+            code,
             name: name.into(),
         }
     }
@@ -33,7 +34,7 @@ pub enum Error {
     Unexpected(#[from] anyhow::Error),
 
     #[error("A channel with code {0} already exists")]
-    CodeAlreadyExists(String),
+    CodeAlreadyExists(Code),
 }
 
 #[async_trait]

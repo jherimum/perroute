@@ -3,12 +3,13 @@ use omni_commons::configuration::settings::DatabaseSettings;
 use secrecy::ExposeSecret;
 use sqlx::{
     postgres::{PgConnectOptions, PgPoolOptions, PgSslMode},
-    Connection, PgConnection, PgPool,
+    Acquire, Connection as SqlxConn, PgConnection, PgPool, Postgres,
 };
 use std::time::Duration;
 use tap::TapFallible;
 
-pub type OmniMessageConnectionPool = PgPool;
+pub type ConnectionPool = PgPool;
+pub type Connection = PgConnection;
 
 pub struct OmniMessageConnectionManager;
 
@@ -26,9 +27,9 @@ impl OmniMessageConnectionManager {
     pub async fn new_pool(
         settings: &DatabaseSettings,
         migration_mode: MigrantionMode,
-        connection_build: ConnectionBuild,
-    ) -> Result<OmniMessageConnectionPool> {
-        let options = Self::connection_options(settings, connection_build);
+        database_name: Option<String>,
+    ) -> Result<ConnectionPool> {
+        let options = Self::connection_options(settings, database_name);
         let pool = PgPoolOptions::new()
             .max_connections(settings.pool.max_connection)
             .max_lifetime(Some(Duration::from_secs(settings.pool.max_lifetime)))
@@ -45,53 +46,50 @@ impl OmniMessageConnectionManager {
             })?;
 
         match migration_mode {
-            MigrantionMode::Run => {
-                tracing::info!("Migration started");
-                sqlx::migrate!()
-                    .run(&pool)
-                    .await
-                    .tap_err(|e| tracing::error!("Failed to run migrations: {e}"))?;
-                tracing::info!("Migrations finished");
-            }
+            MigrantionMode::Run => Self::migrate(&pool).await?,
             _ => tracing::debug!("Migration skiped"),
         };
 
         Ok(pool)
     }
 
+    pub async fn migrate<'e, A: Acquire<'e, Database = Postgres>>(aquire: A) -> Result<()> {
+        tracing::info!("Migration started");
+        sqlx::migrate!()
+            .run(aquire)
+            .await
+            .tap_err(|e| tracing::error!("Failed to run migrations: {e}"))?;
+        tracing::info!("Migrations finished");
+        Ok(())
+    }
+
     pub async fn new_connection(
         database_settings: &DatabaseSettings,
-        connection_build: ConnectionBuild,
+        database_name: Option<String>,
     ) -> Result<PgConnection, sqlx::Error> {
-        let options = Self::connection_options(database_settings, connection_build);
+        let options = Self::connection_options(database_settings, database_name);
         PgConnection::connect_with(&options).await
     }
 
-    pub fn connection_options(
+    fn connection_options(
         database_settings: &DatabaseSettings,
-        connection_build: ConnectionBuild,
+        database_name: Option<String>,
     ) -> PgConnectOptions {
-        match connection_build {
-            ConnectionBuild::WithDatabase => Self::with_db(database_settings),
-            ConnectionBuild::WithoutDatabase => Self::without_db(database_settings),
-        }
-    }
-
-    pub fn with_db(database_settings: &DatabaseSettings) -> PgConnectOptions {
-        Self::without_db(database_settings).database(&database_settings.database_name)
-    }
-
-    pub fn without_db(database_settings: &DatabaseSettings) -> PgConnectOptions {
         let ssl_mode = if database_settings.require_ssl {
             PgSslMode::Require
         } else {
             PgSslMode::Prefer
         };
-        PgConnectOptions::new()
+        let options = PgConnectOptions::new()
             .host(&database_settings.host)
             .username(&database_settings.username)
             .password(database_settings.password.expose_secret())
             .port(database_settings.port)
-            .ssl_mode(ssl_mode)
+            .ssl_mode(ssl_mode);
+
+        match database_name {
+            Some(db_name) => options.database(&db_name),
+            None => options,
+        }
     }
 }
