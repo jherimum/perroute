@@ -1,6 +1,7 @@
 use crate::connection_manager::{ConnectionPool, MigrantionMode, OmniMessageConnectionManager};
 use omni_commons::configuration::settings::{DatabaseSettings, Settings};
 use sqlx::{Connection, Executor};
+use std::{fmt::Debug, path::PathBuf};
 use tokio::runtime::Handle;
 
 pub struct TestContext {
@@ -9,19 +10,28 @@ pub struct TestContext {
     pub pool: ConnectionPool,
 }
 
+impl Debug for TestContext {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("TestContext")
+            .field("db_name", &self.db_name)
+            .finish()
+    }
+}
+
 impl TestContext {
-    pub async fn from_env() -> Self {
+    pub async fn from_env(seed: Vec<PathBuf>) -> Self {
         let settings = Settings::load().expect("Failed to load settings");
-        Self::new(settings.database).await
+        Self::new(settings.database, seed).await
     }
 
-    pub async fn new(settings: DatabaseSettings) -> Self {
+    pub async fn new(settings: DatabaseSettings, seed: Vec<PathBuf>) -> Self {
         let db_name = uuid::Uuid::new_v4().to_string();
         Self::create_database(&settings, &db_name).await;
         let pool = OmniMessageConnectionManager::new_pool(
             &settings,
             MigrantionMode::Run,
             Some(db_name.clone()),
+            seed,
         )
         .await
         .unwrap();
@@ -50,11 +60,9 @@ impl TestContext {
             .await
             .unwrap();
 
-        conn.execute(format!(r#"DROP DATABASE "{}";"#, &self.db_name).as_str())
+        conn.execute(format!(r#"DROP DATABASE "{}" WITH (force);"#, &self.db_name).as_str())
             .await
             .unwrap();
-
-        conn.close().await.unwrap();
     }
 }
 
@@ -62,9 +70,8 @@ impl Drop for TestContext {
     fn drop(&mut self) {
         tokio::task::block_in_place(move || {
             Handle::current().block_on(async {
-                self.pool.close().await;
                 self.drop_database().await;
-            })
+            });
         });
     }
 }

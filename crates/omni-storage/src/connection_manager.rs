@@ -2,10 +2,12 @@ use anyhow::Result;
 use omni_commons::configuration::settings::DatabaseSettings;
 use secrecy::ExposeSecret;
 use sqlx::{
+    migrate::Migrator,
+    pool,
     postgres::{PgConnectOptions, PgPoolOptions, PgSslMode},
     Acquire, Connection as SqlxConn, PgConnection, PgPool, Postgres,
 };
-use std::time::Duration;
+use std::{path::PathBuf, time::Duration};
 use tap::TapFallible;
 
 pub type ConnectionPool = PgPool;
@@ -28,6 +30,7 @@ impl OmniMessageConnectionManager {
         settings: &DatabaseSettings,
         migration_mode: MigrantionMode,
         database_name: Option<String>,
+        seed: Vec<PathBuf>,
     ) -> Result<ConnectionPool> {
         let options = Self::connection_options(settings, database_name);
         let pool = PgPoolOptions::new()
@@ -46,20 +49,26 @@ impl OmniMessageConnectionManager {
             })?;
 
         match migration_mode {
-            MigrantionMode::Run => Self::migrate(&pool).await?,
+            MigrantionMode::Run => Self::migrate(&pool, seed).await?,
             _ => tracing::debug!("Migration skiped"),
         };
 
         Ok(pool)
     }
 
-    pub async fn migrate<'e, A: Acquire<'e, Database = Postgres>>(aquire: A) -> Result<()> {
+    pub async fn migrate(pool: &PgPool, seed: Vec<PathBuf>) -> Result<()> {
         tracing::info!("Migration started");
         sqlx::migrate!()
-            .run(aquire)
+            .run(pool)
             .await
             .tap_err(|e| tracing::error!("Failed to run migrations: {e}"))?;
         tracing::info!("Migrations finished");
+
+        tracing::info!("Seeding started");
+        for path in seed {
+            Migrator::new(path).await?.run(pool).await?;
+        }
+
         Ok(())
     }
 

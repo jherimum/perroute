@@ -21,6 +21,7 @@ impl App {
                 &settings.database,
                 MigrantionMode::Skip,
                 None,
+                vec![],
             )
             .await?,
         })

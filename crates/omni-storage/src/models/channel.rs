@@ -2,7 +2,7 @@ use omni_commons::types::code::Code;
 use sqlx::{FromRow, PgExecutor};
 use tap::TapFallible;
 
-#[derive(Debug, FromRow)]
+#[derive(Debug, FromRow, PartialEq, Eq, Clone)]
 pub struct Channel {
     pub id: uuid::Uuid,
     pub code: Code,
@@ -13,7 +13,7 @@ impl Channel {
     pub fn new(code: Code, name: impl Into<String>) -> Self {
         Self {
             id: uuid::Uuid::new_v4(),
-            code: code.into(),
+            code,
             name: name.into(),
         }
     }
