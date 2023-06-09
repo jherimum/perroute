@@ -1,8 +1,8 @@
 version: '3.9'
 
 services:
-  omni_message_postgres:
-    container_name: omni_message_postgres
+  perroute_message_postgres:
+    container_name: perroute_message_postgres
     image: postgres:latest
     restart: always
     env_file:
