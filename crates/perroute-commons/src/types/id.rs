@@ -1,4 +1,3 @@
-use mockall::automock;
 use serde::{Deserialize, Serialize};
 use sqlx::Type;
 use std::{fmt::Display, str::FromStr};
@@ -7,12 +6,11 @@ use std::{fmt::Display, str::FromStr};
 #[error("Invalid id {0}")]
 pub struct ParseError(#[from] uuid::Error);
 
-#[derive(Debug, PartialEq, Eq, Clone, Type, Copy, Deserialize, Serialize)]
+#[derive(Debug, PartialEq, Eq, Clone, Type, Copy, Deserialize, Serialize, Default)]
 #[sqlx(transparent)]
 #[serde(transparent)]
 pub struct Id(pub uuid::Uuid);
 
-#[automock]
 impl Id {
     pub fn new() -> Self {
         Self(uuid::Uuid::new_v4())

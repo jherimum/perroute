@@ -58,7 +58,7 @@ impl MessageHandler for Handler {
             return Err(Error::CodeAlreadyExists(message.code));
         }
 
-        Ok(Channel::new(message.code, message.name)
+        Ok(Channel::new(&message.code, message.name)
             .save(&self.pool)
             .await
             .unwrap())
