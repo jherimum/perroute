@@ -1,17 +1,18 @@
 use crate::message_bus::{Message, MessageHandler};
 use async_trait::async_trait;
+use perroute_commons::types::id::Id;
 use perroute_storage::models::channel::Channel;
 use sqlx::PgPool;
 use tap::TapFallible;
 
 #[derive(Debug)]
 pub struct Command {
-    id: uuid::Uuid,
+    id: Id,
     name: String,
 }
 
 impl Command {
-    pub fn new(id: uuid::Uuid, name: impl Into<String>) -> Self {
+    pub fn new(id: Id, name: impl Into<String>) -> Self {
         Self {
             id,
             name: name.into(),
@@ -32,7 +33,7 @@ pub enum Error {
     Unexpected(#[from] anyhow::Error),
 
     #[error("Channel with id {0} nor found")]
-    ChannelNotFound(uuid::Uuid),
+    ChannelNotFound(Id),
 }
 
 #[async_trait]
@@ -56,10 +57,10 @@ impl MessageHandler for Handler {
     }
 }
 
-async fn retrieve_channel(pool: &PgPool, id: &uuid::Uuid) -> Result<Channel, Error> {
+async fn retrieve_channel(pool: &PgPool, id: &Id) -> Result<Channel, Error> {
     Channel::find_by_id(pool, id)
         .await
         .tap_err(|e| tracing::error!("Error while retrieving channel {}. Error: {}", id, e))
         .map_err(anyhow::Error::new)?
-        .ok_or_else(|| Error::ChannelNotFound(*id))
+        .ok_or_else(|| Error::ChannelNotFound(id.clone()))
 }

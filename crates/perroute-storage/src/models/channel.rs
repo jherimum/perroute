@@ -1,19 +1,19 @@
-use perroute_commons::types::code::Code;
+use perroute_commons::types::{code::Code, id::Id};
 use sqlx::{FromRow, PgExecutor};
 use tap::TapFallible;
 
 #[derive(Debug, FromRow, PartialEq, Eq, Clone)]
 pub struct Channel {
-    pub id: uuid::Uuid,
+    pub id: Id,
     pub code: Code,
     pub name: String,
 }
 
 impl Channel {
-    pub fn new(code: Code, name: impl Into<String>) -> Self {
+    pub fn new(code: &Code, name: impl Into<String>) -> Self {
         Self {
-            id: uuid::Uuid::new_v4(),
-            code,
+            id: Id::new(),
+            code: code.clone(),
             name: name.into(),
         }
     }
@@ -57,7 +57,7 @@ impl Channel {
 
     pub async fn find_by_id<'e, E: PgExecutor<'e>>(
         exec: E,
-        id: &uuid::Uuid,
+        id: &Id,
     ) -> Result<Option<Self>, sqlx::Error> {
         sqlx::query_as("SELECT * FROM channels WHERE id = $1")
             .bind(id)

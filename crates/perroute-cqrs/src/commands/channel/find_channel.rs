@@ -1,16 +1,17 @@
 use crate::message_bus::{Message, MessageHandler};
 use anyhow::Context;
 use async_trait::async_trait;
+use perroute_commons::types::id::{self, Id};
 use perroute_storage::models::channel::Channel;
 use sqlx::PgPool;
 
 #[derive(Debug)]
 pub struct Command {
-    id: uuid::Uuid,
+    id: id::Id,
 }
 
 impl Command {
-    pub fn new(id: uuid::Uuid) -> Self {
+    pub fn new(id: Id) -> Self {
         Self { id }
     }
 }

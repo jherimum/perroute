@@ -1,10 +1,10 @@
-use perroute_commons::types::code::Code;
+use perroute_commons::types::{code::Code, id::Id};
 use perroute_storage::models::channel::Channel;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Serialize)]
 pub struct ChannelResource {
-    id: uuid::Uuid,
+    id: Id,
     code: Code,
     name: String,
 }

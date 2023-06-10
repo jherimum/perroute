@@ -7,6 +7,7 @@ use axum::extract::{Path, State};
 use axum::routing::{delete, get, post};
 use axum::{Json, Router};
 use perroute_commons::rest::RestError;
+use perroute_commons::types::id::{self, Id};
 use perroute_cqrs::commands::channel::{
     create_channel, delete_channel, find_channel, query_channels, update_channel,
 };
@@ -59,7 +60,7 @@ impl From<CreateChannelRequest> for create_channel::Command {
 
 async fn find(
     State(message_bus): State<MessageBus>,
-    Path(id): Path<uuid::Uuid>,
+    Path(id): Path<id::Id>,
 ) -> Result<Json<ChannelResource>, RestError> {
     Ok(Json(
         message_bus
@@ -74,7 +75,7 @@ async fn find(
 
 async fn update(
     State(message_bus): State<MessageBus>,
-    Path(id): Path<uuid::Uuid>,
+    Path(id): Path<Id>,
     Json(req): Json<UpdateChannelRequest>,
 ) -> Result<Json<ChannelResource>, RestError> {
     Ok(Json(
@@ -87,15 +88,15 @@ async fn update(
     ))
 }
 
-impl From<W<(uuid::Uuid, UpdateChannelRequest)>> for update_channel::Command {
-    fn from(value: W<(uuid::Uuid, UpdateChannelRequest)>) -> Self {
+impl From<W<(id::Id, UpdateChannelRequest)>> for update_channel::Command {
+    fn from(value: W<(id::Id, UpdateChannelRequest)>) -> Self {
         update_channel::Command::new(value.0 .0, value.0 .1.name)
     }
 }
 
 async fn delete_channel(
     State(message_bus): State<MessageBus>,
-    Path(id): Path<uuid::Uuid>,
+    Path(id): Path<id::Id>,
 ) -> Result<(), RestError> {
     message_bus
         .execute::<delete_channel::Handler, _, _, _>(delete_channel::Command::new(id))
