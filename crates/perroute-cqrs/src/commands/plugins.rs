@@ -1,4 +1,7 @@
-use crate::message_bus::{Message, MessageHandler};
+use crate::{
+    actor::Actor,
+    message_bus::{Message, MessageHandler},
+};
 use async_trait::async_trait;
 use perroute_connectors::{ConnectorPlugin, Plugins};
 
@@ -21,7 +24,11 @@ impl MessageHandler for QueryPluginsHandler {
     type Output = Vec<&'static dyn ConnectorPlugin>;
     type Error = Error;
 
-    async fn handle(&self, _: QueryPluginsMessage) -> Result<Self::Output, Self::Error> {
+    async fn handle(
+        &self,
+        actor: Actor,
+        _: QueryPluginsMessage,
+    ) -> Result<Self::Output, Self::Error> {
         Ok(self.plugins.all())
     }
 }

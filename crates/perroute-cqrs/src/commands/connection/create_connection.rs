@@ -1,4 +1,7 @@
-use crate::message_bus::{Message, MessageHandler};
+use crate::{
+    actor::Actor,
+    message_bus::{Message, MessageHandler},
+};
 use anyhow::Context;
 use async_trait::async_trait;
 use perroute_connectors::Plugins;
@@ -41,7 +44,11 @@ impl MessageHandler for CommandHandler {
     type Output = Connection;
     type Error = Error;
 
-    async fn handle(&self, message: Self::Message) -> Result<Self::Output, Self::Error> {
+    async fn handle(
+        &self,
+        actor: Actor,
+        message: Self::Message,
+    ) -> Result<Self::Output, Self::Error> {
         let plugin = self
             .plugins
             .get(&message.plugin_id)

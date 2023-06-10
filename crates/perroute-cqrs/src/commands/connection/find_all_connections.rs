@@ -1,4 +1,7 @@
-use crate::message_bus::{Message, MessageHandler};
+use crate::{
+    actor::Actor,
+    message_bus::{Message, MessageHandler},
+};
 use anyhow::Context;
 use async_trait::async_trait;
 use perroute_storage::models::connection::{Connection, ConnectionsQuery};
@@ -25,7 +28,11 @@ impl MessageHandler for Handler {
     type Output = Vec<Connection>;
     type Error = Error;
 
-    async fn handle(&self, message: Self::Message) -> Result<Self::Output, Self::Error> {
+    async fn handle(
+        &self,
+        actor: Actor,
+        message: Self::Message,
+    ) -> Result<Self::Output, Self::Error> {
         Connection::query(&self.pool, message.into())
             .await
             .with_context(|| "")

@@ -4,7 +4,10 @@ use perroute_commons::types::code::Code;
 use perroute_storage::models::channel::Channel;
 use sqlx::PgPool;
 
-use crate::message_bus::{Message, MessageHandler};
+use crate::{
+    actor::Actor,
+    message_bus::{Message, MessageHandler},
+};
 
 #[derive(Debug)]
 pub struct Command {
@@ -45,7 +48,11 @@ impl MessageHandler for Handler {
 
     type Error = Error;
 
-    async fn handle(&self, message: Self::Message) -> Result<Self::Output, Self::Error> {
+    async fn handle(
+        &self,
+        actor: Actor,
+        message: Self::Message,
+    ) -> Result<Self::Output, Self::Error> {
         if Channel::exists_by_code(&self.pool, &message.code)
             .await
             .with_context(|| {

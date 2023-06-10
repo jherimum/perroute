@@ -1,4 +1,7 @@
-use crate::message_bus::{Message, MessageHandler};
+use crate::{
+    actor::Actor,
+    message_bus::{Message, MessageHandler},
+};
 use async_trait::async_trait;
 use perroute_storage::models::connection::Connection;
 use serde_json::Value;
@@ -26,7 +29,11 @@ impl MessageHandler for Handler {
     type Message = Command;
     type Output = Connection;
     type Error = Error;
-    async fn handle(&self, _message: Self::Message) -> Result<Self::Output, Self::Error> {
+    async fn handle(
+        &self,
+        actor: Actor,
+        _message: Self::Message,
+    ) -> Result<Self::Output, Self::Error> {
         todo!()
     }
 }

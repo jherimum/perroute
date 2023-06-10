@@ -29,7 +29,10 @@ async fn query(
 ) -> Result<Json<Vec<ChannelResource>>, RestError> {
     Ok(Json(
         message_bus
-            .execute::<query_channels::Handler, _, _, _>(query_channels::Command)
+            .execute::<query_channels::Handler, _, _, _>(
+                perroute_cqrs::actor::Actor::System,
+                query_channels::Command,
+            )
             .await
             .unwrap()
             .unwrap()
@@ -44,7 +47,10 @@ async fn create(
 ) -> Result<Json<ChannelResource>, RestError> {
     Ok(Json(
         message_bus
-            .execute::<create_channel::Handler, _, _, _>(req.into())
+            .execute::<create_channel::Handler, _, _, _>(
+                perroute_cqrs::actor::Actor::System,
+                req.into(),
+            )
             .await
             .unwrap()
             .unwrap()
@@ -64,7 +70,10 @@ async fn find(
 ) -> Result<Json<ChannelResource>, RestError> {
     Ok(Json(
         message_bus
-            .execute::<find_channel::Handler, _, _, _>(find_channel::Command::new(id))
+            .execute::<find_channel::Handler, _, _, _>(
+                perroute_cqrs::actor::Actor::System,
+                find_channel::Command::new(id),
+            )
             .await
             .unwrap()
             .unwrap()
@@ -80,7 +89,10 @@ async fn update(
 ) -> Result<Json<ChannelResource>, RestError> {
     Ok(Json(
         message_bus
-            .execute::<update_channel::Handler, _, _, _>(W((id, req)).into())
+            .execute::<update_channel::Handler, _, _, _>(
+                perroute_cqrs::actor::Actor::System,
+                W((id, req)).into(),
+            )
             .await
             .unwrap()
             .unwrap()
@@ -99,7 +111,10 @@ async fn delete_channel(
     Path(id): Path<id::Id>,
 ) -> Result<(), RestError> {
     message_bus
-        .execute::<delete_channel::Handler, _, _, _>(delete_channel::Command::new(id))
+        .execute::<delete_channel::Handler, _, _, _>(
+            perroute_cqrs::actor::Actor::System,
+            delete_channel::Command::new(id),
+        )
         .await
         .unwrap()
         .unwrap();

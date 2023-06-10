@@ -1,4 +1,7 @@
-use crate::message_bus::{Message, MessageHandler};
+use crate::{
+    actor::Actor,
+    message_bus::{Message, MessageHandler},
+};
 use async_trait::async_trait;
 use perroute_commons::types::id::Id;
 use perroute_storage::models::channel::Channel;
@@ -42,7 +45,11 @@ impl MessageHandler for Handler {
     type Output = Channel;
     type Error = Error;
 
-    async fn handle(&self, message: Self::Message) -> Result<Self::Output, Self::Error> {
+    async fn handle(
+        &self,
+        actor: Actor,
+        message: Self::Message,
+    ) -> Result<Self::Output, Self::Error> {
         let mut channel = retrieve_channel(&self.pool, &message.id).await?;
 
         channel.name = message.name;

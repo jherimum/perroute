@@ -7,6 +7,8 @@ use std::{
 };
 use tap::TapOptional;
 
+use crate::actor::Actor;
+
 pub trait Message: Debug {}
 
 #[derive(thiserror::Error, Debug)]
@@ -20,7 +22,11 @@ pub trait MessageHandler: Send + Sync + Debug {
     type Message: Message + Debug;
     type Output: Debug;
     type Error: std::error::Error;
-    async fn handle(&self, message: Self::Message) -> Result<Self::Output, Self::Error>;
+    async fn handle(
+        &self,
+        actor: Actor,
+        message: Self::Message,
+    ) -> Result<Self::Output, Self::Error>;
 }
 
 #[derive(Clone)]
@@ -44,7 +50,11 @@ impl MessageBus {
         handler.and_then(|h| h.downcast_ref::<H>())
     }
 
-    pub async fn execute<H, M, O, E>(&self, message: M) -> Result<Result<O, E>, MessageBusError>
+    pub async fn execute<H, M, O, E>(
+        &self,
+        actor: Actor,
+        message: M,
+    ) -> Result<Result<O, E>, MessageBusError>
     where
         H: MessageHandler<Message = M, Output = O, Error = E> + 'static + Sync + Send,
         M: 'static + Debug,
@@ -62,7 +72,7 @@ impl MessageBus {
             .ok_or(MessageBusError::HandlerNotRegistered(
                 std::any::type_name::<M>().to_owned(),
             ))?
-            .handle(message)
+            .handle(actor, message)
             .await)
     }
 }

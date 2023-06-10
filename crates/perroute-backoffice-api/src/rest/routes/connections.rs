@@ -30,7 +30,10 @@ async fn get_all_connections(
     State(message_bus): State<MessageBus>,
 ) -> Result<Json<Vec<ConnectionResource>>, RestError> {
     Ok(message_bus
-        .execute::<find_all_connections::Handler, _, _, _>(find_all_connections::Query {})
+        .execute::<find_all_connections::Handler, _, _, _>(
+            perroute_cqrs::actor::Actor::System,
+            find_all_connections::Query {},
+        )
         .await
         .unwrap()
         .unwrap()
@@ -47,6 +50,7 @@ async fn create_connection(
     Ok(Json(
         message_bus
             .execute::<create_connection::CommandHandler, _, _, _>(
+                perroute_cqrs::actor::Actor::System,
                 create_connection::Command::from(req),
             )
             .await
@@ -62,7 +66,10 @@ async fn get_connection(
 ) -> Result<Json<ConnectionResource>, RestError> {
     Ok(Json(
         message_bus
-            .execute::<find_connection::Handler, _, _, _>(find_connection::Query(connection_id))
+            .execute::<find_connection::Handler, _, _, _>(
+                perroute_cqrs::actor::Actor::System,
+                find_connection::Query(connection_id),
+            )
             .await
             .unwrap()
             .unwrap()
@@ -78,11 +85,14 @@ async fn update_connection(
 ) -> Result<Json<ConnectionResource>, RestError> {
     Ok(Json(
         message_bus
-            .execute::<update_connection::Handler, _, _, _>(update_connection::Command {
-                id: connection_id,
-                description: req.description,
-                properties: req.properties,
-            })
+            .execute::<update_connection::Handler, _, _, _>(
+                perroute_cqrs::actor::Actor::System,
+                update_connection::Command {
+                    id: connection_id,
+                    description: req.description,
+                    properties: req.properties,
+                },
+            )
             .await
             .unwrap()
             .unwrap()
@@ -95,9 +105,10 @@ async fn delete_connection(
     Path(connection_id): Path<uuid::Uuid>,
 ) -> Result<(), RestError> {
     message_bus
-        .execute::<delete_connection::Handler, _, _, _>(delete_connection::Command {
-            id: connection_id,
-        })
+        .execute::<delete_connection::Handler, _, _, _>(
+            perroute_cqrs::actor::Actor::System,
+            delete_connection::Command { id: connection_id },
+        )
         .await
         .unwrap()
         .unwrap();

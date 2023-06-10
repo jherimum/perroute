@@ -1,4 +1,7 @@
-use crate::message_bus::{Message, MessageHandler};
+use crate::{
+    actor::Actor,
+    message_bus::{Message, MessageHandler},
+};
 use async_trait::async_trait;
 use sqlx::PgPool;
 
@@ -23,7 +26,11 @@ impl MessageHandler for Handler {
     type Output = ();
     type Error = Error;
 
-    async fn handle(&self, _message: Self::Message) -> Result<Self::Output, Self::Error> {
+    async fn handle(
+        &self,
+        actor: Actor,
+        _message: Self::Message,
+    ) -> Result<Self::Output, Self::Error> {
         todo!()
     }
 }
