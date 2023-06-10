@@ -8,6 +8,7 @@ use axum::routing::{delete, get, post};
 use axum::{Json, Router};
 use perroute_commons::rest::RestError;
 use perroute_commons::types::id::{self, Id};
+use perroute_cqrs::actor::Actor;
 use perroute_cqrs::commands::channel::{
     create_channel, delete_channel, find_channel, query_channels, update_channel,
 };
@@ -29,10 +30,7 @@ async fn query(
 ) -> Result<Json<Vec<ChannelResource>>, RestError> {
     Ok(Json(
         message_bus
-            .execute::<query_channels::Handler, _, _, _>(
-                perroute_cqrs::actor::Actor::System,
-                query_channels::Command,
-            )
+            .execute::<query_channels::Handler, _, _, _>(Actor::System, query_channels::Command)
             .await
             .unwrap()
             .unwrap()
@@ -47,10 +45,7 @@ async fn create(
 ) -> Result<Json<ChannelResource>, RestError> {
     Ok(Json(
         message_bus
-            .execute::<create_channel::Handler, _, _, _>(
-                perroute_cqrs::actor::Actor::System,
-                req.into(),
-            )
+            .execute::<create_channel::Handler, _, _, _>(Actor::System, req.into())
             .await
             .unwrap()
             .unwrap()
@@ -71,7 +66,7 @@ async fn find(
     Ok(Json(
         message_bus
             .execute::<find_channel::Handler, _, _, _>(
-                perroute_cqrs::actor::Actor::System,
+                Actor::System,
                 find_channel::Command::new(id),
             )
             .await
@@ -89,10 +84,7 @@ async fn update(
 ) -> Result<Json<ChannelResource>, RestError> {
     Ok(Json(
         message_bus
-            .execute::<update_channel::Handler, _, _, _>(
-                perroute_cqrs::actor::Actor::System,
-                W((id, req)).into(),
-            )
+            .execute::<update_channel::Handler, _, _, _>(Actor::System, W((id, req)).into())
             .await
             .unwrap()
             .unwrap()
@@ -112,7 +104,7 @@ async fn delete_channel(
 ) -> Result<(), RestError> {
     message_bus
         .execute::<delete_channel::Handler, _, _, _>(
-            perroute_cqrs::actor::Actor::System,
+            Actor::System,
             delete_channel::Command::new(id),
         )
         .await

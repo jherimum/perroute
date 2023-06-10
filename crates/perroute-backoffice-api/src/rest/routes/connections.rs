@@ -4,6 +4,7 @@ use axum::{
     routing::{get, patch, post},
     Json, Router,
 };
+use perroute_cqrs::actor::Actor;
 use perroute_cqrs::commands::connection::{
     create_connection, delete_connection, find_all_connections, find_connection, update_connection,
 };
@@ -31,7 +32,7 @@ async fn get_all_connections(
 ) -> Result<Json<Vec<ConnectionResource>>, RestError> {
     Ok(message_bus
         .execute::<find_all_connections::Handler, _, _, _>(
-            perroute_cqrs::actor::Actor::System,
+            Actor::System,
             find_all_connections::Query {},
         )
         .await
@@ -50,7 +51,7 @@ async fn create_connection(
     Ok(Json(
         message_bus
             .execute::<create_connection::CommandHandler, _, _, _>(
-                perroute_cqrs::actor::Actor::System,
+                Actor::System,
                 create_connection::Command::from(req),
             )
             .await
@@ -67,7 +68,7 @@ async fn get_connection(
     Ok(Json(
         message_bus
             .execute::<find_connection::Handler, _, _, _>(
-                perroute_cqrs::actor::Actor::System,
+                Actor::System,
                 find_connection::Query(connection_id),
             )
             .await
@@ -86,7 +87,7 @@ async fn update_connection(
     Ok(Json(
         message_bus
             .execute::<update_connection::Handler, _, _, _>(
-                perroute_cqrs::actor::Actor::System,
+                Actor::System,
                 update_connection::Command {
                     id: connection_id,
                     description: req.description,
@@ -106,7 +107,7 @@ async fn delete_connection(
 ) -> Result<(), RestError> {
     message_bus
         .execute::<delete_connection::Handler, _, _, _>(
-            perroute_cqrs::actor::Actor::System,
+            Actor::System,
             delete_connection::Command { id: connection_id },
         )
         .await
