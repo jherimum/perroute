@@ -4,24 +4,19 @@ use crate::{
 };
 use anyhow::Context;
 use async_trait::async_trait;
+use derive_new::new;
 use perroute_commons::types::id::Id;
 use perroute_storage::models::channel::Channel;
 use sqlx::PgPool;
 
-#[derive(Debug)]
+#[derive(Debug, new)]
 pub struct Command {
     id: Id,
 }
 
-impl Command {
-    pub fn new(id: Id) -> Self {
-        Self { id }
-    }
-}
-
 impl Message for Command {}
 
-#[derive(Debug)]
+#[derive(Debug, new)]
 pub struct Handler {
     pool: PgPool,
 }

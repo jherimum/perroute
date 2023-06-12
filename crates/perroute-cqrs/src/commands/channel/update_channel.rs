@@ -3,29 +3,21 @@ use crate::{
     message_bus::{Message, MessageHandler},
 };
 use async_trait::async_trait;
+use derive_new::new;
 use perroute_commons::types::id::Id;
 use perroute_storage::models::channel::Channel;
 use sqlx::PgPool;
 use tap::TapFallible;
 
-#[derive(Debug)]
+#[derive(Debug, new)]
 pub struct Command {
     id: Id,
     name: String,
 }
 
-impl Command {
-    pub fn new(id: Id, name: impl Into<String>) -> Self {
-        Self {
-            id,
-            name: name.into(),
-        }
-    }
-}
-
 impl Message for Command {}
 
-#[derive(Debug)]
+#[derive(Debug, new)]
 pub struct Handler {
     pool: PgPool,
 }
@@ -45,6 +37,7 @@ impl MessageHandler for Handler {
     type Output = Channel;
     type Error = Error;
 
+    #[tracing::instrument(skip(self))]
     async fn handle(
         &self,
         actor: Actor,
@@ -52,7 +45,7 @@ impl MessageHandler for Handler {
     ) -> Result<Self::Output, Self::Error> {
         let mut channel = retrieve_channel(&self.pool, &message.id).await?;
 
-        channel.name = message.name;
+        channel.with_name(message.name);
 
         Ok(channel
             .update(&self.pool)
@@ -69,5 +62,5 @@ async fn retrieve_channel(pool: &PgPool, id: &Id) -> Result<Channel, Error> {
         .await
         .tap_err(|e| tracing::error!("Error while retrieving channel {}. Error: {}", id, e))
         .map_err(anyhow::Error::new)?
-        .ok_or_else(|| Error::ChannelNotFound(id.clone()))
+        .ok_or_else(|| Error::ChannelNotFound(*id))
 }

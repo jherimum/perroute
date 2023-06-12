@@ -4,14 +4,15 @@ use crate::{
 };
 
 use async_trait::async_trait;
+use derive_new::new;
 use perroute_storage::models::channel::Channel;
 
-#[derive(Debug)]
+#[derive(Debug, new)]
 pub struct Command;
 
 impl Message for Command {}
 
-#[derive(Debug)]
+#[derive(Debug, new)]
 pub struct Handler;
 
 #[derive(thiserror::Error, Debug)]

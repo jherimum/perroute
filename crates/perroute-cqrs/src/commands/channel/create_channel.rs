@@ -1,5 +1,6 @@
 use anyhow::Context;
 use async_trait::async_trait;
+use derive_new::new;
 use perroute_commons::types::code::Code;
 use perroute_storage::models::channel::Channel;
 use sqlx::PgPool;
@@ -9,24 +10,15 @@ use crate::{
     message_bus::{Message, MessageHandler},
 };
 
-#[derive(Debug)]
+#[derive(Debug, new)]
 pub struct Command {
     code: Code,
     name: String,
 }
 
-impl Command {
-    pub fn new(code: Code, name: impl Into<String>) -> Self {
-        Self {
-            code,
-            name: name.into(),
-        }
-    }
-}
-
 impl Message for Command {}
 
-#[derive(Debug)]
+#[derive(Debug, new)]
 pub struct Handler {
     pool: PgPool,
 }
@@ -48,6 +40,7 @@ impl MessageHandler for Handler {
 
     type Error = Error;
 
+    #[tracing::instrument(skip(self))]
     async fn handle(
         &self,
         actor: Actor,

@@ -1,12 +1,16 @@
+use derive_getters::Getters;
+use derive_setters::Setters;
 use perroute_commons::types::{code::Code, id::Id};
 use sqlx::{FromRow, PgExecutor};
 use tap::TapFallible;
 
-#[derive(Debug, FromRow, PartialEq, Eq, Clone)]
+#[derive(Debug, FromRow, PartialEq, Eq, Clone, Getters, Setters)]
+#[setters(prefix = "with_")]
+#[setters(borrow_self)]
 pub struct Channel {
-    pub id: Id,
-    pub code: Code,
-    pub name: String,
+    id: Id,
+    code: Code,
+    name: String,
 }
 
 impl Channel {

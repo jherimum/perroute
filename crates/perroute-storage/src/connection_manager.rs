@@ -11,6 +11,8 @@ use tap::TapFallible;
 pub type ConnectionPool = PgPool;
 pub type Connection = PgConnection;
 
+pub static MIGRATOR: sqlx::migrate::Migrator = sqlx::migrate!();
+
 pub struct ConnectionManager;
 
 impl ConnectionManager {

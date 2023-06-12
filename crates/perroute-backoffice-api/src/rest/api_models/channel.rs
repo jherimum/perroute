@@ -12,9 +12,9 @@ pub struct ChannelResource {
 impl From<Channel> for ChannelResource {
     fn from(value: Channel) -> Self {
         ChannelResource {
-            id: value.id,
-            code: value.code,
-            name: value.name,
+            id: *value.id(),
+            code: value.code().to_owned(),
+            name: value.name().to_owned(),
         }
     }
 }
