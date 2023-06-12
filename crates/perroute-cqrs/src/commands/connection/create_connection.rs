@@ -1,16 +1,15 @@
-use crate::{
-    actor::Actor,
-    message_bus::{Message, MessageHandler},
-};
+use crate::message_bus::{Message, MessageHandler};
 use anyhow::Context;
 use async_trait::async_trait;
+use perroute_commons::types::actor::Actor;
 use perroute_connectors::Plugins;
 use perroute_storage::models::connection::Connection;
+use serde::Serialize;
 use serde_json::Value;
 use sqlx::PgPool;
 use std::sync::Arc;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Clone)]
 pub struct Command {
     pub code: String,
     pub plugin_id: String,

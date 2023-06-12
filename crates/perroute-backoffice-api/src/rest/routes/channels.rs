@@ -7,8 +7,8 @@ use axum::extract::{Path, State};
 use axum::routing::{delete, get, post};
 use axum::{Json, Router};
 use perroute_commons::rest::RestError;
+use perroute_commons::types::actor::Actor;
 use perroute_commons::types::id::{self, Id};
-use perroute_cqrs::actor::Actor;
 use perroute_cqrs::commands::channel::{
     create_channel, delete_channel, find_channel, query_channels, update_channel,
 };

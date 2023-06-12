@@ -1,16 +1,14 @@
 use anyhow::Context;
 use async_trait::async_trait;
 use derive_new::new;
-use perroute_commons::types::code::Code;
-use perroute_storage::models::channel::Channel;
+use perroute_commons::types::{actor::Actor, code::Code};
+use perroute_storage::models::{channel::Channel, command_log::CommandLog};
+use serde::Serialize;
 use sqlx::PgPool;
 
-use crate::{
-    actor::Actor,
-    message_bus::{Message, MessageHandler},
-};
+use crate::message_bus::{Message, MessageHandler};
 
-#[derive(Debug, new)]
+#[derive(Debug, new, Serialize, Clone)]
 pub struct Command {
     code: Code,
     name: String,
@@ -58,9 +56,18 @@ impl MessageHandler for Handler {
             return Err(Error::CodeAlreadyExists(message.code));
         }
 
-        Ok(Channel::new(&message.code, message.name)
-            .save(&self.pool)
+        let mut tx = self.pool.begin().await.unwrap();
+
+        let channel = Channel::new(&message.code, &message.name)
+            .save(&mut tx)
             .await
-            .unwrap())
+            .unwrap();
+
+        CommandLog::new("".to_owned(), actor, &message)
+            .save(&mut tx)
+            .await
+            .unwrap();
+
+        Ok(channel)
     }
 }

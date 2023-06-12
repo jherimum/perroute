@@ -1,13 +1,12 @@
-use crate::{
-    actor::Actor,
-    message_bus::{Message, MessageHandler},
-};
+use crate::message_bus::{Message, MessageHandler};
 
 use async_trait::async_trait;
 use derive_new::new;
+use perroute_commons::types::actor::Actor;
 use perroute_storage::models::channel::Channel;
+use serde::Serialize;
 
-#[derive(Debug, new)]
+#[derive(Debug, new, Serialize, Clone)]
 pub struct Command;
 
 impl Message for Command {}

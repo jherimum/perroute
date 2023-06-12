@@ -1,11 +1,9 @@
+use crate::message_bus::{Message, MessageHandler};
 use async_trait::async_trait;
+use perroute_commons::types::actor::Actor;
+use serde::Serialize;
 
-use crate::{
-    actor::Actor,
-    message_bus::{Message, MessageHandler},
-};
-
-#[derive(Debug)]
+#[derive(Debug, Serialize, Clone)]
 pub struct CreateTokenCommand {}
 
 impl Message for CreateTokenCommand {}

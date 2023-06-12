@@ -4,7 +4,8 @@ use axum::{
     routing::{get, patch, post},
     Json, Router,
 };
-use perroute_cqrs::actor::Actor;
+
+use perroute_commons::types::actor::Actor;
 use perroute_cqrs::commands::connection::{
     create_connection, delete_connection, find_all_connections, find_connection, update_connection,
 };

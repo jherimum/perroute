@@ -1,13 +1,12 @@
-use crate::{
-    actor::Actor,
-    message_bus::{Message, MessageHandler},
-};
+use crate::message_bus::{Message, MessageHandler};
 use async_trait::async_trait;
+use perroute_commons::types::actor::Actor;
 use perroute_storage::models::connection::Connection;
+use serde::Serialize;
 use serde_json::Value;
 use sqlx::PgPool;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Clone)]
 pub struct Command {
     pub id: uuid::Uuid,
     pub description: Option<String>,

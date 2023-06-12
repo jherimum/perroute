@@ -1,4 +1,6 @@
 use async_trait::async_trait;
+use perroute_commons::types::actor::Actor;
+use serde::Serialize;
 use std::{
     any::{Any, TypeId},
     collections::HashMap,
@@ -7,9 +9,7 @@ use std::{
 };
 use tap::TapOptional;
 
-use crate::actor::Actor;
-
-pub trait Message: Debug {}
+pub trait Message: Debug + Serialize + Clone {}
 
 #[derive(thiserror::Error, Debug)]
 pub enum MessageBusError {

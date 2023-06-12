@@ -1,15 +1,13 @@
-use crate::{
-    actor::Actor,
-    message_bus::{Message, MessageHandler},
-};
+use crate::message_bus::{Message, MessageHandler};
 use anyhow::Context;
 use async_trait::async_trait;
 use derive_new::new;
-use perroute_commons::types::id::Id;
+use perroute_commons::types::{actor::Actor, id::Id};
 use perroute_storage::models::channel::Channel;
+use serde::Serialize;
 use sqlx::PgPool;
 
-#[derive(Debug, new)]
+#[derive(Debug, new, Serialize, Clone)]
 pub struct Command {
     id: Id,
 }

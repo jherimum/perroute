@@ -17,7 +17,7 @@ serde_json = "1"
 sqlx = { version = "0.6", features = ["postgres", "runtime-tokio-rustls", "time", "uuid"] }
 tap = "1"
 thiserror = "1"
-time = "0.3"
+time = { version = "0.3", features = ["serde"] }
 uuid = { version = "1", features = ["fast-rng", "v4", "v3", "serde"] }
 tracing = "0.1"
 derive-new = "0.5.9"
