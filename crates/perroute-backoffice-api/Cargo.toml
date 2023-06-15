@@ -27,3 +27,4 @@ tracing = "0.1"
 serde-aux = "4"
 secrecy = { version = "0.8.0", features = ["serde"] }
 dotenv = "0.15.0"
+derive-getters = "0.3"

@@ -13,23 +13,30 @@ where
     C: Serialize + Clone,
 {
     id: Id,
-    command_name: String,
+    command: String,
     payload: CommandPayload<C>,
     actor: Actor,
     created_at: time::OffsetDateTime,
+    error: Option<String>,
 }
 
 impl<C> CommandLog<C>
 where
     C: Serialize + Clone,
 {
-    pub fn new(cmd_name: impl Into<String>, payload: &C, actor: &Actor) -> Self {
+    pub fn new(
+        command: impl Into<String>,
+        payload: &C,
+        actor: &Actor,
+        error: Option<Box<dyn std::error::Error>>,
+    ) -> Self {
         Self {
             id: Id::new(),
-            command_name: cmd_name.into(),
+            command: command.into(),
             payload: CommandPayload(payload.clone()),
             actor: actor.clone(),
             created_at: time::OffsetDateTime::now_utc(),
+            error: error.map(|e| format!("{e}")),
         }
     }
 

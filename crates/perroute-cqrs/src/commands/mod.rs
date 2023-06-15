@@ -1,9 +1,9 @@
 use perroute_commons::types::id::Id;
-use perroute_storage::models::event::Event as DbEvent;
+use strum_macros::{Display, ToString};
 
 pub mod channel;
 pub mod connection;
-pub mod plugins;
+pub mod plugin;
 pub mod token;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -18,8 +18,15 @@ pub enum ChannelEvent {
     Deleted(Id),
 }
 
-impl Into<DbEvent> for Event {
-    fn into(self) -> DbEvent {
-        todo!()
+#[derive(Display, Debug)]
+pub enum CommandType {
+    CreateChannel,
+    UpdateChannel,
+    DeleteChannel,
+}
+
+impl Into<String> for CommandType {
+    fn into(self) -> String {
+        self.to_string()
     }
 }

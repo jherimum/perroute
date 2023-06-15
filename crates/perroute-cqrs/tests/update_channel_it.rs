@@ -16,7 +16,7 @@ async fn test_when_succesfuly_updated(pool: PgPool) {
 
     let updated_channel = Handler::new(pool.clone())
         .handle(
-            Actor::System,
+            Actor::system(),
             Command::new(*channel.id(), "New Channel Name".to_owned()),
         )
         .await
@@ -33,7 +33,7 @@ async fn test_when_channel_does_not_exists(pool: PgPool) {
     let channel_id = Id::new();
     let result = Handler::new(pool.clone())
         .handle(
-            Actor::System,
+            Actor::system(),
             Command::new(channel_id, "New Channel Name".to_owned()),
         )
         .await;

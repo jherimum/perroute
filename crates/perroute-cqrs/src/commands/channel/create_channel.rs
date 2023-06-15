@@ -1,11 +1,13 @@
-use crate::command_bus::{Command, CommandBusContext, CommandHandler};
+use crate::{
+    command_bus::{Command, CommandBusContext, CommandBusError, CommandHandler},
+    commands::CommandType,
+};
 use anyhow::Context;
 use async_trait::async_trait;
 use derive_new::new;
 use perroute_commons::types::code::Code;
-use perroute_storage::models::channel::Channel;
+use perroute_storage::models::{channel::Channel, command_log::CommandLog};
 use serde::Serialize;
-use std::ops::DerefMut;
 
 #[derive(Debug, new, Serialize, Clone, PartialEq, Eq)]
 pub struct CreateChannelCommand {
@@ -14,8 +16,14 @@ pub struct CreateChannelCommand {
 }
 
 impl Command for CreateChannelCommand {
-    fn name(&self) -> &str {
-        "create_channel"
+    fn ty(&self) -> CommandType {
+        CommandType::CreateChannel
+    }
+}
+
+impl From<CommandLog<Self>> for CreateChannelCommand {
+    fn from(value: CommandLog<Self>) -> Self {
+        todo!()
     }
 }
 
@@ -37,9 +45,9 @@ impl CommandHandler for Handler {
 
     async fn handle<'tx>(
         &self,
-        ctx: &CommandBusContext<'tx>,
-        cmd: Self::Command,
-    ) -> Result<String, String> {
+        ctx: &mut CommandBusContext<'tx>,
+        cmd: &Self::Command,
+    ) -> Result<(), CommandBusError> {
         if Channel::exists_by_code(ctx.pool(), &cmd.code)
             .await
             .with_context(|| {
@@ -47,21 +55,19 @@ impl CommandHandler for Handler {
                     "Error while checking if channel with code {} exists",
                     cmd.code,
                 )
-            })
-            .map_err(|_| "")?
+            })?
         {
-            //return Err(CreateChannelError::CodeAlreadyExists(cmd.code)).map(CommandBusError::from);
-            todo!()
+            return Err(CreateChannelError::CodeAlreadyExists(cmd.code.clone()).into());
         }
 
         let channel = Channel::new(&cmd.code, &cmd.name)
-            .save(ctx.tx().write().await.deref_mut())
+            .save(ctx.tx())
             .await
             .unwrap();
 
         // Ok(Event::ChannelEvent(crate::commands::ChannelEvent::Created(
         //     channel.id().clone(),
         // )))
-        Ok("".to_owned())
+        Ok(())
     }
 }

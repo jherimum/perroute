@@ -1,35 +1,28 @@
 use perroute_commons::types::actor::Actor;
 use perroute_commons::types::code::Code;
 use perroute_cqrs::command_bus::{CommandBusContext, CommandHandler};
-use perroute_cqrs::commands::channel::create_channel::Handler;
+use perroute_cqrs::commands::channel::create_channel::{CreateChannelCommand, Handler};
 use perroute_storage::models::channel::Channel;
 use sqlx::PgPool;
-use std::ops::DerefMut;
 use std::str::FromStr;
 
 #[sqlx::test(migrator = "perroute_storage::connection_manager::MIGRATOR")]
 fn test_when_succesfuly_created(pool: PgPool) {
-    let ctx = CommandBusContext::new(pool.clone(), Actor::System)
+    let mut ctx = CommandBusContext::new(pool.clone(), Actor::system())
         .await
         .unwrap();
 
     Handler
         .handle(
-            &ctx,
-            perroute_cqrs::commands::channel::create_channel::CreateChannelCommand::new(
-                Code::from_str("CODE").unwrap(),
-                "Channel name".to_owned(),
-            ),
+            &mut ctx,
+            &CreateChannelCommand::new(Code::from_str("CODE").unwrap(), "Channel name".to_owned()),
         )
         .await
         .unwrap();
 
-    let channel = Channel::find_by_code(
-        ctx.tx().write().await.deref_mut(),
-        &Code::from_str("CODE").unwrap(),
-    )
-    .await
-    .unwrap();
+    let channel = Channel::find_by_code(ctx.tx(), &Code::from_str("CODE").unwrap())
+        .await
+        .unwrap();
     assert!(channel.is_some());
 }
 

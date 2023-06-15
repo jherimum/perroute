@@ -29,14 +29,16 @@ impl App {
     pub async fn init(self) -> Result<()> {
         let message_bus = MessageBus::builder().build();
 
-        let app = Router::new().nest("/healh", health::routes()).nest(
-            "/api",
-            Router::new()
-                .merge(
-                    Router::new().nest("/v1/connections", connections::routes(message_bus.clone())),
-                )
-                .merge(Router::new().nest("/v1/channels", channels::routes(message_bus.clone()))),
-        );
+        // let app = Router::new().nest("/healh", health::routes()).nest(
+        //     "/api",
+        //     Router::new()
+        //         .merge(
+        //             Router::new().nest("/v1/connections", connections::routes(message_bus.clone())),
+        //         )
+        //         .merge(Router::new().nest("/v1/channels", channels::routes(message_bus.clone()))),
+        // );
+
+        let app = Router::new();
 
         tracing::info!("listening on {}", &self.addr);
 
