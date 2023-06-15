@@ -1,3 +1,4 @@
+use super::commands::{channel::create_channel::CreateChannelError, CommandType};
 use anyhow::Context;
 use async_trait::async_trait;
 use perroute_commons::types::actor::Actor;
@@ -12,8 +13,6 @@ use std::{
 };
 use tap::{TapFallible, TapOptional};
 
-use super::commands::{channel::create_channel::CreateChannelError, CommandType};
-
 #[derive(Debug, thiserror::Error)]
 pub enum CommandBusError {
     #[error("Command handler not found for command {0}")]
@@ -24,6 +23,9 @@ pub enum CommandBusError {
 
     #[error(transparent)]
     CreateChannel(#[from] CreateChannelError),
+
+    #[error(transparent)]
+    DatabaseError(#[from] sqlx::Error),
 }
 
 #[derive(Debug)]
@@ -41,7 +43,7 @@ impl<'tx> CommandBusContext<'tx> {
         let tx = pool
             .begin()
             .await
-            .with_context(|| "Failed to begin transaction")?;
+            .tap_err(|e| tracing::error!("Failed to begin transaction: {e}"))?;
         Ok(Self { pool, actor, tx })
     }
 
@@ -61,8 +63,8 @@ impl<'tx> CommandBusContext<'tx> {
         self.tx
             .commit()
             .await
-            .with_context(|| "")
-            .map_err(CommandBusError::from)
+            .tap_err(|e| tracing::error!("Failed to commit transaction: {e}"))
+            .map_err(Into::into)
     }
 }
 
@@ -72,8 +74,8 @@ pub trait Command:
 {
     fn ty(&self) -> CommandType;
 
-    fn into_log(&self, error: Option<Box<dyn std::error::Error>>) -> CommandLog<Self> {
-        CommandLog::new(self.ty(), self, &Actor::system(), error)
+    fn to_log(&self, actor: &Actor, error: Option<Box<dyn std::error::Error>>) -> CommandLog<Self> {
+        CommandLog::new(self.ty(), self, actor, error)
     }
 }
 
@@ -135,26 +137,20 @@ impl CommandBus {
         handler.and_then(|h| h.downcast_ref::<H>())
     }
 
-    #[allow(clippy::await_holding_lock)]
     async fn log_command<'tx, C: Command>(
         &self,
         cmd: &C,
         actor: &Actor,
         error: Option<Box<dyn std::error::Error>>,
-    ) -> Result<(), CommandBusError> {
-        cmd.into_log(error)
+    ) -> Result<CommandLog<C>, CommandBusError> {
+        cmd.to_log(actor, error)
             .save(&self.pool)
             .await
             .tap_err(|e| tracing::error!("Failed to save command log: {e}"))
-            .tap_ok(|_| {
-                tracing::info!("Command log saved successfully"); //TODO: improve logging
-            })
-            .with_context(|| "Failed to save command log")
-            .map_err(CommandBusError::from)
-            .map(|_| ())
+            .map_err(Into::into)
     }
 
-    pub async fn execute<C, H>(&self, actor: Actor, cmd: C) -> Result<(), String>
+    pub async fn execute<C, H>(&self, actor: Actor, cmd: C) -> Result<(), CommandBusError>
     where
         C: Command + 'static,
         H: CommandHandler<Command = C> + 'static + Sync + Send,
@@ -162,12 +158,11 @@ impl CommandBus {
         let handler = self
             .get::<C, H>()
             .tap_none(|| tracing::error!("Handler not found for command: {}", cmd.ty()))
-            .ok_or_else(|| CommandBusError::HandlerNotFound(cmd.ty()))
-            .map_err(|_| "")?;
+            .ok_or_else(|| CommandBusError::HandlerNotFound(cmd.ty()))?;
 
         let mut ctx = CommandBusContext::new(self.pool.clone(), actor.clone())
             .await
-            .map_err(|_| "")?;
+            .tap_err(|e| tracing::error!("Failed to create command bus context: {e}"))?;
 
         let handler_result = handler
             .handle(&mut ctx, &cmd)
@@ -177,12 +172,17 @@ impl CommandBus {
             })
             .tap_ok(|event| {
                 tracing::info!("Command handled successfully: {event:?}"); //TODO: improve logging
-            })
-            .map(|_| ()); //TODO: publish event
+            });
 
-        ctx.commit().await.map_err(|_| "")?;
+        ctx.commit()
+            .await
+            .tap_err(|e| tracing::error!("Failed to commit transaction: {e}"))?;
 
-        self.log_command(&cmd, &actor, None).await.map_err(|_| "")?;
+        self.log_command(&cmd, &actor, handler_result.err().map(Into::into))
+            .await
+            .tap_ok(|l| {
+                tracing::info!("CommandLog: {l:?}, saved successfully"); //TODO: improve logging
+            })?;
 
         Ok(())
     }

@@ -1,5 +1,5 @@
 use perroute_commons::types::id::Id;
-use strum_macros::{Display, ToString};
+use strum_macros::Display;
 
 pub mod channel;
 pub mod connection;
@@ -25,8 +25,8 @@ pub enum CommandType {
     DeleteChannel,
 }
 
-impl Into<String> for CommandType {
-    fn into(self) -> String {
-        self.to_string()
+impl From<CommandType> for String {
+    fn from(value: CommandType) -> Self {
+        value.to_string()
     }
 }
