@@ -1,7 +1,9 @@
 use perroute_commons::types::actor::Actor;
 use perroute_commons::types::code::Code;
-use perroute_cqrs::command_bus::{CommandBusContext, CommandHandler};
-use perroute_cqrs::commands::channel::create_channel::{CreateChannelCommand, Handler};
+use perroute_cqrs::command_bus::bus::{CommandBusContext, CommandHandler};
+use perroute_cqrs::command_bus::commands::channel::create_channel::{
+    CreateChannelCommand, Handler,
+};
 use perroute_storage::models::channel::Channel;
 use sqlx::PgPool;
 use std::str::FromStr;

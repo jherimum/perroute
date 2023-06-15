@@ -1,4 +1,3 @@
-use crate::commands::{channel::create_channel::CreateChannelError, CommandType};
 use anyhow::Context;
 use async_trait::async_trait;
 use perroute_commons::types::actor::Actor;
@@ -12,6 +11,8 @@ use std::{
     sync::Arc,
 };
 use tap::{TapFallible, TapOptional};
+
+use super::commands::{channel::create_channel::CreateChannelError, CommandType};
 
 #[derive(Debug, thiserror::Error)]
 pub enum CommandBusError {

@@ -1,13 +1,14 @@
-use crate::{
-    command_bus::{Command, CommandBusContext, CommandBusError, CommandHandler},
-    commands::CommandType,
-};
 use anyhow::Context;
 use async_trait::async_trait;
 use derive_new::new;
 use perroute_commons::types::code::Code;
 use perroute_storage::models::{channel::Channel, command_log::CommandLog};
 use serde::Serialize;
+
+use crate::command_bus::{
+    bus::{Command, CommandBusContext, CommandBusError, CommandHandler},
+    commands::CommandType,
+};
 
 #[derive(Debug, new, Serialize, Clone, PartialEq, Eq)]
 pub struct CreateChannelCommand {

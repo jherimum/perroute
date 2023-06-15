@@ -1,6 +1,6 @@
 use perroute_commons::types::{actor::Actor, code::Code, id::Id};
 use perroute_cqrs::{
-    commands::channel::update_channel::{Command, Error, Handler},
+    command_bus::commands::channel::update_channel::{Command, Error, Handler},
     message_bus::MessageHandler,
 };
 use perroute_storage::models::channel::Channel;

@@ -9,10 +9,10 @@ use axum::{Json, Router};
 use perroute_commons::rest::RestError;
 use perroute_commons::types::actor::Actor;
 use perroute_commons::types::id::{self, Id};
-use perroute_cqrs::command_bus::CommandBus;
-use perroute_cqrs::commands::channel::{
+use perroute_cqrs::command_bus::commands::channel::{
     create_channel, delete_channel, find_channel, query_channels, update_channel,
 };
+
 use perroute_cqrs::message_bus::MessageBus;
 
 // pub fn routes(message_bus: CommandBus) -> Router {
