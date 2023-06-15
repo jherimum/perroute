@@ -1,28 +1,29 @@
+use crate::command_bus::{Command, CommandBusContext, CommandHandler};
 use anyhow::Context;
 use async_trait::async_trait;
 use derive_new::new;
-use perroute_commons::types::{actor::Actor, code::Code};
-use perroute_storage::models::{channel::Channel, command_log::CommandLog};
+use perroute_commons::types::code::Code;
+use perroute_storage::models::channel::Channel;
 use serde::Serialize;
-use sqlx::PgPool;
+use std::ops::DerefMut;
 
-use crate::message_bus::{Message, MessageHandler};
-
-#[derive(Debug, new, Serialize, Clone)]
-pub struct Command {
+#[derive(Debug, new, Serialize, Clone, PartialEq, Eq)]
+pub struct CreateChannelCommand {
     code: Code,
     name: String,
 }
 
-impl Message for Command {}
-
-#[derive(Debug, new)]
-pub struct Handler {
-    pool: PgPool,
+impl Command for CreateChannelCommand {
+    fn name(&self) -> &str {
+        "create_channel"
+    }
 }
 
+#[derive(Debug, new)]
+pub struct Handler;
+
 #[derive(thiserror::Error, Debug)]
-pub enum Error {
+pub enum CreateChannelError {
     #[error(transparent)]
     Unexpected(#[from] anyhow::Error),
 
@@ -31,43 +32,36 @@ pub enum Error {
 }
 
 #[async_trait]
-impl MessageHandler for Handler {
-    type Message = Command;
+impl CommandHandler for Handler {
+    type Command = CreateChannelCommand;
 
-    type Output = Channel;
-
-    type Error = Error;
-
-    #[tracing::instrument(skip(self))]
-    async fn handle(
+    async fn handle<'tx>(
         &self,
-        actor: Actor,
-        message: Self::Message,
-    ) -> Result<Self::Output, Self::Error> {
-        if Channel::exists_by_code(&self.pool, &message.code)
+        ctx: &CommandBusContext<'tx>,
+        cmd: Self::Command,
+    ) -> Result<String, String> {
+        if Channel::exists_by_code(ctx.pool(), &cmd.code)
             .await
             .with_context(|| {
                 format!(
                     "Error while checking if channel with code {} exists",
-                    message.code,
+                    cmd.code,
                 )
-            })?
+            })
+            .map_err(|_| "")?
         {
-            return Err(Error::CodeAlreadyExists(message.code));
+            //return Err(CreateChannelError::CodeAlreadyExists(cmd.code)).map(CommandBusError::from);
+            todo!()
         }
 
-        let mut tx = self.pool.begin().await.unwrap();
-
-        let channel = Channel::new(&message.code, &message.name)
-            .save(&mut tx)
+        let channel = Channel::new(&cmd.code, &cmd.name)
+            .save(ctx.tx().write().await.deref_mut())
             .await
             .unwrap();
 
-        CommandLog::new("".to_owned(), actor, &message)
-            .save(&mut tx)
-            .await
-            .unwrap();
-
-        Ok(channel)
+        // Ok(Event::ChannelEvent(crate::commands::ChannelEvent::Created(
+        //     channel.id().clone(),
+        // )))
+        Ok("".to_owned())
     }
 }

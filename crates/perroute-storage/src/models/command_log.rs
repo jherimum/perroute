@@ -8,21 +8,27 @@ use sqlx::PgExecutor;
 pub struct CommandPayload<C: Serialize + Clone>(C);
 
 #[derive(Debug, Serialize, sqlx::FromRow)]
-pub struct CommandLog<C: Serialize + Clone> {
+pub struct CommandLog<C>
+where
+    C: Serialize + Clone,
+{
     id: Id,
-    command: String,
-    actor: Actor,
+    command_name: String,
     payload: CommandPayload<C>,
+    actor: Actor,
     created_at: time::OffsetDateTime,
 }
 
-impl<C: Serialize + Clone> CommandLog<C> {
-    pub fn new(command: String, actor: Actor, payload: &C) -> Self {
+impl<C> CommandLog<C>
+where
+    C: Serialize + Clone,
+{
+    pub fn new(cmd_name: impl Into<String>, payload: &C, actor: &Actor) -> Self {
         Self {
             id: Id::new(),
-            command,
-            actor,
+            command_name: cmd_name.into(),
             payload: CommandPayload(payload.clone()),
+            actor: actor.clone(),
             created_at: time::OffsetDateTime::now_utc(),
         }
     }
