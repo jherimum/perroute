@@ -1,13 +1,14 @@
 use crate::command_bus::{
-    bus::{Command, CommandBusContext, CommandBusError, CommandHandler},
+    bus::{Command, CommandBusError, CommandHandler},
     commands::CommandType,
 };
 use async_trait::async_trait;
 use derive_new::new;
 use perroute_commons::types::id::Id;
-use perroute_storage::models::channel::Channel;
 use serde::Serialize;
 use tap::TapFallible;
+
+use super::retrieve_channel;
 
 #[derive(Debug, new, Serialize, Clone, PartialEq, Eq)]
 pub struct UpdateChannelCommand {
@@ -40,7 +41,10 @@ impl CommandHandler for UpdateChannelCommandHandler {
         ctx: &mut crate::command_bus::bus::CommandBusContext<'ctx>,
         command: Self::Command,
     ) -> Result<(), CommandBusError> {
-        let mut channel = retrieve_channel(ctx, command.chanel_id).await?;
+        let mut channel = retrieve_channel(ctx, command.chanel_id, |id| {
+            UpdateChannelError::ChannelNotFound(id).into()
+        })
+        .await?;
 
         channel.with_name(command.name);
 
@@ -50,14 +54,4 @@ impl CommandHandler for UpdateChannelCommandHandler {
 
         Ok(())
     }
-}
-
-async fn retrieve_channel(
-    ctx: &mut CommandBusContext<'_>,
-    id: Id,
-) -> Result<Channel, CommandBusError> {
-    Channel::find_by_id(ctx.tx(), id)
-        .await
-        .tap_err(|e| tracing::error!("Error while retrieving channel {}: {e}", id))?
-        .ok_or_else(|| UpdateChannelError::ChannelNotFound(id).into())
 }

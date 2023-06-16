@@ -1,53 +1,52 @@
-use crate::message_bus::{Message, MessageHandler};
-use anyhow::Context;
+use super::retrieve_channel;
+use crate::command_bus::{
+    bus::{Command, CommandBusContext, CommandBusError, CommandHandler},
+    commands::CommandType,
+};
 use async_trait::async_trait;
 use derive_new::new;
-use perroute_commons::types::{actor::Actor, id::Id};
-use perroute_storage::models::channel::Channel;
+use perroute_commons::types::id::Id;
 use serde::Serialize;
-use sqlx::PgPool;
+use tap::TapFallible;
 
-#[derive(Debug, new, Serialize, Clone)]
-pub struct Command {
-    id: Id,
+#[derive(Debug, new, Serialize, Clone, PartialEq, Eq)]
+pub struct DeleteChannelCommand {
+    pub channel_id: Id,
 }
 
-impl Message for Command {}
+impl Command for DeleteChannelCommand {
+    fn ty(&self) -> CommandType {
+        CommandType::DeleteChannel
+    }
+}
 
 #[derive(Debug, new)]
-pub struct Handler {
-    pool: PgPool,
-}
+pub struct DeleteChannelCommandHandler;
 
 #[derive(thiserror::Error, Debug)]
-pub enum Error {
-    #[error(transparent)]
-    Unexpected(#[from] anyhow::Error),
+pub enum DeleteChannelError {
+    #[error("Channel with id {0} nor found")]
+    ChannelNotFound(Id),
 }
 
 #[async_trait]
-impl MessageHandler for Handler {
-    type Message = Command;
+impl CommandHandler for DeleteChannelCommandHandler {
+    type Command = DeleteChannelCommand;
 
-    type Output = bool;
-
-    type Error = Error;
-
-    async fn handle(
+    #[tracing::instrument(skip(self))]
+    async fn handle<'ctx>(
         &self,
-        actor: Actor,
-        message: Self::Message,
-    ) -> Result<Self::Output, Self::Error> {
-        match Channel::find_by_id(&self.pool, message.id)
-            .await
-            .with_context(|| format!("Error while retrieving channel {}", message.id))?
-        {
-            Some(c) => Ok(c
-                .delete(&self.pool)
-                .await
-                .with_context(|| format!("Error while deleting channel {}", message.id))?),
+        ctx: &mut CommandBusContext<'ctx>,
+        command: Self::Command,
+    ) -> Result<(), CommandBusError> {
+        retrieve_channel(ctx, command.channel_id, |id| {
+            DeleteChannelError::ChannelNotFound(id).into()
+        })
+        .await?
+        .delete(ctx.tx())
+        .await
+        .tap_err(|e| tracing::error!("Failed to delete channel {}: {e}", command.channel_id))?;
 
-            None => Ok(false),
-        }
+        Ok(())
     }
 }

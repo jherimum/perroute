@@ -1,5 +1,8 @@
 use super::commands::{
-    channel::{create_channel::CreateChannelError, update_channel::UpdateChannelError},
+    channel::{
+        create_channel::CreateChannelError, delete_channel::DeleteChannelError,
+        update_channel::UpdateChannelError,
+    },
     CommandType,
 };
 use async_trait::async_trait;
@@ -31,6 +34,9 @@ pub enum CommandBusError {
 
     #[error(transparent)]
     UpdateChannel(#[from] UpdateChannelError),
+
+    #[error(transparent)]
+    DeleteChannel(#[from] DeleteChannelError),
 }
 
 #[derive(Debug)]
