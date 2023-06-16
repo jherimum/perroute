@@ -1,64 +1,63 @@
-use crate::message_bus::{Message, MessageHandler};
+use crate::command_bus::{
+    bus::{Command, CommandBusContext, CommandBusError, CommandHandler},
+    commands::CommandType,
+};
 use async_trait::async_trait;
 use derive_new::new;
-use perroute_commons::types::{actor::Actor, id::Id};
+use perroute_commons::types::id::Id;
 use perroute_storage::models::channel::Channel;
 use serde::Serialize;
-use sqlx::PgPool;
 use tap::TapFallible;
 
-#[derive(Debug, new, Serialize, Clone)]
-pub struct Command {
-    id: Id,
-    name: String,
+#[derive(Debug, new, Serialize, Clone, PartialEq, Eq)]
+pub struct UpdateChannelCommand {
+    pub chanel_id: Id,
+    pub name: String,
 }
 
-impl Message for Command {}
+impl Command for UpdateChannelCommand {
+    fn ty(&self) -> CommandType {
+        CommandType::UpdateChannel
+    }
+}
 
 #[derive(Debug, new)]
-pub struct Handler {
-    pool: PgPool,
-}
+pub struct UpdateChannelCommandHandler;
 
 #[derive(thiserror::Error, Debug)]
-pub enum Error {
-    #[error(transparent)]
-    Unexpected(#[from] anyhow::Error),
-
+pub enum UpdateChannelError {
     #[error("Channel with id {0} nor found")]
     ChannelNotFound(Id),
 }
 
 #[async_trait]
-impl MessageHandler for Handler {
-    type Message = Command;
-    type Output = Channel;
-    type Error = Error;
+impl CommandHandler for UpdateChannelCommandHandler {
+    type Command = UpdateChannelCommand;
 
     #[tracing::instrument(skip(self))]
-    async fn handle(
+    async fn handle<'ctx>(
         &self,
-        actor: Actor,
-        message: Self::Message,
-    ) -> Result<Self::Output, Self::Error> {
-        let mut channel = retrieve_channel(&self.pool, &message.id).await?;
+        ctx: &mut crate::command_bus::bus::CommandBusContext<'ctx>,
+        command: Self::Command,
+    ) -> Result<(), CommandBusError> {
+        let mut channel = retrieve_channel(ctx, command.chanel_id).await?;
 
-        channel.with_name(message.name);
+        channel.with_name(command.name);
 
-        Ok(channel
-            .update(&self.pool)
-            .await
-            .tap_err(|e| {
-                tracing::error!("Error while updating channel {}. Error: {}", message.id, e)
-            })
-            .map_err(anyhow::Error::from)?)
+        channel.update(ctx.tx()).await.tap_err(|e| {
+            tracing::error!("Error while updating channel {}: {e}", command.chanel_id)
+        })?;
+
+        Ok(())
     }
 }
 
-async fn retrieve_channel(pool: &PgPool, id: &Id) -> Result<Channel, Error> {
-    Channel::find_by_id(pool, id)
+async fn retrieve_channel(
+    ctx: &mut CommandBusContext<'_>,
+    id: Id,
+) -> Result<Channel, CommandBusError> {
+    Channel::find_by_id(ctx.tx(), id)
         .await
-        .tap_err(|e| tracing::error!("Error while retrieving channel {}. Error: {}", id, e))
-        .map_err(anyhow::Error::new)?
-        .ok_or_else(|| Error::ChannelNotFound(*id))
+        .tap_err(|e| tracing::error!("Error while retrieving channel {}: {e}", id))?
+        .ok_or_else(|| UpdateChannelError::ChannelNotFound(id).into())
 }

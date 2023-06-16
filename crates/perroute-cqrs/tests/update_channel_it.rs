@@ -1,46 +1,66 @@
+mod common;
+
+use perroute_commons::code;
+use perroute_commons::new_id;
 use perroute_commons::types::{actor::Actor, code::Code, id::Id};
-use perroute_cqrs::{
-    command_bus::commands::channel::update_channel::{Command, Error, Handler},
-    message_bus::MessageHandler,
+use perroute_cqrs::command_bus::bus::CommandBusError;
+use perroute_cqrs::command_bus::bus::CommandHandler;
+use perroute_cqrs::command_bus::commands::channel::update_channel::UpdateChannelError;
+use perroute_cqrs::command_bus::commands::channel::update_channel::{
+    UpdateChannelCommand, UpdateChannelCommandHandler,
 };
 use perroute_storage::models::channel::Channel;
 use sqlx::PgPool;
 use std::str::FromStr;
 
+const OLD_CHANNEL_NAME: &str = "Channel Name";
+const NEW_CHANNEL_NAME: &str = "New Channel Name";
+
 #[sqlx::test(migrator = "perroute_storage::connection_manager::MIGRATOR")]
 async fn test_when_succesfuly_updated(pool: PgPool) {
-    let channel = Channel::new(&Code::from_str("CODE").unwrap(), "Channel Name")
-        .save(&pool)
-        .await
-        .unwrap();
+    let mut ctx = common::start_context(pool, Actor::system()).await;
 
-    let updated_channel = Handler::new(pool.clone())
-        .handle(
-            Actor::system(),
-            Command::new(*channel.id(), "New Channel Name".to_owned()),
-        )
+    let channel_id = new_id!();
+    let channel_code = code!("CODE");
+
+    Channel::new(channel_id, channel_code.clone(), OLD_CHANNEL_NAME)
+        .save(ctx.tx())
         .await
-        .unwrap();
+        .expect("Failed to create channel");
+
+    let command = UpdateChannelCommand::new(channel_id, NEW_CHANNEL_NAME.to_owned());
+
+    UpdateChannelCommandHandler
+        .handle(&mut ctx, command)
+        .await
+        .expect("Failed to update channel");
 
     assert_eq!(
-        Channel::find_by_id(&pool, channel.id()).await.unwrap(),
-        Some(updated_channel)
+        Channel::find_by_id(ctx.tx(), channel_id).await.unwrap(),
+        Some(Channel::new(channel_id, channel_code, NEW_CHANNEL_NAME))
     );
 }
 
 #[sqlx::test(migrator = "perroute_storage::connection_manager::MIGRATOR")]
 async fn test_when_channel_does_not_exists(pool: PgPool) {
-    let channel_id = Id::new();
-    let result = Handler::new(pool.clone())
+    let mut ctx = common::start_context(pool, Actor::system()).await;
+
+    let channel_id = new_id!();
+
+    let result = UpdateChannelCommandHandler
         .handle(
-            Actor::system(),
-            Command::new(channel_id, "New Channel Name".to_owned()),
+            &mut ctx,
+            UpdateChannelCommand::new(channel_id, OLD_CHANNEL_NAME.to_owned()),
         )
         .await;
 
     match result {
         Ok(_) => panic!("Should not be able to update a channel that does not exists"),
-        Err(Error::ChannelNotFound(id)) => assert_eq!(channel_id, id),
+        Err(CommandBusError::UpdateChannel(e)) => match e {
+            UpdateChannelError::ChannelNotFound(id) => {
+                assert_eq!(id, channel_id)
+            }
+        },
         Err(_) => panic!("wrong error type"),
     }
 }

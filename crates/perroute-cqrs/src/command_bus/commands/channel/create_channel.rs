@@ -1,9 +1,10 @@
 use anyhow::Context;
 use async_trait::async_trait;
 use derive_new::new;
-use perroute_commons::types::code::Code;
+use perroute_commons::types::{code::Code, id::Id};
 use perroute_storage::models::{channel::Channel, command_log::CommandLog};
 use serde::Serialize;
+use tap::TapFallible;
 
 use crate::command_bus::{
     bus::{Command, CommandBusContext, CommandBusError, CommandHandler},
@@ -12,8 +13,9 @@ use crate::command_bus::{
 
 #[derive(Debug, new, Serialize, Clone, PartialEq, Eq)]
 pub struct CreateChannelCommand {
-    code: Code,
-    name: String,
+    pub channel_id: Id,
+    pub code: Code,
+    pub name: String,
 }
 
 impl Command for CreateChannelCommand {
@@ -22,14 +24,8 @@ impl Command for CreateChannelCommand {
     }
 }
 
-impl From<CommandLog<Self>> for CreateChannelCommand {
-    fn from(value: CommandLog<Self>) -> Self {
-        todo!()
-    }
-}
-
 #[derive(Debug, new)]
-pub struct Handler;
+pub struct CreateChannelCommandHandler;
 
 #[derive(thiserror::Error, Debug)]
 pub enum CreateChannelError {
@@ -41,27 +37,28 @@ pub enum CreateChannelError {
 }
 
 #[async_trait]
-impl CommandHandler for Handler {
+impl CommandHandler for CreateChannelCommandHandler {
     type Command = CreateChannelCommand;
 
+    #[tracing::instrument(skip(self))]
     async fn handle<'tx>(
         &self,
         ctx: &mut CommandBusContext<'tx>,
-        cmd: &Self::Command,
+        cmd: Self::Command,
     ) -> Result<(), CommandBusError> {
-        if Channel::exists_by_code(ctx.pool(), &cmd.code)
+        if Channel::exists_by_code(ctx.tx(), cmd.code.clone())
             .await
-            .with_context(|| {
-                format!(
-                    "Error while checking if channel with code {} exists",
-                    cmd.code,
+            .tap_err(|e| {
+                tracing::error!(
+                    "Failed to checking if channel with code {} exists: {e}",
+                    cmd.code
                 )
             })?
         {
             return Err(CreateChannelError::CodeAlreadyExists(cmd.code.clone()).into());
         }
 
-        let channel = Channel::new(&cmd.code, &cmd.name)
+        let channel = Channel::new(cmd.channel_id, cmd.code, &cmd.name)
             .save(ctx.tx())
             .await
             .unwrap();

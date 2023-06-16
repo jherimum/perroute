@@ -14,17 +14,17 @@ pub struct Channel {
 }
 
 impl Channel {
-    pub fn new(code: &Code, name: impl Into<String>) -> Self {
+    pub fn new(id: Id, code: Code, name: impl Into<String>) -> Self {
         Self {
-            id: Id::new(),
-            code: code.clone(),
+            id,
+            code,
             name: name.into(),
         }
     }
 
     pub async fn exists_by_code<'e, E: PgExecutor<'e>>(
         exec: E,
-        code: &Code,
+        code: Code,
     ) -> Result<bool, sqlx::Error> {
         Ok(Self::find_by_code(exec, code)
             .await?
@@ -61,7 +61,7 @@ impl Channel {
 
     pub async fn find_by_id<'e, E: PgExecutor<'e>>(
         exec: E,
-        id: &Id,
+        id: Id,
     ) -> Result<Option<Self>, sqlx::Error> {
         sqlx::query_as("SELECT * FROM channels WHERE id = $1")
             .bind(id)
@@ -72,7 +72,7 @@ impl Channel {
 
     pub async fn find_by_code<'e, E: PgExecutor<'e>>(
         exec: E,
-        code: &Code,
+        code: Code,
     ) -> Result<Option<Self>, sqlx::Error> {
         sqlx::query_as("SELECT * FROM channels WHERE code = $1")
             .bind(code)

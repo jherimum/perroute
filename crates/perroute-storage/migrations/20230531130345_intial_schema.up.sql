@@ -23,4 +23,16 @@ CREATE TABLE users (
 );
 
 
+CREATE TABLE command_logs(
+	id 				uuid 	NOT NULL,
+	command_type	varchar NOT NULL,
+	actor_type 		varchar NOT NULL,
+	actor_id 		uuid 	NULL,
+	payload 		jsonb 	NOT NULL,
+	error 			varchar NULL,
+
+	CONSTRAINT command_logs_pk 			PRIMARY KEY (id)
+
+)
+
 

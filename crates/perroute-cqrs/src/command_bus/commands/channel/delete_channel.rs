@@ -38,7 +38,7 @@ impl MessageHandler for Handler {
         actor: Actor,
         message: Self::Message,
     ) -> Result<Self::Output, Self::Error> {
-        match Channel::find_by_id(&self.pool, &message.id)
+        match Channel::find_by_id(&self.pool, message.id)
             .await
             .with_context(|| format!("Error while retrieving channel {}", message.id))?
         {

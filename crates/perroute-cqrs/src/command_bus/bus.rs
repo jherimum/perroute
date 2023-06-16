@@ -1,5 +1,7 @@
-use super::commands::{channel::create_channel::CreateChannelError, CommandType};
-use anyhow::Context;
+use super::commands::{
+    channel::{create_channel::CreateChannelError, update_channel::UpdateChannelError},
+    CommandType,
+};
 use async_trait::async_trait;
 use perroute_commons::types::actor::Actor;
 use perroute_storage::models::command_log::CommandLog;
@@ -22,10 +24,13 @@ pub enum CommandBusError {
     UnexpectedError(#[from] anyhow::Error),
 
     #[error(transparent)]
+    DatabaseError(#[from] sqlx::Error),
+
+    #[error(transparent)]
     CreateChannel(#[from] CreateChannelError),
 
     #[error(transparent)]
-    DatabaseError(#[from] sqlx::Error),
+    UpdateChannel(#[from] UpdateChannelError),
 }
 
 #[derive(Debug)]
@@ -36,7 +41,7 @@ pub struct CommandBusContext<'tx> {
 }
 
 impl<'tx> CommandBusContext<'tx> {
-    pub async fn new(
+    pub async fn begin(
         pool: PgPool,
         actor: Actor,
     ) -> Result<CommandBusContext<'tx>, CommandBusError> {
@@ -69,9 +74,7 @@ impl<'tx> CommandBusContext<'tx> {
 }
 
 #[async_trait]
-pub trait Command:
-    Debug + Serialize + Clone + PartialEq + Eq + Send + Sync + From<CommandLog<Self>>
-{
+pub trait Command: Debug + Serialize + Clone + PartialEq + Eq + Send + Sync {
     fn ty(&self) -> CommandType;
 
     fn to_log(&self, actor: &Actor, error: Option<Box<dyn std::error::Error>>) -> CommandLog<Self> {
@@ -82,10 +85,11 @@ pub trait Command:
 #[async_trait]
 pub trait CommandHandler: Send + Sync + Debug {
     type Command: Command;
+
     async fn handle<'tx>(
         &self,
         ctx: &mut CommandBusContext<'tx>,
-        cmd: &Self::Command,
+        cmd: Self::Command,
     ) -> Result<(), CommandBusError>;
 }
 
@@ -160,12 +164,12 @@ impl CommandBus {
             .tap_none(|| tracing::error!("Handler not found for command: {}", cmd.ty()))
             .ok_or_else(|| CommandBusError::HandlerNotFound(cmd.ty()))?;
 
-        let mut ctx = CommandBusContext::new(self.pool.clone(), actor.clone())
+        let mut ctx = CommandBusContext::begin(self.pool.clone(), actor.clone())
             .await
             .tap_err(|e| tracing::error!("Failed to create command bus context: {e}"))?;
 
         let handler_result = handler
-            .handle(&mut ctx, &cmd)
+            .handle(&mut ctx, cmd.clone())
             .await
             .tap_err(|e| {
                 tracing::error!("Failed to handle command: {e}"); //TODO: improve logging

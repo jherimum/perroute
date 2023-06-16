@@ -2,6 +2,13 @@ use serde::{Deserialize, Serialize};
 use sqlx::Type;
 use std::{fmt::Display, str::FromStr};
 
+#[macro_export]
+macro_rules! new_id {
+    () => {
+        Id::new()
+    };
+}
+
 #[derive(thiserror::Error, Debug, PartialEq, Eq)]
 #[error("Invalid id {0}")]
 pub struct ParseError(#[from] uuid::Error);
