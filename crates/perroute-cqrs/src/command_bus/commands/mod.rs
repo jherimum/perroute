@@ -3,7 +3,6 @@ use strum_macros::Display;
 
 pub mod channel;
 pub mod connection;
-pub mod plugin;
 pub mod token;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
