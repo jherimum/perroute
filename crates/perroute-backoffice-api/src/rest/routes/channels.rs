@@ -1,6 +1,7 @@
 use crate::rest::api_models::channel::{ChannelResource, CreateChannelRequest};
 
 use axum::extract::State;
+use axum::http::Request;
 use axum::routing::post;
 use axum::{Json, Router};
 use perroute_commons::new_id;
@@ -25,11 +26,13 @@ pub fn routes(command_bus: CommandBus) -> Router {
 
 async fn create(
     State(command_bus): State<CommandBus>,
-    Json(req): Json<CreateChannelRequest>,
+    Json(body): Json<CreateChannelRequest>,
 ) -> Result<Json<ChannelResource>, RestError> {
-    let command = CreateChannelCommand::new(new_id!(), req.code, req.name);
-    command_bus
-        .execute::<_, CreateChannelCommandHandler>(Actor::system(), command)
+    let result = command_bus
+        .execute::<_, CreateChannelCommandHandler>(
+            Actor::system(),
+            CreateChannelCommand::new(new_id!(), body.code, body.name),
+        )
         .await;
 
     // Ok(Json(

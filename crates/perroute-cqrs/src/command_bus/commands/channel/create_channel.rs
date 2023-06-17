@@ -28,9 +28,6 @@ pub struct CreateChannelCommandHandler;
 
 #[derive(thiserror::Error, Debug)]
 pub enum CreateChannelError {
-    #[error(transparent)]
-    Unexpected(#[from] anyhow::Error),
-
     #[error("A channel with code {0} already exists")]
     CodeAlreadyExists(Code),
 }
@@ -57,14 +54,11 @@ impl CommandHandler for CreateChannelCommandHandler {
             return Err(CreateChannelError::CodeAlreadyExists(cmd.code.clone()).into());
         }
 
-        let channel = Channel::new(cmd.channel_id, cmd.code, &cmd.name)
+        Channel::new(cmd.channel_id, cmd.code, &cmd.name)
             .save(ctx.tx())
             .await
             .unwrap();
 
-        // Ok(Event::ChannelEvent(crate::commands::ChannelEvent::Created(
-        //     channel.id().clone(),
-        // )))
         Ok(())
     }
 }
