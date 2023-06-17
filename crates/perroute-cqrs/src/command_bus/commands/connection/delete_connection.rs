@@ -1,4 +1,4 @@
-use crate::message_bus::{Message, MessageHandler};
+use crate::query_bus::{Message, MessageHandler};
 use async_trait::async_trait;
 use perroute_commons::types::actor::Actor;
 use serde::Serialize;

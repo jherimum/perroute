@@ -2,8 +2,6 @@ use perroute_commons::types::id::Id;
 use strum_macros::Display;
 
 pub mod channel;
-pub mod connection;
-pub mod token;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Event {

@@ -1,6 +1,7 @@
 use async_trait::async_trait;
 use perroute_commons::types::actor::Actor;
 use serde::Serialize;
+use sqlx::PgPool;
 use std::{
     any::{Any, TypeId},
     collections::HashMap,
@@ -9,89 +10,102 @@ use std::{
 };
 use tap::TapOptional;
 
-pub trait Message: Debug + Serialize + Clone {}
+use super::{error::QueryBusError, queries::QueryType};
 
-#[derive(thiserror::Error, Debug)]
-pub enum MessageBusError {
-    #[error("There is no hanlder registered for command: {0}")]
-    HandlerNotRegistered(String),
+pub struct QueryBusContext {
+    pool: PgPool,
+    actor: Actor,
+}
+
+impl QueryBusContext {
+    pub fn new(pool: PgPool, actor: Actor) -> Self {
+        Self { pool, actor }
+    }
+
+    pub fn actor(&self) -> &Actor {
+        &self.actor
+    }
+
+    pub fn pool(&self) -> &PgPool {
+        &self.pool
+    }
+}
+
+pub trait Query: Serialize + Clone {
+    fn ty(&self) -> QueryType;
 }
 
 #[async_trait]
-pub trait MessageHandler: Send + Sync + Debug {
-    type Message: Message + Debug;
+pub trait QueryHandler: Send + Sync {
+    type Query: Query + Debug;
     type Output: Debug;
-    type Error: std::error::Error;
     async fn handle(
         &self,
-        actor: Actor,
-        message: Self::Message,
-    ) -> Result<Self::Output, Self::Error>;
+        ctx: &QueryBusContext,
+        query: Self::Query,
+    ) -> Result<Self::Output, QueryBusError>;
 }
 
 #[derive(Clone)]
-pub struct MessageBus {
+pub struct QueryBus {
     map: Arc<HashMap<TypeId, Box<dyn Any + Send + Sync>>>,
+    pool: PgPool,
 }
 
-impl MessageBus {
-    pub fn builder() -> MessageBusBuilder {
-        MessageBusBuilder::default()
+impl QueryBus {
+    pub fn builder() -> QueryBusBuilder {
+        QueryBusBuilder::default()
     }
 
-    fn get<H, M, O, E>(&self) -> Option<&H>
+    fn get<H, Q, O>(&self) -> Option<&H>
     where
-        H: MessageHandler<Message = M, Output = O, Error = E> + 'static + Sync + Send,
-        M: 'static + Debug,
+        H: QueryHandler<Query = Q, Output = O> + 'static + Sync + Send,
+        Q: Query + 'static,
         O: Debug,
-        E: std::error::Error,
     {
-        let handler = self.map.get(&TypeId::of::<M>());
+        let handler = self.map.get(&TypeId::of::<Q>());
         handler.and_then(|h| h.downcast_ref::<H>())
     }
 
-    pub async fn execute<H, M, O, E>(
-        &self,
-        actor: Actor,
-        message: M,
-    ) -> Result<Result<O, E>, MessageBusError>
+    pub async fn execute<H, Q, O>(&self, actor: Actor, query: Q) -> Result<O, QueryBusError>
     where
-        H: MessageHandler<Message = M, Output = O, Error = E> + 'static + Sync + Send,
-        M: 'static + Debug,
+        H: QueryHandler<Query = Q, Output = O> + 'static + Sync + Send,
+        Q: Query + 'static,
         O: Debug,
-        E: std::error::Error,
     {
-        Ok(self
-            .get::<H, M, O, E>()
-            .tap_none(|| {
-                tracing::error!(
-                    "Handler {} not registered",
-                    std::any::type_name::<M>().to_owned()
-                )
-            })
-            .ok_or(MessageBusError::HandlerNotRegistered(
-                std::any::type_name::<M>().to_owned(),
-            ))?
-            .handle(actor, message)
-            .await)
+        let handler = self
+            .get::<H, Q, O>()
+            .tap_none(|| tracing::error!("Handler not found for query: {}", query.ty()))
+            .ok_or_else(|| QueryBusError::HandlerNotFound(query.ty()))?;
+
+        let ctx = QueryBusContext::new(self.pool.clone(), actor);
+
+        handler.handle(&ctx, query).await
     }
 }
 
 #[derive(Default)]
-pub struct MessageBusBuilder {
+pub struct QueryBusBuilder {
     map: HashMap<TypeId, Box<dyn Any + Send + Sync>>,
+    pool: Option<PgPool>,
 }
 
-impl MessageBusBuilder {
-    pub fn build(self) -> MessageBus {
-        MessageBus {
+impl QueryBusBuilder {
+    pub fn build(self) -> QueryBus {
+        QueryBus {
             map: Arc::new(self.map),
+            pool: self.pool.expect("pool is required"),
         }
+    }
+
+    pub fn with_pool(mut self, pool: PgPool) -> Self {
+        self.pool = Some(pool);
+        self
     }
 
     pub fn with_handler<H, M, O>(mut self, handler: H) -> Self
     where
-        H: MessageHandler<Message = M, Output = O> + 'static + Sync + Send,
+        H: QueryHandler<Query = M, Output = O> + 'static + Sync + Send,
         M: 'static,
     {
         let type_id = TypeId::of::<M>();

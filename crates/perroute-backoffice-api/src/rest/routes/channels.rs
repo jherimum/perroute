@@ -1,7 +1,8 @@
 use crate::rest::api_models::channel::{ChannelResource, CreateChannelRequest};
+use crate::rest::Buses;
 
-use axum::extract::State;
-use axum::http::Request;
+use axum::extract::{Path, State};
+use axum::routing::get;
 use axum::routing::post;
 use axum::{Json, Router};
 use perroute_commons::new_id;
@@ -12,38 +13,54 @@ use perroute_cqrs::command_bus::bus::CommandBus;
 use perroute_cqrs::command_bus::commands::channel::create_channel::{
     CreateChannelCommand, CreateChannelCommandHandler,
 };
-use perroute_cqrs::message_bus::MessageBus;
+use perroute_cqrs::query_bus::bus::QueryBus;
+use perroute_cqrs::query_bus::queries::channel::find_channel::{
+    FindChannelQuery, FindChannelQueryHandler,
+};
 
-pub fn routes(command_bus: CommandBus) -> Router {
+//use perroute_cqrs::query_bus::MessageBus;
+
+pub fn routes(buses: Buses) -> Router {
     Router::new()
         //.route("/", get(query))
         .route("/", post(create))
-        //.route("/:id", get(find))
+        .route("/:id", get(find))
         //.route("/:id", post(update))
         //.route("/:id", delete(delete_channel))
-        .with_state(command_bus)
+        .with_state(buses)
 }
 
 async fn create(
     State(command_bus): State<CommandBus>,
+    State(query_bus): State<QueryBus>,
     Json(body): Json<CreateChannelRequest>,
 ) -> Result<Json<ChannelResource>, RestError> {
-    let result = command_bus
-        .execute::<_, CreateChannelCommandHandler>(
-            Actor::system(),
-            CreateChannelCommand::new(new_id!(), body.code, body.name),
-        )
-        .await;
+    let actor = Actor::system();
+    let command = CreateChannelCommand::new(new_id!(), body.code, body.name);
+    command_bus
+        .execute::<_, CreateChannelCommandHandler>(actor.clone(), command.clone())
+        .await
+        .unwrap();
+    query_bus
+        .execute::<FindChannelQueryHandler, _, _>(actor, FindChannelQuery::new(command.channel_id))
+        .await
+        .map_err(|_| RestError::InernalServer)?
+        .map(ChannelResource::from)
+        .map(Json::from)
+        .ok_or(RestError::InernalServer)
+}
 
-    // Ok(Json(
-    //     message_bus
-    //         .execute::<create_channel::Handler, _, _, _>(Actor::System, req.into())
-    //         .await
-    //         .unwrap()
-    //         .unwrap()
-    //         .into(),
-    // ))
-    todo!()
+async fn find(
+    State(query_bus): State<QueryBus>,
+    Path(id): Path<Id>,
+) -> Result<Json<ChannelResource>, RestError> {
+    Ok(Json(ChannelResource::from(
+        query_bus
+            .execute::<FindChannelQueryHandler, _, _>(Actor::system(), FindChannelQuery::new(id))
+            .await
+            .unwrap()
+            .unwrap(),
+    )))
 }
 
 // /* create a axum handler for get */

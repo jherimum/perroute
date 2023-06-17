@@ -39,13 +39,6 @@ where
     }
 
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
-        // sqlx::query_as("INSERT INTO channels (id, code, name) VALUES($1, $2, $3) RETURNING *")
-        //     .bind(self.id)
-        //     .bind(self.code)
-        //     .bind(self.name)
-        //     .fetch_one(exec)
-        //     .await
-        //     .tap_err(|e| tracing::error!("Query error. {e}"))
-        todo!()
+        Ok(self)
     }
 }
