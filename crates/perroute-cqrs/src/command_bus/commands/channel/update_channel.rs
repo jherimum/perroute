@@ -1,6 +1,7 @@
 use crate::command_bus::{
-    bus::{Command, CommandBusError, CommandHandler},
+    bus::{Command, CommandHandler},
     commands::CommandType,
+    error::CommandBusError,
 };
 use async_trait::async_trait;
 use derive_new::new;

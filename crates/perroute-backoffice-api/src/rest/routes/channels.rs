@@ -1,29 +1,47 @@
-use crate::rest::api_models::channel::{
-    ChannelResource, CreateChannelRequest, UpdateChannelRequest,
-};
+use crate::rest::api_models::channel::{ChannelResource, CreateChannelRequest};
 
-use crate::types::W;
-use axum::extract::{Path, State};
-use axum::routing::{delete, get, post};
+use axum::extract::State;
+use axum::routing::post;
 use axum::{Json, Router};
+use perroute_commons::new_id;
 use perroute_commons::rest::RestError;
 use perroute_commons::types::actor::Actor;
-use perroute_commons::types::id::{self, Id};
-// use perroute_cqrs::command_bus::commands::channel::{
-//     create_channel, delete_channel, find_channel, query_channels, update_channel,
-// };
-
+use perroute_commons::types::id::Id;
+use perroute_cqrs::command_bus::bus::CommandBus;
+use perroute_cqrs::command_bus::commands::channel::create_channel::{
+    CreateChannelCommand, CreateChannelCommandHandler,
+};
 use perroute_cqrs::message_bus::MessageBus;
 
-// pub fn routes(message_bus: CommandBus) -> Router {
-//     Router::new()
-//         .route("/", get(query))
-//         .route("/", post(create))
-//         .route("/:id", get(find))
-//         .route("/:id", post(update))
-//         .route("/:id", delete(delete_channel))
-//         .with_state(message_bus)
-// }
+pub fn routes(command_bus: CommandBus) -> Router {
+    Router::new()
+        //.route("/", get(query))
+        .route("/", post(create))
+        //.route("/:id", get(find))
+        //.route("/:id", post(update))
+        //.route("/:id", delete(delete_channel))
+        .with_state(command_bus)
+}
+
+async fn create(
+    State(command_bus): State<CommandBus>,
+    Json(req): Json<CreateChannelRequest>,
+) -> Result<Json<ChannelResource>, RestError> {
+    let command = CreateChannelCommand::new(new_id!(), req.code, req.name);
+    command_bus
+        .execute::<_, CreateChannelCommandHandler>(Actor::system(), command)
+        .await;
+
+    // Ok(Json(
+    //     message_bus
+    //         .execute::<create_channel::Handler, _, _, _>(Actor::System, req.into())
+    //         .await
+    //         .unwrap()
+    //         .unwrap()
+    //         .into(),
+    // ))
+    todo!()
+}
 
 // /* create a axum handler for get */
 // async fn query(
@@ -38,19 +56,6 @@ use perroute_cqrs::message_bus::MessageBus;
 //             .into_iter()
 //             .map(ChannelResource::from)
 //             .collect::<Vec<_>>(),
-//     ))
-// }
-// async fn create(
-//     State(message_bus): State<MessageBus>,
-//     Json(req): Json<CreateChannelRequest>,
-// ) -> Result<Json<ChannelResource>, RestError> {
-//     Ok(Json(
-//         message_bus
-//             .execute::<create_channel::Handler, _, _, _>(Actor::System, req.into())
-//             .await
-//             .unwrap()
-//             .unwrap()
-//             .into(),
 //     ))
 // }
 

@@ -5,10 +5,11 @@ use perroute_commons::new_id;
 use perroute_commons::types::actor::Actor;
 use perroute_commons::types::code::Code;
 use perroute_commons::types::id::Id;
-use perroute_cqrs::command_bus::bus::{CommandBusError, CommandHandler};
+use perroute_cqrs::command_bus::bus::CommandHandler;
 use perroute_cqrs::command_bus::commands::channel::create_channel::{
     CreateChannelCommand, CreateChannelCommandHandler, CreateChannelError,
 };
+use perroute_cqrs::command_bus::error::CommandBusError;
 use perroute_storage::models::channel::Channel;
 use sqlx::PgPool;
 use std::str::FromStr;

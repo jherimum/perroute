@@ -3,12 +3,12 @@ mod common;
 use perroute_commons::code;
 use perroute_commons::new_id;
 use perroute_commons::types::{actor::Actor, code::Code, id::Id};
-use perroute_cqrs::command_bus::bus::CommandBusError;
 use perroute_cqrs::command_bus::bus::CommandHandler;
 use perroute_cqrs::command_bus::commands::channel::update_channel::UpdateChannelError;
 use perroute_cqrs::command_bus::commands::channel::update_channel::{
     UpdateChannelCommand, UpdateChannelCommandHandler,
 };
+use perroute_cqrs::command_bus::error::CommandBusError;
 use perroute_storage::models::channel::Channel;
 use sqlx::PgPool;
 use std::str::FromStr;

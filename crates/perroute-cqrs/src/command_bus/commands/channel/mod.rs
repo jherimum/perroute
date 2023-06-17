@@ -1,4 +1,4 @@
-use crate::command_bus::bus::{CommandBusContext, CommandBusError};
+use crate::command_bus::{bus::CommandBusContext, error::CommandBusError};
 use perroute_commons::types::id::Id;
 use perroute_storage::models::channel::Channel;
 use tap::TapFallible;

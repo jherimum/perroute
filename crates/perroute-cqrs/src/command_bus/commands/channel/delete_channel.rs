@@ -1,7 +1,8 @@
 use super::retrieve_channel;
 use crate::command_bus::{
-    bus::{Command, CommandBusContext, CommandBusError, CommandHandler},
+    bus::{Command, CommandBusContext, CommandHandler},
     commands::CommandType,
+    error::CommandBusError,
 };
 use async_trait::async_trait;
 use derive_new::new;

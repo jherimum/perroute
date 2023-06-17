@@ -24,12 +24,10 @@ impl<C> CommandLog<C>
 where
     C: Serialize + Clone,
 {
-    pub fn new(
-        command: impl Into<String>,
-        payload: &C,
-        actor: &Actor,
-        error: Option<Box<dyn std::error::Error>>,
-    ) -> Self {
+    pub fn new<E>(command: impl Into<String>, payload: &C, actor: &Actor, error: Option<E>) -> Self
+    where
+        E: std::fmt::Display,
+    {
         Self {
             id: Id::new(),
             command: command.into(),

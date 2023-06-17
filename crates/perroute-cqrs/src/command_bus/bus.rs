@@ -1,10 +1,4 @@
-use super::commands::{
-    channel::{
-        create_channel::CreateChannelError, delete_channel::DeleteChannelError,
-        update_channel::UpdateChannelError,
-    },
-    CommandType,
-};
+use super::{commands::CommandType, error::CommandBusError};
 use async_trait::async_trait;
 use perroute_commons::types::actor::Actor;
 use perroute_storage::models::command_log::CommandLog;
@@ -17,27 +11,6 @@ use std::{
     sync::Arc,
 };
 use tap::{TapFallible, TapOptional};
-
-#[derive(Debug, thiserror::Error)]
-pub enum CommandBusError {
-    #[error("Command handler not found for command {0}")]
-    HandlerNotFound(CommandType),
-
-    #[error(transparent)]
-    UnexpectedError(#[from] anyhow::Error),
-
-    #[error(transparent)]
-    DatabaseError(#[from] sqlx::Error),
-
-    #[error(transparent)]
-    CreateChannel(#[from] CreateChannelError),
-
-    #[error(transparent)]
-    UpdateChannel(#[from] UpdateChannelError),
-
-    #[error(transparent)]
-    DeleteChannel(#[from] DeleteChannelError),
-}
 
 #[derive(Debug)]
 pub struct CommandBusContext<'tx> {
@@ -83,7 +56,10 @@ impl<'tx> CommandBusContext<'tx> {
 pub trait Command: Debug + Serialize + Clone + PartialEq + Eq + Send + Sync {
     fn ty(&self) -> CommandType;
 
-    fn to_log(&self, actor: &Actor, error: Option<Box<dyn std::error::Error>>) -> CommandLog<Self> {
+    fn to_log<E>(&self, actor: &Actor, error: Option<E>) -> CommandLog<Self>
+    where
+        E: std::error::Error + Send + Sync + 'static,
+    {
         CommandLog::new(self.ty(), self, actor, error)
     }
 }
@@ -128,6 +104,7 @@ impl CommandBusBuilder {
     }
 }
 
+#[derive(Clone)]
 pub struct CommandBus {
     pool: PgPool,
     handlers: Arc<HashMap<TypeId, Box<dyn Any + Send + Sync>>>,
@@ -145,19 +122,6 @@ impl CommandBus {
     {
         let handler = self.handlers.get(&TypeId::of::<C>());
         handler.and_then(|h| h.downcast_ref::<H>())
-    }
-
-    async fn log_command<'tx, C: Command>(
-        &self,
-        cmd: &C,
-        actor: &Actor,
-        error: Option<Box<dyn std::error::Error>>,
-    ) -> Result<CommandLog<C>, CommandBusError> {
-        cmd.to_log(actor, error)
-            .save(&self.pool)
-            .await
-            .tap_err(|e| tracing::error!("Failed to save command log: {e}"))
-            .map_err(Into::into)
     }
 
     pub async fn execute<C, H>(&self, actor: Actor, cmd: C) -> Result<(), CommandBusError>
@@ -184,15 +148,14 @@ impl CommandBus {
                 tracing::info!("Command handled successfully: {event:?}"); //TODO: improve logging
             });
 
+        cmd.to_log(&actor, handler_result.err())
+            .save(ctx.tx())
+            .await
+            .tap_err(|e| tracing::error!("Failed to save command log: {e}"))?;
+
         ctx.commit()
             .await
             .tap_err(|e| tracing::error!("Failed to commit transaction: {e}"))?;
-
-        self.log_command(&cmd, &actor, handler_result.err().map(Into::into))
-            .await
-            .tap_ok(|l| {
-                tracing::info!("CommandLog: {l:?}, saved successfully"); //TODO: improve logging
-            })?;
 
         Ok(())
     }
