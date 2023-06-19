@@ -1,8 +1,7 @@
 use crate::rest::api_models::channel::{
-    self, ChannelResource, CreateChannelRequest, UpdateChannelRequest,
+    ChannelResource, CreateChannelRequest, UpdateChannelRequest,
 };
 use crate::rest::Buses;
-
 use axum::extract::{Path, State};
 use axum::routing::post;
 use axum::routing::{get, put};
@@ -13,7 +12,7 @@ use perroute_commons::types::actor::Actor;
 use perroute_commons::types::id::Id;
 use perroute_cqrs::command_bus::bus::CommandBus;
 use perroute_cqrs::command_bus::commands::channel::create_channel::{
-    CreateChannelCommand, CreateChannelCommandHandler,
+    CreateChannelCommandBuilder, CreateChannelCommandHandler,
 };
 use perroute_cqrs::command_bus::commands::channel::update_channel::{
     UpdateChannelCommand, UpdateChannelCommandHandler,
@@ -58,7 +57,12 @@ async fn create_channel(
     Json(body): Json<CreateChannelRequest>,
 ) -> Result<Json<ChannelResource>, RestError> {
     let actor = Actor::system();
-    let command = CreateChannelCommand::new(new_id!(), body.code, body.name);
+    let command = CreateChannelCommandBuilder::default()
+        .channel_id(new_id!())
+        .code(body.code)
+        .name(body.name)
+        .build()
+        .unwrap();
 
     command_bus
         .execute::<_, CreateChannelCommandHandler>(actor.clone(), command.clone())
@@ -66,7 +70,7 @@ async fn create_channel(
         .tap_err(|e| tracing::error!("Failed to create channel: {e}"))
         .map_err(|e| RestError::UnprocessableEntity(e.to_string()))?;
 
-    retrieve_channel_resource(&actor, &query_bus, command.channel_id, |_| {
+    retrieve_channel_resource(&actor, &query_bus, *command.channel_id(), |_| {
         RestError::InternalServer
     })
     .await

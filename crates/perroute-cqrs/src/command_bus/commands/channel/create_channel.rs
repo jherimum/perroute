@@ -4,17 +4,19 @@ use crate::command_bus::{
     error::CommandBusError,
 };
 use async_trait::async_trait;
+use derive_builder::Builder;
+use derive_getters::Getters;
 use derive_new::new;
 use perroute_commons::types::{code::Code, id::Id};
 use perroute_storage::models::channel::{Channel, ChannelBuilder};
 use serde::Serialize;
 use tap::TapFallible;
 
-#[derive(Debug, new, Serialize, Clone, PartialEq, Eq)]
+#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
 pub struct CreateChannelCommand {
-    pub channel_id: Id,
-    pub code: Code,
-    pub name: String,
+    channel_id: Id,
+    code: Code,
+    name: String,
 }
 
 impl Command for CreateChannelCommand {
