@@ -42,7 +42,7 @@ impl CommandHandler for UpdateChannelCommandHandler {
         ctx: &mut crate::command_bus::bus::CommandBusContext<'ctx>,
         command: Self::Command,
     ) -> Result<(), CommandBusError> {
-        let mut channel = retrieve_channel(ctx, command.chanel_id, |id| {
+        let mut channel = retrieve_channel(ctx, &command.chanel_id, |id| {
             UpdateChannelError::ChannelNotFound(id).into()
         })
         .await?;

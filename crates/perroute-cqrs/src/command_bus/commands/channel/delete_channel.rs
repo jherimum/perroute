@@ -40,7 +40,7 @@ impl CommandHandler for DeleteChannelCommandHandler {
         ctx: &mut CommandBusContext<'ctx>,
         command: Self::Command,
     ) -> Result<(), CommandBusError> {
-        retrieve_channel(ctx, command.channel_id, |id| {
+        retrieve_channel(ctx, &command.channel_id, |id| {
             DeleteChannelError::ChannelNotFound(id).into()
         })
         .await?

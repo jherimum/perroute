@@ -42,7 +42,7 @@ async fn test_when_succesfuly_updated(pool: PgPool) {
         .expect("Failed to update channel");
 
     assert_eq!(
-        Channel::find_by_id(ctx.tx(), channel_id).await.unwrap(),
+        Channel::find_by_id(ctx.tx(), &channel_id).await.unwrap(),
         Some(
             ChannelBuilder::default()
                 .id(channel_id)

@@ -9,7 +9,7 @@ pub mod update_channel;
 
 pub async fn retrieve_channel<'ctx>(
     ctx: &mut CommandBusContext<'ctx>,
-    id: Id,
+    id: &Id,
     to_error: impl FnOnce(Id) -> CommandBusError,
 ) -> Result<Channel, CommandBusError> {
     match Channel::find_by_id(ctx.tx(), id)
@@ -17,6 +17,6 @@ pub async fn retrieve_channel<'ctx>(
         .tap_err(|e| tracing::error!("Failed to retrieve channel {}: {e}", id))?
     {
         Some(channel) => Ok(channel),
-        None => Err(to_error(id)),
+        None => Err(to_error(*id)),
     }
 }

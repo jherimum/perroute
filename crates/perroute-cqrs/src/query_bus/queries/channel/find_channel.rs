@@ -34,7 +34,7 @@ impl QueryHandler for FindChannelQueryHandler {
         ctx: &QueryBusContext,
         query: Self::Query,
     ) -> Result<Self::Output, QueryBusError> {
-        Channel::find_by_id(ctx.pool(), query.channel_id)
+        Channel::find_by_id(ctx.pool(), &query.channel_id)
             .await
             .map_err(Into::into)
     }
