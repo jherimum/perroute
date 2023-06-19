@@ -2,6 +2,7 @@ use axum::extract::FromRef;
 use perroute_cqrs::{command_bus::bus::CommandBus, query_bus::bus::QueryBus};
 
 pub mod api_models;
+pub mod error;
 pub mod extractors;
 pub mod routes;
 

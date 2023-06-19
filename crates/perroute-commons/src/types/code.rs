@@ -7,7 +7,7 @@ use std::{fmt::Display, str::FromStr};
 #[macro_export]
 macro_rules! code {
     ($code:expr) => {
-        Code::from_str($code).expect("Invalid code")
+        $crate::types::code::Code::from_str($code).expect("Invalid code")
     };
 }
 

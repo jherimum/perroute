@@ -56,11 +56,11 @@ impl<'tx> CommandBusContext<'tx> {
 pub trait Command: Debug + Serialize + Clone + PartialEq + Eq + Send + Sync {
     fn ty(&self) -> CommandType;
 
-    fn to_log<E>(&self, actor: &Actor, error: Option<E>) -> CommandLog<Self>
+    fn to_log<E>(&self, actor: &Actor, error: Option<&E>) -> CommandLog
     where
         E: std::error::Error + Send + Sync + 'static,
     {
-        CommandLog::new(self.ty(), self, actor, error)
+        CommandLog::new(self.ty(), serde_json::to_value(self).unwrap(), actor, error)
     }
 }
 
@@ -148,7 +148,7 @@ impl CommandBus {
                 tracing::info!("Command handled successfully: {event:?}"); //TODO: improve logging
             });
 
-        cmd.to_log(&actor, handler_result.err())
+        cmd.to_log(&actor, handler_result.as_ref().err())
             .save(ctx.tx())
             .await
             .tap_err(|e| tracing::error!("Failed to save command log: {e}"))?;
@@ -157,6 +157,6 @@ impl CommandBus {
             .await
             .tap_err(|e| tracing::error!("Failed to commit transaction: {e}"))?;
 
-        Ok(())
+        handler_result
     }
 }

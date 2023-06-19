@@ -3,14 +3,13 @@ mod common;
 use perroute_commons::code;
 use perroute_commons::new_id;
 use perroute_commons::types::actor::Actor;
-use perroute_commons::types::code::Code;
-use perroute_commons::types::id::Id;
 use perroute_cqrs::command_bus::bus::CommandHandler;
 use perroute_cqrs::command_bus::commands::channel::create_channel::{
     CreateChannelCommand, CreateChannelCommandHandler, CreateChannelError,
 };
 use perroute_cqrs::command_bus::error::CommandBusError;
 use perroute_storage::models::channel::Channel;
+use perroute_storage::models::channel::ChannelBuilder;
 use sqlx::PgPool;
 use std::str::FromStr;
 
@@ -35,11 +34,14 @@ fn test_when_succesfuly_created(pool: PgPool) {
         .expect("Failed to find channel");
     assert_eq!(
         channel,
-        Some(Channel::new(
-            command.channel_id,
-            code!("CODE"),
-            CHANNEL_NAME
-        ))
+        Some(
+            ChannelBuilder::default()
+                .id(command.channel_id)
+                .code(code!("CODE"))
+                .name(CHANNEL_NAME.to_owned())
+                .build()
+                .unwrap()
+        )
     );
 }
 
@@ -47,7 +49,12 @@ fn test_when_succesfuly_created(pool: PgPool) {
 fn test_when_a_channel_with_code_already_exists(pool: PgPool) {
     let mut ctx = common::start_context(pool, Actor::system()).await;
 
-    Channel::new(new_id!(), code!("CODE"), CHANNEL_NAME)
+    ChannelBuilder::default()
+        .id(new_id!())
+        .code(code!("CODE"))
+        .name(CHANNEL_NAME.to_owned())
+        .build()
+        .unwrap()
         .save(ctx.tx())
         .await
         .expect("Failed to save channel");

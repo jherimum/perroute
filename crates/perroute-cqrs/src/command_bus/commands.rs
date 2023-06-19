@@ -15,7 +15,7 @@ pub enum ChannelEvent {
     Deleted(Id),
 }
 
-#[derive(Display, Debug)]
+#[derive(Display, Debug, Clone)]
 pub enum CommandType {
     CreateChannel,
     UpdateChannel,

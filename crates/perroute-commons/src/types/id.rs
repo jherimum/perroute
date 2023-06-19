@@ -5,7 +5,7 @@ use std::{fmt::Display, str::FromStr};
 #[macro_export]
 macro_rules! new_id {
     () => {
-        Id::new()
+        $crate::types::id::Id::new()
     };
 }
 

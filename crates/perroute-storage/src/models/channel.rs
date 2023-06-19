@@ -1,10 +1,11 @@
+use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::types::{code::Code, id::Id};
 use sqlx::{FromRow, PgExecutor};
 use tap::TapFallible;
 
-#[derive(Debug, FromRow, PartialEq, Eq, Clone, Getters, Setters)]
+#[derive(Debug, FromRow, PartialEq, Eq, Clone, Getters, Setters, Builder)]
 #[setters(prefix = "with_")]
 #[setters(borrow_self)]
 pub struct Channel {
@@ -14,14 +15,7 @@ pub struct Channel {
 }
 
 impl Channel {
-    pub fn new(id: Id, code: Code, name: impl Into<String>) -> Self {
-        Self {
-            id,
-            code,
-            name: name.into(),
-        }
-    }
-
+    #[tracing::instrument(name = "channel.exists_by_code", skip(exec))]
     pub async fn exists_by_code<'e, E: PgExecutor<'e>>(
         exec: E,
         code: Code,
@@ -31,6 +25,7 @@ impl Channel {
             .map_or_else(|| false, |_| true))
     }
 
+    #[tracing::instrument(name = "channel.save", skip(exec))]
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
         sqlx::query_as("INSERT INTO channels (id, code, name) VALUES($1, $2, $3) RETURNING *")
             .bind(self.id)
@@ -41,6 +36,7 @@ impl Channel {
             .tap_err(|e| tracing::error!("Query error. {e}"))
     }
 
+    #[tracing::instrument(name = "channel.update", skip(exec))]
     pub async fn update<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
         sqlx::query_as("UPDATE channels SET name= $1 WHERE id= $2 RETURNING *")
             .bind(self.name)
@@ -50,6 +46,7 @@ impl Channel {
             .tap_err(|e| tracing::error!("Query error. {e}"))
     }
 
+    #[tracing::instrument(name = "channel.delete", skip(exec))]
     pub async fn delete<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<bool, sqlx::Error> {
         sqlx::query("DELETE FROM channels WHERE id= $1")
             .bind(self.id)
@@ -59,6 +56,7 @@ impl Channel {
             .map(|result| result.rows_affected() > 0)
     }
 
+    #[tracing::instrument(name = "channel.find_by_id", skip(exec))]
     pub async fn find_by_id<'e, E: PgExecutor<'e>>(
         exec: E,
         id: Id,
@@ -70,6 +68,7 @@ impl Channel {
             .tap_err(|e| tracing::error!("Query error. {e}"))
     }
 
+    #[tracing::instrument(name = "channel.find_by_code", skip(exec))]
     pub async fn find_by_code<'e, E: PgExecutor<'e>>(
         exec: E,
         code: Code,

@@ -1,4 +1,3 @@
-use axum::response::IntoResponse;
 use perroute_commons::{crypto::CryptoError, rest::RestError};
 use perroute_cqrs::{command_bus::error::CommandBusError, query_bus::error::QueryBusError};
 
@@ -17,15 +16,5 @@ pub enum PerrouteError {
     CommandBus(#[from] CommandBusError),
 
     #[error(transparent)]
-    QueryBusErrorBus(#[from] QueryBusError),
-}
-
-impl IntoResponse for PerrouteError {
-    fn into_response(self) -> axum::response::Response {
-        match self {
-            PerrouteError::Rest(e) => e,
-            _ => RestError::InernalServer,
-        }
-        .into_response()
-    }
+    QueryBus(#[from] QueryBusError),
 }

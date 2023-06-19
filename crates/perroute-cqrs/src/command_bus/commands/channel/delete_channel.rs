@@ -24,7 +24,7 @@ impl Command for DeleteChannelCommand {
 #[derive(Debug, new)]
 pub struct DeleteChannelCommandHandler;
 
-#[derive(thiserror::Error, Debug)]
+#[derive(thiserror::Error, Debug, Clone)]
 pub enum DeleteChannelError {
     #[error("Channel with id {0} nor found")]
     ChannelNotFound(Id),

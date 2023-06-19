@@ -1,16 +1,13 @@
 mod common;
 
-use perroute_commons::types::code::Code;
-use perroute_commons::types::id::Id;
 use perroute_commons::{code, new_id, types::actor::Actor};
-
 use perroute_cqrs::command_bus::commands::channel::delete_channel::DeleteChannelError;
 use perroute_cqrs::command_bus::error::CommandBusError;
 use perroute_cqrs::command_bus::{
     bus::CommandHandler,
     commands::channel::delete_channel::{DeleteChannelCommand, DeleteChannelCommandHandler},
 };
-use perroute_storage::models::channel::Channel;
+use perroute_storage::models::channel::{Channel, ChannelBuilder};
 use sqlx::PgPool;
 use std::str::FromStr;
 
@@ -18,7 +15,13 @@ use std::str::FromStr;
 fn test_when_succesfuly_deleted(pool: PgPool) {
     let mut ctx = common::start_context(pool, Actor::system()).await;
     let channel_id = new_id!();
-    Channel::new(channel_id, code!("CODE"), "Name")
+
+    ChannelBuilder::default()
+        .id(channel_id)
+        .code(code!("CODE"))
+        .name("Name".to_owned())
+        .build()
+        .unwrap()
         .save(ctx.tx())
         .await
         .expect("Failed to save channel");

@@ -6,7 +6,7 @@ use crate::command_bus::{
 use async_trait::async_trait;
 use derive_new::new;
 use perroute_commons::types::{code::Code, id::Id};
-use perroute_storage::models::channel::Channel;
+use perroute_storage::models::channel::{Channel, ChannelBuilder};
 use serde::Serialize;
 use tap::TapFallible;
 
@@ -26,7 +26,7 @@ impl Command for CreateChannelCommand {
 #[derive(Debug, new)]
 pub struct CreateChannelCommandHandler;
 
-#[derive(thiserror::Error, Debug)]
+#[derive(thiserror::Error, Debug, Clone)]
 pub enum CreateChannelError {
     #[error("A channel with code {0} already exists")]
     CodeAlreadyExists(Code),
@@ -36,7 +36,7 @@ pub enum CreateChannelError {
 impl CommandHandler for CreateChannelCommandHandler {
     type Command = CreateChannelCommand;
 
-    #[tracing::instrument(skip(self))]
+    #[tracing::instrument(name = "create_channel_command", skip(self))]
     async fn handle<'tx>(
         &self,
         ctx: &mut CommandBusContext<'tx>,
@@ -51,10 +51,16 @@ impl CommandHandler for CreateChannelCommandHandler {
                 )
             })?
         {
+            tracing::error!("Channel with code {} already exists", cmd.code);
             return Err(CreateChannelError::CodeAlreadyExists(cmd.code.clone()).into());
         }
 
-        Channel::new(cmd.channel_id, cmd.code, &cmd.name)
+        ChannelBuilder::default()
+            .id(cmd.channel_id)
+            .code(cmd.code)
+            .name(cmd.name)
+            .build()
+            .unwrap()
             .save(ctx.tx())
             .await
             .unwrap();

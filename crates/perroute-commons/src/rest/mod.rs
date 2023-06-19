@@ -1,5 +1,5 @@
 use axum::{http::StatusCode, response::IntoResponse, Json};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, __private::de};
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ErrorResponse {
@@ -14,15 +14,22 @@ pub enum RestError {
     NotFound(String),
 
     #[error("Internal Server Error")]
-    InernalServer,
+    InternalServer,
+
+    #[error("Unprocessable Entity")]
+    UnprocessableEntity(String),
 }
 
 impl IntoResponse for RestError {
     fn into_response(self) -> axum::response::Response {
         match self {
             RestError::NotFound(_) => (StatusCode::NOT_FOUND, Json(self.as_error_response())),
-            RestError::InernalServer => (
+            RestError::InternalServer => (
                 StatusCode::INTERNAL_SERVER_ERROR,
+                Json(self.as_error_response()),
+            ),
+            RestError::UnprocessableEntity(_) => (
+                StatusCode::UNPROCESSABLE_ENTITY,
                 Json(self.as_error_response()),
             ),
         }
@@ -37,8 +44,11 @@ impl RestError {
             RestError::NotFound(detail) => {
                 ErrorResponse::new(StatusCode::NOT_FOUND, message, Some(detail))
             }
-            RestError::InernalServer => {
+            RestError::InternalServer => {
                 ErrorResponse::new(StatusCode::INTERNAL_SERVER_ERROR, message, None)
+            }
+            RestError::UnprocessableEntity(detail) => {
+                ErrorResponse::new(StatusCode::UNPROCESSABLE_ENTITY, message, Some(detail))
             }
         }
     }

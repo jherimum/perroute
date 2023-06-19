@@ -28,6 +28,7 @@ impl QueryHandler for FindChannelQueryHandler {
     type Query = FindChannelQuery;
     type Output = Option<Channel>;
 
+    #[tracing::instrument(name = "query_channel_handler", skip(self, ctx))]
     async fn handle(
         &self,
         ctx: &QueryBusContext,

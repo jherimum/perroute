@@ -26,7 +26,7 @@ impl Command for UpdateChannelCommand {
 #[derive(Debug, new)]
 pub struct UpdateChannelCommandHandler;
 
-#[derive(thiserror::Error, Debug)]
+#[derive(thiserror::Error, Debug, Clone)]
 pub enum UpdateChannelError {
     #[error("Channel with id {0} nor found")]
     ChannelNotFound(Id),

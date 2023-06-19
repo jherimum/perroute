@@ -2,7 +2,8 @@ use super::id::Id;
 use derive_getters::Getters;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, sqlx::Type, Copy)]
+#[sqlx(type_name = "actor_type", rename_all = "snake_case")]
 pub enum ActorType {
     User,
     System,

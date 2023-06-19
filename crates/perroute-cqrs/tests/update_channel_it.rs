@@ -2,7 +2,7 @@ mod common;
 
 use perroute_commons::code;
 use perroute_commons::new_id;
-use perroute_commons::types::{actor::Actor, code::Code, id::Id};
+use perroute_commons::types::actor::Actor;
 use perroute_cqrs::command_bus::bus::CommandHandler;
 use perroute_cqrs::command_bus::commands::channel::update_channel::UpdateChannelError;
 use perroute_cqrs::command_bus::commands::channel::update_channel::{
@@ -10,6 +10,7 @@ use perroute_cqrs::command_bus::commands::channel::update_channel::{
 };
 use perroute_cqrs::command_bus::error::CommandBusError;
 use perroute_storage::models::channel::Channel;
+use perroute_storage::models::channel::ChannelBuilder;
 use sqlx::PgPool;
 use std::str::FromStr;
 
@@ -23,7 +24,12 @@ async fn test_when_succesfuly_updated(pool: PgPool) {
     let channel_id = new_id!();
     let channel_code = code!("CODE");
 
-    Channel::new(channel_id, channel_code.clone(), OLD_CHANNEL_NAME)
+    ChannelBuilder::default()
+        .id(channel_id)
+        .code(channel_code.clone())
+        .name(OLD_CHANNEL_NAME.to_owned())
+        .build()
+        .unwrap()
         .save(ctx.tx())
         .await
         .expect("Failed to create channel");
@@ -37,7 +43,14 @@ async fn test_when_succesfuly_updated(pool: PgPool) {
 
     assert_eq!(
         Channel::find_by_id(ctx.tx(), channel_id).await.unwrap(),
-        Some(Channel::new(channel_id, channel_code, NEW_CHANNEL_NAME))
+        Some(
+            ChannelBuilder::default()
+                .id(channel_id)
+                .code(channel_code)
+                .name(NEW_CHANNEL_NAME.to_owned())
+                .build()
+                .unwrap()
+        )
     );
 }
 
