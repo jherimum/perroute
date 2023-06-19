@@ -47,7 +47,7 @@ impl CommandHandler for UpdateChannelCommandHandler {
         })
         .await?;
 
-        channel.with_name(command.name);
+        channel.set_name(command.name);
 
         channel.update(ctx.tx()).await.tap_err(|e| {
             tracing::error!("Error while updating channel {}: {e}", command.chanel_id)

@@ -79,7 +79,7 @@ async fn test_channel_update(pool: PgPool) {
         .await
         .unwrap();
 
-    channel.with_name("New Channel Name".to_owned());
+    channel.set_name_name("New Channel Name".to_owned());
 
     let channel = channel.update(&pool).await.unwrap();
 

@@ -6,10 +6,12 @@ use sqlx::{FromRow, PgExecutor};
 use tap::TapFallible;
 
 #[derive(Debug, FromRow, PartialEq, Eq, Clone, Getters, Setters, Builder)]
-#[setters(prefix = "with_")]
+#[setters(prefix = "set_")]
 #[setters(borrow_self)]
 pub struct Channel {
+    #[setters(skip)]
     id: Id,
+    #[setters(skip)]
     code: Code,
     name: String,
 }
