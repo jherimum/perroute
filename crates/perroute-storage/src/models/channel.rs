@@ -1,3 +1,4 @@
+use crate::log_query_error;
 use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
@@ -35,7 +36,7 @@ impl Channel {
             .bind(self.name)
             .fetch_one(exec)
             .await
-            .tap_err(|e| tracing::error!("Query error. {e}"))
+            .tap_err(log_query_error!())
     }
 
     #[tracing::instrument(name = "channel.update", skip(exec))]
@@ -45,7 +46,7 @@ impl Channel {
             .bind(self.id)
             .fetch_one(exec)
             .await
-            .tap_err(|e| tracing::error!("Query error. {e}"))
+            .tap_err(log_query_error!())
     }
 
     #[tracing::instrument(name = "channel.delete", skip(exec))]
@@ -54,7 +55,7 @@ impl Channel {
             .bind(self.id)
             .execute(exec)
             .await
-            .tap_err(|e| tracing::error!("Query error. {e}"))
+            .tap_err(log_query_error!())
             .map(|result| result.rows_affected() > 0)
     }
 
@@ -67,7 +68,7 @@ impl Channel {
             .bind(id)
             .fetch_optional(exec)
             .await
-            .tap_err(|e| tracing::error!("Query error. {e}"))
+            .tap_err(log_query_error!())
     }
 
     #[tracing::instrument(name = "channel.find_by_code", skip(exec))]
@@ -79,6 +80,6 @@ impl Channel {
             .bind(code)
             .fetch_optional(exec)
             .await
-            .tap_err(|e| tracing::error!("Query error. {e}"))
+            .tap_err(log_query_error!())
     }
 }
