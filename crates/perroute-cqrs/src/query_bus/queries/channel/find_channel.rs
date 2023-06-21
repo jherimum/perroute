@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use derive_builder::Builder;
 use derive_new::new;
 use perroute_commons::types::id::Id;
 use perroute_storage::models::channel::Channel;
@@ -10,9 +11,9 @@ use crate::query_bus::{
     queries::QueryType,
 };
 
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, new)]
+#[derive(Debug, PartialEq, Eq, Clone, Serialize, Builder)]
 pub struct FindChannelQuery {
-    pub channel_id: Id,
+    channel_id: Id,
 }
 
 pub struct FindChannelQueryHandler;

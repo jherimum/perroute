@@ -18,7 +18,6 @@ pub trait Command: Debug + Serialize + Clone + PartialEq + Eq + Send + Sync {
     }
 }
 
-#[macro_export]
 macro_rules! impl_command {
     ($cmd: ty, $ty: expr) => {
         impl Command for $cmd {
@@ -61,15 +60,15 @@ pub struct CreateChannelCommand {
     name: String,
 }
 
-#[derive(Debug, new, Serialize, Clone, PartialEq, Eq)]
+#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
 pub struct DeleteChannelCommand {
-    pub channel_id: Id,
+    channel_id: Id,
 }
 
-#[derive(Debug, new, Serialize, Clone, PartialEq, Eq)]
+#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
 pub struct UpdateChannelCommand {
-    pub chanel_id: Id,
-    pub name: String,
+    channel_id: Id,
+    name: String,
 }
 
 impl_command!(self::CreateChannelCommand, CommandType::CreateChannel);

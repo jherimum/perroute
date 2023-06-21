@@ -27,15 +27,15 @@ impl CommandHandler for UpdateChannelCommandHandler {
         ctx: &mut crate::command_bus::bus::CommandBusContext<'ctx>,
         command: Self::Command,
     ) -> Result<(), CommandBusError> {
-        let mut channel = retrieve_channel(ctx, &command.chanel_id, |id| {
+        let mut channel = retrieve_channel(ctx, command.channel_id(), |id| {
             UpdateChannelError::ChannelNotFound(id).into()
         })
         .await?;
 
-        channel.set_name(command.name);
+        channel.set_name(command.name().to_owned());
 
         channel.update(ctx.tx()).await.tap_err(|e| {
-            tracing::error!("Error while updating channel {}: {e}", command.chanel_id)
+            tracing::error!("Error while updating channel {}: {e}", command.channel_id())
         })?;
 
         Ok(())

@@ -27,13 +27,13 @@ impl CommandHandler for DeleteChannelCommandHandler {
         ctx: &mut CommandBusContext<'ctx>,
         command: Self::Command,
     ) -> Result<(), CommandBusError> {
-        retrieve_channel(ctx, &command.channel_id, |id| {
+        retrieve_channel(ctx, command.channel_id(), |id| {
             DeleteChannelError::ChannelNotFound(id).into()
         })
         .await?
         .delete(ctx.tx())
         .await
-        .tap_err(|e| tracing::error!("Failed to delete channel {}: {e}", command.channel_id))?;
+        .tap_err(|e| tracing::error!("Failed to delete channel {}: {e}", command.channel_id()))?;
 
         Ok(())
     }

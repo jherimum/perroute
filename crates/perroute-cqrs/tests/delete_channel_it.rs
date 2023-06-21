@@ -3,7 +3,7 @@ mod common;
 use perroute_commons::{code, new_id, types::actor::Actor};
 use perroute_cqrs::command_bus::{
     bus::CommandHandler,
-    commands::DeleteChannelCommand,
+    commands::DeleteChannelCommandBuilder,
     error::CommandBusError,
     handlers::channel::delete_channel::{DeleteChannelCommandHandler, DeleteChannelError},
 };
@@ -26,8 +26,13 @@ fn test_when_succesfuly_deleted(pool: PgPool) {
         .await
         .expect("Failed to save channel");
 
+    let cmd = DeleteChannelCommandBuilder::default()
+        .channel_id(channel_id)
+        .build()
+        .unwrap();
+
     DeleteChannelCommandHandler
-        .handle(&mut ctx, DeleteChannelCommand::new(channel_id))
+        .handle(&mut ctx, cmd)
         .await
         .expect("Failed to delete channel");
 
@@ -41,9 +46,11 @@ fn test_when_succesfuly_deleted(pool: PgPool) {
 fn test_when_channel_do_not_exists(pool: PgPool) {
     let mut ctx = common::start_context(pool, Actor::system()).await;
     let channel_id = new_id!();
-    let result = DeleteChannelCommandHandler
-        .handle(&mut ctx, DeleteChannelCommand::new(channel_id))
-        .await;
+    let cmd = DeleteChannelCommandBuilder::default()
+        .channel_id(channel_id)
+        .build()
+        .unwrap();
+    let result = DeleteChannelCommandHandler.handle(&mut ctx, cmd).await;
 
     match result {
         Ok(_) => panic!("Should not be able to delete channel"),

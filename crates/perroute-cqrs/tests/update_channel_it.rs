@@ -4,7 +4,7 @@ use perroute_commons::code;
 use perroute_commons::new_id;
 use perroute_commons::types::actor::Actor;
 use perroute_cqrs::command_bus::bus::CommandHandler;
-use perroute_cqrs::command_bus::commands::UpdateChannelCommand;
+use perroute_cqrs::command_bus::commands::UpdateChannelCommandBuilder;
 use perroute_cqrs::command_bus::error::CommandBusError;
 use perroute_cqrs::command_bus::handlers::channel::update_channel::UpdateChannelCommandHandler;
 use perroute_cqrs::command_bus::handlers::channel::update_channel::UpdateChannelError;
@@ -33,7 +33,11 @@ async fn test_when_succesfuly_updated(pool: PgPool) {
         .await
         .expect("Failed to create channel");
 
-    let command = UpdateChannelCommand::new(channel_id, NEW_CHANNEL_NAME.to_owned());
+    let command = UpdateChannelCommandBuilder::default()
+        .channel_id(channel_id)
+        .name(NEW_CHANNEL_NAME.to_owned())
+        .build()
+        .unwrap();
 
     UpdateChannelCommandHandler
         .handle(&mut ctx, command)
@@ -58,13 +62,12 @@ async fn test_when_channel_does_not_exists(pool: PgPool) {
     let mut ctx = common::start_context(pool, Actor::system()).await;
 
     let channel_id = new_id!();
-
-    let result = UpdateChannelCommandHandler
-        .handle(
-            &mut ctx,
-            UpdateChannelCommand::new(channel_id, OLD_CHANNEL_NAME.to_owned()),
-        )
-        .await;
+    let cmd = UpdateChannelCommandBuilder::default()
+        .channel_id(channel_id)
+        .name(OLD_CHANNEL_NAME.to_owned())
+        .build()
+        .unwrap();
+    let result = UpdateChannelCommandHandler.handle(&mut ctx, cmd).await;
 
     match result {
         Ok(_) => panic!("Should not be able to update a channel that does not exists"),

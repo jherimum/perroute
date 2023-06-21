@@ -1,25 +1,36 @@
+use std::ops::Deref;
+
 use crate::rest::api_models::channel::{
     ChannelResource, CreateChannelRequest, UpdateChannelRequest,
 };
 use crate::rest::Buses;
 use axum::extract::{Path, State};
-use axum::routing::post;
+use axum::routing::{delete, post};
 use axum::routing::{get, put};
 use axum::{Json, Router};
 use perroute_commons::new_id;
 use perroute_commons::rest::RestError;
 use perroute_commons::types::actor::Actor;
-use perroute_commons::types::id::Id;
+use perroute_commons::types::id::{self, Id};
 use perroute_cqrs::command_bus::bus::CommandBus;
 
-use perroute_cqrs::command_bus::commands::{CreateChannelCommandBuilder, UpdateChannelCommand};
-use perroute_cqrs::command_bus::handlers::channel::create_channel::CreateChannelCommandHandler;
+use perroute_cqrs::command_bus::commands::{
+    CreateChannelCommandBuilder, DeleteChannelCommand, DeleteChannelCommandBuilder,
+    UpdateChannelCommand, UpdateChannelCommandBuilder,
+};
+use perroute_cqrs::command_bus::error::CommandBusError;
+use perroute_cqrs::command_bus::handlers::channel::create_channel::{
+    CreateChannelCommandHandler, CreateChannelError,
+};
+use perroute_cqrs::command_bus::handlers::channel::delete_channel::DeleteChannelCommandHandler;
 use perroute_cqrs::command_bus::handlers::channel::update_channel::UpdateChannelCommandHandler;
 use perroute_cqrs::query_bus::bus::QueryBus;
 use perroute_cqrs::query_bus::queries::channel::find_channel::{
-    FindChannelQuery, FindChannelQueryHandler,
+    FindChannelQuery, FindChannelQueryBuilder, FindChannelQueryHandler,
 };
 use tap::{TapFallible, TapOptional};
+
+use super::RestErrorHandler;
 
 pub fn routes(buses: Buses) -> Router {
     Router::new()
@@ -27,7 +38,7 @@ pub fn routes(buses: Buses) -> Router {
         .route("/", post(create_channel))
         .route("/:id", get(find_channel))
         .route("/:id", put(update_channel))
-        //.route("/:id", delete(delete_channel))
+        .route("/:id", delete(delete_channel))
         .with_state(buses)
 }
 
@@ -37,15 +48,34 @@ async fn retrieve_channel_resource(
     channel_id: Id,
     not_found: impl FnOnce(Id) -> RestError,
 ) -> Result<Json<ChannelResource>, RestError> {
+    let query = FindChannelQueryBuilder::default()
+        .channel_id(channel_id)
+        .build()
+        .unwrap();
     query_bus
-        .execute::<FindChannelQueryHandler, _, _>(actor.clone(), FindChannelQuery::new(channel_id))
+        .execute::<FindChannelQueryHandler, _, _>(actor.clone(), query)
         .await
         .tap_err(|e| tracing::error!("Failed to retrieve channel: {e}"))
         .map_err(|_| RestError::InternalServer)?
         .map(ChannelResource::from)
         .map(Json::from)
-        .tap_none(|| tracing::error!("Channel not found"))
+        .tap_none(|| tracing::error!("Channel {channel_id} not found"))
         .ok_or(not_found(channel_id))
+}
+
+pub struct CreateChannelErrorHandler;
+
+impl RestErrorHandler<CommandBusError> for CreateChannelErrorHandler {
+    fn handle(error: CommandBusError) -> RestError {
+        match error {
+            CommandBusError::CreateChannel(e) => match e {
+                CreateChannelError::CodeAlreadyExists(_) => {
+                    RestError::UnprocessableEntity(e.to_string())
+                }
+            },
+            _ => RestError::InternalServer,
+        }
+    }
 }
 
 #[tracing::instrument(skip(command_bus, query_bus))]
@@ -66,7 +96,7 @@ async fn create_channel(
         .execute::<_, CreateChannelCommandHandler>(actor.clone(), command.clone())
         .await
         .tap_err(|e| tracing::error!("Failed to create channel: {e}"))
-        .map_err(|e| RestError::UnprocessableEntity(e.to_string()))?;
+        .map_err(CreateChannelErrorHandler::handle)?;
 
     retrieve_channel_resource(&actor, &query_bus, *command.channel_id(), |_| {
         RestError::InternalServer
@@ -93,7 +123,11 @@ async fn update_channel(
     Json(req): Json<UpdateChannelRequest>,
 ) -> Result<Json<ChannelResource>, RestError> {
     let actor = Actor::system();
-    let command = UpdateChannelCommand::new(channel_id, req.name);
+    let command = UpdateChannelCommandBuilder::default()
+        .channel_id(channel_id)
+        .name(req.name)
+        .build()
+        .unwrap();
 
     command_bus
         .execute::<_, UpdateChannelCommandHandler>(actor.clone(), command)
@@ -104,6 +138,22 @@ async fn update_channel(
         RestError::NotFound(format!("Channel {id} not found"))
     })
     .await
+}
+
+#[tracing::instrument(skip(command_bus))]
+async fn delete_channel(
+    State(command_bus): State<CommandBus>,
+    Path(id): Path<id::Id>,
+) -> Result<(), RestError> {
+    let cmd = DeleteChannelCommandBuilder::default()
+        .channel_id(id)
+        .build()
+        .unwrap();
+    command_bus
+        .execute::<_, DeleteChannelCommandHandler>(Actor::system(), cmd)
+        .await
+        .unwrap();
+    Ok(())
 }
 
 // /* create a axum handler for get */
@@ -147,19 +197,4 @@ async fn update_channel(
 //     fn from(value: W<(id::Id, UpdateChannelRequest)>) -> Self {
 //         update_channel::Command::new(value.0 .0, value.0 .1.name)
 //     }
-// }
-
-// async fn delete_channel(
-//     State(message_bus): State<MessageBus>,
-//     Path(id): Path<id::Id>,
-// ) -> Result<(), RestError> {
-//     message_bus
-//         .execute::<delete_channel::Handler, _, _, _>(
-//             Actor::System,
-//             delete_channel::Command::new(id),
-//         )
-//         .await
-//         .unwrap()
-//         .unwrap();
-//     Ok(())
 // }
