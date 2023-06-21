@@ -1,3 +1,4 @@
+use chrono::{NaiveDateTime, Utc};
 use perroute_commons::types::{
     actor::{Actor, ActorType},
     id::Id,
@@ -13,7 +14,7 @@ pub struct CommandLog {
     payload: serde_json::Value,
     actor_type: ActorType,
     actor_id: Option<Id>,
-    created_at: time::OffsetDateTime,
+    created_at: NaiveDateTime,
     error: Option<String>,
 }
 
@@ -33,7 +34,7 @@ impl CommandLog {
             payload,
             actor_type: *actor.ty(),
             actor_id: *actor.id(),
-            created_at: time::OffsetDateTime::now_utc(),
+            created_at: Utc::now().naive_utc(),
             error: error.map(|e| format!("{e}")),
         }
     }
@@ -50,6 +51,7 @@ impl CommandLog {
         .bind(self.payload)
         .bind(self.actor_type)
         .bind(self.actor_id)
+        .bind(self.created_at)
         .bind(self.error)
         .fetch_one(exec)
         .await

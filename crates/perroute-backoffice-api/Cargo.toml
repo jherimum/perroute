@@ -15,12 +15,12 @@ async-trait = "0.1"
 axum = { version = "0.6", features = ["macros"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-sqlx = { version = "0.6", features = ["postgres", "runtime-tokio-rustls", "time", "uuid"] }
+sqlx = { version = "0.6", features = ["postgres", "runtime-tokio-rustls", "chrono", "uuid"] }
 strum = { version = "0.24", features = ["derive"] }
 strum_macros = "0.24"
 tap = "1"
 thiserror = "1"
-time = "0.3"
+chrono = "0.4"
 tokio = { version = "1", features = ["macros", "rt", "rt-multi-thread", "signal"] }
 uuid = { version = "1", features = ["fast-rng", "v4", "v3", "serde"] }
 tracing = "0.1"

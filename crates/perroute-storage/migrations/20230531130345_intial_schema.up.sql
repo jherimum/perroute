@@ -23,7 +23,7 @@ CREATE TABLE users (
 );
 
 
-CREATE TYPE actor_type AS ENUM ('User', 'System', 'Service');
+CREATE TYPE actor_type AS ENUM ('user', 'system', 'service');
 
 CREATE TABLE command_logs(
 	id 				uuid 	NOT NULL,
