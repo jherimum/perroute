@@ -4,11 +4,11 @@ use perroute_commons::code;
 use perroute_commons::new_id;
 use perroute_commons::types::actor::Actor;
 use perroute_cqrs::command_bus::bus::CommandHandler;
-use perroute_cqrs::command_bus::commands::channel::create_channel::CreateChannelCommandBuilder;
-use perroute_cqrs::command_bus::commands::channel::create_channel::{
-    CreateChannelCommand, CreateChannelCommandHandler, CreateChannelError,
-};
+use perroute_cqrs::command_bus::commands::CreateChannelCommand;
+use perroute_cqrs::command_bus::commands::CreateChannelCommandBuilder;
 use perroute_cqrs::command_bus::error::CommandBusError;
+use perroute_cqrs::command_bus::handlers::channel::create_channel::CreateChannelCommandHandler;
+use perroute_cqrs::command_bus::handlers::channel::create_channel::CreateChannelError;
 use perroute_storage::models::channel::Channel;
 use perroute_storage::models::channel::ChannelBuilder;
 use sqlx::PgPool;

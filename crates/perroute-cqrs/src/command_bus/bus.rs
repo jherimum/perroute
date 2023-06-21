@@ -1,8 +1,6 @@
-use super::{commands::CommandType, error::CommandBusError};
+use super::{commands::Command, error::CommandBusError};
 use async_trait::async_trait;
 use perroute_commons::types::actor::Actor;
-use perroute_storage::models::command_log::CommandLog;
-use serde::Serialize;
 use sqlx::{PgPool, Postgres, Transaction};
 use std::{
     any::{Any, TypeId},
@@ -49,18 +47,6 @@ impl<'tx> CommandBusContext<'tx> {
             .await
             .tap_err(|e| tracing::error!("Failed to commit transaction: {e}"))
             .map_err(Into::into)
-    }
-}
-
-#[async_trait]
-pub trait Command: Debug + Serialize + Clone + PartialEq + Eq + Send + Sync {
-    fn ty(&self) -> CommandType;
-
-    fn to_log<E>(&self, actor: &Actor, error: Option<&E>) -> CommandLog
-    where
-        E: std::error::Error + Send + Sync + 'static,
-    {
-        CommandLog::new(self.ty(), serde_json::to_value(self).unwrap(), actor, error)
     }
 }
 

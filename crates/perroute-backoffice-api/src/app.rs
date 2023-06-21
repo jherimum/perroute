@@ -4,7 +4,7 @@ use anyhow::{Context, Result};
 use axum::Router;
 use perroute_commons::configuration::settings::Settings;
 use perroute_cqrs::command_bus::bus::CommandBus;
-use perroute_cqrs::command_bus::commands::channel::create_channel::CreateChannelCommandHandler;
+use perroute_cqrs::command_bus::handlers::channel::create_channel::CreateChannelCommandHandler;
 use perroute_cqrs::query_bus::bus::QueryBus;
 use perroute_cqrs::query_bus::queries::channel::find_channel::FindChannelQueryHandler;
 use perroute_storage::connection_manager::ConnectionManager;

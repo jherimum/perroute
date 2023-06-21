@@ -1,27 +1,12 @@
 use crate::command_bus::{
-    bus::{Command, CommandHandler},
-    commands::CommandType,
-    error::CommandBusError,
+    bus::CommandHandler, commands::UpdateChannelCommand, error::CommandBusError,
 };
 use async_trait::async_trait;
 use derive_new::new;
 use perroute_commons::types::id::Id;
-use serde::Serialize;
 use tap::TapFallible;
 
 use super::retrieve_channel;
-
-#[derive(Debug, new, Serialize, Clone, PartialEq, Eq)]
-pub struct UpdateChannelCommand {
-    pub chanel_id: Id,
-    pub name: String,
-}
-
-impl Command for UpdateChannelCommand {
-    fn ty(&self) -> CommandType {
-        CommandType::UpdateChannel
-    }
-}
 
 #[derive(Debug, new)]
 pub struct UpdateChannelCommandHandler;

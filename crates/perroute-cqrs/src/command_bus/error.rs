@@ -1,9 +1,9 @@
-use super::commands::{
-    channel::{
+use super::{
+    commands::CommandType,
+    handlers::channel::{
         create_channel::CreateChannelError, delete_channel::DeleteChannelError,
         update_channel::UpdateChannelError,
     },
-    CommandType,
 };
 
 #[derive(Debug, thiserror::Error)]

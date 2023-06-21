@@ -1,11 +1,11 @@
 mod common;
 
 use perroute_commons::{code, new_id, types::actor::Actor};
-use perroute_cqrs::command_bus::commands::channel::delete_channel::DeleteChannelError;
-use perroute_cqrs::command_bus::error::CommandBusError;
 use perroute_cqrs::command_bus::{
     bus::CommandHandler,
-    commands::channel::delete_channel::{DeleteChannelCommand, DeleteChannelCommandHandler},
+    commands::DeleteChannelCommand,
+    error::CommandBusError,
+    handlers::channel::delete_channel::{DeleteChannelCommandHandler, DeleteChannelError},
 };
 use perroute_storage::models::channel::{Channel, ChannelBuilder};
 use sqlx::PgPool;

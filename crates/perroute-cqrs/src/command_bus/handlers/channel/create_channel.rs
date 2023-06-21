@@ -1,30 +1,14 @@
-use crate::{
-    command_bus::{
-        bus::{Command, CommandBusContext, CommandHandler},
-        commands::CommandType,
-        error::CommandBusError,
-    },
-    impl_command,
+use crate::command_bus::{
+    bus::{CommandBusContext, CommandHandler},
+    commands::CreateChannelCommand,
+    error::CommandBusError,
 };
 use async_trait::async_trait;
-use derive_builder::Builder;
-use derive_getters::Getters;
-use derive_new::new;
-use perroute_commons::types::{code::Code, id::Id};
+use perroute_commons::types::code::Code;
 use perroute_storage::models::channel::{Channel, ChannelBuilder};
-use serde::Serialize;
 use tap::TapFallible;
 
-#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
-pub struct CreateChannelCommand {
-    channel_id: Id,
-    code: Code,
-    name: String,
-}
-
-impl_command!(self::CreateChannelCommand, CommandType::CreateChannel);
-
-#[derive(Debug, new)]
+#[derive(Debug)]
 pub struct CreateChannelCommandHandler;
 
 #[derive(thiserror::Error, Debug, Clone)]
@@ -43,23 +27,23 @@ impl CommandHandler for CreateChannelCommandHandler {
         ctx: &mut CommandBusContext<'tx>,
         cmd: Self::Command,
     ) -> Result<(), CommandBusError> {
-        if Channel::exists_by_code(ctx.tx(), &cmd.code)
+        if Channel::exists_by_code(ctx.tx(), cmd.code())
             .await
             .tap_err(|e| {
                 tracing::error!(
                     "Failed to checking if channel with code {} exists: {e}",
-                    cmd.code
+                    cmd.code()
                 )
             })?
         {
-            tracing::error!("Channel with code {} already exists", cmd.code);
-            return Err(CreateChannelError::CodeAlreadyExists(cmd.code.clone()).into());
+            tracing::error!("Channel with code {} already exists", cmd.code());
+            return Err(CreateChannelError::CodeAlreadyExists(cmd.code().clone()).into());
         }
 
         ChannelBuilder::default()
-            .id(cmd.channel_id)
-            .code(cmd.code)
-            .name(cmd.name)
+            .id(*cmd.channel_id())
+            .code(cmd.code().clone())
+            .name(cmd.name().clone())
             .build()
             .unwrap()
             .save(ctx.tx())

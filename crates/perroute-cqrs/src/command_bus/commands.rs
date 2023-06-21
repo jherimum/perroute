@@ -1,6 +1,22 @@
-use perroute_commons::types::id::Id;
+use derive_builder::Builder;
+use derive_getters::Getters;
+use derive_new::new;
+use perroute_commons::types::{actor::Actor, code::Code, id::Id};
+use perroute_storage::models::command_log::CommandLog;
+use serde::Serialize;
+use std::fmt::Debug;
 use strum_macros::Display;
-pub mod channel;
+
+pub trait Command: Debug + Serialize + Clone + PartialEq + Eq + Send + Sync {
+    fn ty(&self) -> CommandType;
+
+    fn to_log<E>(&self, actor: &Actor, error: Option<&E>) -> CommandLog
+    where
+        E: std::error::Error + Send + Sync + 'static,
+    {
+        CommandLog::new(self.ty(), serde_json::to_value(self).unwrap(), actor, error)
+    }
+}
 
 #[macro_export]
 macro_rules! impl_command {
@@ -37,3 +53,25 @@ impl From<CommandType> for String {
         value.to_string()
     }
 }
+
+#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
+pub struct CreateChannelCommand {
+    channel_id: Id,
+    code: Code,
+    name: String,
+}
+
+#[derive(Debug, new, Serialize, Clone, PartialEq, Eq)]
+pub struct DeleteChannelCommand {
+    pub channel_id: Id,
+}
+
+#[derive(Debug, new, Serialize, Clone, PartialEq, Eq)]
+pub struct UpdateChannelCommand {
+    pub chanel_id: Id,
+    pub name: String,
+}
+
+impl_command!(self::CreateChannelCommand, CommandType::CreateChannel);
+impl_command!(self::DeleteChannelCommand, CommandType::DeleteChannel);
+impl_command!(self::UpdateChannelCommand, CommandType::UpdateChannel);

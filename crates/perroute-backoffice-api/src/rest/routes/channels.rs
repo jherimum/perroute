@@ -11,12 +11,10 @@ use perroute_commons::rest::RestError;
 use perroute_commons::types::actor::Actor;
 use perroute_commons::types::id::Id;
 use perroute_cqrs::command_bus::bus::CommandBus;
-use perroute_cqrs::command_bus::commands::channel::create_channel::{
-    CreateChannelCommandBuilder, CreateChannelCommandHandler,
-};
-use perroute_cqrs::command_bus::commands::channel::update_channel::{
-    UpdateChannelCommand, UpdateChannelCommandHandler,
-};
+
+use perroute_cqrs::command_bus::commands::{CreateChannelCommandBuilder, UpdateChannelCommand};
+use perroute_cqrs::command_bus::handlers::channel::create_channel::CreateChannelCommandHandler;
+use perroute_cqrs::command_bus::handlers::channel::update_channel::UpdateChannelCommandHandler;
 use perroute_cqrs::query_bus::bus::QueryBus;
 use perroute_cqrs::query_bus::queries::channel::find_channel::{
     FindChannelQuery, FindChannelQueryHandler,
