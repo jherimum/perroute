@@ -8,7 +8,7 @@ pub struct ErrorResponse {
     pub detail: Option<String>,
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, Clone)]
 pub enum RestError {
     #[error("Not found")]
     NotFound(String),
@@ -22,25 +22,20 @@ pub enum RestError {
 
 impl IntoResponse for RestError {
     fn into_response(self) -> axum::response::Response {
+        let response: Json<ErrorResponse> = Json(self.clone().into());
         match self {
-            RestError::NotFound(_) => (StatusCode::NOT_FOUND, Json(self.as_error_response())),
-            RestError::InternalServer => (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(self.as_error_response()),
-            ),
-            RestError::UnprocessableEntity(_) => (
-                StatusCode::UNPROCESSABLE_ENTITY,
-                Json(self.as_error_response()),
-            ),
+            RestError::NotFound(_) => (StatusCode::NOT_FOUND, response),
+            RestError::InternalServer => (StatusCode::INTERNAL_SERVER_ERROR, response),
+            RestError::UnprocessableEntity(_) => (StatusCode::UNPROCESSABLE_ENTITY, response),
         }
         .into_response()
     }
 }
 
-impl RestError {
-    pub fn as_error_response(self) -> ErrorResponse {
-        let message = self.to_string();
-        match self {
+impl From<RestError> for ErrorResponse {
+    fn from(value: RestError) -> Self {
+        let message = value.to_string();
+        match value {
             RestError::NotFound(detail) => {
                 ErrorResponse::new(StatusCode::NOT_FOUND, message, Some(detail))
             }
