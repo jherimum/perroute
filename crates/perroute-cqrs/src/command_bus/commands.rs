@@ -1,7 +1,17 @@
 use perroute_commons::types::id::Id;
 use strum_macros::Display;
-
 pub mod channel;
+
+#[macro_export]
+macro_rules! impl_command {
+    ($cmd: ty, $ty: expr) => {
+        impl Command for $cmd {
+            fn ty(&self) -> CommandType {
+                $ty
+            }
+        }
+    };
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Event {

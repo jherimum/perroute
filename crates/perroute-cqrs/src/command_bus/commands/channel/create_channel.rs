@@ -1,7 +1,10 @@
-use crate::command_bus::{
-    bus::{Command, CommandBusContext, CommandHandler},
-    commands::CommandType,
-    error::CommandBusError,
+use crate::{
+    command_bus::{
+        bus::{Command, CommandBusContext, CommandHandler},
+        commands::CommandType,
+        error::CommandBusError,
+    },
+    impl_command,
 };
 use async_trait::async_trait;
 use derive_builder::Builder;
@@ -19,11 +22,7 @@ pub struct CreateChannelCommand {
     name: String,
 }
 
-impl Command for CreateChannelCommand {
-    fn ty(&self) -> CommandType {
-        CommandType::CreateChannel
-    }
-}
+impl_command!(self::CreateChannelCommand, CommandType::CreateChannel);
 
 #[derive(Debug, new)]
 pub struct CreateChannelCommandHandler;
