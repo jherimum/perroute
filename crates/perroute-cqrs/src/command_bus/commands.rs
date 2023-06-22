@@ -57,6 +57,9 @@ pub enum CommandType {
     CreateChannel,
     UpdateChannel,
     DeleteChannel,
+    CreateMessageType,
+    UpdateMessageType,
+    DeleteMessageType,
 }
 
 impl From<CommandType> for String {
@@ -83,6 +86,30 @@ pub struct UpdateChannelCommand {
     name: String,
 }
 
-impl_command!(self::CreateChannelCommand, CommandType::CreateChannel);
-impl_command!(self::DeleteChannelCommand, CommandType::DeleteChannel);
-impl_command!(self::UpdateChannelCommand, CommandType::UpdateChannel);
+#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
+pub struct CreateMessageTypeCommand {
+    message_type_id: Id,
+    code: Code,
+    description: String,
+    enabled: bool,
+    channel_id: Id,
+}
+
+#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
+pub struct UpdateMessageTypeCommand {
+    message_type_id: Id,
+    description: String,
+    enabled: bool,
+}
+
+#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
+pub struct DeleteMessageTypeCommand {
+    message_type_id: Id,
+}
+
+impl_command!(CreateChannelCommand, CommandType::CreateChannel);
+impl_command!(DeleteChannelCommand, CommandType::DeleteChannel);
+impl_command!(UpdateChannelCommand, CommandType::UpdateChannel);
+impl_command!(CreateMessageTypeCommand, CommandType::CreateMessageType);
+impl_command!(UpdateMessageTypeCommand, CommandType::UpdateMessageType);
+impl_command!(DeleteMessageTypeCommand, CommandType::DeleteMessageType);
