@@ -1,11 +1,11 @@
+pub mod create_channel;
+pub mod delete_channel;
+pub mod update_channel;
+
 use crate::command_bus::{bus::CommandBusContext, error::CommandBusError};
 use perroute_commons::types::id::Id;
 use perroute_storage::models::channel::Channel;
 use tap::TapFallible;
-
-pub mod create_channel;
-pub mod delete_channel;
-pub mod update_channel;
 
 pub async fn retrieve_channel<'ctx>(
     ctx: &mut CommandBusContext<'ctx>,

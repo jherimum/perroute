@@ -69,7 +69,7 @@ async fn test_channel_save(pool: PgPool) {
 #[sqlx::test]
 async fn test_channel_update(pool: PgPool) {
     let channel_id = new_id!();
-    let mut channel = ChannelBuilder::default()
+    let channel = ChannelBuilder::default()
         .id(channel_id)
         .code(code!("CODE"))
         .name("channel name".to_owned())
@@ -79,9 +79,11 @@ async fn test_channel_update(pool: PgPool) {
         .await
         .unwrap();
 
-    channel.set_name("New Channel Name".to_owned());
-
-    let channel = channel.update(&pool).await.unwrap();
+    let channel = channel
+        .set_name("New Channel Name".to_owned())
+        .update(&pool)
+        .await
+        .unwrap();
 
     assert_eq!(
         Channel::find_by_id(&pool, &channel_id).await.unwrap(),

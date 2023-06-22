@@ -1,6 +1,5 @@
 use derive_builder::Builder;
 use derive_getters::Getters;
-use derive_new::new;
 use perroute_commons::types::{actor::Actor, code::Code, id::Id};
 use perroute_storage::models::command_log::CommandLog;
 use serde::Serialize;

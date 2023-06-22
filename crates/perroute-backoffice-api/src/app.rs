@@ -1,12 +1,15 @@
-use crate::rest::routes::{channels, health};
+use crate::rest::routes::{channels_routes, health};
 use crate::rest::Buses;
 use anyhow::{Context, Result};
 use axum::Router;
 use perroute_commons::configuration::settings::Settings;
 use perroute_cqrs::command_bus::bus::CommandBus;
 use perroute_cqrs::command_bus::handlers::channel::create_channel::CreateChannelCommandHandler;
+use perroute_cqrs::command_bus::handlers::channel::delete_channel::DeleteChannelCommandHandler;
+use perroute_cqrs::command_bus::handlers::channel::update_channel::UpdateChannelCommandHandler;
 use perroute_cqrs::query_bus::bus::QueryBus;
 use perroute_cqrs::query_bus::queries::channel::find_channel::FindChannelQueryHandler;
+use perroute_cqrs::query_bus::queries::channel::query_channels::QueryChannelsQueryHandler;
 use perroute_storage::connection_manager::ConnectionManager;
 use sqlx::PgPool;
 use std::net::SocketAddr;
@@ -33,10 +36,13 @@ impl App {
         let query_bus = QueryBus::builder()
             .with_pool(self.pool.clone())
             .with_handler(FindChannelQueryHandler)
+            .with_handler(QueryChannelsQueryHandler)
             .build();
         let command_bus = CommandBus::builder()
             .with_pool(self.pool.clone())
             .with_handler(CreateChannelCommandHandler)
+            .with_handler(DeleteChannelCommandHandler)
+            .with_handler(UpdateChannelCommandHandler)
             .build();
         let buses = Buses::new(command_bus, query_bus);
 
@@ -46,7 +52,7 @@ impl App {
                 // .merge(
                 //     Router::new().nest("/v1/connections", connections::routes(message_bus.clone())),
                 // )
-                .merge(Router::new().nest("/v1/channels", channels::routes(buses))),
+                .merge(Router::new().nest("/v1/channels", channels_routes::routes(buses))),
         );
 
         tracing::info!("listening on {}", &self.addr);

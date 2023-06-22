@@ -3,6 +3,7 @@ use crate::command_bus::{
     commands::CreateChannelCommand,
     error::CommandBusError,
 };
+use anyhow::Context;
 use async_trait::async_trait;
 use perroute_commons::types::code::Code;
 use perroute_storage::models::channel::{Channel, ChannelBuilder};
@@ -36,7 +37,6 @@ impl CommandHandler for CreateChannelCommandHandler {
                 )
             })?
         {
-            tracing::error!("Channel with code {} already exists", cmd.code());
             return Err(CreateChannelError::CodeAlreadyExists(cmd.code().clone()).into());
         }
 
@@ -45,11 +45,14 @@ impl CommandHandler for CreateChannelCommandHandler {
             .code(cmd.code().clone())
             .name(cmd.name().clone())
             .build()
-            .unwrap()
+            .tap_err(|e| {
+                tracing::error!("Failed to build channel: {e}");
+            })
+            .with_context(|| "Failed to build channel")?
             .save(ctx.tx())
             .await
-            .unwrap();
-
-        Ok(())
+            .tap_err(|e| tracing::error!("Failed to save channel: {e}"))
+            .map_err(CommandBusError::from)
+            .map(|_| ())
     }
 }

@@ -8,6 +8,12 @@ pub struct ErrorResponse {
     pub detail: Option<String>,
 }
 
+impl From<anyhow::Error> for RestError {
+    fn from(_: anyhow::Error) -> Self {
+        RestError::InternalServer
+    }
+}
+
 #[derive(Debug, thiserror::Error, Clone)]
 pub enum RestError {
     #[error("Not found")]

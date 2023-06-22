@@ -32,7 +32,7 @@ CREATE TABLE command_logs(
 	actor_id 		uuid 	NULL,
 	payload 		jsonb 	NOT NULL,
 	error 			varchar NULL,
-	created_at 		timestamptz NOT NULL DEFAULT NOW(),
+	created_at 		timestamp NOT NULL DEFAULT NOW(),
 
 	CONSTRAINT command_logs_pk 			PRIMARY KEY (id)
 

@@ -8,7 +8,6 @@ use tap::TapFallible;
 
 #[derive(Debug, FromRow, PartialEq, Eq, Clone, Getters, Setters, Builder)]
 #[setters(prefix = "set_")]
-#[setters(borrow_self)]
 pub struct Channel {
     #[setters(skip)]
     id: Id,
@@ -79,6 +78,13 @@ impl Channel {
         sqlx::query_as("SELECT * FROM channels WHERE code = $1")
             .bind(code)
             .fetch_optional(exec)
+            .await
+            .tap_err(log_query_error!())
+    }
+
+    pub async fn query<'e, E: PgExecutor<'e>>(exec: E) -> Result<Vec<Channel>, sqlx::Error> {
+        sqlx::query_as("SELECT * FROM channels")
+            .fetch_all(exec)
             .await
             .tap_err(log_query_error!())
     }
