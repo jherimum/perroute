@@ -16,7 +16,7 @@ async fn test_channel_find_by_id(pool: PgPool) {
         .unwrap()
         .save(&pool)
         .await
-        .unwrap();
+        .expect("failed to save channel");
 
     assert_eq!(
         Channel::find_by_id(&pool, channel.id()).await.unwrap(),
@@ -135,4 +135,40 @@ async fn test_channel_delete(pool: PgPool) {
         .await
         .unwrap()
         .is_none());
+}
+
+#[sqlx::test]
+async fn test_query(pool: PgPool) {
+    let channels = Channel::query(&pool)
+        .await
+        .expect("failed to query channels");
+
+    assert!(channels.is_empty());
+
+    let channel_1 = ChannelBuilder::default()
+        .id(new_id!())
+        .code(code!("CODE"))
+        .name("channel name".to_owned())
+        .build()
+        .unwrap()
+        .save(&pool)
+        .await
+        .expect("failed to save channel");
+
+    let channel_2 = ChannelBuilder::default()
+        .id(new_id!())
+        .code(code!("CODE1"))
+        .name("channel name".to_owned())
+        .build()
+        .unwrap()
+        .save(&pool)
+        .await
+        .expect("failed to save channel");
+
+    let channels = Channel::query(&pool)
+        .await
+        .expect("failed to query channels");
+
+    assert!(channels.contains(&channel_1));
+    assert!(channels.contains(&channel_2));
 }

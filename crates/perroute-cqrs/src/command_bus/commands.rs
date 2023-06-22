@@ -1,7 +1,11 @@
+use chrono::Utc;
 use derive_builder::Builder;
 use derive_getters::Getters;
-use perroute_commons::types::{actor::Actor, code::Code, id::Id};
-use perroute_storage::models::command_log::CommandLog;
+use perroute_commons::{
+    new_id,
+    types::{actor::Actor, code::Code, id::Id},
+};
+use perroute_storage::models::command_log::{CommandLog, CommandLogBuilder};
 use serde::Serialize;
 use std::fmt::Debug;
 use strum_macros::Display;
@@ -13,7 +17,16 @@ pub trait Command: Debug + Serialize + Clone + PartialEq + Eq + Send + Sync {
     where
         E: std::error::Error + Send + Sync + 'static,
     {
-        CommandLog::new(self.ty(), serde_json::to_value(self).unwrap(), actor, error)
+        CommandLogBuilder::default()
+            .id(new_id!())
+            .actor_type(*actor.ty())
+            .actor_id(*actor.id())
+            .command_type(self.ty())
+            .payload(serde_json::to_value(self).unwrap())
+            .created_at(Utc::now().naive_utc())
+            .error(error.map(|e| format!("{e}")))
+            .build()
+            .unwrap()
     }
 }
 

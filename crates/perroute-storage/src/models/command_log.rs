@@ -1,13 +1,15 @@
-use chrono::{NaiveDateTime, Utc};
-use perroute_commons::types::{
-    actor::{Actor, ActorType},
-    id::Id,
-};
+use chrono::NaiveDateTime;
+use derive_builder::Builder;
+use derive_getters::Getters;
+use perroute_commons::types::{actor::ActorType, id::Id};
 use serde::Serialize;
-use sqlx::PgExecutor;
+use sqlx::{FromRow, PgExecutor};
 use tap::TapFallible;
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+use crate::log_query_error;
+
+#[derive(Debug, FromRow, PartialEq, Eq, Clone, Getters, Builder, Serialize)]
+#[builder(setter(into))]
 pub struct CommandLog {
     id: Id,
     command_type: String,
@@ -19,26 +21,6 @@ pub struct CommandLog {
 }
 
 impl CommandLog {
-    pub fn new<E>(
-        command: impl Into<String>,
-        payload: serde_json::Value,
-        actor: &Actor,
-        error: Option<E>,
-    ) -> Self
-    where
-        E: std::fmt::Display,
-    {
-        Self {
-            id: Id::new(),
-            command_type: command.into(),
-            payload,
-            actor_type: *actor.ty(),
-            actor_id: *actor.id(),
-            created_at: Utc::now().naive_utc(),
-            error: error.map(|e| format!("{e}")),
-        }
-    }
-
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
         sqlx::query_as(
             r#"
@@ -55,6 +37,6 @@ impl CommandLog {
         .bind(self.error)
         .fetch_one(exec)
         .await
-        .tap_err(|e| tracing::error!("Query error. {e}"))
+        .tap_err(log_query_error!())
     }
 }

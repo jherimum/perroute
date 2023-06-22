@@ -7,7 +7,9 @@ use sqlx::{FromRow, PgExecutor};
 use tap::TapFallible;
 
 #[derive(Debug, FromRow, PartialEq, Eq, Clone, Getters, Setters, Builder)]
+#[builder(setter(into))]
 #[setters(prefix = "set_")]
+#[setters(into)]
 pub struct Channel {
     #[setters(skip)]
     id: Id,
@@ -23,7 +25,8 @@ impl Channel {
         code: &Code,
     ) -> Result<bool, sqlx::Error> {
         Ok(Self::find_by_code(exec, code)
-            .await?
+            .await
+            .tap_err(|e| tracing::error!("Failed to find by code: {e}"))?
             .map_or_else(|| false, |_| true))
     }
 
