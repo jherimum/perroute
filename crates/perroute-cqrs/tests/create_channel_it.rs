@@ -25,7 +25,7 @@ fn build_command(code: impl Into<String>) -> CreateChannelCommand {
         .unwrap()
 }
 #[sqlx::test(migrator = "perroute_storage::connection_manager::MIGRATOR")]
-fn test_when_succesfuly_created(pool: PgPool) {
+fn test_when_successfully_created(pool: PgPool) {
     let mut ctx = common::start_context(pool, Actor::system()).await;
 
     let command = build_command("CODE");

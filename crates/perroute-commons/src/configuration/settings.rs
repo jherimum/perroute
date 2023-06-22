@@ -79,7 +79,7 @@ impl Settings {
             .tap_err(|e| tracing::error!("{:?}", e))?;
         settings
             .try_deserialize::<Settings>()
-            .tap_err(|e| tracing::error!("Faile to deserialize settings. Error: {e}"))
+            .tap_err(|e| tracing::error!("Failed to deserialize settings. Error: {e}"))
             .map_err(anyhow::Error::from)
             .tap(|s| tracing::debug!("Settings loaded: {s:#?}"))
     }

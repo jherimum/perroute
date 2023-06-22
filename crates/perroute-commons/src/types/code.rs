@@ -111,13 +111,13 @@ mod tests {
     fn test_code_deserialize() {
         assert_eq!(
             serde_json::from_str::<Code>(r#""CODE""#)
-                .expect("Shoud not failed to deserialize code"),
+                .expect("Should not failed to deserialize code"),
             Code("CODE".to_string())
         );
 
         assert_eq!(
             serde_json::from_str::<Code>(r#""CODE1""#)
-                .expect("Shoud not failed to deserialize code"),
+                .expect("Should not failed to deserialize code"),
             Code("CODE1".to_string())
         );
         let code = serde_json::from_str::<Code>(r#""""#);

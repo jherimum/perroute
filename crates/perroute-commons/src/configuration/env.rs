@@ -68,7 +68,7 @@ mod tests {
     #[case(Some("production"), Environment::Production)]
     #[case(Some("sandbox"), Environment::Sandbox)]
     #[case(Some("invalid"), Environment::Development)]
-    fn test_wich(#[case] env_value: Option<&str>, #[case] environment: Environment) {
+    fn test_which(#[case] env_value: Option<&str>, #[case] environment: Environment) {
         if env_value.is_some() {
             temp_env::with_var(RUN_ENV, env_value, || {
                 assert_eq!(Environment::which(), environment);

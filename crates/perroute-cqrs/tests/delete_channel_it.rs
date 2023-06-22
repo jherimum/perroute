@@ -12,7 +12,7 @@ use sqlx::PgPool;
 use std::str::FromStr;
 
 #[sqlx::test(migrator = "perroute_storage::connection_manager::MIGRATOR")]
-fn test_when_succesfuly_deleted(pool: PgPool) {
+fn test_when_successfully_deleted(pool: PgPool) {
     let mut ctx = common::start_context(pool, Actor::system()).await;
     let channel_id = new_id!();
 

@@ -25,7 +25,7 @@ impl QueryHandler for QueryChannelsQueryHandler {
     type Query = QueryChannelsQuery;
     type Output = Vec<Channel>;
 
-    #[tracing::instrument(name = "querys_channels_handler", skip(self, ctx))]
+    #[tracing::instrument(name = "query_channels_handler", skip(self, ctx))]
     async fn handle(
         &self,
         ctx: &QueryBusContext,

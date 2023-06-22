@@ -17,7 +17,7 @@ const OLD_CHANNEL_NAME: &str = "Channel Name";
 const NEW_CHANNEL_NAME: &str = "New Channel Name";
 
 #[sqlx::test(migrator = "perroute_storage::connection_manager::MIGRATOR")]
-async fn test_when_succesfuly_updated(pool: PgPool) {
+async fn test_when_successfully_updated(pool: PgPool) {
     let mut ctx = common::start_context(pool, Actor::system()).await;
 
     let channel_id = new_id!();
