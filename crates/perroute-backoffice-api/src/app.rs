@@ -8,8 +8,8 @@ use perroute_cqrs::command_bus::handlers::channel::create_channel::CreateChannel
 use perroute_cqrs::command_bus::handlers::channel::delete_channel::DeleteChannelCommandHandler;
 use perroute_cqrs::command_bus::handlers::channel::update_channel::UpdateChannelCommandHandler;
 use perroute_cqrs::query_bus::bus::QueryBus;
-use perroute_cqrs::query_bus::queries::channel::find_channel::FindChannelQueryHandler;
-use perroute_cqrs::query_bus::queries::channel::query_channels::QueryChannelsQueryHandler;
+use perroute_cqrs::query_bus::handlers::channel::find_channel::FindChannelQueryHandler;
+use perroute_cqrs::query_bus::handlers::channel::query_channels::QueryChannelsQueryHandler;
 use perroute_storage::connection_manager::ConnectionManager;
 use sqlx::PgPool;
 use std::net::SocketAddr;

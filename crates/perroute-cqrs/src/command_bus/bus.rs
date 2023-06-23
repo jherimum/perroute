@@ -1,5 +1,4 @@
-use super::{commands::Command, error::CommandBusError};
-use async_trait::async_trait;
+use super::{commands::Command, error::CommandBusError, handlers::CommandHandler};
 use perroute_commons::types::actor::Actor;
 use sqlx::{PgPool, Postgres, Transaction};
 use std::{
@@ -29,7 +28,7 @@ impl<'tx> CommandBusContext<'tx> {
         Ok(Self { pool, actor, tx })
     }
 
-    pub fn actor(&self) -> &Actor {
+    pub const fn actor(&self) -> &Actor {
         &self.actor
     }
 
@@ -37,7 +36,7 @@ impl<'tx> CommandBusContext<'tx> {
         &mut self.tx
     }
 
-    pub fn pool(&self) -> &PgPool {
+    pub const fn pool(&self) -> &PgPool {
         &self.pool
     }
 
@@ -48,17 +47,6 @@ impl<'tx> CommandBusContext<'tx> {
             .tap_err(|e| tracing::error!("Failed to commit transaction: {e}"))
             .map_err(Into::into)
     }
-}
-
-#[async_trait]
-pub trait CommandHandler: Send + Sync + Debug {
-    type Command: Command;
-
-    async fn handle<'tx>(
-        &self,
-        ctx: &mut CommandBusContext<'tx>,
-        cmd: Self::Command,
-    ) -> Result<(), CommandBusError>;
 }
 
 #[derive(Default)]

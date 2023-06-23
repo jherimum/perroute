@@ -20,7 +20,7 @@ impl FromStr for Email {
     type Err = ParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Email(s.to_owned()))
+        Ok(Self(s.to_owned()))
     }
 }
 

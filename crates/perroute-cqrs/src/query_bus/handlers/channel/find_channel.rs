@@ -1,27 +1,13 @@
 use async_trait::async_trait;
-use derive_builder::Builder;
-use perroute_commons::types::id::Id;
 use perroute_storage::models::channel::Channel;
-use serde::Serialize;
 
 use crate::query_bus::{
-    bus::{Query, QueryBusContext, QueryHandler},
+    bus::{QueryBusContext, QueryHandler},
     error::QueryBusError,
-    queries::QueryType,
+    queries::FindChannelQuery,
 };
 
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Builder)]
-pub struct FindChannelQuery {
-    channel_id: Id,
-}
-
 pub struct FindChannelQueryHandler;
-
-impl Query for FindChannelQuery {
-    fn ty(&self) -> QueryType {
-        QueryType::FindChannel
-    }
-}
 
 #[async_trait]
 impl QueryHandler for FindChannelQueryHandler {
@@ -34,7 +20,7 @@ impl QueryHandler for FindChannelQueryHandler {
         ctx: &QueryBusContext,
         query: Self::Query,
     ) -> Result<Self::Output, QueryBusError> {
-        Channel::find_by_id(ctx.pool(), &query.channel_id)
+        Channel::find_by_id(ctx.pool(), query.channel_id())
             .await
             .map_err(Into::into)
     }

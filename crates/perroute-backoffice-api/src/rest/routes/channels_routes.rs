@@ -1,8 +1,8 @@
+use crate::errors::PerrouteBackofficeApiError;
 use crate::rest::api_models::channel::{
     ChannelResource, CreateChannelRequest, UpdateChannelRequest,
 };
 use crate::rest::Buses;
-use crate::types::W;
 use axum::extract::{Path, State};
 use axum::routing::{delete, post};
 use axum::routing::{get, put};
@@ -20,12 +20,9 @@ use perroute_cqrs::command_bus::handlers::channel::create_channel::CreateChannel
 use perroute_cqrs::command_bus::handlers::channel::delete_channel::DeleteChannelCommandHandler;
 use perroute_cqrs::command_bus::handlers::channel::update_channel::UpdateChannelCommandHandler;
 use perroute_cqrs::query_bus::bus::QueryBus;
-use perroute_cqrs::query_bus::queries::channel::find_channel::{
-    FindChannelQueryBuilder, FindChannelQueryHandler,
-};
-use perroute_cqrs::query_bus::queries::channel::query_channels::{
-    QueryChannelsQueryBuilder, QueryChannelsQueryHandler,
-};
+use perroute_cqrs::query_bus::handlers::channel::find_channel::FindChannelQueryHandler;
+use perroute_cqrs::query_bus::handlers::channel::query_channels::QueryChannelsQueryHandler;
+use perroute_cqrs::query_bus::queries::{FindChannelQueryBuilder, QueryChannelsQueryBuilder};
 use tap::{TapFallible, TapOptional};
 
 pub fn routes(buses: Buses) -> Router {
@@ -51,10 +48,10 @@ async fn retrieve_channel_resource(
         .map_err(|_| RestError::InternalServer)?;
 
     query_bus
-        .execute::<FindChannelQueryHandler, _, _>(actor.clone(), query)
+        .execute::<_, FindChannelQueryHandler, _>(actor.clone(), query)
         .await
         .tap_err(|e| tracing::error!("Failed to retrieve channel: {e}"))
-        .map_err(W)?
+        .map_err(PerrouteBackofficeApiError::from)?
         .map(ChannelResource::from)
         .map(Json::from)
         .tap_none(|| tracing::error!("Channel {channel_id} not found"))
@@ -80,7 +77,7 @@ async fn create_channel(
         .execute::<_, CreateChannelCommandHandler>(actor.clone(), command.clone())
         .await
         .tap_err(|e| tracing::error!("Failed to create channel: {e}"))
-        .map_err(W)?;
+        .map_err(PerrouteBackofficeApiError::from)?;
 
     retrieve_channel_resource(&actor, &query_bus, *command.channel_id(), |_| {
         RestError::InternalServer
@@ -119,7 +116,7 @@ async fn update_channel(
         .execute::<_, UpdateChannelCommandHandler>(actor.clone(), command)
         .await
         .tap_err(|e| tracing::error!("Failed to update channel: {e}"))
-        .map_err(W)?;
+        .map_err(PerrouteBackofficeApiError::from)?;
 
     retrieve_channel_resource(&actor, &query_bus, channel_id, |id| {
         RestError::NotFound(format!("Channel {id} not found"))
@@ -143,7 +140,7 @@ async fn delete_channel(
         .execute::<_, DeleteChannelCommandHandler>(Actor::system(), cmd)
         .await
         .tap_err(|e| tracing::error!("Failed to delete channel: {e}"))
-        .map_err(W)?)
+        .map_err(PerrouteBackofficeApiError::from)?)
 }
 
 #[tracing::instrument(skip(query_bus))]
@@ -154,9 +151,9 @@ async fn query_channels(
     let query = QueryChannelsQueryBuilder::default().build().unwrap();
     Ok(Json::from(
         query_bus
-            .execute::<QueryChannelsQueryHandler, _, _>(actor, query)
+            .execute::<_, QueryChannelsQueryHandler, _>(actor, query)
             .await
-            .map_err(W)?
+            .map_err(PerrouteBackofficeApiError::from)?
             .into_iter()
             .map(ChannelResource::from)
             .collect::<Vec<_>>(),

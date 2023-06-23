@@ -1,24 +1,12 @@
-use async_trait::async_trait;
-use derive_builder::Builder;
-use perroute_storage::models::channel::Channel;
-use serde::Serialize;
-
 use crate::query_bus::{
-    bus::{Query, QueryBusContext, QueryHandler},
+    bus::{QueryBusContext, QueryHandler},
     error::QueryBusError,
-    queries::QueryType,
+    queries::QueryChannelsQuery,
 };
-
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Builder)]
-pub struct QueryChannelsQuery {}
+use async_trait::async_trait;
+use perroute_storage::models::channel::Channel;
 
 pub struct QueryChannelsQueryHandler;
-
-impl Query for QueryChannelsQuery {
-    fn ty(&self) -> QueryType {
-        QueryType::QueryChannels
-    }
-}
 
 #[async_trait]
 impl QueryHandler for QueryChannelsQueryHandler {

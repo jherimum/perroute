@@ -1,5 +1,5 @@
 use crate::command_bus::{
-    bus::CommandHandler, commands::UpdateChannelCommand, error::CommandBusError,
+    commands::UpdateChannelCommand, error::CommandBusError, handlers::CommandHandler,
 };
 use async_trait::async_trait;
 use derive_new::new;

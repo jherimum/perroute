@@ -1,6 +1,6 @@
+use super::{error::QueryBusError, queries::Query};
 use async_trait::async_trait;
 use perroute_commons::types::actor::Actor;
-use serde::Serialize;
 use sqlx::PgPool;
 use std::{
     any::{Any, TypeId},
@@ -9,8 +9,6 @@ use std::{
     sync::Arc,
 };
 use tap::TapOptional;
-
-use super::{error::QueryBusError, queries::QueryType};
 
 pub struct QueryBusContext {
     pool: PgPool,
@@ -29,10 +27,6 @@ impl QueryBusContext {
     pub fn pool(&self) -> &PgPool {
         &self.pool
     }
-}
-
-pub trait Query: Serialize + Clone {
-    fn ty(&self) -> QueryType;
 }
 
 #[async_trait]
@@ -57,7 +51,7 @@ impl QueryBus {
         QueryBusBuilder::default()
     }
 
-    fn get<H, Q, O>(&self) -> Option<&H>
+    fn get<Q, H, O>(&self) -> Option<&H>
     where
         H: QueryHandler<Query = Q, Output = O> + 'static + Sync + Send,
         Q: Query + 'static,
@@ -67,14 +61,14 @@ impl QueryBus {
         handler.and_then(|h| h.downcast_ref::<H>())
     }
 
-    pub async fn execute<H, Q, O>(&self, actor: Actor, query: Q) -> Result<O, QueryBusError>
+    pub async fn execute<Q, H, O>(&self, actor: Actor, query: Q) -> Result<O, QueryBusError>
     where
         H: QueryHandler<Query = Q, Output = O> + 'static + Sync + Send,
         Q: Query + 'static,
         O: Debug,
     {
         let handler = self
-            .get::<H, Q, O>()
+            .get::<Q, H, O>()
             .tap_none(|| tracing::error!("Handler not found for query: {}", query.ty()))
             .ok_or_else(|| QueryBusError::HandlerNotFound(query.ty()))?;
 

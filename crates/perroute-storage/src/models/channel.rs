@@ -85,7 +85,7 @@ impl Channel {
             .tap_err(log_query_error!())
     }
 
-    pub async fn query<'e, E: PgExecutor<'e>>(exec: E) -> Result<Vec<Channel>, sqlx::Error> {
+    pub async fn query<'e, E: PgExecutor<'e>>(exec: E) -> Result<Vec<Self>, sqlx::Error> {
         sqlx::query_as("SELECT * FROM channels")
             .fetch_all(exec)
             .await

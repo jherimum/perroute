@@ -1,8 +1,7 @@
 use super::retrieve_channel;
 use crate::command_bus::{
-    bus::{CommandBusContext, CommandHandler},
-    commands::DeleteChannelCommand,
-    error::CommandBusError,
+    bus::CommandBusContext, commands::DeleteChannelCommand, error::CommandBusError,
+    handlers::CommandHandler,
 };
 use async_trait::async_trait;
 use perroute_commons::types::id::Id;

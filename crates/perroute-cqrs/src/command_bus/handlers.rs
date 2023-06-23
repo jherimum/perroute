@@ -1,0 +1,17 @@
+use std::fmt::Debug;
+
+use super::{bus::CommandBusContext, commands::Command, error::CommandBusError};
+
+pub mod channel;
+pub mod message_type;
+
+#[async_trait::async_trait]
+pub trait CommandHandler: Send + Sync + Debug {
+    type Command: Command;
+
+    async fn handle<'tx>(
+        &self,
+        ctx: &mut CommandBusContext<'tx>,
+        cmd: Self::Command,
+    ) -> Result<(), CommandBusError>;
+}

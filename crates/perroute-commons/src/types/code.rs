@@ -28,8 +28,8 @@ impl FromStr for Code {
         }
         CODE_REGEX
             .is_match(s)
-            .then(|| Code(s.to_string().to_uppercase()))
-            .ok_or(ParseError(s.to_string()))
+            .then(|| Self(s.to_string().to_uppercase()))
+            .ok_or_else(|| ParseError(s.to_string()))
     }
 }
 

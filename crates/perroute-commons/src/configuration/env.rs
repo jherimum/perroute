@@ -32,7 +32,7 @@ impl Environment {
                         .tap_err(|e| {
                             tracing::warn!("Failed to parse {} to Environment. Error: {e:?}", v)
                         })
-                        .unwrap_or(Default::default())
+                        .unwrap_or_default()
                 },
             )
     }

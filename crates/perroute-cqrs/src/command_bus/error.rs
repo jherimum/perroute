@@ -1,8 +1,15 @@
 use super::{
     commands::CommandType,
-    handlers::channel::{
-        create_channel::CreateChannelError, delete_channel::DeleteChannelError,
-        update_channel::UpdateChannelError,
+    handlers::{
+        channel::{
+            create_channel::CreateChannelError, delete_channel::DeleteChannelError,
+            update_channel::UpdateChannelError,
+        },
+        message_type::{
+            create_message_type::CreateMessageTypeError,
+            delete_message_type::DeleteMessageTypeError,
+            update_message_type::UpdateMessageTypeError,
+        },
     },
 };
 
@@ -25,4 +32,13 @@ pub enum CommandBusError {
 
     #[error(transparent)]
     DeleteChannel(#[from] DeleteChannelError),
+
+    #[error(transparent)]
+    DeleteMessageType(#[from] DeleteMessageTypeError),
+
+    #[error(transparent)]
+    UpdateMessageType(#[from] UpdateMessageTypeError),
+
+    #[error(transparent)]
+    CreateMessageType(#[from] CreateMessageTypeError),
 }

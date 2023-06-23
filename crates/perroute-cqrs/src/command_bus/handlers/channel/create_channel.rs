@@ -1,7 +1,6 @@
 use crate::command_bus::{
-    bus::{CommandBusContext, CommandHandler},
-    commands::CreateChannelCommand,
-    error::CommandBusError,
+    bus::CommandBusContext, commands::CreateChannelCommand, error::CommandBusError,
+    handlers::CommandHandler,
 };
 use anyhow::Context;
 use async_trait::async_trait;

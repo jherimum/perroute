@@ -10,6 +10,17 @@ use serde::Serialize;
 use std::fmt::Debug;
 use strum_macros::Display;
 
+macro_rules! impl_command {
+    ($cmd: ty, $ty: expr) => {
+        impl Command for $cmd {
+            fn ty(&self) -> CommandType {
+                $ty
+            }
+        }
+    };
+}
+
+
 pub trait Command: Debug + Serialize + Clone + PartialEq + Eq + Send + Sync {
     fn ty(&self) -> CommandType;
 
@@ -30,15 +41,6 @@ pub trait Command: Debug + Serialize + Clone + PartialEq + Eq + Send + Sync {
     }
 }
 
-macro_rules! impl_command {
-    ($cmd: ty, $ty: expr) => {
-        impl Command for $cmd {
-            fn ty(&self) -> CommandType {
-                $ty
-            }
-        }
-    };
-}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Event {
@@ -91,7 +93,6 @@ pub struct CreateMessageTypeCommand {
     message_type_id: Id,
     code: Code,
     description: String,
-    enabled: bool,
     channel_id: Id,
 }
 

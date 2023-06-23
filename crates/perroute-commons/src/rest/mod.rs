@@ -10,7 +10,7 @@ pub struct ErrorResponse {
 
 impl From<anyhow::Error> for RestError {
     fn from(_: anyhow::Error) -> Self {
-        RestError::InternalServer
+        Self::InternalServer
     }
 }
 
@@ -30,9 +30,9 @@ impl IntoResponse for RestError {
     fn into_response(self) -> axum::response::Response {
         let response: Json<ErrorResponse> = Json(self.clone().into());
         match self {
-            RestError::NotFound(_) => (StatusCode::NOT_FOUND, response),
-            RestError::InternalServer => (StatusCode::INTERNAL_SERVER_ERROR, response),
-            RestError::UnprocessableEntity(_) => (StatusCode::UNPROCESSABLE_ENTITY, response),
+            Self::NotFound(_) => (StatusCode::NOT_FOUND, response),
+            Self::InternalServer => (StatusCode::INTERNAL_SERVER_ERROR, response),
+            Self::UnprocessableEntity(_) => (StatusCode::UNPROCESSABLE_ENTITY, response),
         }
         .into_response()
     }
@@ -42,14 +42,12 @@ impl From<RestError> for ErrorResponse {
     fn from(value: RestError) -> Self {
         let message = value.to_string();
         match value {
-            RestError::NotFound(detail) => {
-                ErrorResponse::new(StatusCode::NOT_FOUND, message, Some(detail))
-            }
+            RestError::NotFound(detail) => Self::new(StatusCode::NOT_FOUND, message, Some(detail)),
             RestError::InternalServer => {
-                ErrorResponse::new(StatusCode::INTERNAL_SERVER_ERROR, message, None)
+                Self::new(StatusCode::INTERNAL_SERVER_ERROR, message, None)
             }
             RestError::UnprocessableEntity(detail) => {
-                ErrorResponse::new(StatusCode::UNPROCESSABLE_ENTITY, message, Some(detail))
+                Self::new(StatusCode::UNPROCESSABLE_ENTITY, message, Some(detail))
             }
         }
     }

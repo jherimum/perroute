@@ -27,7 +27,7 @@ impl TryFrom<&ServerSettings> for SocketAddr {
     type Error = AddrParseError;
 
     fn try_from(value: &ServerSettings) -> Result<Self, Self::Error> {
-        SocketAddr::from_str(&format!("{}:{}", value.host, value.port))
+        Self::from_str(&format!("{}:{}", value.host, value.port))
     }
 }
 
@@ -78,7 +78,7 @@ impl Settings {
             .build()
             .tap_err(|e| tracing::error!("{:?}", e))?;
         settings
-            .try_deserialize::<Settings>()
+            .try_deserialize::<Self>()
             .tap_err(|e| tracing::error!("Failed to deserialize settings. Error: {e}"))
             .map_err(anyhow::Error::from)
             .tap(|s| tracing::debug!("Settings loaded: {s:#?}"))
