@@ -1,4 +1,6 @@
-use crate::rest::routes::{channels_routes, health, message_types_routes};
+use crate::rest::routes::channels_routes::ChannelRouter;
+use crate::rest::routes::health::HealthRouter;
+use crate::rest::routes::message_types_routes::MessageTypeRouter;
 use crate::rest::Buses;
 use anyhow::{Context, Result};
 use axum::Router;
@@ -52,11 +54,11 @@ impl App {
             .build();
         let buses = Buses::new(command_bus, query_bus);
 
-        let app = Router::new().nest("/", health::routes()).nest(
+        let app = Router::new().nest("/", HealthRouter::routes()).nest(
             "/api",
             Router::new()
-                .merge(channels_routes::routes(buses.clone()))
-                .merge(message_types_routes::routes(buses)),
+                .merge(ChannelRouter::routes(buses.clone()))
+                .merge(MessageTypeRouter::routes(buses)),
         );
 
         tracing::info!("listening on {}", &self.addr);
