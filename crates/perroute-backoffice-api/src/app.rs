@@ -1,6 +1,7 @@
-use crate::rest::routes::channels_routes::ChannelRouter;
-use crate::rest::routes::health::HealthRouter;
-use crate::rest::routes::message_types_routes::MessageTypeRouter;
+use crate::rest::routes::channel_router::ChannelRouter;
+use crate::rest::routes::health_router::HealthRouter;
+use crate::rest::routes::message_type_router::MessageTypeRouter;
+use crate::rest::routes::message_type_version_router::MessageTypeVersionRouter;
 use crate::rest::Buses;
 use anyhow::{Context, Result};
 use axum::Router;
@@ -58,7 +59,8 @@ impl App {
             "/api",
             Router::new()
                 .merge(ChannelRouter::routes(buses.clone()))
-                .merge(MessageTypeRouter::routes(buses)),
+                .merge(MessageTypeRouter::routes(buses.clone()))
+                .merge(MessageTypeVersionRouter::routes(buses)),
         );
 
         tracing::info!("listening on {}", &self.addr);

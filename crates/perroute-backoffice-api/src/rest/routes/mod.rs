@@ -1,7 +1,4 @@
-//pub mod connections;
-pub mod channels_routes;
-//pub mod connections;
-pub mod health;
-//pub mod plugins;
-
-pub mod message_types_routes;
+pub mod channel_router;
+pub mod health_router;
+pub mod message_type_router;
+pub mod message_type_version_router;
