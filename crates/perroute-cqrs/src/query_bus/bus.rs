@@ -1,4 +1,16 @@
-use super::{error::QueryBusError, queries::Query};
+use super::{
+    error::QueryBusError,
+    handlers::{
+        channel::{
+            find_channel::FindChannelQueryHandler, query_channels::QueryChannelsQueryHandler,
+        },
+        message_type::{
+            find_message_type::FindMessageTypeQueryHandler,
+            query_message_types::QueryMessageTypesHandler,
+        },
+    },
+    queries::Query,
+};
 use async_trait::async_trait;
 use perroute_commons::types::actor::Actor;
 use sqlx::PgPool;
@@ -47,6 +59,16 @@ pub struct QueryBus {
 }
 
 impl QueryBus {
+    pub fn complete(pool: PgPool) -> Self {
+        QueryBus::builder()
+            .with_pool(pool)
+            .with_handler(FindChannelQueryHandler)
+            .with_handler(QueryChannelsQueryHandler)
+            .with_handler(QueryMessageTypesHandler)
+            .with_handler(FindMessageTypeQueryHandler)
+            .build()
+    }
+
     pub fn builder() -> QueryBusBuilder {
         QueryBusBuilder::default()
     }

@@ -1,4 +1,23 @@
-use super::{commands::Command, error::CommandBusError, handlers::CommandHandler};
+use super::{
+    commands::Command,
+    error::CommandBusError,
+    handlers::{
+        channel::{
+            create_channel::CreateChannelCommandHandler,
+            delete_channel::DeleteChannelCommandHandler,
+            update_channel::UpdateChannelCommandHandler,
+        },
+        message_type::create_message_type::CreateMessageTypeCommandHandler,
+        message_type_version::{
+            create_message_type_version::CreateMessageTypeVersionCommandHandler,
+            delete_message_type_version::DeleteMessageTypeVersionCommandHandler,
+            duplicate_message_type_version::DuplicateMessageTypeVersionCommandHandler,
+            publish_message_type_version::PublishMessageTypeVersionCommandHandler,
+            update_message_type_version::UpdateMessageTypeVersionCommandHandler,
+        },
+        CommandHandler,
+    },
+};
 use perroute_commons::types::actor::Actor;
 use sqlx::{PgPool, Postgres, Transaction};
 use std::{
@@ -29,7 +48,7 @@ impl<'tx, 'a> CommandBusContext<'tx, 'a> {
     }
 
     pub const fn actor(&self) -> &Actor {
-        &self.actor
+        self.actor
     }
 
     pub fn tx(&mut self) -> &mut Transaction<'tx, Postgres> {
@@ -85,6 +104,21 @@ pub struct CommandBus {
 }
 
 impl CommandBus {
+    pub fn complete(pool: PgPool) -> Self {
+        Self::builder()
+            .with_pool(pool)
+            .with_handler(CreateChannelCommandHandler)
+            .with_handler(DeleteChannelCommandHandler)
+            .with_handler(UpdateChannelCommandHandler)
+            .with_handler(CreateMessageTypeCommandHandler)
+            .with_handler(CreateMessageTypeVersionCommandHandler)
+            .with_handler(UpdateMessageTypeVersionCommandHandler)
+            .with_handler(DeleteMessageTypeVersionCommandHandler)
+            .with_handler(PublishMessageTypeVersionCommandHandler)
+            .with_handler(DuplicateMessageTypeVersionCommandHandler)
+            .build()
+    }
+
     pub fn builder() -> CommandBusBuilder {
         Default::default()
     }
@@ -122,7 +156,7 @@ impl CommandBus {
                 tracing::info!("Command handled successfully: {event:?}"); //TODO: improve logging
             });
 
-        cmd.to_log(&actor, handler_result.as_ref().err())
+        cmd.to_log(actor, handler_result.as_ref().err())
             .save(ctx.tx())
             .await
             .tap_err(|e| tracing::error!("Failed to save command log: {e}"))?;

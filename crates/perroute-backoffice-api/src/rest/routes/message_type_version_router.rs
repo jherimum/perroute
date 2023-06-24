@@ -16,12 +16,13 @@ impl MessageTypeVersionRouter {
                     .route("/", get(Self::query_versions))
                     .route("/", post(Self::create_version))
                     .nest(
-                        "/:id",
+                        "/:message_type_version_id",
                         Router::new()
                             .route("/", get(Self::find_version))
                             .route("/", put(Self::update_version))
                             .route("/", delete(Self::delete_version))
-                            .route("/publish", post(Self::publish_version)),
+                            .route("/publish", post(Self::publish_version))
+                            .route("/duplicate", post(Self::duplicate_version)),
                     ),
             )
             .with_state(buses)
@@ -48,6 +49,10 @@ impl MessageTypeVersionRouter {
     }
 
     async fn publish_version() -> impl IntoResponse {
+        todo!()
+    }
+
+    async fn duplicate_version() -> impl IntoResponse {
         todo!()
     }
 }

@@ -53,7 +53,7 @@ impl MessageTypeRouter {
                     .route("/", get(Self::query_message_types))
                     .route("/", post(Self::create_message_type))
                     .nest(
-                        "/:id",
+                        "/:message_type_id",
                         Router::new()
                             .route("/", get(Self::find_message_type))
                             .route("/", put(Self::update_message_type))

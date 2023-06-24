@@ -7,15 +7,7 @@ use anyhow::{Context, Result};
 use axum::Router;
 use perroute_commons::configuration::settings::Settings;
 use perroute_cqrs::command_bus::bus::CommandBus;
-use perroute_cqrs::command_bus::handlers::channel::create_channel::CreateChannelCommandHandler;
-use perroute_cqrs::command_bus::handlers::channel::delete_channel::DeleteChannelCommandHandler;
-use perroute_cqrs::command_bus::handlers::channel::update_channel::UpdateChannelCommandHandler;
-use perroute_cqrs::command_bus::handlers::message_type::create_message_type::CreateMessageTypeCommandHandler;
 use perroute_cqrs::query_bus::bus::QueryBus;
-use perroute_cqrs::query_bus::handlers::channel::find_channel::FindChannelQueryHandler;
-use perroute_cqrs::query_bus::handlers::channel::query_channels::QueryChannelsQueryHandler;
-use perroute_cqrs::query_bus::handlers::message_type::find_message_type::FindMessageTypeQueryHandler;
-use perroute_cqrs::query_bus::handlers::message_type::query_message_types::QueryMessageTypesHandler;
 use perroute_storage::connection_manager::ConnectionManager;
 use sqlx::PgPool;
 use std::net::SocketAddr;
@@ -39,21 +31,10 @@ impl App {
     }
 
     pub async fn init(self) -> Result<()> {
-        let query_bus = QueryBus::builder()
-            .with_pool(self.pool.clone())
-            .with_handler(FindChannelQueryHandler)
-            .with_handler(QueryChannelsQueryHandler)
-            .with_handler(QueryMessageTypesHandler)
-            .with_handler(FindMessageTypeQueryHandler)
-            .build();
-        let command_bus = CommandBus::builder()
-            .with_pool(self.pool.clone())
-            .with_handler(CreateChannelCommandHandler)
-            .with_handler(DeleteChannelCommandHandler)
-            .with_handler(UpdateChannelCommandHandler)
-            .with_handler(CreateMessageTypeCommandHandler)
-            .build();
-        let buses = Buses::new(command_bus, query_bus);
+        let buses = Buses::new(
+            CommandBus::complete(self.pool.clone()),
+            QueryBus::complete(self.pool.clone()),
+        );
 
         let app = Router::new().nest("/", HealthRouter::routes()).nest(
             "/api",

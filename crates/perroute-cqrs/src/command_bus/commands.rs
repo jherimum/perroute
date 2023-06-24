@@ -20,7 +20,6 @@ macro_rules! impl_command {
     };
 }
 
-
 pub trait Command: Debug + Serialize + Clone + PartialEq + Eq + Send + Sync {
     fn ty(&self) -> CommandType;
 
@@ -41,7 +40,6 @@ pub trait Command: Debug + Serialize + Clone + PartialEq + Eq + Send + Sync {
     }
 }
 
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Event {
     ChannelEvent(ChannelEvent),
@@ -59,9 +57,16 @@ pub enum CommandType {
     CreateChannel,
     UpdateChannel,
     DeleteChannel,
+
     CreateMessageType,
     UpdateMessageType,
     DeleteMessageType,
+
+    CreateMessageTypeVersion,
+    UpdateMessageTypeVersion,
+    DeleteMessageTypeVersion,
+    PublishMessageTypeVersion,
+    DuplicateMessageTypeVersion,
 }
 
 impl From<CommandType> for String {
@@ -108,9 +113,58 @@ pub struct DeleteMessageTypeCommand {
     message_type_id: Id,
 }
 
+#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
+pub struct CreateMessageTypeVersionCommand {
+    message_type_version_id: Id,
+    schema: serde_json::Value,
+    number: i32,
+    message_type_id: Id,
+}
+
+#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
+pub struct UpdateMessageTypeVersionCommand {
+    message_type_version_id: Id,
+    schema: serde_json::Value,
+}
+
+#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
+pub struct DeleteMessageTypeVersionCommand {
+    message_type_version_id: Id,
+}
+
+#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
+pub struct PublishMessageTypeVersionCommand {
+    message_type_version_id: Id,
+}
+
+#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
+pub struct DuplicateMessageTypeVersionCommand {
+    message_type_version_id: Id,
+}
+
 impl_command!(CreateChannelCommand, CommandType::CreateChannel);
 impl_command!(DeleteChannelCommand, CommandType::DeleteChannel);
 impl_command!(UpdateChannelCommand, CommandType::UpdateChannel);
 impl_command!(CreateMessageTypeCommand, CommandType::CreateMessageType);
 impl_command!(UpdateMessageTypeCommand, CommandType::UpdateMessageType);
 impl_command!(DeleteMessageTypeCommand, CommandType::DeleteMessageType);
+impl_command!(
+    CreateMessageTypeVersionCommand,
+    CommandType::CreateMessageTypeVersion
+);
+impl_command!(
+    UpdateMessageTypeVersionCommand,
+    CommandType::UpdateMessageTypeVersion
+);
+impl_command!(
+    DeleteMessageTypeVersionCommand,
+    CommandType::DuplicateMessageTypeVersion
+);
+impl_command!(
+    PublishMessageTypeVersionCommand,
+    CommandType::PublishMessageTypeVersion
+);
+impl_command!(
+    DuplicateMessageTypeVersionCommand,
+    CommandType::DuplicateMessageTypeVersion
+);
