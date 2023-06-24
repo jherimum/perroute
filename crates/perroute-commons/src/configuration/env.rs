@@ -47,14 +47,15 @@ impl Environment {
     }
 
     fn workspace_path() -> PathBuf {
-        if let Ok(manifest_dir) = std::env::var(CARGO_MANIFEST_DIR) {
-            let mut path = PathBuf::from(manifest_dir);
-            path.pop();
-            path.pop();
-            path
-        } else {
-            PathBuf::from(".")
-        }
+        std::env::var(CARGO_MANIFEST_DIR).map_or_else(
+            |_| PathBuf::from("."),
+            |manifest_dir| {
+                let mut path = PathBuf::from(manifest_dir);
+                path.pop();
+                path.pop();
+                path
+            },
+        )
     }
 }
 

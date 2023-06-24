@@ -1,4 +1,3 @@
-use axum::response::IntoResponse;
 use perroute_commons::rest::RestError;
 use perroute_cqrs::{
     command_bus::{

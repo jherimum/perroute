@@ -17,19 +17,19 @@ pub struct Actor {
 }
 
 impl Actor {
-    pub fn new(id: Option<Id>, ty: ActorType) -> Self {
+    pub const fn new(id: Option<Id>, ty: ActorType) -> Self {
         Self { id, ty }
     }
 
-    pub fn system() -> Self {
+    pub const fn system() -> Self {
         Self::new(None, ActorType::System)
     }
 
-    pub fn user(id: Id) -> Self {
+    pub const fn user(id: Id) -> Self {
         Self::new(Some(id), ActorType::User)
     }
 
-    pub fn service(id: Id) -> Self {
+    pub const fn service(id: Id) -> Self {
         Self::new(Some(id), ActorType::Service)
     }
 }

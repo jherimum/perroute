@@ -33,7 +33,7 @@ impl Connection {
     pub async fn query<'e, E: Executor<'e>>(
         _exec: E,
         _query: ConnectionsQuery,
-    ) -> Result<Vec<Connection>, sqlx::Error> {
+    ) -> Result<Vec<Self>, sqlx::Error> {
         Ok(vec![])
     }
 

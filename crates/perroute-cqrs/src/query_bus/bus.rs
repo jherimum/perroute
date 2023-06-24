@@ -28,15 +28,15 @@ pub struct QueryBusContext<'a> {
 }
 
 impl<'a> QueryBusContext<'a> {
-    pub fn new(pool: PgPool, actor: &'a Actor) -> Self {
+    pub const fn new(pool: PgPool, actor: &'a Actor) -> Self {
         Self { pool, actor }
     }
 
-    pub fn actor(&self) -> &'a Actor {
+    pub const fn actor(&self) -> &Actor {
         self.actor
     }
 
-    pub fn pool(&self) -> &PgPool {
+    pub const fn pool(&self) -> &PgPool {
         &self.pool
     }
 }
@@ -60,7 +60,7 @@ pub struct QueryBus {
 
 impl QueryBus {
     pub fn complete(pool: PgPool) -> Self {
-        QueryBus::builder()
+        Self::builder()
             .with_pool(pool)
             .with_handler(FindChannelQueryHandler)
             .with_handler(QueryChannelsQueryHandler)

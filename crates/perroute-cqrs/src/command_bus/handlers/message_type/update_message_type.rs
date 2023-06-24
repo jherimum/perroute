@@ -24,9 +24,7 @@ impl CommandHandler for UpdateMessageTypeCommandHandler {
     ) -> Result<(), CommandBusError> {
         MessageType::find_by_id(ctx.tx(), cmd.message_type_id())
             .await?
-            .ok_or(UpdateMessageTypeError::MessageTypeNotFound(
-                *cmd.message_type_id(),
-            ))?
+            .ok_or_else(|| UpdateMessageTypeError::MessageTypeNotFound(*cmd.message_type_id()))?
             .set_description(cmd.description().clone())
             .set_enabled(*cmd.enabled())
             .update(ctx.tx())
