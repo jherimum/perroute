@@ -17,9 +17,9 @@ pub struct CreateMessageTypeCommandHandler;
 #[async_trait::async_trait]
 impl CommandHandler for CreateMessageTypeCommandHandler {
     type Command = CreateMessageTypeCommand;
-    async fn handle<'tx>(
+    async fn handle<'tx, 'a>(
         &self,
-        ctx: &mut CommandBusContext<'tx>,
+        ctx: &mut CommandBusContext<'tx, 'a>,
         cmd: Self::Command,
     ) -> Result<(), CommandBusError> {
         if MessageType::exists_code(ctx.tx(), cmd.channel_id(), cmd.code()).await? {

@@ -26,7 +26,8 @@ fn build_command(code: impl Into<String>) -> CreateChannelCommand {
 }
 #[sqlx::test(migrator = "perroute_storage::connection_manager::MIGRATOR")]
 fn test_when_successfully_created(pool: PgPool) {
-    let mut ctx = common::start_context(pool, Actor::system()).await;
+    let actor = Actor::system();
+    let mut ctx = common::start_context(pool, &actor).await;
 
     let command = build_command("CODE");
     CreateChannelCommandHandler
@@ -52,7 +53,8 @@ fn test_when_successfully_created(pool: PgPool) {
 
 #[sqlx::test(migrator = "perroute_storage::connection_manager::MIGRATOR")]
 fn test_when_a_channel_with_code_already_exists(pool: PgPool) {
-    let mut ctx = common::start_context(pool, Actor::system()).await;
+    let actor = Actor::system();
+    let mut ctx = common::start_context(pool, &actor).await;
 
     ChannelBuilder::default()
         .id(new_id!())

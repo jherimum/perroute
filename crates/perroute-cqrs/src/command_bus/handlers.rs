@@ -9,9 +9,9 @@ pub mod message_type;
 pub trait CommandHandler: Send + Sync + Debug {
     type Command: Command;
 
-    async fn handle<'tx>(
+    async fn handle<'tx, 'a>(
         &self,
-        ctx: &mut CommandBusContext<'tx>,
+        ctx: &mut CommandBusContext<'tx, 'a>,
         cmd: Self::Command,
     ) -> Result<(), CommandBusError>;
 }

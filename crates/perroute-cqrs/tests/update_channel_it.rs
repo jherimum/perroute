@@ -18,7 +18,8 @@ const NEW_CHANNEL_NAME: &str = "New Channel Name";
 
 #[sqlx::test(migrator = "perroute_storage::connection_manager::MIGRATOR")]
 async fn test_when_successfully_updated(pool: PgPool) {
-    let mut ctx = common::start_context(pool, Actor::system()).await;
+    let actor = Actor::system();
+    let mut ctx = common::start_context(pool, &actor).await;
 
     let channel_id = new_id!();
     let channel_code = code!("CODE");
@@ -59,7 +60,8 @@ async fn test_when_successfully_updated(pool: PgPool) {
 
 #[sqlx::test(migrator = "perroute_storage::connection_manager::MIGRATOR")]
 async fn test_when_channel_does_not_exists(pool: PgPool) {
-    let mut ctx = common::start_context(pool, Actor::system()).await;
+    let actor = Actor::system();
+    let mut ctx = common::start_context(pool, &actor).await;
 
     let channel_id = new_id!();
     let cmd = UpdateChannelCommandBuilder::default()

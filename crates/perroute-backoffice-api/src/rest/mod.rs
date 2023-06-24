@@ -6,7 +6,7 @@ pub mod error;
 pub mod extractors;
 pub mod routes;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Buses {
     pub command_bus: CommandBus,
     pub query_bus: QueryBus,

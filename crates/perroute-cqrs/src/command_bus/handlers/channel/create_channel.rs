@@ -22,9 +22,9 @@ impl CommandHandler for CreateChannelCommandHandler {
     type Command = CreateChannelCommand;
 
     #[tracing::instrument(name = "create_channel_command", skip(self))]
-    async fn handle<'tx>(
+    async fn handle<'tx, 'a>(
         &self,
-        ctx: &mut CommandBusContext<'tx>,
+        ctx: &mut CommandBusContext<'tx, 'a>,
         cmd: Self::Command,
     ) -> Result<(), CommandBusError> {
         if Channel::exists_by_code(ctx.tx(), cmd.code())

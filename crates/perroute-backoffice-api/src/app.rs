@@ -1,4 +1,4 @@
-use crate::rest::routes::{channels_routes, health};
+use crate::rest::routes::{channels_routes, health, message_types_routes};
 use crate::rest::Buses;
 use anyhow::{Context, Result};
 use axum::Router;
@@ -7,9 +7,12 @@ use perroute_cqrs::command_bus::bus::CommandBus;
 use perroute_cqrs::command_bus::handlers::channel::create_channel::CreateChannelCommandHandler;
 use perroute_cqrs::command_bus::handlers::channel::delete_channel::DeleteChannelCommandHandler;
 use perroute_cqrs::command_bus::handlers::channel::update_channel::UpdateChannelCommandHandler;
+use perroute_cqrs::command_bus::handlers::message_type::create_message_type::CreateMessageTypeCommandHandler;
 use perroute_cqrs::query_bus::bus::QueryBus;
 use perroute_cqrs::query_bus::handlers::channel::find_channel::FindChannelQueryHandler;
 use perroute_cqrs::query_bus::handlers::channel::query_channels::QueryChannelsQueryHandler;
+use perroute_cqrs::query_bus::handlers::message_type::find_message_type::FindMessageTypeQueryHandler;
+use perroute_cqrs::query_bus::handlers::message_type::query_message_types::QueryMessageTypesHandler;
 use perroute_storage::connection_manager::ConnectionManager;
 use sqlx::PgPool;
 use std::net::SocketAddr;
@@ -37,22 +40,23 @@ impl App {
             .with_pool(self.pool.clone())
             .with_handler(FindChannelQueryHandler)
             .with_handler(QueryChannelsQueryHandler)
+            .with_handler(QueryMessageTypesHandler)
+            .with_handler(FindMessageTypeQueryHandler)
             .build();
         let command_bus = CommandBus::builder()
             .with_pool(self.pool.clone())
             .with_handler(CreateChannelCommandHandler)
             .with_handler(DeleteChannelCommandHandler)
             .with_handler(UpdateChannelCommandHandler)
+            .with_handler(CreateMessageTypeCommandHandler)
             .build();
         let buses = Buses::new(command_bus, query_bus);
 
-        let app = Router::new().nest("/healh", health::routes()).nest(
+        let app = Router::new().nest("/", health::routes()).nest(
             "/api",
             Router::new()
-                // .merge(
-                //     Router::new().nest("/v1/connections", connections::routes(message_bus.clone())),
-                // )
-                .merge(Router::new().nest("/v1/channels", channels_routes::routes(buses))),
+                .merge(channels_routes::routes(buses.clone()))
+                .merge(message_types_routes::routes(buses)),
         );
 
         tracing::info!("listening on {}", &self.addr);

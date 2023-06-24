@@ -21,9 +21,9 @@ impl CommandHandler for DeleteChannelCommandHandler {
     type Command = DeleteChannelCommand;
 
     #[tracing::instrument(skip(self))]
-    async fn handle<'ctx>(
+    async fn handle<'ctx, 'a>(
         &self,
-        ctx: &mut CommandBusContext<'ctx>,
+        ctx: &mut CommandBusContext<'ctx, 'a>,
         command: Self::Command,
     ) -> Result<(), CommandBusError> {
         retrieve_channel(ctx, command.channel_id(), |id| {

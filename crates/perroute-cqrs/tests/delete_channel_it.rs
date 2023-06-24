@@ -15,7 +15,8 @@ use std::str::FromStr;
 
 #[sqlx::test(migrator = "perroute_storage::connection_manager::MIGRATOR")]
 fn test_when_successfully_deleted(pool: PgPool) {
-    let mut ctx = common::start_context(pool, Actor::system()).await;
+    let actor = Actor::system();
+    let mut ctx = common::start_context(pool, &actor).await;
     let channel_id = new_id!();
 
     ChannelBuilder::default()
@@ -46,7 +47,8 @@ fn test_when_successfully_deleted(pool: PgPool) {
 
 #[sqlx::test(migrator = "perroute_storage::connection_manager::MIGRATOR")]
 fn test_when_channel_do_not_exists(pool: PgPool) {
-    let mut ctx = common::start_context(pool, Actor::system()).await;
+    let actor = Actor::system();
+    let mut ctx = common::start_context(pool, &actor).await;
     let channel_id = new_id!();
     let cmd = DeleteChannelCommandBuilder::default()
         .channel_id(channel_id)

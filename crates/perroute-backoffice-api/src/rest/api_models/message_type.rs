@@ -1,14 +1,14 @@
 use perroute_commons::types::{code::Code, id::Id};
 use perroute_storage::models::message_type::MessageType;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct CreateMessageTypeRequest {
     pub code: Code,
     pub description: String,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct UpdateMessageTypeRequest {
     pub description: String,
     pub enabled: bool,

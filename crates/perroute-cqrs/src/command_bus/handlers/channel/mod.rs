@@ -7,8 +7,8 @@ use perroute_commons::types::id::Id;
 use perroute_storage::models::channel::Channel;
 use tap::TapFallible;
 
-pub async fn retrieve_channel<'ctx>(
-    ctx: &mut CommandBusContext<'ctx>,
+pub async fn retrieve_channel<'ctx, 'a>(
+    ctx: &mut CommandBusContext<'ctx, 'a>,
     id: &Id,
     to_error: impl FnOnce(Id) -> CommandBusError,
 ) -> Result<Channel, CommandBusError> {

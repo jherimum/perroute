@@ -10,18 +10,18 @@ use std::{
 };
 use tap::TapOptional;
 
-pub struct QueryBusContext {
+pub struct QueryBusContext<'a> {
     pool: PgPool,
-    actor: Actor,
+    actor: &'a Actor,
 }
 
-impl QueryBusContext {
-    pub fn new(pool: PgPool, actor: Actor) -> Self {
+impl<'a> QueryBusContext<'a> {
+    pub fn new(pool: PgPool, actor: &'a Actor) -> Self {
         Self { pool, actor }
     }
 
-    pub fn actor(&self) -> &Actor {
-        &self.actor
+    pub fn actor(&self) -> &'a Actor {
+        self.actor
     }
 
     pub fn pool(&self) -> &PgPool {
@@ -40,7 +40,7 @@ pub trait QueryHandler: Send + Sync {
     ) -> Result<Self::Output, QueryBusError>;
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct QueryBus {
     map: Arc<HashMap<TypeId, Box<dyn Any + Send + Sync>>>,
     pool: PgPool,
@@ -61,7 +61,7 @@ impl QueryBus {
         handler.and_then(|h| h.downcast_ref::<H>())
     }
 
-    pub async fn execute<Q, H, O>(&self, actor: Actor, query: Q) -> Result<O, QueryBusError>
+    pub async fn execute<Q, H, O>(&self, actor: &Actor, query: Q) -> Result<O, QueryBusError>
     where
         H: QueryHandler<Query = Q, Output = O> + 'static + Sync + Send,
         Q: Query + 'static,

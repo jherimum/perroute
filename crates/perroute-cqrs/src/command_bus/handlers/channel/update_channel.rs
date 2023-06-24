@@ -1,5 +1,6 @@
 use crate::command_bus::{
-    commands::UpdateChannelCommand, error::CommandBusError, handlers::CommandHandler,
+    bus::CommandBusContext, commands::UpdateChannelCommand, error::CommandBusError,
+    handlers::CommandHandler,
 };
 use async_trait::async_trait;
 use derive_new::new;
@@ -22,9 +23,9 @@ impl CommandHandler for UpdateChannelCommandHandler {
     type Command = UpdateChannelCommand;
 
     #[tracing::instrument(skip(self))]
-    async fn handle<'ctx>(
+    async fn handle<'ctx, 'a>(
         &self,
-        ctx: &mut crate::command_bus::bus::CommandBusContext<'ctx>,
+        ctx: &mut CommandBusContext<'ctx, 'a>,
         command: Self::Command,
     ) -> Result<(), CommandBusError> {
         retrieve_channel(ctx, command.channel_id(), |id| {

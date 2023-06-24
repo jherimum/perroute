@@ -1,4 +1,4 @@
-create table messsage_types(
+create table message_types(
     id          uuid            not null,
     code        varchar(50)     not null,    
     description varchar(500)    not null,

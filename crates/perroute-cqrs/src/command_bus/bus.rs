@@ -10,17 +10,17 @@ use std::{
 use tap::{TapFallible, TapOptional};
 
 #[derive(Debug)]
-pub struct CommandBusContext<'tx> {
+pub struct CommandBusContext<'tx, 'a> {
     pool: PgPool,
     tx: Transaction<'tx, Postgres>,
-    actor: Actor,
+    actor: &'a Actor,
 }
 
-impl<'tx> CommandBusContext<'tx> {
+impl<'tx, 'a> CommandBusContext<'tx, 'a> {
     pub async fn begin(
         pool: PgPool,
-        actor: Actor,
-    ) -> Result<CommandBusContext<'tx>, CommandBusError> {
+        actor: &'a Actor,
+    ) -> Result<CommandBusContext<'tx, 'a>, CommandBusError> {
         let tx = pool
             .begin()
             .await
@@ -78,7 +78,7 @@ impl CommandBusBuilder {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct CommandBus {
     pool: PgPool,
     handlers: Arc<HashMap<TypeId, Box<dyn Any + Send + Sync>>>,
@@ -98,7 +98,7 @@ impl CommandBus {
         handler.and_then(|h| h.downcast_ref::<H>())
     }
 
-    pub async fn execute<C, H>(&self, actor: Actor, cmd: C) -> Result<(), CommandBusError>
+    pub async fn execute<C, H>(&self, actor: &Actor, cmd: C) -> Result<(), CommandBusError>
     where
         C: Command + 'static,
         H: CommandHandler<Command = C> + 'static + Sync + Send,
@@ -108,7 +108,7 @@ impl CommandBus {
             .tap_none(|| tracing::error!("Handler not found for command: {}", cmd.ty()))
             .ok_or_else(|| CommandBusError::HandlerNotFound(cmd.ty()))?;
 
-        let mut ctx = CommandBusContext::begin(self.pool.clone(), actor.clone())
+        let mut ctx = CommandBusContext::begin(self.pool.clone(), actor)
             .await
             .tap_err(|e| tracing::error!("Failed to create command bus context: {e}"))?;
 
