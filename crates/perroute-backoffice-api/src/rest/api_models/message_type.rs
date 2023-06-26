@@ -34,3 +34,9 @@ impl From<MessageType> for MessageTypeResource {
         }
     }
 }
+
+impl From<&MessageType> for MessageTypeResource {
+    fn from(value: &MessageType) -> Self {
+        value.clone().into()
+    }
+}

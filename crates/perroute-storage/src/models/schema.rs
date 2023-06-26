@@ -5,7 +5,7 @@ use perroute_commons::types::{id::Id, json_schema::JsonSchema};
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgExecutor, Type};
 
-#[derive(Debug, PartialEq, Eq, Clone, Type, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Clone, Type, Serialize, Deserialize, Copy)]
 #[sqlx(transparent)]
 #[serde(transparent)]
 pub struct Version(i32);
@@ -19,6 +19,24 @@ impl Default for Version {
 impl Version {
     pub fn increment(self) -> Self {
         Self(self.0 + 1)
+    }
+}
+
+impl From<i32> for Version {
+    fn from(value: i32) -> Self {
+        Self(value)
+    }
+}
+
+impl From<Version> for i32 {
+    fn from(value: Version) -> Self {
+        value.0
+    }
+}
+
+impl From<&Version> for i32 {
+    fn from(value: &Version) -> Self {
+        value.0
     }
 }
 
@@ -131,5 +149,22 @@ impl Schema {
         .fetch_optional(exec)
         .await
         .map(|r| r.unwrap_or_default())
+    }
+
+    pub async fn query<'e, E: PgExecutor<'e>>(
+        exec: E,
+        message_type_id: &Id,
+    ) -> Result<Vec<Self>, sqlx::Error> {
+        sqlx::query_as(
+            r#"
+            SELECT * 
+            FROM schemas 
+            WHERE 
+                message_type_id= $1
+            "#,
+        )
+        .bind(message_type_id)
+        .fetch_all(exec)
+        .await
     }
 }

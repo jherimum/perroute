@@ -3,7 +3,7 @@ use derive_builder::Builder;
 use derive_getters::Getters;
 use perroute_commons::{
     new_id,
-    types::{actor::Actor, code::Code, id::Id, json_schema::JsonSchema},
+    types::{actor::Actor, code::Code, id::Id},
 };
 use perroute_storage::models::command_log::{CommandLog, CommandLogBuilder};
 use serde::Serialize;

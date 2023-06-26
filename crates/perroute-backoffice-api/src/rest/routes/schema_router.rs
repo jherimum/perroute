@@ -1,6 +1,8 @@
 use crate::rest::{
-    api_models::schema::{CreateSchemaRequest, UpdateSchemaRequest},
-    extractors::actor::ActorExtractor,
+    api_models::schema::{CreateSchemaRequest, SchemaResource, UpdateSchemaRequest},
+    extractors::{
+        actor::ActorExtractor, message_type::MessageTypeExtractor, schema::SchemaExtractor,
+    },
     Buses,
 };
 use axum::{
@@ -9,7 +11,7 @@ use axum::{
     routing::{delete, get, post, put},
     Json, Router,
 };
-use perroute_commons::{new_id, types::id::Id};
+use perroute_commons::{new_id, rest::RestError, types::id::Id};
 use perroute_cqrs::{
     command_bus::{
         bus::CommandBus,
@@ -21,8 +23,15 @@ use perroute_cqrs::{
             update_schema::UpdateSchemaCommandHandler,
         },
     },
-    query_bus::bus::QueryBus,
+    query_bus::{
+        bus::QueryBus,
+        handlers::schema::{
+            find_schema::FindSchemaQueryHandler, query_schemas::QuerySchemasQueryHandler,
+        },
+        queries::{FindSchemaQueryBuilder, QuerySchemasQueryBuilder},
+    },
 };
+use std::ops::Deref;
 
 pub struct SchemaRouter;
 
@@ -47,22 +56,37 @@ impl SchemaRouter {
     }
 
     async fn query_schemas(
-        Path((channel_id, message_type_id)): Path<(Id, Id)>,
+        ActorExtractor(actor): ActorExtractor,
+        message_type: MessageTypeExtractor<Path<(Id, Id)>>,
         State(query_bus): State<QueryBus>,
-    ) -> impl IntoResponse {
-        todo!()
+    ) -> Result<Json<Vec<SchemaResource>>, RestError> {
+        let query = QuerySchemasQueryBuilder::default()
+            .message_type_id(*message_type.id())
+            .build()
+            .unwrap();
+
+        Ok(Json(
+            query_bus
+                .execute::<_, QuerySchemasQueryHandler, _>(&actor, query)
+                .await
+                .unwrap()
+                .into_iter()
+                .map(SchemaResource::from)
+                .collect::<Vec<_>>(),
+        ))
     }
 
     async fn create_schema(
         ActorExtractor(actor): ActorExtractor,
-        Path((channel_id, message_type_id)): Path<(Id, Id)>,
+        message_type: MessageTypeExtractor<Path<(Id, Id)>>,
         State(query_bus): State<QueryBus>,
         State(command_bus): State<CommandBus>,
         Json(body): Json<CreateSchemaRequest>,
-    ) -> impl IntoResponse {
+    ) -> Result<Json<SchemaResource>, RestError> {
+        let id = new_id!();
         let cmd = CreateSchemaCommandBuilder::default()
-            .schema_id(new_id!())
-            .message_type_id(message_type_id)
+            .schema_id(id)
+            .message_type_id(*message_type.id())
             .schema(body.schema)
             .build()
             .unwrap();
@@ -72,18 +96,28 @@ impl SchemaRouter {
             .await
             .unwrap();
 
-        todo!()
+        let query = FindSchemaQueryBuilder::default()
+            .message_type_id(id)
+            .build()
+            .unwrap();
+        let schema = query_bus
+            .execute::<_, FindSchemaQueryHandler, _>(&actor, query)
+            .await
+            .unwrap()
+            .unwrap();
+
+        Ok(Json(SchemaResource::from(schema)))
     }
 
     async fn update_schema(
         ActorExtractor(actor): ActorExtractor,
-        Path((channel_id, message_type_id, schema_id)): Path<(Id, Id, Id)>,
+        schema: SchemaExtractor<Path<(Id, Id, i32)>>,
         State(query_bus): State<QueryBus>,
         State(command_bus): State<CommandBus>,
         Json(body): Json<UpdateSchemaRequest>,
-    ) -> impl IntoResponse {
+    ) -> Result<Json<SchemaResource>, RestError> {
         let cmd = UpdateSchemaCommandBuilder::default()
-            .schema_id(schema_id)
+            .schema_id(*schema.id())
             .schema(body.schema)
             .build()
             .unwrap();
@@ -93,17 +127,27 @@ impl SchemaRouter {
             .await
             .unwrap();
 
-        todo!()
+        let query = FindSchemaQueryBuilder::default()
+            .message_type_id(*schema.message_type_id())
+            .version(schema.deref().version().into())
+            .build()
+            .unwrap();
+        let schema = query_bus
+            .execute::<_, FindSchemaQueryHandler, _>(&actor, query)
+            .await
+            .unwrap()
+            .unwrap();
+
+        Ok(Json(SchemaResource::from(schema)))
     }
 
     async fn delete_schema(
         ActorExtractor(actor): ActorExtractor,
-        Path((channel_id, message_type_id, schema_id)): Path<(Id, Id, Id)>,
-        State(query_bus): State<QueryBus>,
+        schema: SchemaExtractor<Path<(Id, Id, i32)>>,
         State(command_bus): State<CommandBus>,
-    ) -> impl IntoResponse {
+    ) -> Result<(), RestError> {
         let cmd = DeleteSchemaCommandBuilder::default()
-            .schema_id(schema_id)
+            .schema_id(*schema.deref().id())
             .build()
             .unwrap();
 
@@ -112,14 +156,13 @@ impl SchemaRouter {
             .await
             .unwrap();
 
-        todo!()
+        Ok(())
     }
 
     async fn find_schema(
-        Path((channel_id, message_type_id, shcema_id)): Path<(Id, Id, Id)>,
-        State(query_bus): State<QueryBus>,
-    ) -> impl IntoResponse {
-        todo!()
+        schema: SchemaExtractor<Path<(Id, Id, i32)>>,
+    ) -> Result<Json<SchemaResource>, RestError> {
+        Ok(Json(SchemaResource::from(schema.deref())))
     }
 
     async fn publish_schema(

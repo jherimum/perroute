@@ -1,8 +1,11 @@
+use std::ops::Deref;
+
 use crate::errors::PerrouteBackofficeApiError;
 use crate::rest::api_models::channel::{
     ChannelResource, CreateChannelRequest, UpdateChannelRequest,
 };
 use crate::rest::extractors::actor::ActorExtractor;
+use crate::rest::extractors::channel::ChannelExtractor;
 use crate::rest::Buses;
 use axum::extract::{Path, State};
 use axum::routing::{delete, post};
@@ -11,9 +14,8 @@ use axum::{Json, Router};
 use perroute_commons::new_id;
 use perroute_commons::rest::RestError;
 use perroute_commons::types::actor::Actor;
-use perroute_commons::types::id::{self, Id};
+use perroute_commons::types::id::Id;
 use perroute_cqrs::command_bus::bus::CommandBus;
-
 use perroute_cqrs::command_bus::commands::{
     CreateChannelCommandBuilder, DeleteChannelCommandBuilder, UpdateChannelCommandBuilder,
 };
@@ -96,17 +98,12 @@ impl ChannelRouter {
         .await
     }
 
-    #[tracing::instrument(skip(query_bus))]
+    #[tracing::instrument]
     async fn find_channel(
-        State(query_bus): State<QueryBus>,
         ActorExtractor(actor): ActorExtractor,
-        Path(channel_id): Path<Id>,
+        channel: ChannelExtractor<Path<Id>>,
     ) -> Result<Json<ChannelResource>, RestError> {
-        Self::retrieve_channel_resource(&actor, &query_bus, channel_id, |id| {
-            RestError::NotFound(format!("Channel {id} not found"))
-        })
-        .await
-        .tap_err(|e| tracing::error!("Failed to find channel: {e}"))
+        Ok(Json(ChannelResource::from(channel.deref())))
     }
 
     #[tracing::instrument(skip(query_bus, command_bus))]
@@ -114,11 +111,11 @@ impl ChannelRouter {
         State(query_bus): State<QueryBus>,
         State(command_bus): State<CommandBus>,
         ActorExtractor(actor): ActorExtractor,
-        Path(channel_id): Path<Id>,
+        channel: ChannelExtractor<Path<Id>>,
         Json(req): Json<UpdateChannelRequest>,
     ) -> Result<Json<ChannelResource>, RestError> {
         let command = UpdateChannelCommandBuilder::default()
-            .channel_id(channel_id)
+            .channel_id(*channel.id())
             .name(req.name)
             .build()
             .tap_err(|e| tracing::error!("Failed to build UpdateChannelCommandBuilder: {e}"))
@@ -130,7 +127,7 @@ impl ChannelRouter {
             .tap_err(|e| tracing::error!("Failed to update channel: {e}"))
             .map_err(PerrouteBackofficeApiError::from)?;
 
-        Self::retrieve_channel_resource(&actor, &query_bus, channel_id, |id| {
+        Self::retrieve_channel_resource(&actor, &query_bus, *channel.id(), |id| {
             RestError::NotFound(format!("Channel {id} not found"))
         })
         .await
@@ -141,10 +138,10 @@ impl ChannelRouter {
     async fn delete_channel(
         State(command_bus): State<CommandBus>,
         ActorExtractor(actor): ActorExtractor,
-        Path(id): Path<id::Id>,
+        channel: ChannelExtractor<Path<Id>>,
     ) -> Result<(), RestError> {
         let cmd = DeleteChannelCommandBuilder::default()
-            .channel_id(id)
+            .channel_id(*channel.id())
             .build()
             .tap_err(|e| tracing::error!("Failed to build DeleteChannelCommandBuilder: {e}"))
             .map_err(|_| RestError::InternalServer)?;

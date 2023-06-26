@@ -19,6 +19,12 @@ impl From<Channel> for ChannelResource {
     }
 }
 
+impl From<&Channel> for ChannelResource {
+    fn from(value: &Channel) -> Self {
+        value.clone().into()
+    }
+}
+
 #[derive(Clone, Deserialize, Debug)]
 pub struct CreateChannelRequest {
     pub code: Code,

@@ -1,5 +1,5 @@
-use std::marker::PhantomData;
-
+use super::actor::ActorExtractor;
+use crate::{errors::PerrouteBackofficeApiError, rest::Buses};
 use async_trait::async_trait;
 use axum::{
     extract::{FromRequestParts, Path},
@@ -14,19 +14,24 @@ use perroute_cqrs::query_bus::{
     queries::FindChannelQueryBuilder,
 };
 use perroute_storage::models::channel::Channel;
-
-use crate::{errors::PerrouteBackofficeApiError, rest::Buses};
-
-use super::actor::ActorExtractor;
+use std::{marker::PhantomData, ops::Deref};
 
 #[derive(Debug)]
-pub struct ChannelResourceGuard<S> {
-    pub channel: Channel,
+pub struct ChannelExtractor<S> {
+    channel: Channel,
     marker: PhantomData<S>,
 }
 
+impl<S> Deref for ChannelExtractor<S> {
+    type Target = Channel;
+
+    fn deref(&self) -> &Self::Target {
+        &self.channel
+    }
+}
+
 #[async_trait]
-impl FromRequestParts<Buses> for ChannelResourceGuard<Path<Id>> {
+impl FromRequestParts<Buses> for ChannelExtractor<Path<Id>> {
     type Rejection = RestError;
 
     async fn from_request_parts(parts: &mut Parts, buses: &Buses) -> Result<Self, Self::Rejection> {
@@ -36,7 +41,7 @@ impl FromRequestParts<Buses> for ChannelResourceGuard<Path<Id>> {
         let p = <Path<Id>>::from_request_parts(parts, buses).await.unwrap();
         let channel = check_channel(&buses.query_bus, &p.0, &actor).await?;
 
-        Ok(ChannelResourceGuard {
+        Ok(ChannelExtractor {
             channel,
             marker: PhantomData,
         })
@@ -44,7 +49,7 @@ impl FromRequestParts<Buses> for ChannelResourceGuard<Path<Id>> {
 }
 
 #[async_trait]
-impl FromRequestParts<Buses> for ChannelResourceGuard<Path<(Id, Id)>> {
+impl FromRequestParts<Buses> for ChannelExtractor<Path<(Id, Id)>> {
     type Rejection = RestError;
 
     async fn from_request_parts(parts: &mut Parts, buses: &Buses) -> Result<Self, Self::Rejection> {
@@ -54,7 +59,7 @@ impl FromRequestParts<Buses> for ChannelResourceGuard<Path<(Id, Id)>> {
         let p = <Path<Id>>::from_request_parts(parts, buses).await.unwrap();
         let channel = check_channel(&buses.query_bus, &p.0, &actor).await?;
 
-        Ok(ChannelResourceGuard {
+        Ok(ChannelExtractor {
             channel,
             marker: PhantomData,
         })
