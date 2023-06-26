@@ -2,7 +2,10 @@ use crate::command_bus::{
     bus::CommandBusContext, commands::CreateMessageTypeCommand, error::CommandBusError,
     handlers::CommandHandler,
 };
-use perroute_commons::{new_id, types::code::Code};
+use perroute_commons::{
+    new_id,
+    types::{code::Code, json_schema::JsonSchema},
+};
 use perroute_storage::models::{
     message_type::{MessageType, MessageTypeBuilder},
     schema::SchemaBuilder,
@@ -43,10 +46,9 @@ impl CommandHandler for CreateMessageTypeCommandHandler {
 
         SchemaBuilder::default()
             .id(new_id!())
-            .schema(serde_json::Value::default())
+            .schema(JsonSchema::default())
             .version(Version::default())
             .message_type_id(*cmd.message_type_id())
-            .channel_id(*cmd.channel_id())
             .build()
             .unwrap()
             .save(ctx.tx())

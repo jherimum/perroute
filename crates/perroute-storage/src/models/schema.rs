@@ -1,7 +1,7 @@
 use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
-use perroute_commons::types::id::Id;
+use perroute_commons::types::{id::Id, json_schema::JsonSchema};
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgExecutor, Type};
 
@@ -29,22 +29,20 @@ impl Version {
 pub struct Schema {
     #[setters(skip)]
     id: Id,
-    schema: serde_json::Value,
+    schema: JsonSchema,
     #[setters(skip)]
     version: Version,
     published: bool,
     #[setters(skip)]
     message_type_id: Id,
-    #[setters(skip)]
-    channel_id: Id,
 }
 
 impl Schema {
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
         sqlx::query_as(
             r#"
-                INSERT INTO schemas (id, schema, version, published, message_type_id, channel_id) 
-                VALUES($1, $2, $3, $4, $5, $6) RETURNING *
+                INSERT INTO schemas (id, schema, version, published, message_type_id) 
+                VALUES($1, $2, $3, $4, $5) RETURNING *
             "#,
         )
         .bind(self.id)
@@ -52,7 +50,6 @@ impl Schema {
         .bind(self.version)
         .bind(self.published)
         .bind(self.message_type_id)
-        .bind(self.channel_id)
         .fetch_one(exec)
         .await
     }
@@ -98,9 +95,8 @@ impl Schema {
         .await
     }
 
-    pub async fn find_by_channel_id_and_message_type_id_and_id<'e, E: PgExecutor<'e>>(
+    pub async fn find_message_type_id_and_id<'e, E: PgExecutor<'e>>(
         exec: E,
-        channel_id: &Id,
         message_type_id: &Id,
         id: &Id,
     ) -> Result<Option<Self>, sqlx::Error> {
@@ -109,12 +105,10 @@ impl Schema {
             SELECT * 
             FROM schemas 
             WHERE 
-                channel_id= $1 
-                AND message_type_id= $2 
-                AND id= $3
+                message_type_id= $1 
+                AND id= $2
             "#,
         )
-        .bind(channel_id)
         .bind(message_type_id)
         .bind(id)
         .fetch_optional(exec)
