@@ -2,11 +2,20 @@ use crate::command_bus::{
     bus::CommandBusContext, commands::CreateSchemaCommand, error::CommandBusError,
     handlers::CommandHandler,
 };
-use perroute_commons::new_id;
+use perroute_commons::{
+    new_id,
+    types::json_schema::{JsonSchema, JsonSchemaError},
+};
 use perroute_storage::models::{
     message_type::MessageType,
     schema::{Schema, SchemaBuilder},
 };
+
+#[derive(Debug, thiserror::Error)]
+pub enum CreateSchemaError {
+    #[error(transparent)]
+    InvalidSchema(#[from] JsonSchemaError),
+}
 
 #[derive(Debug)]
 pub struct CreateSchemaCommandHandler;
@@ -27,7 +36,7 @@ impl CommandHandler for CreateSchemaCommandHandler {
 
         SchemaBuilder::default()
             .id(new_id!())
-            .schema(cmd.schema().clone())
+            .schema(JsonSchema::try_from(cmd.schema().clone()).map_err(CreateSchemaError::from)?)
             .version(actual_version.increment())
             .published(false)
             .message_type_id(*mt.id())

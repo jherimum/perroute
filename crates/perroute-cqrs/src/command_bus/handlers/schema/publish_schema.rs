@@ -2,6 +2,7 @@ use crate::command_bus::{
     bus::CommandBusContext, commands::PublishSchemaCommand, error::CommandBusError,
     handlers::CommandHandler,
 };
+use perroute_storage::models::schema::Schema;
 
 #[derive(Debug)]
 pub struct PublishSchemaCommandHandler;
@@ -12,9 +13,18 @@ impl CommandHandler for PublishSchemaCommandHandler {
 
     async fn handle<'tx, 'a>(
         &self,
-        _ctx: &mut CommandBusContext<'tx, 'a>,
-        _cmd: Self::Command,
+        ctx: &mut CommandBusContext<'tx, 'a>,
+        cmd: Self::Command,
     ) -> Result<(), CommandBusError> {
-        todo!()
+        Schema::find_by_id(ctx.tx(), cmd.schema_id())
+            .await
+            .unwrap()
+            .unwrap()
+            .set_published(true)
+            .update(ctx.tx())
+            .await
+            .unwrap();
+
+        Ok(())
     }
 }

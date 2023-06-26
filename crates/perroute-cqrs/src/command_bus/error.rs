@@ -10,6 +10,7 @@ use super::{
             delete_message_type::DeleteMessageTypeError,
             update_message_type::UpdateMessageTypeError,
         },
+        schema::create_schema::CreateSchemaError,
     },
 };
 
@@ -41,4 +42,7 @@ pub enum CommandBusError {
 
     #[error(transparent)]
     CreateMessageType(#[from] CreateMessageTypeError),
+
+    #[error(transparent)]
+    CreateSchema(#[from] CreateSchemaError),
 }
