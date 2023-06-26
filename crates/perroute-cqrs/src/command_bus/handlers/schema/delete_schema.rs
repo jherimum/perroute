@@ -1,14 +1,14 @@
 use crate::command_bus::{
-    bus::CommandBusContext, commands::DeleteMessageTypeVersionCommand, error::CommandBusError,
+    bus::CommandBusContext, commands::DeleteSchemaCommand, error::CommandBusError,
     handlers::CommandHandler,
 };
 
 #[derive(Debug)]
-pub struct DeleteMessageTypeVersionCommandHandler;
+pub struct DeleteSchemaCommandHandler;
 
 #[async_trait::async_trait]
-impl CommandHandler for DeleteMessageTypeVersionCommandHandler {
-    type Command = DeleteMessageTypeVersionCommand;
+impl CommandHandler for DeleteSchemaCommandHandler {
+    type Command = DeleteSchemaCommand;
 
     async fn handle<'tx, 'a>(
         &self,

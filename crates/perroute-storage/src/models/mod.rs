@@ -4,7 +4,7 @@ pub mod command_log;
 pub mod connection;
 pub mod event;
 pub mod message_type;
-pub mod message_type_version;
+pub mod schema;
 pub mod user;
 pub mod user_password;
 

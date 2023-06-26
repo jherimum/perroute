@@ -2,18 +2,36 @@ use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::types::id::Id;
-use sqlx::{FromRow, PgExecutor};
+use serde::{Deserialize, Serialize};
+use sqlx::{FromRow, PgExecutor, Type};
+
+#[derive(Debug, PartialEq, Eq, Clone, Type, Serialize, Deserialize)]
+#[sqlx(transparent)]
+#[serde(transparent)]
+pub struct Version(i32);
+
+impl Default for Version {
+    fn default() -> Self {
+        Self(1)
+    }
+}
+
+impl Version {
+    pub fn increment(self) -> Self {
+        Self(self.0 + 1)
+    }
+}
 
 #[derive(Debug, FromRow, PartialEq, Eq, Clone, Getters, Setters, Builder)]
 #[builder(setter(into))]
 #[setters(prefix = "set_")]
 #[setters(into)]
-pub struct MessageTypeVersion {
+pub struct Schema {
     #[setters(skip)]
     id: Id,
-    schema: String,
+    schema: serde_json::Value,
     #[setters(skip)]
-    version: i32,
+    version: Version,
     published: bool,
     #[setters(skip)]
     message_type_id: Id,
@@ -21,27 +39,28 @@ pub struct MessageTypeVersion {
     channel_id: Id,
 }
 
-impl MessageTypeVersion {
+impl Schema {
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
         sqlx::query_as(
             r#"
-                INSERT INTO message_type_versions (id, schema, version, published, message_type_id, channel_id) 
+                INSERT INTO schemas (id, schema, version, published, message_type_id, channel_id) 
                 VALUES($1, $2, $3, $4, $5, $6) RETURNING *
-            "#)
-            .bind(self.id)
-            .bind(self.schema)
-            .bind(self.version)
-            .bind(self.published)
-            .bind(self.message_type_id)
-            .bind(self.channel_id)
-            .fetch_one(exec)
-            .await
+            "#,
+        )
+        .bind(self.id)
+        .bind(self.schema)
+        .bind(self.version)
+        .bind(self.published)
+        .bind(self.message_type_id)
+        .bind(self.channel_id)
+        .fetch_one(exec)
+        .await
     }
 
     pub async fn update<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
         sqlx::query_as(
             r#"
-            UPDATE message_type_versions 
+            UPDATE schemas 
             SET 
                 schema= $1, 
                 published= $2
@@ -56,7 +75,7 @@ impl MessageTypeVersion {
     }
 
     pub async fn delete<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<bool, sqlx::Error> {
-        sqlx::query("DELETE FROM message_type_versions WHERE id= $1")
+        sqlx::query("DELETE FROM schemas WHERE id= $1")
             .bind(self.id)
             .execute(exec)
             .await
@@ -70,7 +89,7 @@ impl MessageTypeVersion {
         sqlx::query_as(
             r#"
             SELECT * 
-            FROM message_type_versions 
+            FROM schemas 
             WHERE id= $1
             "#,
         )
@@ -88,7 +107,7 @@ impl MessageTypeVersion {
         sqlx::query_as(
             r#"
             SELECT * 
-            FROM message_type_versions 
+            FROM schemas 
             WHERE 
                 channel_id= $1 
                 AND message_type_id= $2 
@@ -100,5 +119,23 @@ impl MessageTypeVersion {
         .bind(id)
         .fetch_optional(exec)
         .await
+    }
+
+    pub async fn max_version_number(
+        exec: &mut sqlx::PgConnection,
+        message_type_id: &Id,
+    ) -> Result<Version, sqlx::Error> {
+        sqlx::query_scalar::<_, Version>(
+            r#"
+            SELECT MAX(version) as version
+            FROM schemas 
+            WHERE 
+                message_type_id= $1
+            "#,
+        )
+        .bind(message_type_id)
+        .fetch_optional(exec)
+        .await
+        .map(|r| r.unwrap_or_default())
     }
 }

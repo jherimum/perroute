@@ -2,8 +2,12 @@ use crate::command_bus::{
     bus::CommandBusContext, commands::CreateMessageTypeCommand, error::CommandBusError,
     handlers::CommandHandler,
 };
-use perroute_commons::types::code::Code;
-use perroute_storage::models::message_type::{MessageType, MessageTypeBuilder};
+use perroute_commons::{new_id, types::code::Code};
+use perroute_storage::models::{
+    message_type::{MessageType, MessageTypeBuilder},
+    schema::SchemaBuilder,
+    schema::Version,
+};
 
 #[derive(Debug, thiserror::Error)]
 pub enum CreateMessageTypeError {
@@ -35,8 +39,18 @@ impl CommandHandler for CreateMessageTypeCommandHandler {
             .build()
             .unwrap()
             .save(ctx.tx())
-            .await
-            .map(|_| ())
-            .map_err(CommandBusError::from)
+            .await?;
+
+        SchemaBuilder::default()
+            .id(new_id!())
+            .schema(serde_json::Value::default())
+            .version(Version::default())
+            .message_type_id(*cmd.message_type_id())
+            .channel_id(*cmd.channel_id())
+            .build()
+            .unwrap()
+            .save(ctx.tx())
+            .await?;
+        Ok(())
     }
 }

@@ -8,13 +8,7 @@ use super::{
             update_channel::UpdateChannelCommandHandler,
         },
         message_type::create_message_type::CreateMessageTypeCommandHandler,
-        message_type_version::{
-            create_message_type_version::CreateMessageTypeVersionCommandHandler,
-            delete_message_type_version::DeleteMessageTypeVersionCommandHandler,
-            duplicate_message_type_version::DuplicateMessageTypeVersionCommandHandler,
-            publish_message_type_version::PublishMessageTypeVersionCommandHandler,
-            update_message_type_version::UpdateMessageTypeVersionCommandHandler,
-        },
+        schema::create_schema::CreateSchemaCommandHandler,
         CommandHandler,
     },
 };
@@ -111,11 +105,10 @@ impl CommandBus {
             .with_handler(DeleteChannelCommandHandler)
             .with_handler(UpdateChannelCommandHandler)
             .with_handler(CreateMessageTypeCommandHandler)
-            .with_handler(CreateMessageTypeVersionCommandHandler)
-            .with_handler(UpdateMessageTypeVersionCommandHandler)
-            .with_handler(DeleteMessageTypeVersionCommandHandler)
-            .with_handler(PublishMessageTypeVersionCommandHandler)
-            .with_handler(DuplicateMessageTypeVersionCommandHandler)
+            .with_handler(CreateSchemaCommandHandler)
+            .with_handler(CreateSchemaCommandHandler)
+            .with_handler(CreateSchemaCommandHandler)
+            .with_handler(CreateSchemaCommandHandler)
             .build()
     }
 

@@ -1,0 +1,1 @@
+ALTER TABLE schemas RENAME TO message_type_versions;

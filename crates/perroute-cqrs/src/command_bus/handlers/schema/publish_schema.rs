@@ -1,14 +1,14 @@
 use crate::command_bus::{
-    bus::CommandBusContext, commands::DuplicateMessageTypeVersionCommand, error::CommandBusError,
+    bus::CommandBusContext, commands::PublishSchemaCommand, error::CommandBusError,
     handlers::CommandHandler,
 };
 
 #[derive(Debug)]
-pub struct DuplicateMessageTypeVersionCommandHandler;
+pub struct PublishSchemaCommandHandler;
 
 #[async_trait::async_trait]
-impl CommandHandler for DuplicateMessageTypeVersionCommandHandler {
-    type Command = DuplicateMessageTypeVersionCommand;
+impl CommandHandler for PublishSchemaCommandHandler {
+    type Command = PublishSchemaCommand;
 
     async fn handle<'tx, 'a>(
         &self,

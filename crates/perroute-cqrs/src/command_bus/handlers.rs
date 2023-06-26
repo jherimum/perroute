@@ -4,7 +4,7 @@ use super::{bus::CommandBusContext, commands::Command, error::CommandBusError};
 
 pub mod channel;
 pub mod message_type;
-pub mod message_type_version;
+pub mod schema;
 
 #[async_trait::async_trait]
 pub trait CommandHandler: Send + Sync + Debug {

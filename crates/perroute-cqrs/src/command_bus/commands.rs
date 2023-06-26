@@ -62,11 +62,10 @@ pub enum CommandType {
     UpdateMessageType,
     DeleteMessageType,
 
-    CreateMessageTypeVersion,
-    UpdateMessageTypeVersion,
-    DeleteMessageTypeVersion,
-    PublishMessageTypeVersion,
-    DuplicateMessageTypeVersion,
+    CreateSchema,
+    UpdateSchema,
+    DeleteSchema,
+    PublishSchema,
 }
 
 impl From<CommandType> for String {
@@ -114,32 +113,26 @@ pub struct DeleteMessageTypeCommand {
 }
 
 #[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
-pub struct CreateMessageTypeVersionCommand {
-    message_type_version_id: Id,
+pub struct CreateSchemaCommand {
+    schema_id: Id,
     schema: serde_json::Value,
-    number: i32,
     message_type_id: Id,
 }
 
 #[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
-pub struct UpdateMessageTypeVersionCommand {
-    message_type_version_id: Id,
+pub struct UpdateSchemaCommand {
+    schema_id: Id,
     schema: serde_json::Value,
 }
 
 #[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
-pub struct DeleteMessageTypeVersionCommand {
-    message_type_version_id: Id,
+pub struct DeleteSchemaCommand {
+    schema_id: Id,
 }
 
 #[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
-pub struct PublishMessageTypeVersionCommand {
-    message_type_version_id: Id,
-}
-
-#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
-pub struct DuplicateMessageTypeVersionCommand {
-    message_type_version_id: Id,
+pub struct PublishSchemaCommand {
+    schema_id: Id,
 }
 
 impl_command!(CreateChannelCommand, CommandType::CreateChannel);
@@ -148,23 +141,7 @@ impl_command!(UpdateChannelCommand, CommandType::UpdateChannel);
 impl_command!(CreateMessageTypeCommand, CommandType::CreateMessageType);
 impl_command!(UpdateMessageTypeCommand, CommandType::UpdateMessageType);
 impl_command!(DeleteMessageTypeCommand, CommandType::DeleteMessageType);
-impl_command!(
-    CreateMessageTypeVersionCommand,
-    CommandType::CreateMessageTypeVersion
-);
-impl_command!(
-    UpdateMessageTypeVersionCommand,
-    CommandType::UpdateMessageTypeVersion
-);
-impl_command!(
-    DeleteMessageTypeVersionCommand,
-    CommandType::DuplicateMessageTypeVersion
-);
-impl_command!(
-    PublishMessageTypeVersionCommand,
-    CommandType::PublishMessageTypeVersion
-);
-impl_command!(
-    DuplicateMessageTypeVersionCommand,
-    CommandType::DuplicateMessageTypeVersion
-);
+impl_command!(CreateSchemaCommand, CommandType::CreateSchema);
+impl_command!(UpdateSchemaCommand, CommandType::UpdateSchema);
+impl_command!(DeleteSchemaCommand, CommandType::DeleteSchema);
+impl_command!(PublishSchemaCommand, CommandType::PublishSchema);
