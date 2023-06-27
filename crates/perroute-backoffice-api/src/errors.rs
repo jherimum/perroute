@@ -17,6 +17,9 @@ pub enum PerrouteBackofficeApiError {
 
     #[error(transparent)]
     QueryBus(#[from] QueryBusError),
+
+    #[error(transparent)]
+    Unexpected(#[from] anyhow::Error),
 }
 
 impl From<PerrouteBackofficeApiError> for RestError {
@@ -37,6 +40,7 @@ impl From<PerrouteBackofficeApiError> for RestError {
                 _ => RestError::InternalServer,
             },
             PerrouteBackofficeApiError::QueryBus(_) => RestError::InternalServer,
+            _ => RestError::InternalServer,
         }
     }
 }

@@ -5,6 +5,7 @@ use crate::rest::api_models::channel::{
 use crate::rest::extractors::actor::ActorExtractor;
 use crate::rest::extractors::resource_path::{ChannelPath, ResourcePath};
 use crate::rest::Buses;
+use anyhow::Context;
 use axum::extract::State;
 use axum::routing::{delete, post};
 use axum::routing::{get, put};
@@ -55,20 +56,19 @@ impl ChannelRouter {
             .code(body.code)
             .name(body.name)
             .build()
-            .tap_err(|e| tracing::error!("Failed to build CreateChannelCommandBuilder: {e}"))
-            .map_err(|_| RestError::InternalServer)?;
+            .tap_err(|e| tracing::error!("Failed to build CreateChannelCommand: {e}"))
+            .with_context(|| "Failed to build CreateChannelCommand")?;
 
         command_bus
-            .execute::<_, CreateChannelCommandHandler>(&actor, command.clone())
+            .execute::<_, CreateChannelCommandHandler>(&actor, &command)
             .await
             .tap_err(|e| tracing::error!("Failed to create channel: {e}"))
             .map_err(PerrouteBackofficeApiError::from)?;
 
         Ok(Json(ChannelResource::from(
             ChannelPath::from(*command.channel_id())
-                .resource(&query_bus, &actor)
-                .await?
-                .ok_or(RestError::NotFound("".to_owned()))?,
+                .fetch(&query_bus, &actor, || RestError::InternalServer)
+                .await?,
         )))
     }
 
@@ -80,9 +80,8 @@ impl ChannelRouter {
     ) -> Result<Json<ChannelResource>, RestError> {
         Ok(Json(ChannelResource::from(
             channel_path
-                .resource(&query_bus, &actor)
-                .await?
-                .ok_or(RestError::NotFound("".to_owned()))?,
+                .fetch(&query_bus, &actor, || RestError::NotFound("()".to_owned()))
+                .await?,
         )))
     }
 
@@ -95,9 +94,8 @@ impl ChannelRouter {
         Json(req): Json<UpdateChannelRequest>,
     ) -> Result<Json<ChannelResource>, RestError> {
         let channel = channel_path
-            .resource(&query_bus, &actor)
-            .await?
-            .ok_or(RestError::NotFound("".to_owned()))?;
+            .fetch(&query_bus, &actor, || RestError::NotFound("()".to_owned()))
+            .await?;
 
         let command = UpdateChannelCommandBuilder::default()
             .channel_id(*channel.id())
@@ -107,16 +105,15 @@ impl ChannelRouter {
             .map_err(|_| RestError::InternalServer)?;
 
         command_bus
-            .execute::<_, UpdateChannelCommandHandler>(&actor, command)
+            .execute::<_, UpdateChannelCommandHandler>(&actor, &command)
             .await
             .tap_err(|e| tracing::error!("Failed to update channel: {e}"))
             .map_err(PerrouteBackofficeApiError::from)?;
 
         Ok(Json(ChannelResource::from(
             channel_path
-                .resource(&query_bus, &actor)
-                .await?
-                .ok_or(RestError::NotFound("".to_owned()))?,
+                .fetch(&query_bus, &actor, || RestError::InternalServer)
+                .await?,
         )))
     }
 
@@ -128,9 +125,8 @@ impl ChannelRouter {
         channel_path: ChannelPath,
     ) -> Result<(), RestError> {
         let channel = channel_path
-            .resource(&query_bus, &actor)
-            .await?
-            .ok_or(RestError::NotFound("".to_owned()))?;
+            .fetch(&query_bus, &actor, || RestError::NotFound("()".to_owned()))
+            .await?;
 
         let cmd = DeleteChannelCommandBuilder::default()
             .channel_id(*channel.id())
@@ -139,7 +135,7 @@ impl ChannelRouter {
             .map_err(|_| RestError::InternalServer)?;
 
         Ok(command_bus
-            .execute::<_, DeleteChannelCommandHandler>(&actor, cmd)
+            .execute::<_, DeleteChannelCommandHandler>(&actor, &cmd)
             .await
             .tap_err(|e| tracing::error!("Failed to delete channel: {e}"))
             .map_err(PerrouteBackofficeApiError::from)?)

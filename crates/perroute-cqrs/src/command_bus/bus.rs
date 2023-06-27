@@ -125,7 +125,7 @@ impl CommandBus {
         handler.and_then(|h| h.downcast_ref::<H>())
     }
 
-    pub async fn execute<C, H>(&self, actor: &Actor, cmd: C) -> Result<(), CommandBusError>
+    pub async fn execute<C, H>(&self, actor: &Actor, cmd: &C) -> Result<(), CommandBusError>
     where
         C: Command + 'static,
         H: CommandHandler<Command = C> + 'static + Sync + Send,

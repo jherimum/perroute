@@ -58,9 +58,8 @@ impl SchemaRouter {
         State(query_bus): State<QueryBus>,
     ) -> Result<Json<Vec<SchemaResource>>, RestError> {
         let message_type = message_type_path
-            .resource(&query_bus, &actor)
-            .await?
-            .ok_or(RestError::NotFound("".to_owned()))?;
+            .fetch(&query_bus, &actor, || RestError::NotFound("()".to_owned()))
+            .await?;
 
         let query = QuerySchemasQueryBuilder::default()
             .message_type_id(*message_type.id())
@@ -86,9 +85,8 @@ impl SchemaRouter {
         Json(body): Json<CreateSchemaRequest>,
     ) -> Result<Json<SchemaResource>, RestError> {
         let message_type = message_type_path
-            .resource(&query_bus, &actor)
-            .await?
-            .ok_or(RestError::NotFound("".to_owned()))?;
+            .fetch(&query_bus, &actor, || RestError::NotFound("()".to_owned()))
+            .await?;
         let cmd = CreateSchemaCommandBuilder::default()
             .schema_id(new_id!())
             .message_type_id(*message_type.id())
@@ -97,7 +95,7 @@ impl SchemaRouter {
             .unwrap();
 
         command_bus
-            .execute::<_, CreateSchemaCommandHandler>(&actor, cmd.clone())
+            .execute::<_, CreateSchemaCommandHandler>(&actor, &cmd)
             .await
             .unwrap();
 
@@ -107,9 +105,8 @@ impl SchemaRouter {
                 *message_type.id(),
                 *cmd.schema_id(),
             ))
-            .resource(&query_bus, &actor)
-            .await?
-            .ok_or(RestError::NotFound("".to_owned()))?,
+            .fetch(&query_bus, &actor, || RestError::NotFound("()".to_owned()))
+            .await?,
         )))
     }
 
@@ -121,9 +118,8 @@ impl SchemaRouter {
         Json(body): Json<UpdateSchemaRequest>,
     ) -> Result<Json<SchemaResource>, RestError> {
         let schema = schema_path
-            .resource(&query_bus, &actor)
-            .await?
-            .ok_or(RestError::NotFound("".to_owned()))?;
+            .fetch(&query_bus, &actor, || RestError::NotFound("()".to_owned()))
+            .await?;
         let cmd = UpdateSchemaCommandBuilder::default()
             .schema_id(*schema.id())
             .schema(body.schema)
@@ -131,7 +127,7 @@ impl SchemaRouter {
             .unwrap();
 
         command_bus
-            .execute::<_, UpdateSchemaCommandHandler>(&actor, cmd)
+            .execute::<_, UpdateSchemaCommandHandler>(&actor, &cmd)
             .await
             .unwrap();
 
@@ -141,9 +137,8 @@ impl SchemaRouter {
                 schema_path.message_type_id,
                 schema_path.schema_id,
             ))
-            .resource(&query_bus, &actor)
-            .await?
-            .ok_or(RestError::NotFound("".to_owned()))?,
+            .fetch(&query_bus, &actor, || RestError::NotFound("()".to_owned()))
+            .await?,
         )))
     }
 
@@ -154,16 +149,15 @@ impl SchemaRouter {
         State(command_bus): State<CommandBus>,
     ) -> Result<(), RestError> {
         let schema = schema_path
-            .resource(&query_bus, &actor)
-            .await?
-            .ok_or(RestError::NotFound("".to_owned()))?;
+            .fetch(&query_bus, &actor, || RestError::NotFound("()".to_owned()))
+            .await?;
         let cmd = DeleteSchemaCommandBuilder::default()
             .schema_id(*schema.id())
             .build()
             .unwrap();
 
         command_bus
-            .execute::<_, DeleteSchemaCommandHandler>(&actor, cmd)
+            .execute::<_, DeleteSchemaCommandHandler>(&actor, &cmd)
             .await
             .unwrap();
 
@@ -176,9 +170,8 @@ impl SchemaRouter {
         State(query_bus): State<QueryBus>,
     ) -> Result<Json<SchemaResource>, RestError> {
         let schema = schema_path
-            .resource(&query_bus, &actor)
-            .await?
-            .ok_or(RestError::NotFound("".to_owned()))?;
+            .fetch(&query_bus, &actor, || RestError::NotFound("()".to_owned()))
+            .await?;
         Ok(Json(SchemaResource::from(schema)))
     }
 

@@ -30,21 +30,21 @@ pub trait ResourcePath {
         + Sync
         + Send;
     type Query: Query + 'static + Sync + Send;
-    async fn resource(
+
+    async fn fetch(
         &self,
         query_bus: &QueryBus,
         actor: &Actor,
-    ) -> Result<Option<Self::Resource>, RestError> {
+        when_none: impl FnOnce() -> RestError + Send + Sync,
+    ) -> Result<Self::Resource, RestError> {
         query_bus
             .execute::<_, Self::Handler, _>(actor, self.query())
             .await
-            .map_err(PerrouteBackofficeApiError::from)
-            .map_err(Into::into)
+            .map_err(PerrouteBackofficeApiError::from)?
+            .ok_or_else(when_none)
     }
 
     fn query(&self) -> Self::Query;
-
-    fn not_found(&self) -> &str;
 }
 
 #[async_trait::async_trait]
@@ -88,10 +88,6 @@ impl ResourcePath for ChannelPath {
             .build()
             .unwrap()
     }
-
-    fn not_found(&self) -> &str {
-        "Channel not found"
-    }
 }
 
 #[derive(Debug)]
@@ -113,10 +109,6 @@ impl ResourcePath for MessageTypePath {
             .channel_id(Some(self.channel_id))
             .build()
             .unwrap()
-    }
-
-    fn not_found(&self) -> &str {
-        "Mesaage type not found"
     }
 }
 
@@ -169,10 +161,6 @@ impl ResourcePath for SchemaPath {
             .version(self.schema_id)
             .build()
             .unwrap()
-    }
-
-    fn not_found(&self) -> &str {
-        "Schema not found"
     }
 }
 

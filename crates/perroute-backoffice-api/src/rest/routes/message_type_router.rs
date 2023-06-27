@@ -64,9 +64,8 @@ impl MessageTypeRouter {
         channel_path: ChannelPath,
     ) -> Result<Json<Vec<MessageTypeResource>>, RestError> {
         let channel = channel_path
-            .resource(&query_bus, &actor)
-            .await?
-            .ok_or(RestError::NotFound("".to_owned()))?;
+            .fetch(&query_bus, &actor, || RestError::NotFound("()".to_owned()))
+            .await?;
 
         let query = QueryMessageTypesQueryBuilder::default()
             .channel_id(*channel.id())
@@ -92,9 +91,8 @@ impl MessageTypeRouter {
     ) -> Result<Json<MessageTypeResource>, RestError> {
         Ok(Json(MessageTypeResource::from(
             message_type_path
-                .resource(&query_bus, &actor)
-                .await?
-                .ok_or(RestError::NotFound("".to_owned()))?,
+                .fetch(&query_bus, &actor, || RestError::NotFound("()".to_owned()))
+                .await?,
         )))
     }
 
@@ -106,9 +104,8 @@ impl MessageTypeRouter {
         Json(body): Json<CreateMessageTypeRequest>,
     ) -> Result<Json<MessageTypeResource>, RestError> {
         let channel = channel_path
-            .resource(&query_bus, &actor)
-            .await?
-            .ok_or(RestError::NotFound("".to_owned()))?;
+            .fetch(&query_bus, &actor, || RestError::NotFound("()".to_owned()))
+            .await?;
         let command = CreateMessageTypeCommandBuilder::default()
             .message_type_id(new_id!())
             .code(body.code)
@@ -118,15 +115,14 @@ impl MessageTypeRouter {
             .unwrap();
 
         command_bus
-            .execute::<_, CreateMessageTypeCommandHandler>(&actor, command.clone())
+            .execute::<_, CreateMessageTypeCommandHandler>(&actor, &command)
             .await
             .map_err(PerrouteBackofficeApiError::from)?;
 
         Ok(Json(MessageTypeResource::from(
             MessageTypePath::from((*channel.id(), *command.message_type_id()))
-                .resource(&query_bus, &actor)
-                .await?
-                .ok_or(RestError::NotFound("".to_owned()))?,
+                .fetch(&query_bus, &actor, || RestError::NotFound("()".to_owned()))
+                .await?,
         )))
     }
 
@@ -138,9 +134,8 @@ impl MessageTypeRouter {
         Json(req): Json<UpdateMessageTypeRequest>,
     ) -> Result<Json<MessageTypeResource>, RestError> {
         let message_type = message_type_path
-            .resource(&query_bus, &actor)
-            .await?
-            .ok_or(RestError::NotFound("".to_owned()))?;
+            .fetch(&query_bus, &actor, || RestError::NotFound("()".to_owned()))
+            .await?;
         let cmd = UpdateMessageTypeCommandBuilder::default()
             .message_type_id(*message_type.id())
             .description(req.description)
@@ -149,15 +144,14 @@ impl MessageTypeRouter {
             .unwrap();
 
         command_bus
-            .execute::<_, UpdateMessageTypeCommandHandler>(&actor, cmd)
+            .execute::<_, UpdateMessageTypeCommandHandler>(&actor, &cmd)
             .await
             .map_err(PerrouteBackofficeApiError::from)?;
 
         Ok(Json(MessageTypeResource::from(
             message_type_path
-                .resource(&query_bus, &actor)
-                .await?
-                .ok_or(RestError::NotFound("".to_owned()))?,
+                .fetch(&query_bus, &actor, || RestError::NotFound("()".to_owned()))
+                .await?,
         )))
     }
 
@@ -168,16 +162,15 @@ impl MessageTypeRouter {
         message_type_path: MessageTypePath,
     ) -> Result<(), RestError> {
         let message_type = message_type_path
-            .resource(&query_bus, &actor)
-            .await?
-            .ok_or(RestError::NotFound("".to_owned()))?;
+            .fetch(&query_bus, &actor, || RestError::NotFound("()".to_owned()))
+            .await?;
         let cmd = DeleteMessageTypeCommandBuilder::default()
             .message_type_id(*message_type.id())
             .build()
             .unwrap();
 
         command_bus
-            .execute::<_, DeleteMessageTypeCommandHandler>(&actor, cmd)
+            .execute::<_, DeleteMessageTypeCommandHandler>(&actor, &cmd)
             .await
             .map_err(PerrouteBackofficeApiError::from)?;
 
