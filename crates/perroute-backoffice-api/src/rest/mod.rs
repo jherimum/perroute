@@ -1,5 +1,6 @@
 use axum::extract::FromRef;
 use perroute_cqrs::{command_bus::bus::CommandBus, query_bus::bus::QueryBus};
+use std::fmt::Debug;
 
 pub mod api_models;
 pub mod error;

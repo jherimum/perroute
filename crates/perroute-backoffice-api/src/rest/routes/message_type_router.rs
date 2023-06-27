@@ -5,21 +5,18 @@ use crate::{
             CreateMessageTypeRequest, MessageTypeResource, UpdateMessageTypeRequest,
         },
         extractors::{
-            actor::ActorExtractor, channel::ChannelExtractor, message_type::MessageTypeExtractor,
+            actor::ActorExtractor,
+            resource_path::{ChannelPath, MessageTypePath, ResourcePath},
         },
         Buses,
     },
 };
 use axum::{
-    extract::{Path, State},
+    extract::State,
     routing::{delete, get, post, put},
     Json, Router,
 };
-use perroute_commons::{
-    new_id,
-    rest::RestError,
-    types::{actor::Actor, id::Id},
-};
+use perroute_commons::{new_id, rest::RestError};
 use perroute_cqrs::{
     command_bus::{
         bus::CommandBus,
@@ -34,16 +31,10 @@ use perroute_cqrs::{
         },
     },
     query_bus::{
-        bus::QueryBus,
-        handlers::message_type::{
-            find_message_type::FindMessageTypeQueryHandler,
-            query_message_types::QueryMessageTypesHandler,
-        },
-        queries::{FindMessageTypeQueryBuilder, QueryMessageTypesQueryBuilder},
+        bus::QueryBus, handlers::message_type::query_message_types::QueryMessageTypesHandler,
+        queries::QueryMessageTypesQueryBuilder,
     },
 };
-use perroute_storage::models::message_type::MessageType;
-use std::ops::Deref;
 
 pub struct MessageTypeRouter;
 
@@ -66,31 +57,17 @@ impl MessageTypeRouter {
             .with_state(buses)
     }
 
-    async fn retrieve_message_type(
-        query_bus: &QueryBus,
-        message_type_id: Id,
-        actor: &Actor,
-    ) -> Result<MessageType, RestError> {
-        let query = FindMessageTypeQueryBuilder::default()
-            .message_type_id(message_type_id)
-            .build()
-            .unwrap();
-
-        query_bus
-            .execute::<_, FindMessageTypeQueryHandler, _>(actor, query)
-            .await
-            .map_err(PerrouteBackofficeApiError::from)?
-            .ok_or(RestError::NotFound(format!(
-                "Message type {message_type_id} not found"
-            )))
-    }
-
     #[tracing::instrument(skip(query_bus))]
     async fn query_message_types(
         State(query_bus): State<QueryBus>,
         ActorExtractor(actor): ActorExtractor,
-        channel: ChannelExtractor<Path<Id>>,
+        channel_path: ChannelPath,
     ) -> Result<Json<Vec<MessageTypeResource>>, RestError> {
+        let channel = channel_path
+            .resource(&query_bus, &actor)
+            .await?
+            .ok_or(RestError::NotFound("".to_owned()))?;
+
         let query = QueryMessageTypesQueryBuilder::default()
             .channel_id(*channel.id())
             .build()
@@ -109,18 +86,29 @@ impl MessageTypeRouter {
 
     #[tracing::instrument]
     async fn find_message_type(
-        message_type: MessageTypeExtractor<Path<(Id, Id)>>,
+        message_type_path: MessageTypePath,
+        State(query_bus): State<QueryBus>,
+        ActorExtractor(actor): ActorExtractor,
     ) -> Result<Json<MessageTypeResource>, RestError> {
-        Ok(Json::from(MessageTypeResource::from(message_type.deref())))
+        Ok(Json(MessageTypeResource::from(
+            message_type_path
+                .resource(&query_bus, &actor)
+                .await?
+                .ok_or(RestError::NotFound("".to_owned()))?,
+        )))
     }
 
     async fn create_message_type(
         State(command_bus): State<CommandBus>,
         State(query_bus): State<QueryBus>,
         ActorExtractor(actor): ActorExtractor,
-        channel: ChannelExtractor<Path<Id>>,
+        channel_path: ChannelPath,
         Json(body): Json<CreateMessageTypeRequest>,
     ) -> Result<Json<MessageTypeResource>, RestError> {
+        let channel = channel_path
+            .resource(&query_bus, &actor)
+            .await?
+            .ok_or(RestError::NotFound("".to_owned()))?;
         let command = CreateMessageTypeCommandBuilder::default()
             .message_type_id(new_id!())
             .code(body.code)
@@ -134,19 +122,25 @@ impl MessageTypeRouter {
             .await
             .map_err(PerrouteBackofficeApiError::from)?;
 
-        Self::retrieve_message_type(&query_bus, *command.message_type_id(), &actor)
-            .await
-            .map(MessageTypeResource::from)
-            .map(Json::from)
+        Ok(Json(MessageTypeResource::from(
+            MessageTypePath::from((*channel.id(), *command.message_type_id()))
+                .resource(&query_bus, &actor)
+                .await?
+                .ok_or(RestError::NotFound("".to_owned()))?,
+        )))
     }
 
     async fn update_message_type(
         State(command_bus): State<CommandBus>,
         State(query_bus): State<QueryBus>,
         ActorExtractor(actor): ActorExtractor,
-        message_type: MessageTypeExtractor<Path<(Id, Id)>>,
+        message_type_path: MessageTypePath,
         Json(req): Json<UpdateMessageTypeRequest>,
     ) -> Result<Json<MessageTypeResource>, RestError> {
+        let message_type = message_type_path
+            .resource(&query_bus, &actor)
+            .await?
+            .ok_or(RestError::NotFound("".to_owned()))?;
         let cmd = UpdateMessageTypeCommandBuilder::default()
             .message_type_id(*message_type.id())
             .description(req.description)
@@ -159,19 +153,26 @@ impl MessageTypeRouter {
             .await
             .map_err(PerrouteBackofficeApiError::from)?;
 
-        Self::retrieve_message_type(&query_bus, *message_type.id(), &actor)
-            .await
-            .map(MessageTypeResource::from)
-            .map(Json::from)
+        Ok(Json(MessageTypeResource::from(
+            message_type_path
+                .resource(&query_bus, &actor)
+                .await?
+                .ok_or(RestError::NotFound("".to_owned()))?,
+        )))
     }
 
     async fn delete_message_type(
         State(command_bus): State<CommandBus>,
+        State(query_bus): State<QueryBus>,
         ActorExtractor(actor): ActorExtractor,
-        message_type_guard: MessageTypeExtractor<Path<(Id, Id)>>,
+        message_type_path: MessageTypePath,
     ) -> Result<(), RestError> {
+        let message_type = message_type_path
+            .resource(&query_bus, &actor)
+            .await?
+            .ok_or(RestError::NotFound("".to_owned()))?;
         let cmd = DeleteMessageTypeCommandBuilder::default()
-            .message_type_id(*message_type_guard.id())
+            .message_type_id(*message_type.id())
             .build()
             .unwrap();
 

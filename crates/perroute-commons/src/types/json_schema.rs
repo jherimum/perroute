@@ -15,6 +15,7 @@ pub enum JsonSchemaError {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Type, Eq)]
+#[sqlx(transparent)]
 pub struct JsonSchema(serde_json::Value);
 
 impl Default for JsonSchema {

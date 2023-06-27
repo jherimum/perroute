@@ -24,8 +24,10 @@ pub trait Query: Debug + Serialize + Clone + PartialEq + Eq + Send + Sync {
 pub enum QueryType {
     FindChannel,
     QueryChannels,
+
     FindMessageTypeQuery,
     QueryChannelMessageTypes,
+
     QuerySchemas,
     FindSchema,
 }
@@ -40,6 +42,7 @@ pub struct QueryChannelsQuery {}
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Builder, Getters)]
 pub struct FindMessageTypeQuery {
+    channel_id: Option<Id>,
     message_type_id: Id,
 }
 
@@ -55,8 +58,9 @@ pub struct QuerySchemasQuery {
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Builder, Getters)]
 pub struct FindSchemaQuery {
+    channel_id: Id,
     message_type_id: Id,
-    version: i32,
+    version: Id,
 }
 
 impl_query!(FindChannelQuery, QueryType::FindChannel);
