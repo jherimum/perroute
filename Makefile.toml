@@ -13,6 +13,14 @@ args = ["watch", "-x", "clippy", "-x", "run | bunyan"]
 dependencies = ["postgres"]
 
 
+[tasks.dev-backoffice-actix]
+install_crate="cargo-watch"
+cwd = "./crates/perroute-backoffice-actix"
+command = "cargo"
+args = ["watch", "-x", "clippy", "-x", "run | bunyan"]
+dependencies = ["postgres"]
+
+
 [tasks.format]
 install_crate = "rustfmt"
 command = "cargo"

@@ -1,4 +1,4 @@
-use axum::{http::StatusCode, response::IntoResponse, Json};
+use actix_web::{http::StatusCode, HttpResponse, ResponseError};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -8,11 +8,25 @@ pub struct ErrorResponse {
     pub detail: Option<String>,
 }
 
-impl From<anyhow::Error> for RestError {
-    fn from(_: anyhow::Error) -> Self {
-        Self::InternalServer
+impl ResponseError for RestError {
+    fn status_code(&self) -> actix_web::http::StatusCode {
+        match self {
+            RestError::NotFound(_) => StatusCode::NOT_FOUND,
+            RestError::InternalServer => StatusCode::INTERNAL_SERVER_ERROR,
+            RestError::UnprocessableEntity(_) => StatusCode::UNPROCESSABLE_ENTITY,
+        }
+    }
+    fn error_response(&self) -> HttpResponse<actix_web::body::BoxBody> {
+        let response: ErrorResponse = self.clone().into();
+        HttpResponse::build(self.status_code()).json(response)
     }
 }
+
+// impl From<anyhow::Error> for RestError {
+//     fn from(_: anyhow::Error) -> Self {
+//         Self::InternalServer
+//     }
+// }
 
 #[derive(Debug, thiserror::Error, Clone)]
 pub enum RestError {
@@ -26,17 +40,17 @@ pub enum RestError {
     UnprocessableEntity(String),
 }
 
-impl IntoResponse for RestError {
-    fn into_response(self) -> axum::response::Response {
-        let response: Json<ErrorResponse> = Json(self.clone().into());
-        match self {
-            Self::NotFound(_) => (StatusCode::NOT_FOUND, response),
-            Self::InternalServer => (StatusCode::INTERNAL_SERVER_ERROR, response),
-            Self::UnprocessableEntity(_) => (StatusCode::UNPROCESSABLE_ENTITY, response),
-        }
-        .into_response()
-    }
-}
+// impl IntoResponse for RestError {
+//     fn into_response(self) -> axum::response::Response {
+//         let response: Json<ErrorResponse> = Json(self.clone().into());
+//         match self {
+//             Self::NotFound(_) => (StatusCode::NOT_FOUND, response),
+//             Self::InternalServer => (StatusCode::INTERNAL_SERVER_ERROR, response),
+//             Self::UnprocessableEntity(_) => (StatusCode::UNPROCESSABLE_ENTITY, response),
+//         }
+//         .into_response()
+//     }
+// }
 
 impl From<RestError> for ErrorResponse {
     fn from(value: RestError) -> Self {
