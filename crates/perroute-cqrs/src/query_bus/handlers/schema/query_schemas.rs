@@ -18,7 +18,7 @@ impl QueryHandler for QuerySchemasQueryHandler {
     async fn handle(
         &self,
         ctx: &QueryBusContext,
-        query: Self::Query,
+        query: &Self::Query,
     ) -> Result<Self::Output, QueryBusError> {
         Schema::query(ctx.pool(), query.message_type_id())
             .await

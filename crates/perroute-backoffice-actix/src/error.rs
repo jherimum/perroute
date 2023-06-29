@@ -1,20 +1,35 @@
 use actix_web::ResponseError;
-use perroute_commons::rest::RestError;
+use perroute_commons::{rest::RestError, types::code::Code};
 use perroute_cqrs::{command_bus::error::CommandBusError, query_bus::error::QueryBusError};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum ApiError {
+    #[error("Channel {0} not found")]
+    ChannelNotFound(Code),
+
     #[error(transparent)]
     CommandBus(#[from] CommandBusError),
 
     #[error(transparent)]
     QueryBus(#[from] QueryBusError),
+
+    #[error(transparent)]
+    Rest(#[from] RestError),
+
+    #[error(transparent)]
+    Unexpected(#[from] anyhow::Error),
+
+    #[error("{0}")]
+    Const(&'static str),
 }
 
 impl From<&ApiError> for RestError {
     fn from(value: &ApiError) -> Self {
-        RestError::InternalServer
+        match value {
+            ApiError::Rest(e) => e.clone(),
+            _ => RestError::InternalServer,
+        }
     }
 }
 

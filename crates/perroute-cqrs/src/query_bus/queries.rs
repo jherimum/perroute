@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use derive_builder::Builder;
 use derive_getters::Getters;
-use perroute_commons::types::id::Id;
+use perroute_commons::types::{code::Code, id::Id};
 use serde::Serialize;
 use strum_macros::Display;
 
@@ -22,7 +22,8 @@ pub trait Query: Debug + Serialize + Clone + PartialEq + Eq + Send + Sync {
 
 #[derive(Debug, Clone, PartialEq, Eq, Display)]
 pub enum QueryType {
-    FindChannel,
+    FindChannelByCode,
+    FindChannelById,
     QueryChannels,
 
     FindMessageTypeQuery,
@@ -33,7 +34,12 @@ pub enum QueryType {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Builder, Getters)]
-pub struct FindChannelQuery {
+pub struct FindChannelByCodeQuery {
+    channel_code: Code,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Serialize, Builder, Getters)]
+pub struct FindChannelByIdQuery {
     channel_id: Id,
 }
 
@@ -63,7 +69,8 @@ pub struct FindSchemaQuery {
     version: Id,
 }
 
-impl_query!(FindChannelQuery, QueryType::FindChannel);
+impl_query!(FindChannelByIdQuery, QueryType::FindChannelById);
+impl_query!(FindChannelByCodeQuery, QueryType::FindChannelByCode);
 impl_query!(QueryChannelsQuery, QueryType::QueryChannels);
 impl_query!(FindMessageTypeQuery, QueryType::FindMessageTypeQuery);
 impl_query!(QueryMessageTypesQuery, QueryType::QueryChannelMessageTypes);

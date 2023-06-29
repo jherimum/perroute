@@ -15,7 +15,7 @@ impl QueryHandler for QueryMessageTypesHandler {
     async fn handle(
         &self,
         ctx: &QueryBusContext,
-        query: Self::Query,
+        query: &Self::Query,
     ) -> Result<Self::Output, QueryBusError> {
         MessageType::query_by_channel_id(ctx.pool(), query.channel_id())
             .await

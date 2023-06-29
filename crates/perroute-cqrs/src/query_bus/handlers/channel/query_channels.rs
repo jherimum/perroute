@@ -17,7 +17,7 @@ impl QueryHandler for QueryChannelsQueryHandler {
     async fn handle(
         &self,
         ctx: &QueryBusContext,
-        _: Self::Query,
+        _: &Self::Query,
     ) -> Result<Self::Output, QueryBusError> {
         Channel::query(ctx.pool())
             .await

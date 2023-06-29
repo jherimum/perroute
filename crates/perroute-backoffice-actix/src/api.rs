@@ -1,23 +1,26 @@
 use std::collections::HashMap;
 
 use actix_web::{body::BoxBody, HttpRequest, HttpResponse, Responder};
-use perroute_commons::types::id::Id;
+use perroute_commons::types::{code::Code, id::Id};
 use serde::Serialize;
 use tap::TapFallible;
 use url::Url;
 
-use crate::error::ApiError;
+use crate::{
+    error::ApiError,
+    routes::channel::{CHANNELS_RESOUCE_LINK, CHANNEL_RESOUCE_LINK},
+};
 
 pub enum ResourceLink {
-    Channel(Id),
+    Channel(Code),
     Channels,
 }
 
 impl ResourceLink {
     pub fn as_url(&self, req: &HttpRequest) -> Url {
         match self {
-            ResourceLink::Channel(id) => req.url_for("channel", [id.to_string()]),
-            ResourceLink::Channels => req.url_for_static("channels"),
+            ResourceLink::Channel(id) => req.url_for(CHANNEL_RESOUCE_LINK, [id.to_string()]),
+            ResourceLink::Channels => req.url_for_static(CHANNELS_RESOUCE_LINK),
         }
         .tap_err(|e| tracing::error!("Failed to build url: {}", e))
         .expect("msg")
@@ -30,10 +33,10 @@ impl ResourceLink {
     }
 }
 
-pub type RouterResult<T> = Result<ApiResponse<T>, ApiError>;
+pub type ApiResult<T> = Result<ApiResponse<T>, ApiError>;
 
 pub enum ApiResponse<D: Serialize> {
-    Ok(ApiResource<D>),
+    Ok(Option<ApiResource<D>>),
     Created(ResourceLink, Option<ApiResource<D>>),
 }
 
@@ -42,7 +45,13 @@ impl<T: Serialize> Responder for ApiResponse<T> {
 
     fn respond_to(self, req: &actix_web::HttpRequest) -> actix_web::HttpResponse<Self::Body> {
         match self {
-            ApiResponse::Ok(body) => HttpResponse::Ok().json(body.build(req)),
+            ApiResponse::Ok(body) => {
+                let mut b = HttpResponse::Ok();
+                match body {
+                    Some(body) => b.json(body.build(req)),
+                    None => b.finish(),
+                }
+            }
             ApiResponse::Created(url, body) => {
                 let mut builder = HttpResponse::Created();
                 builder.insert_header(url.as_location_header(req));

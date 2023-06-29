@@ -16,7 +16,7 @@ impl QueryHandler for FindMessageTypeQueryHandler {
     async fn handle(
         &self,
         ctx: &QueryBusContext,
-        query: Self::Query,
+        query: &Self::Query,
     ) -> Result<Self::Output, QueryBusError> {
         MessageType::find_by_id(ctx.pool(), query.message_type_id())
             .await

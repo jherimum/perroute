@@ -2,7 +2,8 @@ use super::{
     error::QueryBusError,
     handlers::{
         channel::{
-            find_channel::FindChannelQueryHandler, query_channels::QueryChannelsQueryHandler,
+            find_channel_by_code::FindChannelByCodeHandler,
+            find_channel_by_id::FindChannelByIdHandler, query_channels::QueryChannelsQueryHandler,
         },
         message_type::{
             find_message_type::FindMessageTypeQueryHandler,
@@ -20,7 +21,7 @@ use std::{
     fmt::Debug,
     sync::Arc,
 };
-use tap::TapOptional;
+use tap::{TapFallible, TapOptional};
 
 pub struct QueryBusContext<'a> {
     pool: PgPool,
@@ -48,7 +49,7 @@ pub trait QueryHandler: Send + Sync {
     async fn handle(
         &self,
         ctx: &QueryBusContext,
-        query: Self::Query,
+        query: &Self::Query,
     ) -> Result<Self::Output, QueryBusError>;
 }
 
@@ -62,7 +63,8 @@ impl QueryBus {
     pub fn complete(pool: PgPool) -> Self {
         Self::builder()
             .with_pool(pool)
-            .with_handler(FindChannelQueryHandler)
+            .with_handler(FindChannelByCodeHandler)
+            .with_handler(FindChannelByIdHandler)
             .with_handler(QueryChannelsQueryHandler)
             .with_handler(QueryMessageTypesHandler)
             .with_handler(FindMessageTypeQueryHandler)
@@ -83,7 +85,7 @@ impl QueryBus {
         handler.and_then(|h| h.downcast_ref::<H>())
     }
 
-    pub async fn execute<Q, H, O>(&self, actor: &Actor, query: Q) -> Result<O, QueryBusError>
+    pub async fn execute<Q, H, O>(&self, actor: &Actor, query: &Q) -> Result<O, QueryBusError>
     where
         H: QueryHandler<Query = Q, Output = O> + 'static + Sync + Send,
         Q: Query + 'static,
@@ -96,7 +98,10 @@ impl QueryBus {
 
         let ctx = QueryBusContext::new(self.pool.clone(), actor);
 
-        handler.handle(&ctx, query).await
+        handler
+            .handle(&ctx, query)
+            .await
+            .tap_err(|e| tracing::error!("Failed to execute query {:?}: {}", query, e))
     }
 }
 
