@@ -45,6 +45,8 @@ impl From<Channel> for SingleResource<ChannelResource> {
                 Linkrelation::MessageTypes,
                 ResourceLink::MessageTypes(*value.id()),
             )
+            .with_link(Linkrelation::Routes, ResourceLink::Routes(*value.id()))
+        // .with_link(Linkrelation::Schemas, ResourceLink::Schemas(*value.id()))
     }
 }
 

@@ -1,3 +1,4 @@
+use super::channel::ChannelRouter;
 use crate::api::response::{ApiResponse, EmptyResource};
 use crate::api::ResourceLink;
 use crate::{
@@ -35,22 +36,18 @@ use perroute_cqrs::query_bus::queries::{
 };
 use perroute_storage::models::message_type::MessageType;
 
-use super::channel::ChannelRouter;
-
 pub const MESSAGE_TYPES_RESOURCE_NAME: &str = "message_types";
 pub const MESSAGE_TYPE_RESOURCE_NAME: &str = "message_type";
 
 pub struct MessageTypeRouter;
 
 impl MessageTypeRouter {
-    #[tracing::instrument]
+    #[tracing::instrument(skip(state))]
     pub async fn query(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
         path: Path<Id>,
     ) -> ApiResult<MessageTypeResource> {
-        println!("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
-
         let channel_id = path.into_inner();
         let channel =
             ChannelRouter::retrieve_channel(state.query_bus(), &actor, &channel_id, || {
@@ -70,7 +67,7 @@ impl MessageTypeRouter {
         Ok(ApiResponse::OkCollection((channel, message_types).into()))
     }
 
-    #[tracing::instrument]
+    #[tracing::instrument(skip(state))]
     pub async fn create(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
@@ -113,7 +110,7 @@ impl MessageTypeRouter {
         ))
     }
 
-    #[tracing::instrument(name = "CHANNEL")]
+    #[tracing::instrument(skip(state))]
     pub async fn update(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
@@ -147,7 +144,7 @@ impl MessageTypeRouter {
         Ok(ApiResponse::OkSingle(message_type.into()))
     }
 
-    #[tracing::instrument(name = "CHANNEL")]
+    #[tracing::instrument(skip(state))]
     pub async fn delete(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
@@ -172,7 +169,7 @@ impl MessageTypeRouter {
         Ok(ApiResponse::OkEmpty(EmptyResource))
     }
 
-    #[tracing::instrument(name = "CHANNEL")]
+    #[tracing::instrument(skip(state))]
     pub async fn find(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,

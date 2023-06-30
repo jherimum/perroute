@@ -42,7 +42,7 @@ pub const CHANNELS_RESOURCE_NAME: &str = "channels";
 pub struct ChannelRouter;
 
 impl ChannelRouter {
-    #[tracing::instrument]
+    #[tracing::instrument(skip(state))]
     pub async fn create_channel(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
@@ -73,7 +73,7 @@ impl ChannelRouter {
         ))
     }
 
-    #[tracing::instrument]
+    #[tracing::instrument(skip(state))]
     pub async fn find_channel(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
@@ -87,7 +87,7 @@ impl ChannelRouter {
         Ok(ApiResponse::OkSingle(channel.into()))
     }
 
-    #[tracing::instrument(name = "CHANNEL")]
+    #[tracing::instrument(skip(state))]
     pub async fn query(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
@@ -100,7 +100,7 @@ impl ChannelRouter {
         Ok(ApiResponse::OkCollection(channels.into()))
     }
 
-    #[tracing::instrument(name = "CHANNEL")]
+    #[tracing::instrument(skip(state))]
     pub async fn update(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
@@ -134,7 +134,7 @@ impl ChannelRouter {
         Ok(ApiResponse::OkSingle(channel.into()))
     }
 
-    #[tracing::instrument(name = "CHANNEL")]
+    #[tracing::instrument(skip(state))]
     pub async fn delete(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,

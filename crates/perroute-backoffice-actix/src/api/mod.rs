@@ -1,13 +1,14 @@
+use crate::routes::{
+    channel::{CHANNELS_RESOURCE_NAME, CHANNEL_RESOURCE_NAME},
+    message_type::{MESSAGE_TYPES_RESOURCE_NAME, MESSAGE_TYPE_RESOURCE_NAME},
+    route::ROUTE_RESOURCE_NAME,
+    schema::{SCHEMAS_RESOURCE_NAME, SCHEMA_RESOURCE_NAME},
+};
 use actix_web::HttpRequest;
 use perroute_commons::types::id::Id;
 use serde::Serialize;
 use tap::TapFallible;
 use url::Url;
-
-use crate::routes::{
-    channel::{CHANNELS_RESOURCE_NAME, CHANNEL_RESOURCE_NAME},
-    message_type::{MESSAGE_TYPES_RESOURCE_NAME, MESSAGE_TYPE_RESOURCE_NAME},
-};
 
 pub mod models;
 pub mod response;
@@ -18,6 +19,8 @@ pub enum Linkrelation {
     Channels,
     Channel,
     MessageTypes,
+    Routes,
+    Schemas,
 }
 
 #[derive(Debug, Serialize, Clone)]
@@ -26,6 +29,10 @@ pub enum ResourceLink {
     Channels,
     MessageType(Id, Id),
     MessageTypes(Id),
+    Schemas(Id),
+    Schema(Id, Id),
+    Routes(Id),
+    Route(Id, Id),
 }
 
 impl ResourceLink {
@@ -39,6 +46,20 @@ impl ResourceLink {
             ResourceLink::MessageType(channel_id, message_type_id) => req.url_for(
                 MESSAGE_TYPE_RESOURCE_NAME,
                 [channel_id.to_string(), message_type_id.to_string()],
+            ),
+            ResourceLink::Schemas(channel_id) => {
+                req.url_for(SCHEMAS_RESOURCE_NAME, [channel_id.to_string()])
+            }
+            ResourceLink::Schema(channel_id, schema_id) => req.url_for(
+                SCHEMA_RESOURCE_NAME,
+                [channel_id.to_string(), schema_id.to_string()],
+            ),
+            ResourceLink::Routes(channel_id) => {
+                req.url_for(ROUTE_RESOURCE_NAME, [channel_id.to_string()])
+            }
+            ResourceLink::Route(channel_id, route_id) => req.url_for(
+                ROUTE_RESOURCE_NAME,
+                [channel_id.to_string(), route_id.to_string()],
             ),
         }
         .tap_err(|e| tracing::error!("Failed to build url: {}", e))

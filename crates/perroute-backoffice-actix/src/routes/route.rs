@@ -1,11 +1,11 @@
 use actix_web::{HttpResponse, Responder};
 
-pub const SCHEMAS_RESOURCE_NAME: &str = "schemas";
-pub const SCHEMA_RESOURCE_NAME: &str = "schema";
+pub const ROUTES_RESOURCE_NAME: &str = "routes";
+pub const ROUTE_RESOURCE_NAME: &str = "route";
 
-pub struct SchemaRouter;
+pub struct RouteRouter;
 
-impl SchemaRouter {
+impl RouteRouter {
     #[tracing::instrument]
     pub async fn query() -> impl Responder {
         HttpResponse::Ok().finish()
