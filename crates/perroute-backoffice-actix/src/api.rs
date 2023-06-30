@@ -131,7 +131,7 @@ pub struct EmptyResource;
 impl Resource for EmptyResource {}
 
 pub enum ApiResponse<D: Resource> {
-    OkEmpty(D),
+    OkEmpty(EmptyResource),
     OkSingle(SingleResource<D>),
     OkCollection(CollectionResource<D>),
     CreatedEmpty(ResourceLink),
