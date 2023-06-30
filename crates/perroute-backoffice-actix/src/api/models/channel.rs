@@ -1,8 +1,11 @@
-use crate::api::{CollectionResource, Linkrelation, Resource, ResourceLink, SingleResource};
 use derive_getters::Getters;
 use perroute_commons::types::code::Code;
 use perroute_storage::models::channel::Channel;
 use serde::Serialize;
+
+use crate::api::response::{
+    CollectionResource, Linkrelation, Resource, ResourceLink, SingleResource,
+};
 
 #[derive(Debug, serde::Deserialize, Clone, Getters)]
 pub struct CreateChannelRequest {
@@ -38,7 +41,7 @@ impl From<Channel> for SingleResource<ChannelResource> {
             .with_data(value.clone().into())
             .with_link(
                 Linkrelation::Self_,
-                crate::api::ResourceLink::Channel(value.code().clone()),
+                ResourceLink::Channel(value.code().clone()),
             )
             .with_link(Linkrelation::Channels, ResourceLink::Channels)
     }

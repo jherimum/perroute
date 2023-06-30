@@ -1,9 +1,11 @@
 use crate::{
-    api::{ApiResponse, ApiResult, EmptyResource, Resource, ResourceLink},
-    api_models::channel::{ChannelResource, CreateChannelRequest, UpdateChannelRequest},
+    api::{
+        models::channel::{ChannelResource, CreateChannelRequest, UpdateChannelRequest},
+        response::{ApiResponse, ApiResult, EmptyResource, ResourceLink},
+    },
+    app::AppState,
     error::ApiError,
     extractors::actor::ActorExtractor,
-    AppState,
 };
 use actix_web::{
     web::{delete, get, post, put, resource, Data, Json, Path},

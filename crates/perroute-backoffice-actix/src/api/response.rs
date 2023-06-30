@@ -1,13 +1,14 @@
-use crate::{
-    error::ApiError,
-    routes::channel::{CHANNELS_RESOUCE_LINK, CHANNEL_RESOUCE_LINK},
-};
 use actix_web::{body::BoxBody, http::StatusCode, HttpRequest, HttpResponse, Responder};
 use perroute_commons::types::code::Code;
 use serde::Serialize;
 use std::{collections::HashMap, fmt::Debug};
 use tap::TapFallible;
 use url::Url;
+
+use crate::{
+    error::ApiError,
+    routes::channel::{CHANNELS_RESOUCE_LINK, CHANNEL_RESOUCE_LINK},
+};
 
 pub trait Resource: Debug + Clone + Serialize {}
 

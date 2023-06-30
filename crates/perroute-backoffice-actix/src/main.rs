@@ -4,11 +4,11 @@ use actix_web::{
 };
 use anyhow::{Context, Result};
 use perroute_backoffice_actix::{
+    app::AppState,
     routes::{
         channel::ChannelRouter, health::HealthRouter, message_type::MessageTypeRouter,
         schema::SchemaRouter,
     },
-    AppState,
 };
 use perroute_commons::{configuration::settings::Settings, tracing::init_tracing};
 use tap::TapFallible;
