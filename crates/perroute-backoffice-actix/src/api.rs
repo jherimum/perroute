@@ -1,25 +1,26 @@
-use actix_web::{body::BoxBody, http::StatusCode, HttpRequest, HttpResponse, Responder};
-use perroute_commons::types::code::Code;
-use serde::Serialize;
-use std::collections::HashMap;
-use tap::TapFallible;
-use url::Url;
-
 use crate::{
     error::ApiError,
     routes::channel::{CHANNELS_RESOUCE_LINK, CHANNEL_RESOUCE_LINK},
 };
+use actix_web::{body::BoxBody, http::StatusCode, HttpRequest, HttpResponse, Responder};
+use perroute_commons::types::code::Code;
+use serde::Serialize;
+use std::{collections::HashMap, fmt::Debug};
+use tap::TapFallible;
+use url::Url;
 
-pub type ApiResult<T> = Result<ApiResponse<T>, ApiError>;
+pub trait Resource: Debug + Clone + Serialize {}
+
+pub type ApiResult<R> = Result<ApiResponse<R>, ApiError>;
 
 #[derive(Debug, Serialize, Clone)]
 pub struct SingleResourceModel<D: Serialize> {
-    data: D,
+    data: Option<D>,
     links: HashMap<Linkrelation, Url>,
 }
 
 #[derive(Debug, Serialize, Clone)]
-pub struct CollectionResourceModel<D: Serialize> {
+pub struct CollectionResourceModel<D: Resource> {
     data: Vec<SingleResourceModel<D>>,
     links: HashMap<Linkrelation, Url>,
 }
@@ -42,46 +43,105 @@ impl Links {
 }
 
 #[derive(Debug, Serialize, Clone)]
-pub struct SingleResource<D: Serialize + Clone> {
-    pub data: D,
-    pub links: Links,
+pub struct SingleResource<D: Resource> {
+    data: Option<D>,
+    links: Links,
 }
 
-impl<D: Serialize + Clone> SingleResource<D> {
+impl<D: Resource> Default for SingleResource<D> {
+    fn default() -> Self {
+        Self {
+            data: Default::default(),
+            links: Default::default(),
+        }
+    }
+}
+
+impl<D: Resource> SingleResource<D> {
     pub fn build(&self, req: &HttpRequest) -> SingleResourceModel<D> {
         SingleResourceModel {
             data: self.data.clone(),
             links: self.links.as_url_map(req),
         }
     }
+
+    pub fn with_link(self, rel: Linkrelation, link: ResourceLink) -> Self {
+        Self {
+            data: self.data,
+            links: self.links.add(rel, link),
+        }
+    }
+
+    pub fn with_data(self, data: D) -> Self {
+        Self {
+            data: Some(data),
+            links: self.links,
+        }
+    }
 }
 
-pub struct CollectionResource<D: Serialize + Clone> {
-    pub data: Vec<SingleResource<D>>,
-    pub links: Links,
+pub struct CollectionResource<D: Resource> {
+    data: Vec<SingleResource<D>>,
+    links: Links,
 }
 
-impl<D: Serialize + Clone> CollectionResource<D> {
+impl<D: Resource> Default for CollectionResource<D> {
+    fn default() -> Self {
+        Self {
+            data: Default::default(),
+            links: Default::default(),
+        }
+    }
+}
+
+impl<D: Resource> CollectionResource<D> {
     pub fn build(&self, req: &HttpRequest) -> CollectionResourceModel<D> {
         CollectionResourceModel {
             data: self.data.iter().map(|b| b.build(req)).collect(),
             links: self.links.as_url_map(req),
         }
     }
+
+    pub fn with_resources(self, data: Vec<SingleResource<D>>) -> Self {
+        Self {
+            data,
+            links: self.links,
+        }
+    }
+
+    pub fn add_resource(mut self, data: SingleResource<D>) -> Self {
+        self.data.push(data);
+        Self {
+            data: self.data,
+            links: self.links,
+        }
+    }
+
+    pub fn with_link(self, rel: Linkrelation, link: ResourceLink) -> Self {
+        Self {
+            data: self.data,
+            links: self.links.add(rel, link),
+        }
+    }
 }
 
-pub enum ApiResponse<D: Serialize + Clone> {
-    OkEmpty,
+#[derive(Debug, Clone, Serialize)]
+pub struct EmptyResource;
+
+impl Resource for EmptyResource {}
+
+pub enum ApiResponse<D: Resource> {
+    OkEmpty(D),
     OkSingle(SingleResource<D>),
     OkCollection(CollectionResource<D>),
     CreatedEmpty(ResourceLink),
     Created(ResourceLink, SingleResource<D>),
 }
 
-impl<D: Serialize + Clone> ApiResponse<D> {
+impl<D: Resource> ApiResponse<D> {
     pub fn status_code(&self) -> StatusCode {
         match self {
-            ApiResponse::OkEmpty => StatusCode::OK,
+            ApiResponse::OkEmpty(_) => StatusCode::OK,
             ApiResponse::OkSingle(_) => StatusCode::OK,
             ApiResponse::OkCollection(_) => StatusCode::OK,
             ApiResponse::CreatedEmpty(_) => StatusCode::CREATED,
@@ -90,12 +150,12 @@ impl<D: Serialize + Clone> ApiResponse<D> {
     }
 }
 
-impl<D: Serialize + Clone> Responder for ApiResponse<D> {
+impl<D: Resource> Responder for ApiResponse<D> {
     type Body = BoxBody;
 
     fn respond_to(self, req: &HttpRequest) -> actix_web::HttpResponse<Self::Body> {
         match self {
-            ApiResponse::OkEmpty => HttpResponse::Ok().finish(),
+            ApiResponse::OkEmpty(_) => HttpResponse::Ok().finish(),
             ApiResponse::OkSingle(body) => HttpResponse::Ok().json(body.build(req)),
             ApiResponse::OkCollection(body) => HttpResponse::Ok().json(body.build(req)),
             ApiResponse::CreatedEmpty(url) => {

@@ -1,5 +1,5 @@
 use crate::{
-    api::{ApiResponse, ApiResult, ResourceLink},
+    api::{ApiResponse, ApiResult, EmptyResource, Resource, ResourceLink},
     api_models::channel::{ChannelResource, CreateChannelRequest, UpdateChannelRequest},
     error::ApiError,
     extractors::actor::ActorExtractor,
@@ -157,7 +157,7 @@ impl ChannelRouter {
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
         path: Path<Code>,
-    ) -> ApiResult<()> {
+    ) -> ApiResult<EmptyResource> {
         let channel_code = path.into_inner();
         let channel = retrieve_channel(state.query_bus(), &actor, &channel_code, || {
             ApiError::ChannelNotFound(channel_code.clone())
@@ -176,7 +176,7 @@ impl ChannelRouter {
             .await
             .tap_err(|e| tracing::error!("Failed to delete channel: {e}"))?;
 
-        Ok(ApiResponse::OkEmpty)
+        Ok(ApiResponse::OkEmpty(EmptyResource))
     }
 }
 

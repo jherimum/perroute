@@ -1,4 +1,4 @@
-use crate::api::{CollectionResource, Linkrelation, Links, ResourceLink, SingleResource};
+use crate::api::{CollectionResource, Linkrelation, Resource, ResourceLink, SingleResource};
 use derive_getters::Getters;
 use perroute_commons::types::code::Code;
 use perroute_storage::models::channel::Channel;
@@ -21,6 +21,8 @@ pub struct ChannelResource {
     name: String,
 }
 
+impl Resource for ChannelResource {}
+
 impl From<Channel> for ChannelResource {
     fn from(value: Channel) -> Self {
         ChannelResource {
@@ -32,23 +34,20 @@ impl From<Channel> for ChannelResource {
 
 impl From<Channel> for SingleResource<ChannelResource> {
     fn from(value: Channel) -> Self {
-        SingleResource {
-            data: value.clone().into(),
-            links: Links::default()
-                .add(
-                    Linkrelation::Self_,
-                    crate::api::ResourceLink::Channel(value.code().clone()),
-                )
-                .add(Linkrelation::Channels, ResourceLink::Channels),
-        }
+        SingleResource::default()
+            .with_data(value.clone().into())
+            .with_link(
+                Linkrelation::Self_,
+                crate::api::ResourceLink::Channel(value.code().clone()),
+            )
+            .with_link(Linkrelation::Channels, ResourceLink::Channels)
     }
 }
 
 impl From<Vec<Channel>> for CollectionResource<ChannelResource> {
     fn from(value: Vec<Channel>) -> Self {
-        CollectionResource {
-            data: value.into_iter().map(Channel::into).collect(),
-            links: Links::default().add(Linkrelation::Self_, ResourceLink::Channels),
-        }
+        CollectionResource::default()
+            .with_link(Linkrelation::Self_, ResourceLink::Channels)
+            .with_resources(value.into_iter().map(Channel::into).collect())
     }
 }
