@@ -1,8 +1,7 @@
-use std::collections::HashMap;
-
-use actix_web::{body::BoxBody, HttpRequest, HttpResponse, Responder};
-use perroute_commons::types::{code::Code, id::Id};
+use actix_web::{body::BoxBody, http::StatusCode, HttpRequest, HttpResponse, Responder};
+use perroute_commons::types::code::Code;
 use serde::Serialize;
+use std::collections::HashMap;
 use tap::TapFallible;
 use url::Url;
 
@@ -11,6 +10,109 @@ use crate::{
     routes::channel::{CHANNELS_RESOUCE_LINK, CHANNEL_RESOUCE_LINK},
 };
 
+pub type ApiResult<T> = Result<ApiResponse<T>, ApiError>;
+
+#[derive(Debug, Serialize, Clone)]
+pub struct SingleResourceModel<D: Serialize> {
+    data: D,
+    links: HashMap<Linkrelation, Url>,
+}
+
+#[derive(Debug, Serialize, Clone)]
+pub struct CollectionResourceModel<D: Serialize> {
+    data: Vec<SingleResourceModel<D>>,
+    links: HashMap<Linkrelation, Url>,
+}
+
+#[derive(Debug, Clone, Serialize, Default)]
+pub struct Links(HashMap<Linkrelation, ResourceLink>);
+
+impl Links {
+    pub fn add(mut self, rel: Linkrelation, link: ResourceLink) -> Self {
+        self.0.insert(rel, link);
+        self
+    }
+
+    fn as_url_map(&self, req: &HttpRequest) -> HashMap<Linkrelation, Url> {
+        self.0
+            .iter()
+            .map(|(rel, link)| (*rel, link.as_url(req)))
+            .collect()
+    }
+}
+
+#[derive(Debug, Serialize, Clone)]
+pub struct SingleResource<D: Serialize + Clone> {
+    pub data: D,
+    pub links: Links,
+}
+
+impl<D: Serialize + Clone> SingleResource<D> {
+    pub fn build(&self, req: &HttpRequest) -> SingleResourceModel<D> {
+        SingleResourceModel {
+            data: self.data.clone(),
+            links: self.links.as_url_map(req),
+        }
+    }
+}
+
+pub struct CollectionResource<D: Serialize + Clone> {
+    pub data: Vec<SingleResource<D>>,
+    pub links: Links,
+}
+
+impl<D: Serialize + Clone> CollectionResource<D> {
+    pub fn build(&self, req: &HttpRequest) -> CollectionResourceModel<D> {
+        CollectionResourceModel {
+            data: self.data.iter().map(|b| b.build(req)).collect(),
+            links: self.links.as_url_map(req),
+        }
+    }
+}
+
+pub enum ApiResponse<D: Serialize + Clone> {
+    OkEmpty,
+    OkSingle(SingleResource<D>),
+    OkCollection(CollectionResource<D>),
+    CreatedEmpty(ResourceLink),
+    Created(ResourceLink, SingleResource<D>),
+}
+
+impl<D: Serialize + Clone> ApiResponse<D> {
+    pub fn status_code(&self) -> StatusCode {
+        match self {
+            ApiResponse::OkEmpty => StatusCode::OK,
+            ApiResponse::OkSingle(_) => StatusCode::OK,
+            ApiResponse::OkCollection(_) => StatusCode::OK,
+            ApiResponse::CreatedEmpty(_) => StatusCode::CREATED,
+            ApiResponse::Created(_, _) => StatusCode::CREATED,
+        }
+    }
+}
+
+impl<D: Serialize + Clone> Responder for ApiResponse<D> {
+    type Body = BoxBody;
+
+    fn respond_to(self, req: &HttpRequest) -> actix_web::HttpResponse<Self::Body> {
+        match self {
+            ApiResponse::OkEmpty => HttpResponse::Ok().finish(),
+            ApiResponse::OkSingle(body) => HttpResponse::Ok().json(body.build(req)),
+            ApiResponse::OkCollection(body) => HttpResponse::Ok().json(body.build(req)),
+            ApiResponse::CreatedEmpty(url) => {
+                let mut builder = HttpResponse::Created();
+                builder.insert_header(url.as_location_header(req));
+                builder.finish()
+            }
+            ApiResponse::Created(url, body) => {
+                let mut builder = HttpResponse::Created();
+                builder.insert_header(url.as_location_header(req));
+                builder.json(body.build(req))
+            }
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Clone)]
 pub enum ResourceLink {
     Channel(Code),
     Channels,
@@ -33,91 +135,8 @@ impl ResourceLink {
     }
 }
 
-pub type ApiResult<T> = Result<ApiResponse<T>, ApiError>;
-
-pub enum ApiResponse<D: Serialize> {
-    Ok(Option<ApiResource<D>>),
-    Created(ResourceLink, Option<ApiResource<D>>),
-}
-
-impl<T: Serialize> Responder for ApiResponse<T> {
-    type Body = BoxBody;
-
-    fn respond_to(self, req: &actix_web::HttpRequest) -> actix_web::HttpResponse<Self::Body> {
-        match self {
-            ApiResponse::Ok(body) => {
-                let mut b = HttpResponse::Ok();
-                match body {
-                    Some(body) => b.json(body.build(req)),
-                    None => b.finish(),
-                }
-            }
-            ApiResponse::Created(url, body) => {
-                let mut builder = HttpResponse::Created();
-                builder.insert_header(url.as_location_header(req));
-                match body {
-                    Some(body) => builder.json(body.build(req)),
-                    None => builder.finish(),
-                }
-            }
-        }
-    }
-}
-
-#[derive(Debug, PartialEq, Eq, Hash, Serialize)]
+#[derive(Debug, PartialEq, Eq, Hash, Serialize, Clone, Copy)]
 pub enum Linkrelation {
     Self_,
     Channels,
-}
-
-#[derive(Serialize)]
-pub struct InnerLink {
-    href: Url,
-    rel: Linkrelation,
-}
-
-#[derive(Serialize)]
-pub struct InnerResource<D: Serialize> {
-    #[serde(flatten)]
-    data: Option<D>,
-    links: Vec<InnerLink>,
-}
-
-pub struct ApiResource<D: Serialize> {
-    pub data: Option<D>,
-    pub links: HashMap<Linkrelation, ResourceLink>,
-}
-
-impl<D: Serialize> Default for ApiResource<D> {
-    fn default() -> Self {
-        Self {
-            data: Default::default(),
-            links: Default::default(),
-        }
-    }
-}
-impl<D: Serialize> ApiResource<D> {
-    pub fn with_link(mut self, rel: Linkrelation, link: ResourceLink) -> Self {
-        self.links.insert(rel, link);
-        self
-    }
-
-    pub fn with_data(mut self, data: D) -> Self {
-        self.data = Some(data);
-        self
-    }
-
-    fn build(self, req: &HttpRequest) -> InnerResource<D> {
-        InnerResource {
-            data: self.data,
-            links: self
-                .links
-                .into_iter()
-                .map(|(rel, link)| InnerLink {
-                    href: link.as_url(req),
-                    rel,
-                })
-                .collect(),
-        }
-    }
 }

@@ -4,6 +4,7 @@ use perroute_commons::configuration::settings::Settings;
 use perroute_cqrs::{command_bus::bus::CommandBus, query_bus::bus::QueryBus};
 use perroute_storage::connection_manager::ConnectionManager;
 
+//pub mod api;
 pub mod api;
 pub mod api_models;
 pub mod error;

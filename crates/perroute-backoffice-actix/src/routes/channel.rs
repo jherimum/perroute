@@ -26,8 +26,12 @@ use perroute_cqrs::{
         },
     },
     query_bus::{
-        bus::QueryBus, handlers::channel::find_channel_by_code::FindChannelByCodeHandler,
-        queries::FindChannelByCodeQueryBuilder,
+        bus::QueryBus,
+        handlers::channel::{
+            find_channel_by_code::FindChannelByCodeHandler,
+            query_channels::QueryChannelsQueryHandler,
+        },
+        queries::{FindChannelByCodeQueryBuilder, QueryChannelsQueryBuilder},
     },
 };
 use perroute_storage::models::channel::Channel;
@@ -83,7 +87,7 @@ impl ChannelRouter {
 
         Ok(ApiResponse::Created(
             ResourceLink::Channel(channel.code().clone()),
-            Some(channel.into()),
+            channel.into(),
         ))
     }
 
@@ -98,12 +102,20 @@ impl ChannelRouter {
             ApiError::ChannelNotFound(channel_code.clone())
         })
         .await?;
-        Ok(ApiResponse::Ok(Some(channel.into())))
+        Ok(ApiResponse::OkSingle(channel.into()))
     }
 
     #[tracing::instrument(name = "CHANNEL")]
-    pub async fn query() -> ApiResult<()> {
-        Ok(ApiResponse::Ok(None))
+    pub async fn query(
+        state: Data<AppState>,
+        ActorExtractor(actor): ActorExtractor,
+    ) -> ApiResult<ChannelResource> {
+        let query = QueryChannelsQueryBuilder::default().build().unwrap();
+        let channels = state
+            .query_bus()
+            .execute::<_, QueryChannelsQueryHandler, _>(&actor, &query)
+            .await?;
+        Ok(ApiResponse::OkCollection(channels.into()))
     }
 
     #[tracing::instrument(name = "CHANNEL")]
@@ -137,7 +149,7 @@ impl ChannelRouter {
         })
         .await?;
 
-        Ok(ApiResponse::Ok(Some(channel.into())))
+        Ok(ApiResponse::OkSingle(channel.into()))
     }
 
     #[tracing::instrument(name = "CHANNEL")]
@@ -147,7 +159,6 @@ impl ChannelRouter {
         path: Path<Code>,
     ) -> ApiResult<()> {
         let channel_code = path.into_inner();
-
         let channel = retrieve_channel(state.query_bus(), &actor, &channel_code, || {
             ApiError::ChannelNotFound(channel_code.clone())
         })
@@ -165,7 +176,7 @@ impl ChannelRouter {
             .await
             .tap_err(|e| tracing::error!("Failed to delete channel: {e}"))?;
 
-        Ok(ApiResponse::Ok(None))
+        Ok(ApiResponse::OkEmpty)
     }
 }
 
