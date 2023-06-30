@@ -7,11 +7,11 @@ use perroute_backoffice_actix::{
     app::AppState,
     routes::{
         channel::{ChannelRouter, CHANNELS_RESOURCE_NAME, CHANNEL_RESOURCE_NAME},
-        health::HealthRouter,
         message_type::{
             MessageTypeRouter, MESSAGE_TYPES_RESOURCE_NAME, MESSAGE_TYPE_RESOURCE_NAME,
         },
-        schema::SchemaRouter,
+        route::{RouteRouter, ROUTES_RESOURCE_NAME, ROUTE_RESOURCE_NAME},
+        schema::{SchemaRouter, SCHEMAS_RESOURCE_NAME, SCHEMA_RESOURCE_NAME},
     },
 };
 use perroute_commons::{configuration::settings::Settings, tracing::init_tracing};
@@ -53,6 +53,42 @@ fn routes(state: AppState) -> Scope {
                                                 .route(web::get().to(MessageTypeRouter::find))
                                                 .route(web::put().to(MessageTypeRouter::update))
                                                 .route(web::delete().to(MessageTypeRouter::delete)),
+                                        ),
+                                    ),
+                            )
+                            .service(
+                                web::scope("/schemas")
+                                    .service(
+                                        web::resource("")
+                                            .name(SCHEMAS_RESOURCE_NAME)
+                                            .route(web::get().to(SchemaRouter::query))
+                                            .route(web::post().to(SchemaRouter::create)),
+                                    )
+                                    .service(
+                                        web::scope("/{schema_id}").service(
+                                            web::resource("")
+                                                .name(SCHEMA_RESOURCE_NAME)
+                                                .route(web::get().to(SchemaRouter::find))
+                                                .route(web::put().to(SchemaRouter::update))
+                                                .route(web::delete().to(SchemaRouter::delete)),
+                                        ),
+                                    ),
+                            )
+                            .service(
+                                web::scope("/routes")
+                                    .service(
+                                        web::resource("")
+                                            .name(ROUTES_RESOURCE_NAME)
+                                            .route(web::get().to(RouteRouter::query))
+                                            .route(web::post().to(RouteRouter::create)),
+                                    )
+                                    .service(
+                                        web::scope("/{route_id}").service(
+                                            web::resource("")
+                                                .name(ROUTE_RESOURCE_NAME)
+                                                .route(web::get().to(RouteRouter::find))
+                                                .route(web::put().to(RouteRouter::update))
+                                                .route(web::delete().to(RouteRouter::delete)),
                                         ),
                                     ),
                             ),
