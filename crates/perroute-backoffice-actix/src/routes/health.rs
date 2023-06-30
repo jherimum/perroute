@@ -1,6 +1,6 @@
 use actix_web::{
     web::{get, resource},
-    HttpResponse, Responder, Scope,
+    HttpResponse, Scope,
 };
 
 pub struct HealthRouter;
@@ -11,7 +11,7 @@ impl HealthRouter {
     }
 
     #[tracing::instrument(name = "HEALTH")]
-    pub async fn health() -> impl Responder {
+    pub async fn health() -> HttpResponse {
         HttpResponse::Ok().finish()
     }
 }
