@@ -20,7 +20,7 @@ pub struct JsonSchema(serde_json::Value);
 
 impl Default for JsonSchema {
     fn default() -> Self {
-        JsonSchema(json!({}))
+        Self(json!({}))
     }
 }
 
@@ -29,7 +29,7 @@ impl TryFrom<Value> for JsonSchema {
 
     fn try_from(value: Value) -> Result<Self, Self::Error> {
         JSONSchema::compile(&value).map_err(|_| JsonSchemaError::InvalidSchema)?;
-        Ok(JsonSchema(value))
+        Ok(Self(value))
     }
 }
 

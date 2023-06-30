@@ -1,4 +1,3 @@
-use lazy_static::__Deref;
 use serde::{Deserialize, Serialize};
 use sqlx::Type;
 use std::{fmt::Display, str::FromStr};

@@ -4,8 +4,8 @@ use std::ops::Deref;
 pub struct Payload(Value);
 
 impl Payload {
-    pub fn new(value: Value) -> Self {
-        Payload(value)
+    pub const fn new(value: Value) -> Self {
+        Self(value)
     }
 }
 

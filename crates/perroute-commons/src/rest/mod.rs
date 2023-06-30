@@ -11,9 +11,9 @@ pub struct ErrorResponse {
 impl ResponseError for RestError {
     fn status_code(&self) -> actix_web::http::StatusCode {
         match self {
-            RestError::NotFound(_) => StatusCode::NOT_FOUND,
-            RestError::InternalServer => StatusCode::INTERNAL_SERVER_ERROR,
-            RestError::UnprocessableEntity(_) => StatusCode::UNPROCESSABLE_ENTITY,
+            Self::NotFound(_) => StatusCode::NOT_FOUND,
+            Self::InternalServer => StatusCode::INTERNAL_SERVER_ERROR,
+            Self::UnprocessableEntity(_) => StatusCode::UNPROCESSABLE_ENTITY,
         }
     }
     fn error_response(&self) -> HttpResponse<actix_web::body::BoxBody> {

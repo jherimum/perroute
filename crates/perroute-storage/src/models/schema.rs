@@ -17,7 +17,7 @@ impl Default for Version {
 }
 
 impl Version {
-    pub fn increment(self) -> Self {
+    pub const fn increment(self) -> Self {
         Self(self.0 + 1)
     }
 }
