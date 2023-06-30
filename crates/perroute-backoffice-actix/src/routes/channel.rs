@@ -1,7 +1,8 @@
 use crate::{
     api::{
         models::channel::{ChannelResource, CreateChannelRequest, UpdateChannelRequest},
-        response::{ApiResponse, ApiResult, EmptyResource, ResourceLink},
+        response::{ApiResponse, ApiResult, EmptyResource},
+        ResourceLink,
     },
     app::AppState,
     error::ApiError,
