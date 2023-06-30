@@ -6,6 +6,7 @@ use super::{
             find_channel_by_id::FindChannelByIdHandler, query_channels::QueryChannelsQueryHandler,
         },
         message_type::{
+            find_channel_message_type::FindChannelMessageTypeQueryHandler,
             find_message_type::FindMessageTypeQueryHandler,
             query_message_types::QueryMessageTypesHandler,
         },
@@ -68,6 +69,7 @@ impl QueryBus {
             .with_handler(QueryChannelsQueryHandler)
             .with_handler(QueryMessageTypesHandler)
             .with_handler(FindMessageTypeQueryHandler)
+            .with_handler(FindChannelMessageTypeQueryHandler)
             .build()
     }
 

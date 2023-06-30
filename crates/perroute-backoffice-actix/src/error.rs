@@ -1,12 +1,15 @@
 use actix_web::ResponseError;
-use perroute_commons::{rest::RestError, types::code::Code};
+use perroute_commons::{rest::RestError, types::id::Id};
 use perroute_cqrs::{command_bus::error::CommandBusError, query_bus::error::QueryBusError};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum ApiError {
     #[error("Channel {0} not found")]
-    ChannelNotFound(Code),
+    ChannelNotFound(Id),
+
+    #[error("Message type {0} not found")]
+    MessageTypeNotFound(Id),
 
     #[error(transparent)]
     CommandBus(#[from] CommandBusError),

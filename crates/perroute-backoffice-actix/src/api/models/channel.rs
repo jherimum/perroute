@@ -39,11 +39,12 @@ impl From<Channel> for SingleResource<ChannelResource> {
     fn from(value: Channel) -> Self {
         SingleResource::default()
             .with_data(value.clone().into())
-            .with_link(
-                Linkrelation::Self_,
-                ResourceLink::Channel(value.code().clone()),
-            )
+            .with_link(Linkrelation::Self_, ResourceLink::Channel(*value.id()))
             .with_link(Linkrelation::Channels, ResourceLink::Channels)
+            .with_link(
+                Linkrelation::MessageTypes,
+                ResourceLink::MessageTypes(*value.id()),
+            )
     }
 }
 

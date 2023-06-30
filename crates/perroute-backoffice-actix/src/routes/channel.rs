@@ -8,14 +8,11 @@ use crate::{
     error::ApiError,
     extractors::actor::ActorExtractor,
 };
-use actix_web::{
-    web::{delete, get, post, put, resource, Data, Json, Path},
-    Scope,
-};
+use actix_web::web::{Data, Json, Path};
 use anyhow::Context;
 use perroute_commons::{
     new_id,
-    types::{actor::Actor, code::Code},
+    types::{actor::Actor, id::Id},
 };
 use perroute_cqrs::{
     command_bus::{
@@ -31,38 +28,20 @@ use perroute_cqrs::{
     query_bus::{
         bus::QueryBus,
         handlers::channel::{
-            find_channel_by_code::FindChannelByCodeHandler,
-            query_channels::QueryChannelsQueryHandler,
+            find_channel_by_id::FindChannelByIdHandler, query_channels::QueryChannelsQueryHandler,
         },
-        queries::{FindChannelByCodeQueryBuilder, QueryChannelsQueryBuilder},
+        queries::{FindChannelByIdQueryBuilder, QueryChannelsQueryBuilder},
     },
 };
 use perroute_storage::models::channel::Channel;
 use tap::TapFallible;
 
-pub const CHANNEL_RESOUCE_LINK: &str = "channel";
-pub const CHANNELS_RESOUCE_LINK: &str = "channels";
+pub const CHANNEL_RESOURCE_NAME: &str = "channel";
+pub const CHANNELS_RESOURCE_NAME: &str = "channels";
 
 pub struct ChannelRouter;
 
 impl ChannelRouter {
-    pub fn routes() -> Scope {
-        Scope::new("/v1/channels")
-            .service(
-                resource("")
-                    .name(CHANNELS_RESOUCE_LINK)
-                    .route(post().to(Self::create_channel))
-                    .route(get().to(Self::query)),
-            )
-            .service(
-                resource("/{channel_code}")
-                    .name(CHANNEL_RESOUCE_LINK)
-                    .route(get().to(Self::find_channel))
-                    .route(put().to(Self::update))
-                    .route(delete().to(Self::delete)),
-            )
-    }
-
     #[tracing::instrument]
     pub async fn create_channel(
         state: Data<AppState>,
@@ -83,13 +62,13 @@ impl ChannelRouter {
             .await
             .tap_err(|e| tracing::error!("Failed to create channel: {e}"))?;
 
-        let channel = retrieve_channel(state.query_bus(), &actor, body.code(), || {
+        let channel = Self::retrieve_channel(state.query_bus(), &actor, cmd.channel_id(), || {
             ApiError::Const("Failed to retrieve channel")
         })
         .await?;
 
         Ok(ApiResponse::Created(
-            ResourceLink::Channel(channel.code().clone()),
+            ResourceLink::Channel(*channel.id()),
             channel.into(),
         ))
     }
@@ -98,11 +77,11 @@ impl ChannelRouter {
     pub async fn find_channel(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
-        path: Path<Code>,
+        path: Path<Id>,
     ) -> ApiResult<ChannelResource> {
-        let channel_code = path.into_inner();
-        let channel = retrieve_channel(state.query_bus(), &actor, &channel_code, || {
-            ApiError::ChannelNotFound(channel_code.clone())
+        let channel_id = path.into_inner();
+        let channel = Self::retrieve_channel(state.query_bus(), &actor, &channel_id, || {
+            ApiError::ChannelNotFound(channel_id)
         })
         .await?;
         Ok(ApiResponse::OkSingle(channel.into()))
@@ -125,12 +104,12 @@ impl ChannelRouter {
     pub async fn update(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
-        path: Path<Code>,
+        path: Path<Id>,
         Json(body): Json<UpdateChannelRequest>,
     ) -> ApiResult<ChannelResource> {
-        let code = path.into_inner();
-        let channel = retrieve_channel(state.query_bus(), &actor, &code, || {
-            ApiError::ChannelNotFound(code.clone())
+        let id = path.into_inner();
+        let channel = Self::retrieve_channel(state.query_bus(), &actor, &id, || {
+            ApiError::ChannelNotFound(id)
         })
         .await?;
 
@@ -147,7 +126,7 @@ impl ChannelRouter {
             .await
             .tap_err(|e| tracing::error!("Failed to update channel: {e}"))?;
 
-        let channel = retrieve_channel(state.query_bus(), &actor, &code, || {
+        let channel = Self::retrieve_channel(state.query_bus(), &actor, &id, || {
             ApiError::Const("Failed to retrieve channel")
         })
         .await?;
@@ -159,11 +138,11 @@ impl ChannelRouter {
     pub async fn delete(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
-        path: Path<Code>,
+        path: Path<Id>,
     ) -> ApiResult<EmptyResource> {
-        let channel_code = path.into_inner();
-        let channel = retrieve_channel(state.query_bus(), &actor, &channel_code, || {
-            ApiError::ChannelNotFound(channel_code.clone())
+        let channel_id = path.into_inner();
+        let channel = Self::retrieve_channel(state.query_bus(), &actor, &channel_id, || {
+            ApiError::ChannelNotFound(channel_id)
         })
         .await?;
 
@@ -181,23 +160,23 @@ impl ChannelRouter {
 
         Ok(ApiResponse::OkEmpty(EmptyResource))
     }
-}
 
-async fn retrieve_channel(
-    query_bus: &QueryBus,
-    actor: &Actor,
-    code: &Code,
-    not_found: impl FnOnce() -> ApiError,
-) -> Result<Channel, ApiError> {
-    let query = FindChannelByCodeQueryBuilder::default()
-        .channel_code(code.clone())
-        .build()
-        .tap_err(|e| tracing::error!("Failed to build FindChannelByCodeQuery: {}", e))
-        .with_context(|| "Failed to build FindChannelByCodeQuery")?;
+    pub async fn retrieve_channel(
+        query_bus: &QueryBus,
+        actor: &Actor,
+        id: &Id,
+        not_found: impl FnOnce() -> ApiError,
+    ) -> Result<Channel, ApiError> {
+        let query = FindChannelByIdQueryBuilder::default()
+            .channel_id(*id)
+            .build()
+            .tap_err(|e| tracing::error!("Failed to build FindChannelByCodeQuery: {}", e))
+            .with_context(|| "Failed to build FindChannelByCodeQuery")?;
 
-    query_bus
-        .execute::<_, FindChannelByCodeHandler, _>(actor, &query)
-        .await
-        .tap_err(|e| tracing::error!("Failed to retrieve channel: {e}"))?
-        .ok_or_else(not_found)
+        query_bus
+            .execute::<_, FindChannelByIdHandler, _>(actor, &query)
+            .await
+            .tap_err(|e| tracing::error!("Failed to retrieve channel: {e}"))?
+            .ok_or_else(not_found)
+    }
 }
