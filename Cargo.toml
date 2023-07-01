@@ -1,8 +1,7 @@
 [workspace]
 members = [
-    # runnable applications
-    #"crates/perroute-backoffice-api",
-    "crates/perroute-backoffice-actix",
+    # runnable applications    
+    "crates/perroute-backoffice-api",
     
     # dependent library crates
     "crates/perroute-cqrs",

@@ -1,4 +1,5 @@
+pub mod api;
 pub mod app;
-pub mod errors;
-pub mod rest;
-pub mod types;
+pub mod error;
+pub mod extractors;
+pub mod routes;
