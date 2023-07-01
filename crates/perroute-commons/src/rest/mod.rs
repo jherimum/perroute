@@ -40,18 +40,6 @@ pub enum RestError {
     UnprocessableEntity(String),
 }
 
-// impl IntoResponse for RestError {
-//     fn into_response(self) -> axum::response::Response {
-//         let response: Json<ErrorResponse> = Json(self.clone().into());
-//         match self {
-//             Self::NotFound(_) => (StatusCode::NOT_FOUND, response),
-//             Self::InternalServer => (StatusCode::INTERNAL_SERVER_ERROR, response),
-//             Self::UnprocessableEntity(_) => (StatusCode::UNPROCESSABLE_ENTITY, response),
-//         }
-//         .into_response()
-//     }
-// }
-
 impl From<RestError> for ErrorResponse {
     fn from(value: RestError) -> Self {
         let message = value.to_string();

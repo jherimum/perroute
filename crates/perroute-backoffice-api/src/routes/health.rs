@@ -10,7 +10,7 @@ impl HealthRouter {
         Scope::new("/health").service(resource("").name("health").route(get().to(Self::health)))
     }
 
-    #[tracing::instrument(name = "HEALTH")]
+    #[tracing::instrument]
     pub async fn health() -> HttpResponse {
         HttpResponse::Ok().finish()
     }

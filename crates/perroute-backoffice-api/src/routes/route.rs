@@ -7,27 +7,27 @@ pub struct RouteRouter;
 
 impl RouteRouter {
     #[tracing::instrument]
-    pub async fn query() -> impl Responder {
+    pub async fn query_routes() -> impl Responder {
         HttpResponse::Ok().finish()
     }
 
     #[tracing::instrument]
-    pub async fn create() -> impl Responder {
+    pub async fn create_route() -> impl Responder {
         HttpResponse::Ok().finish()
     }
 
     #[tracing::instrument]
-    pub async fn update() -> impl Responder {
+    pub async fn update_route() -> impl Responder {
         HttpResponse::Ok().finish()
     }
 
     #[tracing::instrument]
-    pub async fn delete() -> impl Responder {
+    pub async fn delete_route() -> impl Responder {
         HttpResponse::Ok().finish()
     }
 
     #[tracing::instrument]
-    pub async fn find() -> impl Responder {
+    pub async fn find_route() -> impl Responder {
         HttpResponse::Ok().finish()
     }
 }

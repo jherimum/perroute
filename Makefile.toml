@@ -4,18 +4,9 @@ CARGO_MAKE_EXTEND_WORKSPACE_MAKEFILE = true
 [config] ## we want most/all of our tasks to run in the context of a workspace
 default_to_workspace = false
 
-
 [tasks.dev-backoffice-api]
 install_crate="cargo-watch"
 cwd = "./crates/perroute-backoffice-api"
-command = "cargo"
-args = ["watch", "-x", "clippy", "-x", "run | bunyan"]
-dependencies = ["postgres"]
-
-
-[tasks.dev-backoffice-actix]
-install_crate="cargo-watch"
-cwd = "./crates/perroute-backoffice-actix"
 command = "cargo"
 args = ["watch", "-x", "clippy", "-x", "run | bunyan"]
 dependencies = ["postgres"]

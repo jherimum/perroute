@@ -88,7 +88,7 @@ impl ChannelRouter {
     }
 
     #[tracing::instrument(skip(state))]
-    pub async fn query(
+    pub async fn query_channels(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
     ) -> ApiResult<ChannelResource> {
@@ -101,7 +101,7 @@ impl ChannelRouter {
     }
 
     #[tracing::instrument(skip(state))]
-    pub async fn update(
+    pub async fn update_channel(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
         path: Path<Id>,
@@ -135,7 +135,7 @@ impl ChannelRouter {
     }
 
     #[tracing::instrument(skip(state))]
-    pub async fn delete(
+    pub async fn delete_channel(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
         path: Path<Id>,

@@ -7,27 +7,27 @@ pub struct SchemaRouter;
 
 impl SchemaRouter {
     #[tracing::instrument]
-    pub async fn query() -> impl Responder {
+    pub async fn query_shemas() -> impl Responder {
         HttpResponse::Ok().finish()
     }
 
     #[tracing::instrument]
-    pub async fn create() -> impl Responder {
+    pub async fn create_schema() -> impl Responder {
         HttpResponse::Ok().finish()
     }
 
     #[tracing::instrument]
-    pub async fn update() -> impl Responder {
+    pub async fn update_schema() -> impl Responder {
         HttpResponse::Ok().finish()
     }
 
     #[tracing::instrument]
-    pub async fn delete() -> impl Responder {
+    pub async fn delete_schema() -> impl Responder {
         HttpResponse::Ok().finish()
     }
 
     #[tracing::instrument]
-    pub async fn find() -> impl Responder {
+    pub async fn find_schema() -> impl Responder {
         HttpResponse::Ok().finish()
     }
 }

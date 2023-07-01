@@ -26,7 +26,7 @@ fn routes(state: AppState) -> Scope {
                     .service(
                         web::resource("")
                             .name(CHANNELS_RESOURCE_NAME)
-                            .route(web::get().to(ChannelRouter::query))
+                            .route(web::get().to(ChannelRouter::query_channels))
                             .route(web::post().to(ChannelRouter::create_channel)),
                     )
                     .service(
@@ -35,24 +35,39 @@ fn routes(state: AppState) -> Scope {
                                 web::resource("")
                                     .name(CHANNEL_RESOURCE_NAME)
                                     .route(web::get().to(ChannelRouter::find_channel))
-                                    .route(web::put().to(ChannelRouter::update))
-                                    .route(web::delete().to(ChannelRouter::delete)),
+                                    .route(web::put().to(ChannelRouter::update_channel))
+                                    .route(web::delete().to(ChannelRouter::delete_channel)),
                             )
                             .service(
                                 web::scope("/message_types")
                                     .service(
                                         web::resource("")
                                             .name(MESSAGE_TYPES_RESOURCE_NAME)
-                                            .route(web::get().to(MessageTypeRouter::query))
-                                            .route(web::post().to(MessageTypeRouter::create)),
+                                            .route(
+                                                web::get()
+                                                    .to(MessageTypeRouter::query_message_types),
+                                            )
+                                            .route(
+                                                web::post()
+                                                    .to(MessageTypeRouter::create_message_type),
+                                            ),
                                     )
                                     .service(
                                         web::scope("/{message_type_id}").service(
                                             web::resource("")
                                                 .name(MESSAGE_TYPE_RESOURCE_NAME)
-                                                .route(web::get().to(MessageTypeRouter::find))
-                                                .route(web::put().to(MessageTypeRouter::update))
-                                                .route(web::delete().to(MessageTypeRouter::delete)),
+                                                .route(
+                                                    web::get()
+                                                        .to(MessageTypeRouter::find_message_type),
+                                                )
+                                                .route(
+                                                    web::put()
+                                                        .to(MessageTypeRouter::update_message_type),
+                                                )
+                                                .route(
+                                                    web::delete()
+                                                        .to(MessageTypeRouter::delete_message_type),
+                                                ),
                                         ),
                                     ),
                             )
@@ -61,16 +76,18 @@ fn routes(state: AppState) -> Scope {
                                     .service(
                                         web::resource("")
                                             .name(SCHEMAS_RESOURCE_NAME)
-                                            .route(web::get().to(SchemaRouter::query))
-                                            .route(web::post().to(SchemaRouter::create)),
+                                            .route(web::get().to(SchemaRouter::query_shemas))
+                                            .route(web::post().to(SchemaRouter::create_schema)),
                                     )
                                     .service(
                                         web::scope("/{schema_id}").service(
                                             web::resource("")
                                                 .name(SCHEMA_RESOURCE_NAME)
-                                                .route(web::get().to(SchemaRouter::find))
-                                                .route(web::put().to(SchemaRouter::update))
-                                                .route(web::delete().to(SchemaRouter::delete)),
+                                                .route(web::get().to(SchemaRouter::find_schema))
+                                                .route(web::put().to(SchemaRouter::update_schema))
+                                                .route(
+                                                    web::delete().to(SchemaRouter::delete_schema),
+                                                ),
                                         ),
                                     ),
                             )
@@ -79,16 +96,16 @@ fn routes(state: AppState) -> Scope {
                                     .service(
                                         web::resource("")
                                             .name(ROUTES_RESOURCE_NAME)
-                                            .route(web::get().to(RouteRouter::query))
-                                            .route(web::post().to(RouteRouter::create)),
+                                            .route(web::get().to(RouteRouter::query_routes))
+                                            .route(web::post().to(RouteRouter::create_route)),
                                     )
                                     .service(
                                         web::scope("/{route_id}").service(
                                             web::resource("")
                                                 .name(ROUTE_RESOURCE_NAME)
-                                                .route(web::get().to(RouteRouter::find))
-                                                .route(web::put().to(RouteRouter::update))
-                                                .route(web::delete().to(RouteRouter::delete)),
+                                                .route(web::get().to(RouteRouter::find_route))
+                                                .route(web::put().to(RouteRouter::update_route))
+                                                .route(web::delete().to(RouteRouter::delete_route)),
                                         ),
                                     ),
                             ),

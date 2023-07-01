@@ -43,7 +43,7 @@ pub struct MessageTypeRouter;
 
 impl MessageTypeRouter {
     #[tracing::instrument(skip(state))]
-    pub async fn query(
+    pub async fn query_message_types(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
         path: Path<Id>,
@@ -68,7 +68,7 @@ impl MessageTypeRouter {
     }
 
     #[tracing::instrument(skip(state))]
-    pub async fn create(
+    pub async fn create_message_type(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
         path: Path<Id>,
@@ -111,7 +111,7 @@ impl MessageTypeRouter {
     }
 
     #[tracing::instrument(skip(state))]
-    pub async fn update(
+    pub async fn update_message_type(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
         path: Path<(Id, Id)>,
@@ -145,7 +145,7 @@ impl MessageTypeRouter {
     }
 
     #[tracing::instrument(skip(state))]
-    pub async fn delete(
+    pub async fn delete_message_type(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
         path: Path<(Id, Id)>,
@@ -170,7 +170,7 @@ impl MessageTypeRouter {
     }
 
     #[tracing::instrument(skip(state))]
-    pub async fn find(
+    pub async fn find_message_type(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
         path: Path<(Id, Id)>,
