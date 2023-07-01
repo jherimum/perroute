@@ -197,7 +197,7 @@ impl MessageTypeRouter {
             .unwrap();
 
         query_bus
-            .execute::<_, FindChannelMessageTypeQueryHandler, _>(&actor, &query)
+            .execute::<_, FindChannelMessageTypeQueryHandler, _>(actor, &query)
             .await?
             .ok_or_else(not_found)
     }
