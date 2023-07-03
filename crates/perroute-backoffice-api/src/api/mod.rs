@@ -1,6 +1,6 @@
 use crate::routes::{
     channel::{CHANNELS_RESOURCE_NAME, CHANNEL_RESOURCE_NAME},
-    message_type::{self, MESSAGE_TYPES_RESOURCE_NAME, MESSAGE_TYPE_RESOURCE_NAME},
+    message_type::{MESSAGE_TYPES_RESOURCE_NAME, MESSAGE_TYPE_RESOURCE_NAME},
     route::{ROUTES_RESOURCE_NAME, ROUTE_RESOURCE_NAME},
     schema::{SCHEMAS_RESOURCE_NAME, SCHEMA_RESOURCE_NAME},
 };
@@ -13,13 +13,20 @@ use url::Url;
 pub mod models;
 pub mod response;
 
-#[derive(Debug, PartialEq, Eq, Hash, Serialize, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Hash, Serialize, Clone, Copy, strum_macros::Display)]
+#[strum(serialize_all = "snake_case")]
 pub enum Linkrelation {
+    #[serde(rename = "self")]
     Self_,
+    #[serde(rename = "channels")]
     Channels,
+    #[serde(rename = "channel")]
     Channel,
+    #[serde(rename = "mesage_types")]
     MessageTypes,
+    #[serde(rename = "routes")]
     Routes,
+    #[serde(rename = "schemas")]
     Schemas,
 }
 
@@ -75,5 +82,17 @@ impl ResourceLink {
             actix_web::http::header::LOCATION.as_str().to_string(),
             self.as_url(req).to_string(),
         )
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_name() {
+        dbg!(Linkrelation::Channels.to_string());
+
+        dbg!(serde_json::to_string(&Linkrelation::Channels).unwrap());
     }
 }

@@ -51,6 +51,7 @@ impl CommandHandler for CreateMessageTypeCommandHandler {
             .schema(JsonSchema::default())
             .version(Version::default())
             .message_type_id(*cmd.message_type_id())
+            .channel_id(*message_type.channel_id())
             .published(false)
             .build()
             .unwrap()
