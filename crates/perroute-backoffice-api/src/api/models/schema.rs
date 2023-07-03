@@ -1,6 +1,6 @@
 use crate::api::response::{Resource, SingleResource};
 use perroute_commons::types::id::Id;
-use perroute_storage::models::schema::Schema;
+use perroute_storage::models::{message_type::MessageType, schema::Schema};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 

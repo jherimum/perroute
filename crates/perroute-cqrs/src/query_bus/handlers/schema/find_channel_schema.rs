@@ -1,4 +1,4 @@
-use crate::query_bus::queries::FindChannelSchemaQuery;
+use crate::query_bus::queries::FindChannelMessageTypeSchemaQuery;
 use crate::query_bus::{
     bus::{QueryBusContext, QueryHandler},
     error::QueryBusError,
@@ -10,7 +10,7 @@ pub struct FindChannelSchemaQueryHandler;
 
 #[async_trait]
 impl QueryHandler for FindChannelSchemaQueryHandler {
-    type Query = FindChannelSchemaQuery;
+    type Query = FindChannelMessageTypeSchemaQuery;
     type Output = Option<Schema>;
     async fn handle(
         &self,

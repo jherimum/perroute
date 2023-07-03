@@ -53,14 +53,15 @@ pub struct Schema {
     published: bool,
     #[setters(skip)]
     message_type_id: Id,
+    channel_id: Id,
 }
 
 impl Schema {
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
         sqlx::query_as(
             r#"
-                INSERT INTO schemas (id, schema, version, published, message_type_id) 
-                VALUES($1, $2, $3, $4, $5) RETURNING *
+                INSERT INTO schemas (id, schema, version, published, message_type_id, channel_id) 
+                VALUES($1, $2, $3, $4, $5, $6) RETURNING *
             "#,
         )
         .bind(self.id)
@@ -68,6 +69,7 @@ impl Schema {
         .bind(self.version)
         .bind(self.published)
         .bind(self.message_type_id)
+        .bind(self.channel_id)
         .fetch_one(exec)
         .await
     }

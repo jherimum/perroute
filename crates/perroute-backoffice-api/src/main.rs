@@ -69,7 +69,8 @@ fn routes(state: AppState) -> Scope {
                     .route(web::put().to(MessageTypeRouter::update_message_type))
                     .route(web::delete().to(MessageTypeRouter::delete_message_type)),
             ),
-        );
+        )
+        .service(schemas);
 
     let routes = web::scope("/routes")
         .service(
@@ -106,8 +107,7 @@ fn routes(state: AppState) -> Scope {
                 )
                 .service(message_types)
                 .service(routes)
-                .service(templates)
-                .service(schemas),
+                .service(templates),
         );
 
     web::scope("/api")

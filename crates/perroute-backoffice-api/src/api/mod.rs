@@ -1,6 +1,6 @@
 use crate::routes::{
     channel::{CHANNELS_RESOURCE_NAME, CHANNEL_RESOURCE_NAME},
-    message_type::{MESSAGE_TYPES_RESOURCE_NAME, MESSAGE_TYPE_RESOURCE_NAME},
+    message_type::{self, MESSAGE_TYPES_RESOURCE_NAME, MESSAGE_TYPE_RESOURCE_NAME},
     route::{ROUTES_RESOURCE_NAME, ROUTE_RESOURCE_NAME},
     schema::{SCHEMAS_RESOURCE_NAME, SCHEMA_RESOURCE_NAME},
 };
@@ -30,7 +30,7 @@ pub enum ResourceLink {
     MessageType(Id, Id),
     MessageTypes(Id),
     Schemas(Id, Id),
-    Schema(Id, Id),
+    Schema(Id, Id, Id),
     Routes(Id),
     Route(Id, Id),
 }
@@ -51,9 +51,13 @@ impl ResourceLink {
                 SCHEMAS_RESOURCE_NAME,
                 [channel_id.to_string(), message_type_id.to_string()],
             ),
-            ResourceLink::Schema(channel_id, schema_id) => req.url_for(
+            ResourceLink::Schema(channel_id, message_type_id, schema_id) => req.url_for(
                 SCHEMA_RESOURCE_NAME,
-                [channel_id.to_string(), schema_id.to_string()],
+                [
+                    channel_id.to_string(),
+                    schema_id.to_string(),
+                    message_type_id.to_string(),
+                ],
             ),
             ResourceLink::Routes(channel_id) => {
                 req.url_for(ROUTES_RESOURCE_NAME, [channel_id.to_string()])
