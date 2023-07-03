@@ -46,9 +46,9 @@ impl MessageTypeRouter {
     pub async fn query_message_types(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
-        path: Path<Id>,
+        message_types_path: Path<Id>,
     ) -> ApiResult<MessageTypeResource> {
-        let channel_id = path.into_inner();
+        let channel_id = message_types_path.into_inner();
         let channel =
             ChannelRouter::retrieve_channel(state.query_bus(), &actor, &channel_id, || {
                 ApiError::ChannelNotFound(channel_id)
@@ -71,10 +71,10 @@ impl MessageTypeRouter {
     pub async fn create_message_type(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
-        path: Path<Id>,
+        message_types_path: Path<Id>,
         Json(body): Json<CreateMessageTypeRequest>,
     ) -> ApiResult<MessageTypeResource> {
-        let channel_id = path.into_inner();
+        let channel_id = message_types_path.into_inner();
         let channel =
             ChannelRouter::retrieve_channel(state.query_bus(), &actor, &channel_id, || {
                 ApiError::ChannelNotFound(channel_id)
@@ -114,10 +114,10 @@ impl MessageTypeRouter {
     pub async fn update_message_type(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
-        path: Path<(Id, Id)>,
+        message_types_path: Path<(Id, Id)>,
         Json(body): Json<UpdateMessageTypeRequest>,
     ) -> ApiResult<MessageTypeResource> {
-        let path = path.into_inner();
+        let path = message_types_path.into_inner();
         let message_type =
             Self::retrieve_message_type(state.query_bus(), &actor, &path.0, &path.1, || {
                 ApiError::MessageTypeNotFound(path.1)
@@ -148,13 +148,16 @@ impl MessageTypeRouter {
     pub async fn delete_message_type(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
-        path: Path<(Id, Id)>,
+        message_types_path: Path<(Id, Id)>,
     ) -> ApiResult<EmptyResource> {
-        let message_type =
-            Self::retrieve_message_type(state.query_bus(), &actor, &path.0, &path.1, || {
-                ApiError::ChannelNotFound(path.1)
-            })
-            .await?;
+        let message_type = Self::retrieve_message_type(
+            state.query_bus(),
+            &actor,
+            &message_types_path.0,
+            &message_types_path.1,
+            || ApiError::ChannelNotFound(message_types_path.1),
+        )
+        .await?;
 
         let cmd = DeleteMessageTypeCommandBuilder::default()
             .message_type_id(*message_type.id())
@@ -173,13 +176,16 @@ impl MessageTypeRouter {
     pub async fn find_message_type(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
-        path: Path<(Id, Id)>,
+        message_types_path: Path<(Id, Id)>,
     ) -> ApiResult<MessageTypeResource> {
-        let message_type =
-            Self::retrieve_message_type(state.query_bus(), &actor, &path.0, &path.1, || {
-                ApiError::MessageTypeNotFound(path.0)
-            })
-            .await?;
+        let message_type = Self::retrieve_message_type(
+            state.query_bus(),
+            &actor,
+            &message_types_path.0,
+            &message_types_path.1,
+            || ApiError::MessageTypeNotFound(message_types_path.0),
+        )
+        .await?;
         Ok(ApiResponse::OkSingle(message_type.into()))
     }
 
