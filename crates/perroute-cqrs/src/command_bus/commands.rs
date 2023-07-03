@@ -3,7 +3,7 @@ use derive_builder::Builder;
 use derive_getters::Getters;
 use perroute_commons::{
     new_id,
-    types::{actor::Actor, code::Code, id::Id},
+    types::{actor::Actor, code::Code, id::Id, json_schema::JsonSchema},
 };
 use perroute_storage::models::command_log::{CommandLog, CommandLogBuilder};
 use serde::Serialize;
@@ -116,8 +116,8 @@ pub struct DeleteMessageTypeCommand {
 #[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
 pub struct CreateSchemaCommand {
     schema_id: Id,
-    schema: Value,
     message_type_id: Id,
+    schema: JsonSchema,
 }
 
 #[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]

@@ -1,15 +1,24 @@
 use actix_web::ResponseError;
-use perroute_commons::{rest::RestError, types::id::Id};
+use perroute_commons::{
+    rest::RestError,
+    types::{id::Id, json_schema::JsonSchemaError},
+};
 use perroute_cqrs::{command_bus::error::CommandBusError, query_bus::error::QueryBusError};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum ApiError {
+    #[error(transparent)]
+    JsonChema(#[from] JsonSchemaError),
+
     #[error("Channel {0} not found")]
     ChannelNotFound(Id),
 
     #[error("Message type {0} not found")]
     MessageTypeNotFound(Id),
+
+    #[error("Schema {0} not found")]
+    SchemaNotFound(Id),
 
     #[error(transparent)]
     CommandBus(#[from] CommandBusError),

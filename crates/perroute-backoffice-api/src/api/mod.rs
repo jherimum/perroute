@@ -30,7 +30,7 @@ pub enum ResourceLink {
     MessageType(Id, Id),
     MessageTypes(Id),
     Schemas(Id, Id),
-    Schema(Id, Id, Id),
+    Schema(Id, Id),
     Routes(Id),
     Route(Id, Id),
 }
@@ -51,13 +51,9 @@ impl ResourceLink {
                 SCHEMAS_RESOURCE_NAME,
                 [channel_id.to_string(), message_type_id.to_string()],
             ),
-            ResourceLink::Schema(channel_id, message_type_id, schema_id) => req.url_for(
+            ResourceLink::Schema(channel_id, schema_id) => req.url_for(
                 SCHEMA_RESOURCE_NAME,
-                [
-                    channel_id.to_string(),
-                    message_type_id.to_string(),
-                    schema_id.to_string(),
-                ],
+                [channel_id.to_string(), schema_id.to_string()],
             ),
             ResourceLink::Routes(channel_id) => {
                 req.url_for(ROUTES_RESOURCE_NAME, [channel_id.to_string()])

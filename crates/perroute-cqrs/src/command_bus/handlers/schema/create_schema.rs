@@ -36,7 +36,8 @@ impl CommandHandler for CreateSchemaCommandHandler {
 
         SchemaBuilder::default()
             .id(new_id!())
-            .schema(JsonSchema::try_from(cmd.schema().clone()).map_err(CreateSchemaError::from)?)
+            //.schema(JsonSchema::try_from(cmd.schema().clone()).map_err(CreateSchemaError::from)?)
+            .schema(cmd.schema().clone())
             .version(actual_version.increment())
             .published(false)
             .message_type_id(*mt.id())
