@@ -8,7 +8,10 @@ use crate::{
     error::ApiError,
     extractors::actor::ActorExtractor,
 };
-use actix_web::web::{Data, Json, Path};
+use actix_web::{
+    guard::Guard,
+    web::{Data, Json, Path},
+};
 use anyhow::Context;
 use perroute_commons::{
     new_id,
