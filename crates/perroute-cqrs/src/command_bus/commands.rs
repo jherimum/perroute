@@ -123,7 +123,7 @@ pub struct CreateSchemaCommand {
 #[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
 pub struct UpdateSchemaCommand {
     schema_id: Id,
-    schema: serde_json::Value,
+    schema: JsonSchema,
 }
 
 #[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]

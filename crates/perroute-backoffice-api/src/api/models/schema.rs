@@ -10,6 +10,11 @@ pub struct CreateSchemaRequest {
     pub schema: Value,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct UpdateSchemaRequest {
+    pub schema: Value,
+}
+
 #[derive(Debug, Serialize, Clone)]
 pub struct SchemaResource {}
 
