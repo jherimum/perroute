@@ -5,6 +5,7 @@ use crate::command_bus::{
 use async_trait::async_trait;
 use derive_new::new;
 use perroute_commons::types::id::Id;
+use perroute_storage::models::channel::Channel;
 use tap::TapFallible;
 
 use super::retrieve_channel;
@@ -21,13 +22,14 @@ pub enum UpdateChannelError {
 #[async_trait]
 impl CommandHandler for UpdateChannelCommandHandler {
     type Command = UpdateChannelCommand;
+    type Output = Channel;
 
     #[tracing::instrument(skip(self))]
     async fn handle<'ctx, 'a>(
         &self,
         ctx: &mut CommandBusContext<'ctx, 'a>,
         command: Self::Command,
-    ) -> Result<(), CommandBusError> {
+    ) -> Result<Channel, CommandBusError> {
         retrieve_channel(ctx, command.channel_id(), |id| {
             UpdateChannelError::ChannelNotFound(id).into()
         })
@@ -37,6 +39,5 @@ impl CommandHandler for UpdateChannelCommandHandler {
         .await
         .tap_err(|e| tracing::error!("Error while updating channel {}: {e}", command.channel_id()))
         .map_err(CommandBusError::from)
-        .map(|_| ())
     }
 }

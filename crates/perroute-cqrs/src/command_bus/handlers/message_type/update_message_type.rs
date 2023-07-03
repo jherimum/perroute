@@ -17,11 +17,13 @@ pub struct UpdateMessageTypeCommandHandler;
 #[async_trait::async_trait]
 impl CommandHandler for UpdateMessageTypeCommandHandler {
     type Command = UpdateMessageTypeCommand;
+    type Output = MessageType;
+
     async fn handle<'tx, 'a>(
         &self,
         ctx: &mut CommandBusContext<'tx, 'a>,
         cmd: Self::Command,
-    ) -> Result<(), CommandBusError> {
+    ) -> Result<Self::Output, CommandBusError> {
         MessageType::find_by_id(ctx.tx(), cmd.message_type_id())
             .await?
             .ok_or_else(|| UpdateMessageTypeError::MessageTypeNotFound(*cmd.message_type_id()))?
@@ -30,6 +32,5 @@ impl CommandHandler for UpdateMessageTypeCommandHandler {
             .update(ctx.tx())
             .await
             .map_err(CommandBusError::from)
-            .map(|_| ())
     }
 }

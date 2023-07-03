@@ -6,10 +6,10 @@ use crate::query_bus::{
 use async_trait::async_trait;
 use perroute_storage::models::schema::Schema;
 
-pub struct FindChannelSchemaQueryHandler;
+pub struct FindChannelMessageTypeSchemaQueryHandler;
 
 #[async_trait]
-impl QueryHandler for FindChannelSchemaQueryHandler {
+impl QueryHandler for FindChannelMessageTypeSchemaQueryHandler {
     type Query = FindChannelMessageTypeSchemaQuery;
     type Output = Option<Schema>;
     async fn handle(

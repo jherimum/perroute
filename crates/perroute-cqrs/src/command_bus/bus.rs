@@ -116,22 +116,24 @@ impl CommandBus {
         Default::default()
     }
 
-    fn get<C, H>(&self) -> Option<&H>
+    fn get<C, H, O>(&self) -> Option<&H>
     where
         C: Command + 'static,
-        H: CommandHandler<Command = C> + 'static + Sync + Send,
+        H: CommandHandler<Command = C, Output = O> + 'static + Sync + Send,
+        O: Debug,
     {
         let handler = self.handlers.get(&TypeId::of::<C>());
         handler.and_then(|h| h.downcast_ref::<H>())
     }
 
-    pub async fn execute<C, H>(&self, actor: &Actor, cmd: &C) -> Result<(), CommandBusError>
+    pub async fn execute<C, H, O>(&self, actor: &Actor, cmd: &C) -> Result<O, CommandBusError>
     where
         C: Command + 'static,
-        H: CommandHandler<Command = C> + 'static + Sync + Send,
+        H: CommandHandler<Command = C, Output = O> + 'static + Sync + Send,
+        O: Debug,
     {
         let handler = self
-            .get::<C, H>()
+            .get::<C, H, O>()
             .tap_none(|| tracing::error!("Handler not found for command: {}", cmd.ty()))
             .ok_or_else(|| CommandBusError::HandlerNotFound(cmd.ty()))?;
 

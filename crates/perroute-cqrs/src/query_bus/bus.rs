@@ -10,7 +10,7 @@ use super::{
             find_message_type::FindMessageTypeQueryHandler,
             query_message_types::QueryMessageTypesHandler,
         },
-        schema::find_channel_schema::FindChannelSchemaQueryHandler,
+        schema::find_channel__message_type_schema::FindChannelMessageTypeSchemaQueryHandler,
     },
     queries::Query,
 };
@@ -71,7 +71,7 @@ impl QueryBus {
             .with_handler(QueryMessageTypesHandler)
             .with_handler(FindMessageTypeQueryHandler)
             .with_handler(FindChannelMessageTypeQueryHandler)
-            .with_handler(FindChannelSchemaQueryHandler)
+            .with_handler(FindChannelMessageTypeSchemaQueryHandler)
             .build()
     }
 

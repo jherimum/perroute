@@ -2,10 +2,7 @@ use crate::command_bus::{
     bus::CommandBusContext, commands::CreateSchemaCommand, error::CommandBusError,
     handlers::CommandHandler,
 };
-use perroute_commons::{
-    new_id,
-    types::json_schema::{JsonSchema, JsonSchemaError},
-};
+use perroute_commons::{new_id, types::json_schema::JsonSchemaError};
 use perroute_storage::models::{
     message_type::MessageType,
     schema::{Schema, SchemaBuilder},
@@ -23,12 +20,13 @@ pub struct CreateSchemaCommandHandler;
 #[async_trait::async_trait]
 impl CommandHandler for CreateSchemaCommandHandler {
     type Command = CreateSchemaCommand;
+    type Output = Schema;
 
     async fn handle<'tx, 'a>(
         &self,
         ctx: &mut CommandBusContext<'tx, 'a>,
         cmd: Self::Command,
-    ) -> Result<(), CommandBusError> {
+    ) -> Result<Self::Output, CommandBusError> {
         let mt = MessageType::find_by_id(ctx.tx(), cmd.message_type_id())
             .await?
             .unwrap();
@@ -44,7 +42,7 @@ impl CommandHandler for CreateSchemaCommandHandler {
             .build()
             .unwrap()
             .save(ctx.tx())
-            .await?;
-        Ok(())
+            .await
+            .map_err(CommandBusError::from)
     }
 }

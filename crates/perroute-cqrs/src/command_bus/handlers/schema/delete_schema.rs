@@ -11,18 +11,19 @@ pub struct DeleteSchemaCommandHandler;
 #[async_trait::async_trait]
 impl CommandHandler for DeleteSchemaCommandHandler {
     type Command = DeleteSchemaCommand;
+    type Output = bool;
 
     async fn handle<'tx, 'a>(
         &self,
         ctx: &mut CommandBusContext<'tx, 'a>,
         cmd: Self::Command,
-    ) -> Result<(), CommandBusError> {
+    ) -> Result<Self::Output, CommandBusError> {
         Schema::find_by_id(ctx.tx(), cmd.schema_id())
             .await
             .unwrap()
             .unwrap()
             .delete(ctx.tx())
-            .await?;
-        Ok(())
+            .await
+            .map_err(CommandBusError::from)
     }
 }

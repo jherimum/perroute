@@ -19,13 +19,14 @@ pub enum DeleteChannelError {
 #[async_trait]
 impl CommandHandler for DeleteChannelCommandHandler {
     type Command = DeleteChannelCommand;
+    type Output = bool;
 
     #[tracing::instrument(skip(self))]
     async fn handle<'ctx, 'a>(
         &self,
         ctx: &mut CommandBusContext<'ctx, 'a>,
         command: Self::Command,
-    ) -> Result<(), CommandBusError> {
+    ) -> Result<bool, CommandBusError> {
         retrieve_channel(ctx, command.channel_id(), |id| {
             DeleteChannelError::ChannelNotFound(id).into()
         })
@@ -34,6 +35,5 @@ impl CommandHandler for DeleteChannelCommandHandler {
         .await
         .tap_err(|e| tracing::error!("Failed to delete channel {}: {e}", command.channel_id()))
         .map_err(CommandBusError::from)
-        .map(|_| ())
     }
 }

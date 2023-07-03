@@ -27,7 +27,8 @@ use perroute_cqrs::{
         },
     },
     query_bus::{
-        bus::QueryBus, handlers::schema::find_channel_schema::FindChannelSchemaQueryHandler,
+        bus::QueryBus,
+        handlers::schema::find_channel__message_type_schema::FindChannelMessageTypeSchemaQueryHandler,
     },
 };
 use perroute_storage::models::message_type::MessageType;
@@ -46,7 +47,6 @@ impl SchemaRouter {
         channel_id: Id,
         message_type_id: Id,
         schema_id: Id,
-        not_found: impl FnOnce() -> ApiError,
         map: impl FnOnce(Schema) -> R,
     ) -> Result<R, ApiError> {
         let query = FindChannelMessageTypeSchemaQueryBuilder::default()
@@ -57,25 +57,24 @@ impl SchemaRouter {
             .unwrap();
 
         query_bus
-            .execute::<_, FindChannelSchemaQueryHandler, _>(actor, &query)
+            .execute::<_, FindChannelMessageTypeSchemaQueryHandler, _>(actor, &query)
             .await
             .unwrap()
-            .ok_or_else(not_found)
+            .ok_or_else(|| ApiError::SchemaNotFound(schema_id))
             .map(map)
     }
 
     async fn retrieve_message_type(
         query_bus: &QueryBus,
         actor: &Actor,
-        channel_id: &Id,
-        message_type_id: &Id,
+        channel_id: Id,
+        message_type_id: Id,
     ) -> Result<MessageType, ApiError> {
         MessageTypeRouter::retrieve_message_type(
             query_bus,
             actor,
             channel_id,
             message_type_id,
-            || ApiError::MessageTypeNotFound(*message_type_id),
             identity,
         )
         .await
@@ -87,13 +86,8 @@ impl SchemaRouter {
         ActorExtractor(actor): ActorExtractor,
         schemas_path: Path<(Id, Id)>,
     ) -> ApiResult<EmptyResource> {
-        let message_type = Self::retrieve_message_type(
-            state.query_bus(),
-            &actor,
-            &schemas_path.0,
-            &schemas_path.1,
-        )
-        .await?;
+        Self::retrieve_message_type(state.query_bus(), &actor, schemas_path.0, schemas_path.1)
+            .await?;
 
         //HttpResponse::Ok().finish()
         todo!()
@@ -106,13 +100,9 @@ impl SchemaRouter {
         schemas_path: Path<(Id, Id)>,
         Json(body): Json<CreateSchemaRequest>,
     ) -> ApiResult<SchemaResource> {
-        let message_type = Self::retrieve_message_type(
-            state.query_bus(),
-            &actor,
-            &schemas_path.0,
-            &schemas_path.1,
-        )
-        .await?;
+        let message_type =
+            Self::retrieve_message_type(state.query_bus(), &actor, schemas_path.0, schemas_path.1)
+                .await?;
 
         let cmd = CreateSchemaCommandBuilder::default()
             .schema_id(new_id!())
@@ -121,19 +111,11 @@ impl SchemaRouter {
             .build()
             .unwrap();
 
-        state
+        Ok(state
             .command_bus()
-            .execute::<_, CreateSchemaCommandHandler>(&actor, &cmd)
-            .await?;
-
-        Self::retrieve_schema(
-            state.query_bus(),
-            &actor,
-            schemas_path.0,
-            schemas_path.1,
-            *cmd.schema_id(),
-            || ApiError::Const("()"),
-            |schema| {
+            .execute::<_, CreateSchemaCommandHandler, _>(&actor, &cmd)
+            .await
+            .map(|schema| {
                 ApiResponse::Created(
                     ResourceLink::Schema(
                         *message_type.channel_id(),
@@ -142,9 +124,7 @@ impl SchemaRouter {
                     ),
                     schema.into(),
                 )
-            },
-        )
-        .await
+            })?)
     }
 
     #[tracing::instrument]
@@ -160,7 +140,6 @@ impl SchemaRouter {
             schema_path.0,
             schema_path.1,
             schema_path.2,
-            || ApiError::SchemaNotFound(schema_path.1),
             identity,
         )
         .await?;
@@ -171,27 +150,16 @@ impl SchemaRouter {
             .build()
             .unwrap();
 
-        state
+        Ok(state
             .command_bus()
-            .execute::<_, UpdateSchemaCommandHandler>(&actor, &cmd)
+            .execute::<_, UpdateSchemaCommandHandler, _>(&actor, &cmd)
             .await
-            .unwrap();
-
-        Self::retrieve_schema(
-            state.query_bus(),
-            &actor,
-            schema_path.0,
-            schema_path.1,
-            *cmd.schema_id(),
-            || ApiError::Const("()"),
-            |schema| {
+            .map(|schema| {
                 ApiResponse::Created(
                     ResourceLink::Schema(schema_path.0, schema_path.1, *schema.id()),
                     schema.into(),
                 )
-            },
-        )
-        .await
+            })?)
     }
 
     #[tracing::instrument]
@@ -206,7 +174,6 @@ impl SchemaRouter {
             schema_path.0,
             schema_path.1,
             schema_path.2,
-            || ApiError::SchemaNotFound(schema_path.1),
             identity,
         )
         .await?;
@@ -216,12 +183,11 @@ impl SchemaRouter {
             .build()
             .unwrap();
 
-        state
+        Ok(state
             .command_bus()
-            .execute::<_, DeleteSchemaCommandHandler>(&actor, &cmd)
-            .await?;
-
-        Ok(ApiResponse::OkEmpty(EmptyResource))
+            .execute::<_, DeleteSchemaCommandHandler, _>(&actor, &cmd)
+            .await
+            .map(|_| ApiResponse::OkEmpty(EmptyResource))?)
     }
 
     #[tracing::instrument]
@@ -236,7 +202,6 @@ impl SchemaRouter {
             schema_path.0,
             schema_path.1,
             schema_path.2,
-            || ApiError::SchemaNotFound(schema_path.1),
             |schema| {
                 ApiResponse::Created(
                     ResourceLink::Schema(schema_path.0, schema_path.1, *schema.id()),

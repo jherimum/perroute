@@ -24,16 +24,18 @@ pub struct CreateMessageTypeCommandHandler;
 #[async_trait::async_trait]
 impl CommandHandler for CreateMessageTypeCommandHandler {
     type Command = CreateMessageTypeCommand;
+    type Output = MessageType;
+
     async fn handle<'tx, 'a>(
         &self,
         ctx: &mut CommandBusContext<'tx, 'a>,
         cmd: Self::Command,
-    ) -> Result<(), CommandBusError> {
+    ) -> Result<MessageType, CommandBusError> {
         if MessageType::exists_code(ctx.tx(), cmd.channel_id(), cmd.code()).await? {
             return Err(CreateMessageTypeError::CodeAlreadyExists(cmd.code().clone()).into());
         }
 
-        MessageTypeBuilder::default()
+        let message_type = MessageTypeBuilder::default()
             .id(*cmd.message_type_id())
             .code(cmd.code().clone())
             .description(cmd.description().clone())
@@ -54,6 +56,7 @@ impl CommandHandler for CreateMessageTypeCommandHandler {
             .unwrap()
             .save(ctx.tx())
             .await?;
-        Ok(())
+
+        Ok(message_type)
     }
 }

@@ -17,17 +17,18 @@ pub struct DeleteMessageTypeCommandHandler;
 #[async_trait::async_trait]
 impl CommandHandler for DeleteMessageTypeCommandHandler {
     type Command = DeleteMessageTypeCommand;
+    type Output = bool;
+
     async fn handle<'tx, 'a>(
         &self,
         ctx: &mut CommandBusContext<'tx, 'a>,
         cmd: Self::Command,
-    ) -> Result<(), CommandBusError> {
+    ) -> Result<Self::Output, CommandBusError> {
         MessageType::find_by_id(ctx.tx(), cmd.message_type_id())
             .await?
             .ok_or_else(|| DeleteMessageTypeError::MessageTypeNotFound(*cmd.message_type_id()))?
             .delete(ctx.tx())
             .await
             .map_err(CommandBusError::from)
-            .map(|_| ())
     }
 }

@@ -1,5 +1,3 @@
-use std::convert::identity;
-
 use super::channel::ChannelRouter;
 use crate::api::response::{ApiResponse, EmptyResource};
 use crate::api::ResourceLink;
@@ -37,6 +35,7 @@ use perroute_cqrs::query_bus::queries::{
     FindChannelMessageTypeQueryBuilder, FindMessageTypeQueryBuilder, QueryMessageTypesQueryBuilder,
 };
 use perroute_storage::models::message_type::MessageType;
+use std::convert::identity;
 
 pub const MESSAGE_TYPES_RESOURCE_NAME: &str = "message_types";
 pub const MESSAGE_TYPE_RESOURCE_NAME: &str = "message_type";
@@ -44,24 +43,42 @@ pub const MESSAGE_TYPE_RESOURCE_NAME: &str = "message_type";
 pub struct MessageTypeRouter;
 
 impl MessageTypeRouter {
+    pub async fn retrieve_message_type_by_id<R>(
+        query_bus: &QueryBus,
+        actor: &Actor,
+        message_type_id: &Id,
+        not_found: impl FnOnce(Id) -> ApiError,
+        map: impl FnOnce(MessageType) -> R,
+    ) -> Result<R, ApiError> {
+        let query = FindMessageTypeQueryBuilder::default()
+            .message_type_id(*message_type_id)
+            .build()
+            .unwrap();
+
+        query_bus
+            .execute::<_, FindMessageTypeQueryHandler, _>(actor, &query)
+            .await?
+            .ok_or_else(|| not_found(*message_type_id))
+            .map(map)
+    }
+
     pub async fn retrieve_message_type<R>(
         query_bus: &QueryBus,
         actor: &Actor,
-        channel_id: &Id,
-        message_type_id: &Id,
-        not_found: impl FnOnce() -> ApiError,
+        channel_id: Id,
+        message_type_id: Id,
         map: impl FnOnce(MessageType) -> R,
     ) -> Result<R, ApiError> {
         let query = FindChannelMessageTypeQueryBuilder::default()
-            .channel_id(*channel_id)
-            .message_type_id(*message_type_id)
+            .channel_id(channel_id)
+            .message_type_id(message_type_id)
             .build()
             .unwrap();
 
         query_bus
             .execute::<_, FindChannelMessageTypeQueryHandler, _>(actor, &query)
             .await?
-            .ok_or_else(not_found)
+            .ok_or_else(|| ApiError::MessageTypeNotFound(message_type_id))
             .map(map)
     }
 
@@ -72,14 +89,9 @@ impl MessageTypeRouter {
         message_types_path: Path<Id>,
     ) -> ApiResult<MessageTypeResource> {
         let channel_id = message_types_path.into_inner();
-        let channel = ChannelRouter::retrieve_channel(
-            state.query_bus(),
-            &actor,
-            &channel_id,
-            || ApiError::ChannelNotFound(channel_id),
-            identity,
-        )
-        .await?;
+        let channel =
+            ChannelRouter::retrieve_channel(state.query_bus(), &actor, channel_id, identity)
+                .await?;
         let query = QueryMessageTypesQueryBuilder::default()
             .channel_id(*channel.id())
             .build()
@@ -101,14 +113,9 @@ impl MessageTypeRouter {
         Json(body): Json<CreateMessageTypeRequest>,
     ) -> ApiResult<MessageTypeResource> {
         let channel_id = message_types_path.into_inner();
-        let channel = ChannelRouter::retrieve_channel(
-            state.query_bus(),
-            &actor,
-            &channel_id,
-            || ApiError::ChannelNotFound(channel_id),
-            identity,
-        )
-        .await?;
+        let channel =
+            ChannelRouter::retrieve_channel(state.query_bus(), &actor, channel_id, identity)
+                .await?;
 
         let cmd = CreateMessageTypeCommandBuilder::default()
             .message_type_id(new_id!())
@@ -117,26 +124,17 @@ impl MessageTypeRouter {
             .description(body.description().to_owned())
             .build()
             .unwrap();
-        state
+
+        Ok(state
             .command_bus()
-            .execute::<_, CreateMessageTypeCommandHandler>(&actor, &cmd)
-            .await?;
-
-        let query = FindMessageTypeQueryBuilder::default()
-            .message_type_id(*cmd.message_type_id())
-            .build()
-            .unwrap();
-
-        let message_type = state
-            .query_bus()
-            .execute::<_, FindMessageTypeQueryHandler, _>(&actor, &query)
-            .await?
-            .unwrap();
-
-        Ok(ApiResponse::Created(
-            ResourceLink::MessageType(channel_id, *message_type.id()),
-            message_type.into(),
-        ))
+            .execute::<_, CreateMessageTypeCommandHandler, _>(&actor, &cmd)
+            .await
+            .map(|message_type| {
+                ApiResponse::Created(
+                    ResourceLink::MessageType(*message_type.channel_id(), *message_type.id()),
+                    message_type.into(),
+                )
+            })?)
     }
 
     #[tracing::instrument(skip(state))]
@@ -147,15 +145,9 @@ impl MessageTypeRouter {
         Json(body): Json<UpdateMessageTypeRequest>,
     ) -> ApiResult<MessageTypeResource> {
         let path = message_types_path.into_inner();
-        let message_type = Self::retrieve_message_type(
-            state.query_bus(),
-            &actor,
-            &path.0,
-            &path.1,
-            || ApiError::MessageTypeNotFound(path.1),
-            identity,
-        )
-        .await?;
+        let message_type =
+            Self::retrieve_message_type(state.query_bus(), &actor, path.0, path.1, identity)
+                .await?;
 
         let cmd = UpdateMessageTypeCommandBuilder::default()
             .message_type_id(*message_type.id())
@@ -163,20 +155,12 @@ impl MessageTypeRouter {
             .enabled(*body.enabled())
             .build()
             .unwrap();
-        state
-            .command_bus()
-            .execute::<_, UpdateMessageTypeCommandHandler>(&actor, &cmd)
-            .await?;
 
-        Self::retrieve_message_type(
-            state.query_bus(),
-            &actor,
-            &path.0,
-            &path.1,
-            || ApiError::MessageTypeNotFound(path.1),
-            |message_type| ApiResponse::OkSingle(message_type.into()),
-        )
-        .await
+        Ok(state
+            .command_bus()
+            .execute::<_, UpdateMessageTypeCommandHandler, _>(&actor, &cmd)
+            .await
+            .map(|message_type| ApiResponse::OkSingle(message_type.into()))?)
     }
 
     #[tracing::instrument(skip(state))]
@@ -188,9 +172,8 @@ impl MessageTypeRouter {
         let message_type = Self::retrieve_message_type(
             state.query_bus(),
             &actor,
-            &message_types_path.0,
-            &message_types_path.1,
-            || ApiError::ChannelNotFound(message_types_path.1),
+            message_types_path.0,
+            message_types_path.1,
             identity,
         )
         .await?;
@@ -200,12 +183,11 @@ impl MessageTypeRouter {
             .build()
             .unwrap();
 
-        state
+        Ok(state
             .command_bus()
-            .execute::<_, DeleteMessageTypeCommandHandler>(&actor, &cmd)
-            .await?;
-
-        Ok(ApiResponse::OkEmpty(EmptyResource))
+            .execute::<_, DeleteMessageTypeCommandHandler, _>(&actor, &cmd)
+            .await
+            .map(|_| ApiResponse::OkEmpty(EmptyResource))?)
     }
 
     #[tracing::instrument(skip(state))]
@@ -217,9 +199,8 @@ impl MessageTypeRouter {
         Self::retrieve_message_type(
             state.query_bus(),
             &actor,
-            &message_types_path.0,
-            &message_types_path.1,
-            || ApiError::MessageTypeNotFound(message_types_path.0),
+            message_types_path.0,
+            message_types_path.1,
             |message_type| ApiResponse::OkSingle(message_type.into()),
         )
         .await

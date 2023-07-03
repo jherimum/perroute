@@ -10,12 +10,13 @@ pub struct PublishSchemaCommandHandler;
 #[async_trait::async_trait]
 impl CommandHandler for PublishSchemaCommandHandler {
     type Command = PublishSchemaCommand;
+    type Output = Schema;
 
     async fn handle<'tx, 'a>(
         &self,
         ctx: &mut CommandBusContext<'tx, 'a>,
         cmd: Self::Command,
-    ) -> Result<(), CommandBusError> {
+    ) -> Result<Self::Output, CommandBusError> {
         Schema::find_by_id(ctx.tx(), cmd.schema_id())
             .await
             .unwrap()
@@ -23,8 +24,6 @@ impl CommandHandler for PublishSchemaCommandHandler {
             .set_published(true)
             .update(ctx.tx())
             .await
-            .unwrap();
-
-        Ok(())
+            .map_err(CommandBusError::from)
     }
 }

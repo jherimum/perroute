@@ -20,13 +20,14 @@ pub enum CreateChannelError {
 #[async_trait]
 impl CommandHandler for CreateChannelCommandHandler {
     type Command = CreateChannelCommand;
+    type Output = Channel;
 
     #[tracing::instrument(name = "create_channel_command", skip(self))]
     async fn handle<'tx, 'a>(
         &self,
         ctx: &mut CommandBusContext<'tx, 'a>,
         cmd: Self::Command,
-    ) -> Result<(), CommandBusError> {
+    ) -> Result<Channel, CommandBusError> {
         if Channel::exists_by_code(ctx.tx(), cmd.code())
             .await
             .tap_err(|e| {
@@ -52,6 +53,5 @@ impl CommandHandler for CreateChannelCommandHandler {
             .await
             .tap_err(|e| tracing::error!("Failed to save channel: {e}"))
             .map_err(CommandBusError::from)
-            .map(|_| ())
     }
 }
