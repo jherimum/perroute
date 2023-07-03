@@ -12,6 +12,7 @@ use perroute_backoffice_api::{
         },
         route::{RouteRouter, ROUTES_RESOURCE_NAME, ROUTE_RESOURCE_NAME},
         schema::{SchemaRouter, SCHEMAS_RESOURCE_NAME, SCHEMA_RESOURCE_NAME},
+        template::{TemplateRouter, TEMPLATES_RESOURCE_NAME, TEMPLATE_RESOURCE_NAME},
     },
 };
 use perroute_commons::{configuration::settings::Settings, tracing::init_tracing};
@@ -19,6 +20,23 @@ use tap::TapFallible;
 use tracing_actix_web::TracingLogger;
 
 fn routes(state: AppState) -> Scope {
+    let templates = web::scope("/templates")
+        .service(
+            web::resource("")
+                .name(TEMPLATES_RESOURCE_NAME)
+                .route(web::get().to(TemplateRouter::query_templates))
+                .route(web::post().to(TemplateRouter::create_template)),
+        )
+        .service(
+            web::scope("/{template_id}").service(
+                web::resource("")
+                    .name(TEMPLATE_RESOURCE_NAME)
+                    .route(web::get().to(TemplateRouter::find_template))
+                    .route(web::put().to(TemplateRouter::update_template))
+                    .route(web::delete().to(TemplateRouter::delete_template)),
+            ),
+        );
+
     let schemas = web::scope("/schemas")
         .service(
             web::resource("")
@@ -89,7 +107,8 @@ fn routes(state: AppState) -> Scope {
                         .route(web::delete().to(ChannelRouter::delete_channel)),
                 )
                 .service(message_types)
-                .service(routes),
+                .service(routes)
+                .service(templates),
         );
 
     web::scope("/api")
