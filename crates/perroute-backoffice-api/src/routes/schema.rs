@@ -34,6 +34,7 @@ use perroute_cqrs::{
 use perroute_storage::models::message_type::MessageType;
 use perroute_storage::models::schema::Schema;
 use std::convert::identity;
+use tap::TapFallible;
 
 pub const SCHEMAS_RESOURCE_NAME: &str = "schemas";
 pub const SCHEMA_RESOURCE_NAME: &str = "schema";
@@ -93,7 +94,7 @@ impl SchemaRouter {
         todo!()
     }
 
-    #[tracing::instrument]
+    #[tracing::instrument(skip(state))]
     pub async fn create_schema(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
@@ -102,12 +103,17 @@ impl SchemaRouter {
     ) -> ApiResult<SchemaResource> {
         let message_type =
             Self::retrieve_message_type(state.query_bus(), &actor, schemas_path.0, schemas_path.1)
-                .await?;
+                .await
+                .tap_err(|e| tracing::error!("XXXXXXXXX:{e}"))?;
 
         let cmd = CreateSchemaCommandBuilder::default()
+            .message_type_id(*message_type.id())
             .schema_id(new_id!())
-            .message_type_id(body.message_type_id)
-            .schema(JsonSchema::try_from(body.schema).map_err(ApiError::from)?)
+            .schema(
+                JsonSchema::try_from(body.schema)
+                    .map_err(ApiError::from)
+                    .tap_err(|e| tracing::error!("XXXXXXXXX:{e}"))?,
+            )
             .build()
             .unwrap();
 

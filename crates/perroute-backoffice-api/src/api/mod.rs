@@ -22,7 +22,7 @@ pub enum Linkrelation {
     Channels,
     #[serde(rename = "channel")]
     Channel,
-    #[serde(rename = "mesage_types")]
+    #[serde(rename = "message_types")]
     MessageTypes,
     #[serde(rename = "routes")]
     Routes,

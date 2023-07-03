@@ -39,6 +39,7 @@ impl CommandHandler for CreateSchemaCommandHandler {
             .version(actual_version.increment())
             .published(false)
             .message_type_id(*mt.id())
+            .channel_id(*mt.channel_id())
             .build()
             .unwrap()
             .save(ctx.tx())

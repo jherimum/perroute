@@ -1,12 +1,14 @@
-use crate::api::response::{Resource, SingleResource};
-use perroute_commons::types::id::Id;
-use perroute_storage::models::{message_type::MessageType, schema::Schema};
+use crate::api::{
+    response::{Resource, SingleResource},
+    Linkrelation, ResourceLink,
+};
+use perroute_commons::types::json_schema::JsonSchema;
+use perroute_storage::models::schema::{Schema, Version};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 #[derive(Debug, Deserialize)]
 pub struct CreateSchemaRequest {
-    pub message_type_id: Id,
     pub schema: Value,
 }
 
@@ -16,18 +18,35 @@ pub struct UpdateSchemaRequest {
 }
 
 #[derive(Debug, Serialize, Clone)]
-pub struct SchemaResource {}
+pub struct SchemaResource {
+    schema: JsonSchema,
+    version: Version,
+    published: bool,
+}
 
 impl Resource for SchemaResource {}
 
-impl From<SchemaResource> for Schema {
-    fn from(value: SchemaResource) -> Self {
-        todo!()
+impl From<Schema> for SchemaResource {
+    fn from(value: Schema) -> Self {
+        SchemaResource {
+            schema: value.schema().to_owned(),
+            version: value.version().to_owned(),
+            published: value.published().to_owned(),
+        }
     }
 }
 
 impl From<Schema> for SingleResource<SchemaResource> {
     fn from(value: Schema) -> Self {
-        todo!()
+        SingleResource::default()
+            .with_data(value.clone().into())
+            .with_link(
+                Linkrelation::Self_,
+                ResourceLink::Schema(*value.channel_id(), *value.message_type_id(), *value.id()),
+            )
+            .with_link(
+                Linkrelation::Schemas,
+                ResourceLink::Schemas(*value.channel_id(), *value.message_type_id()),
+            )
     }
 }

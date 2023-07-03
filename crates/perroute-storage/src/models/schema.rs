@@ -53,6 +53,7 @@ pub struct Schema {
     published: bool,
     #[setters(skip)]
     message_type_id: Id,
+    #[setters(skip)]
     channel_id: Id,
 }
 
