@@ -67,12 +67,37 @@ pub enum CommandType {
     UpdateSchema,
     DeleteSchema,
     PublishSchema,
+
+    CreateTemplate,
+    UpdateTemplate,
+    DeleteTemplate,
 }
 
 impl From<CommandType> for String {
     fn from(value: CommandType) -> Self {
         value.to_string()
     }
+}
+
+#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
+pub struct CreateTemplateCommand {
+    template_id: Id,
+    channel_id: Id,
+    code: Code,
+    description: String,
+    template: String,
+}
+
+#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
+pub struct UpdateTemplateCommand {
+    template_id: Id,
+    description: String,
+    template: String,
+}
+
+#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
+pub struct DeleteTemplateCommand {
+    template_id: Id,
 }
 
 #[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
@@ -146,3 +171,7 @@ impl_command!(CreateSchemaCommand, CommandType::CreateSchema);
 impl_command!(UpdateSchemaCommand, CommandType::UpdateSchema);
 impl_command!(DeleteSchemaCommand, CommandType::DeleteSchema);
 impl_command!(PublishSchemaCommand, CommandType::PublishSchema);
+
+impl_command!(CreateTemplateCommand, CommandType::CreateTemplate);
+impl_command!(UpdateTemplateCommand, CommandType::UpdateTemplate);
+impl_command!(DeleteTemplateCommand, CommandType::DeleteTemplate);

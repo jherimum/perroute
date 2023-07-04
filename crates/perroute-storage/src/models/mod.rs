@@ -5,6 +5,7 @@ pub mod connection;
 pub mod event;
 pub mod message_type;
 pub mod schema;
+pub mod template;
 pub mod user;
 pub mod user_password;
 
