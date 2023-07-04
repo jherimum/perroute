@@ -29,7 +29,6 @@ mockall = "0.11.4"
 derive-getters = "0.3"
 jsonschema = "0.17"
 actix-web = "4"
-handlebars= "4"
 
 [dev-dependencies]
 temp-env = "0.3"

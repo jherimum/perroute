@@ -9,6 +9,7 @@ use super::{
         },
         message_type::create_message_type::CreateMessageTypeCommandHandler,
         schema::create_schema::CreateSchemaCommandHandler,
+        template::create_template::CreateTemplateCommandHandler,
         CommandHandler,
     },
 };
@@ -109,6 +110,7 @@ impl CommandBus {
             .with_handler(CreateSchemaCommandHandler)
             .with_handler(CreateSchemaCommandHandler)
             .with_handler(CreateSchemaCommandHandler)
+            .with_handler(CreateTemplateCommandHandler)
             .build()
     }
 
