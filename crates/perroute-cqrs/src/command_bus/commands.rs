@@ -30,18 +30,6 @@ pub trait Command: Debug + Serialize + Clone + PartialEq + Eq + Send + Sync {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Event {
-    ChannelEvent(ChannelEvent),
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum ChannelEvent {
-    Created(Id),
-    Updated(Id),
-    Deleted(Id),
-}
-
 #[derive(Display, Debug, Clone)]
 pub enum CommandType {
     CreateChannel,
