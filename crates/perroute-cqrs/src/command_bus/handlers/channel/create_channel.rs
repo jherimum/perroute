@@ -27,7 +27,7 @@ impl CommandHandler for CreateChannelCommandHandler {
         &self,
         ctx: &mut CommandBusContext<'tx, 'a>,
         cmd: Self::Command,
-    ) -> Result<Channel, CommandBusError> {
+    ) -> Result<Self::Output, CommandBusError> {
         if Channel::exists_by_code(ctx.tx(), cmd.code())
             .await
             .tap_err(|e| {

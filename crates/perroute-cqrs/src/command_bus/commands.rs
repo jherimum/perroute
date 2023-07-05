@@ -1,24 +1,14 @@
 use chrono::Utc;
-use derive_builder::Builder;
-use derive_getters::Getters;
 use perroute_commons::{
     new_id,
-    types::{actor::Actor, code::Code, id::Id, json_schema::JsonSchema},
+    types::{actor::Actor, code::Code, id::Id, json_schema::JsonSchema, template::TemplateSnippet},
 };
 use perroute_storage::models::command_log::{CommandLog, CommandLogBuilder};
 use serde::Serialize;
 use std::fmt::Debug;
 use strum_macros::Display;
 
-macro_rules! impl_command {
-    ($cmd: ty, $ty: expr) => {
-        impl Command for $cmd {
-            fn ty(&self) -> CommandType {
-                $ty
-            }
-        }
-    };
-}
+use crate::command;
 
 pub trait Command: Debug + Serialize + Clone + PartialEq + Eq + Send + Sync {
     fn ty(&self) -> CommandType;
@@ -78,99 +68,100 @@ impl From<CommandType> for String {
     }
 }
 
-#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
-pub struct CreateTemplateCommand {
+command!(
+    CreateChannelCommand,
+    CommandType::CreateChannel,
+    channel_id: Id,
+    code: Code,
+    name: String
+);
+command!(
+    DeleteChannelCommand,
+    CommandType::DeleteChannel,
+    channel_id: Id
+);
+command!(
+    UpdateChannelCommand,
+    CommandType::UpdateChannel,
+    channel_id: Id,
+    name: String
+);
+command!(
+    CreateMessageTypeCommand,
+    CommandType::CreateMessageType,
+    message_type_id: Id,
+    code: Code,
+    description: String,
+    channel_id: Id
+);
+
+command!(
+    UpdateMessageTypeCommand,
+    CommandType::UpdateMessageType,
+    message_type_id: Id,
+    description: String,
+    enabled: bool
+);
+
+command!(
+    DeleteMessageTypeCommand,
+    CommandType::DeleteMessageType,
+    message_type_id: Id
+);
+
+command!(
+    CreateSchemaCommand,
+    CommandType::CreateSchema,
+    schema_id: Id,
+    message_type_id: Id,
+    schema: JsonSchema
+);
+
+command!(
+    UpdateSchemaCommand,
+    CommandType::UpdateSchema,
+    schema_id: Id,
+    schema: JsonSchema
+);
+
+command!(
+    DeleteSchemaCommand,
+    CommandType::DeleteSchema,
+    schema_id: Id
+);
+
+command!(
+    PublishSchemaCommand,
+    CommandType::PublishSchema,
+    schema_id: Id
+);
+
+//templates
+
+command!(
+    CreateTemplateCommand,
+    CommandType::CreateTemplate,
     template_id: Id,
     channel_id: Id,
     code: Code,
     description: String,
-    template: String,
-}
+    html: Option<TemplateSnippet>,
+    text: Option<TemplateSnippet>,
+    subject: Option<TemplateSnippet>
+);
 
-#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
-pub struct UpdateTemplateCommand {
+command!(
+    UpdateTemplateCommand,
+    CommandType::UpdateTemplate,
     template_id: Id,
     description: String,
-    template: String,
-}
+    html: Option<TemplateSnippet>,
+    text: Option<TemplateSnippet>,
+    subject: Option<TemplateSnippet>
+);
 
-#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
-pub struct DeleteTemplateCommand {
-    template_id: Id,
-}
-
-#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
-pub struct CreateChannelCommand {
-    channel_id: Id,
-    code: Code,
-    name: String,
-}
-
-#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
-pub struct DeleteChannelCommand {
-    channel_id: Id,
-}
-
-#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
-pub struct UpdateChannelCommand {
-    channel_id: Id,
-    name: String,
-}
-
-#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
-pub struct CreateMessageTypeCommand {
-    message_type_id: Id,
-    code: Code,
-    description: String,
-    channel_id: Id,
-}
-
-#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
-pub struct UpdateMessageTypeCommand {
-    message_type_id: Id,
-    description: String,
-    enabled: bool,
-}
-
-#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
-pub struct DeleteMessageTypeCommand {
-    message_type_id: Id,
-}
-
-#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
-pub struct CreateSchemaCommand {
-    schema_id: Id,
-    message_type_id: Id,
-    schema: JsonSchema,
-}
-
-#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
-pub struct UpdateSchemaCommand {
-    schema_id: Id,
-    schema: JsonSchema,
-}
-
-#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
-pub struct DeleteSchemaCommand {
-    schema_id: Id,
-}
-
-#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
-pub struct PublishSchemaCommand {
-    schema_id: Id,
-}
-
-impl_command!(CreateChannelCommand, CommandType::CreateChannel);
-impl_command!(DeleteChannelCommand, CommandType::DeleteChannel);
-impl_command!(UpdateChannelCommand, CommandType::UpdateChannel);
-impl_command!(CreateMessageTypeCommand, CommandType::CreateMessageType);
-impl_command!(UpdateMessageTypeCommand, CommandType::UpdateMessageType);
-impl_command!(DeleteMessageTypeCommand, CommandType::DeleteMessageType);
-impl_command!(CreateSchemaCommand, CommandType::CreateSchema);
-impl_command!(UpdateSchemaCommand, CommandType::UpdateSchema);
-impl_command!(DeleteSchemaCommand, CommandType::DeleteSchema);
-impl_command!(PublishSchemaCommand, CommandType::PublishSchema);
-
-impl_command!(CreateTemplateCommand, CommandType::CreateTemplate);
-impl_command!(UpdateTemplateCommand, CommandType::UpdateTemplate);
-impl_command!(DeleteTemplateCommand, CommandType::DeleteTemplate);
+command!(
+    DeleteTemplateCommand,
+    CommandType::DeleteTemplate,
+    template_id: Id
+);

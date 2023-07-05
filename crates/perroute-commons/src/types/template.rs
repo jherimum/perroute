@@ -1,9 +1,12 @@
 use serde::Serialize;
+use sqlx::Type;
 
-pub enum TemplateError {}
+#[derive(Debug, Clone, PartialEq, Eq, Type, Serialize)]
+#[sqlx(transparent)]
+pub struct TemplateSnippet(String);
 
-pub trait Template {
-    fn render<T: Serialize>(&self, data: &T) -> String;
+impl From<String> for TemplateSnippet {
+    fn from(value: String) -> Self {
+        TemplateSnippet(value)
+    }
 }
-
-pub struct HandleBarTemplate {}

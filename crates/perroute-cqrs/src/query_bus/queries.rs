@@ -1,20 +1,9 @@
-use std::fmt::Debug;
-
-use derive_builder::Builder;
-use derive_getters::Getters;
 use perroute_commons::types::{code::Code, id::Id};
 use serde::Serialize;
+use std::fmt::Debug;
 use strum_macros::Display;
 
-macro_rules! impl_query {
-    ($cmd: ty, $ty: expr) => {
-        impl Query for $cmd {
-            fn ty(&self) -> QueryType {
-                $ty
-            }
-        }
-    };
-}
+use crate::query;
 
 pub trait Query: Debug + Serialize + Clone + PartialEq + Eq + Send + Sync {
     fn ty(&self) -> QueryType;
@@ -27,60 +16,59 @@ pub enum QueryType {
     QueryChannels,
 
     FindMessageTypeQuery,
-    QueryChannelMessageTypes,
+    QueryMessageTypes,
 
     QuerySchemas,
     FindSchema,
     FindSchemaById,
     FindChannelMessageTypeSchema,
+
+    QueryTemplates,
+    FindTemplate,
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Builder, Getters)]
-pub struct FindChannelByCodeQuery {
-    channel_code: Code,
-}
+query!(
+    FindChannelByCodeQuery,
+    QueryType::FindChannelByCode,
+    channel_code: Code
+);
+query!(
+    FindChannelByIdQuery,
+    QueryType::FindChannelById,
+    channel_id: Id
+);
 
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Builder, Getters)]
-pub struct FindChannelByIdQuery {
+query!(QueryChannelsQuery, QueryType::QueryChannels);
+
+query!(
+    FindMessageTypeQuery,
+    QueryType::FindMessageTypeQuery,
+    message_type_id: Id
+);
+
+query!(QueryMessageTypesQuery, QueryType::QueryMessageTypes);
+
+query!(
+    QueryMessageTypeSchemasQuery,
+    QueryType::QuerySchemas,
+    message_type_id: Id
+);
+
+query!(
+    FindSchemaQuery,
+    QueryType::FindSchema,
     channel_id: Id,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Builder)]
-pub struct QueryChannelsQuery {}
-
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Builder, Getters)]
-pub struct FindMessageTypeQuery {
     message_type_id: Id,
-}
+    version: Id
+);
 
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Builder, Getters)]
-pub struct QueryMessageTypesQuery {}
-
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Builder, Getters)]
-pub struct QueryMessageTypeSchemasQuery {
+query!(
+    FindMessageTypeSchemaQuery,
+    QueryType::FindChannelMessageTypeSchema,
     message_type_id: Id,
-}
+    schema_id: Id
+);
 
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Builder, Getters)]
-pub struct FindSchemaQuery {
-    channel_id: Id,
-    message_type_id: Id,
-    version: Id,
-}
+query!(QueryTemplatesQuery, QueryType::QueryTemplates);
 
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Builder, Getters)]
-pub struct FindMessageTypeSchemaQuery {
-    message_type_id: Id,
-    schema_id: Id,
-}
-
-impl_query!(FindChannelByIdQuery, QueryType::FindChannelById);
-impl_query!(FindChannelByCodeQuery, QueryType::FindChannelByCode);
-impl_query!(QueryChannelsQuery, QueryType::QueryChannels);
-
-impl_query!(FindMessageTypeQuery, QueryType::FindMessageTypeQuery);
-impl_query!(QueryMessageTypesQuery, QueryType::QueryChannelMessageTypes);
-
-impl_query!(QueryMessageTypeSchemasQuery, QueryType::QuerySchemas);
-impl_query!(FindSchemaQuery, QueryType::FindSchema);
-impl_query!(FindMessageTypeSchemaQuery, QueryType::FindSchemaById);
+query!(FindTemplateQuery, QueryType::FindTemplate, template_id: Id);
