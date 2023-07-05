@@ -21,6 +21,10 @@ pub struct CollectionResourceModel<D: Resource> {
     links: HashMap<Linkrelation, Url>,
 }
 
+pub trait AsUrl {
+    fn as_url(&self, req: &HttpRequest) -> Url;
+}
+
 #[derive(Debug, Clone, Serialize, Default)]
 pub struct Links(HashMap<Linkrelation, ResourceLink>);
 

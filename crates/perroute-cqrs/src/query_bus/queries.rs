@@ -85,7 +85,6 @@ pub struct FindSchemaByIdQuery {
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Builder, Getters)]
 pub struct FindChannelMessageTypeSchemaQuery {
     channel_id: Id,
-    message_type_id: Id,
     schema_id: Id,
 }
 

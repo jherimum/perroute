@@ -62,15 +62,13 @@ fn routes(state: AppState) -> Scope {
                 .route(web::post().to(MessageTypeRouter::create_message_type)),
         )
         .service(
-            web::scope("/{message_type_id}")
-                .service(
-                    web::resource("")
-                        .name(MESSAGE_TYPE_RESOURCE_NAME)
-                        .route(web::get().to(MessageTypeRouter::find_message_type))
-                        .route(web::put().to(MessageTypeRouter::update_message_type))
-                        .route(web::delete().to(MessageTypeRouter::delete_message_type)),
-                )
-                .service(schemas),
+            web::scope("/{message_type_id}").service(
+                web::resource("")
+                    .name(MESSAGE_TYPE_RESOURCE_NAME)
+                    .route(web::get().to(MessageTypeRouter::find_message_type))
+                    .route(web::put().to(MessageTypeRouter::update_message_type))
+                    .route(web::delete().to(MessageTypeRouter::delete_message_type)),
+            ),
         );
 
     let routes = web::scope("/routes")
@@ -108,7 +106,8 @@ fn routes(state: AppState) -> Scope {
                 )
                 .service(message_types)
                 .service(routes)
-                .service(templates),
+                .service(templates)
+                .service(schemas),
         );
 
     web::scope("/api")

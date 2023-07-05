@@ -142,6 +142,7 @@ pub struct DeleteMessageTypeCommand {
 pub struct CreateSchemaCommand {
     schema_id: Id,
     message_type_id: Id,
+    channel_id: Id,
     schema: JsonSchema,
 }
 

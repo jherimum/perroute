@@ -1,3 +1,4 @@
+use self::response::AsUrl;
 use crate::routes::{
     channel::{CHANNELS_RESOURCE_NAME, CHANNEL_RESOURCE_NAME},
     message_type::{MESSAGE_TYPES_RESOURCE_NAME, MESSAGE_TYPE_RESOURCE_NAME},
@@ -36,14 +37,14 @@ pub enum ResourceLink {
     Channels,
     MessageType(Id, Id),
     MessageTypes(Id),
-    Schemas(Id, Id),
-    Schema(Id, Id, Id),
+    Schemas(Id),
+    Schema(Id, Id),
     Routes(Id),
     Route(Id, Id),
 }
 
-impl ResourceLink {
-    pub fn as_url(&self, req: &HttpRequest) -> Url {
+impl AsUrl for ResourceLink {
+    fn as_url(&self, req: &HttpRequest) -> Url {
         match self {
             ResourceLink::Channel(id) => req.url_for(CHANNEL_RESOURCE_NAME, [id.to_string()]),
             ResourceLink::Channels => req.url_for_static(CHANNELS_RESOURCE_NAME),
@@ -54,17 +55,12 @@ impl ResourceLink {
                 MESSAGE_TYPE_RESOURCE_NAME,
                 [channel_id.to_string(), message_type_id.to_string()],
             ),
-            ResourceLink::Schemas(channel_id, message_type_id) => req.url_for(
-                SCHEMAS_RESOURCE_NAME,
-                [channel_id.to_string(), message_type_id.to_string()],
-            ),
-            ResourceLink::Schema(channel_id, message_type_id, schema_id) => req.url_for(
+            ResourceLink::Schemas(channel_id) => {
+                req.url_for(SCHEMAS_RESOURCE_NAME, [channel_id.to_string()])
+            }
+            ResourceLink::Schema(channel_id, schema_id) => req.url_for(
                 SCHEMA_RESOURCE_NAME,
-                [
-                    channel_id.to_string(),
-                    schema_id.to_string(),
-                    message_type_id.to_string(),
-                ],
+                [channel_id.to_string(), schema_id.to_string()],
             ),
             ResourceLink::Routes(channel_id) => {
                 req.url_for(ROUTES_RESOURCE_NAME, [channel_id.to_string()])
@@ -77,22 +73,13 @@ impl ResourceLink {
         .tap_err(|e| tracing::error!("Failed to build url: {}", e))
         .expect("msg")
     }
+}
+
+impl ResourceLink {
     pub fn as_location_header(&self, req: &HttpRequest) -> (String, String) {
         (
             actix_web::http::header::LOCATION.as_str().to_string(),
             self.as_url(req).to_string(),
         )
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_name() {
-        dbg!(Linkrelation::Channels.to_string());
-
-        dbg!(serde_json::to_string(&Linkrelation::Channels).unwrap());
     }
 }

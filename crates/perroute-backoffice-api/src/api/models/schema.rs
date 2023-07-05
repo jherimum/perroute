@@ -2,7 +2,7 @@ use crate::api::{
     response::{Resource, SingleResource},
     Linkrelation, ResourceLink,
 };
-use perroute_commons::types::json_schema::JsonSchema;
+use perroute_commons::types::{id::Id, json_schema::JsonSchema};
 use perroute_storage::models::schema::{Schema, Version};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -10,6 +10,7 @@ use serde_json::Value;
 #[derive(Debug, Deserialize)]
 pub struct CreateSchemaRequest {
     pub schema: Value,
+    pub message_type_id: Id,
 }
 
 #[derive(Debug, Deserialize)]
@@ -42,11 +43,11 @@ impl From<Schema> for SingleResource<SchemaResource> {
             .with_data(value.clone().into())
             .with_link(
                 Linkrelation::Self_,
-                ResourceLink::Schema(*value.channel_id(), *value.message_type_id(), *value.id()),
+                ResourceLink::Schema(*value.channel_id(), *value.id()),
             )
             .with_link(
                 Linkrelation::Schemas,
-                ResourceLink::Schemas(*value.channel_id(), *value.message_type_id()),
+                ResourceLink::Schemas(*value.channel_id()),
             )
     }
 }
