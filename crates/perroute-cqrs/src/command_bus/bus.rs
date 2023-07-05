@@ -7,8 +7,15 @@ use super::{
             delete_channel::DeleteChannelCommandHandler,
             update_channel::UpdateChannelCommandHandler,
         },
-        message_type::create_message_type::CreateMessageTypeCommandHandler,
-        schema::create_schema::CreateSchemaCommandHandler,
+        message_type::{
+            create_message_type::CreateMessageTypeCommandHandler,
+            delete_message_type::DeleteMessageTypeCommandHandler,
+            update_message_type::UpdateMessageTypeCommandHandler,
+        },
+        schema::{
+            create_schema::CreateSchemaCommandHandler, delete_schema::DeleteSchemaCommandHandler,
+            update_schema::UpdateSchemaCommandHandler,
+        },
         template::create_template::CreateTemplateCommandHandler,
         CommandHandler,
     },
@@ -106,10 +113,12 @@ impl CommandBus {
             .with_handler(DeleteChannelCommandHandler)
             .with_handler(UpdateChannelCommandHandler)
             .with_handler(CreateMessageTypeCommandHandler)
+            .with_handler(UpdateMessageTypeCommandHandler)
+            .with_handler(DeleteMessageTypeCommandHandler)
             .with_handler(CreateSchemaCommandHandler)
             .with_handler(CreateSchemaCommandHandler)
-            .with_handler(CreateSchemaCommandHandler)
-            .with_handler(CreateSchemaCommandHandler)
+            .with_handler(DeleteSchemaCommandHandler)
+            .with_handler(UpdateSchemaCommandHandler)
             .with_handler(CreateTemplateCommandHandler)
             .build()
     }

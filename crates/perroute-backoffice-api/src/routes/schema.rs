@@ -1,6 +1,5 @@
 use super::message_type::MessageTypeRouter;
 use crate::api::models::schema::UpdateSchemaRequest;
-use crate::routes::channel::ChannelRouter;
 use crate::{
     api::{
         models::schema::{CreateSchemaRequest, SchemaResource},
@@ -16,7 +15,11 @@ use perroute_commons::{
     new_id,
     types::{actor::Actor, id::Id, json_schema::JsonSchema},
 };
-use perroute_cqrs::query_bus::queries::FindChannelMessageTypeSchemaQueryBuilder;
+use perroute_cqrs::query_bus::handlers::schema::find_message_schema::FindMessageTypeSchemaQueryHandler;
+use perroute_cqrs::query_bus::handlers::schema::query_message_type_schemas::QueryMessageTypeSchemasQueryHandler;
+use perroute_cqrs::query_bus::queries::{
+    FindMessageTypeSchemaQueryBuilder, QueryMessageTypeSchemasQueryBuilder,
+};
 use perroute_cqrs::{
     command_bus::{
         commands::{
@@ -27,12 +30,8 @@ use perroute_cqrs::{
             update_schema::UpdateSchemaCommandHandler,
         },
     },
-    query_bus::{
-        bus::QueryBus,
-        handlers::schema::find_channel__message_type_schema::FindChannelMessageTypeSchemaQueryHandler,
-    },
+    query_bus::bus::QueryBus,
 };
-use perroute_storage::models::message_type::MessageType;
 use perroute_storage::models::schema::Schema;
 use std::convert::identity;
 use tap::TapFallible;
@@ -46,47 +45,31 @@ impl SchemaRouter {
     pub async fn retrieve_schema<R>(
         query_bus: &QueryBus,
         actor: &Actor,
-        channel_id: Id,
+        message_type_id: Id,
         schema_id: Id,
         map: impl FnOnce(Schema) -> R,
     ) -> Result<R, ApiError> {
-        let query = FindChannelMessageTypeSchemaQueryBuilder::default()
-            .channel_id(channel_id)
+        let query = FindMessageTypeSchemaQueryBuilder::default()
+            .message_type_id(message_type_id)
             .schema_id(schema_id)
             .build()
             .unwrap();
 
         query_bus
-            .execute::<_, FindChannelMessageTypeSchemaQueryHandler, _>(actor, &query)
+            .execute::<_, FindMessageTypeSchemaQueryHandler, _>(actor, &query)
             .await
             .unwrap()
             .ok_or_else(|| ApiError::SchemaNotFound(schema_id))
             .map(map)
     }
 
-    async fn retrieve_message_type(
-        query_bus: &QueryBus,
-        actor: &Actor,
-        channel_id: Id,
-        message_type_id: Id,
-    ) -> Result<MessageType, ApiError> {
-        MessageTypeRouter::retrieve_message_type(
-            query_bus,
-            actor,
-            channel_id,
-            message_type_id,
-            identity,
-        )
-        .await
-    }
-
-    #[tracing::instrument]
+    #[tracing::instrument(skip(state))]
     pub async fn query_schemas(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
-        schemas_path: Path<(Id)>,
-    ) -> ApiResult<EmptyResource> {
-        let channel = ChannelRouter::retrieve_channel(
+        schemas_path: Path<Id>,
+    ) -> ApiResult<SchemaResource> {
+        let message_type = MessageTypeRouter::retrieve_message_type(
             state.query_bus(),
             &actor,
             schemas_path.into_inner(),
@@ -94,8 +77,17 @@ impl SchemaRouter {
         )
         .await?;
 
-        //HttpResponse::Ok().finish()
-        todo!()
+        let query = QueryMessageTypeSchemasQueryBuilder::default()
+            .message_type_id(*message_type.id())
+            .build()
+            .unwrap();
+
+        state
+            .query_bus()
+            .execute::<_, QueryMessageTypeSchemasQueryHandler, _>(&actor, &query)
+            .await
+            .map(|schemas| ApiResponse::OkCollection((message_type, schemas).into()))
+            .map_err(ApiError::from)
     }
 
     #[tracing::instrument(skip(state))]
@@ -105,15 +97,17 @@ impl SchemaRouter {
         schemas_path: Path<Id>,
         Json(body): Json<CreateSchemaRequest>,
     ) -> ApiResult<SchemaResource> {
-        let channel_id = schemas_path.into_inner();
-        let channel =
-            ChannelRouter::retrieve_channel(state.query_bus(), &actor, channel_id, identity)
-                .await?;
+        let message_type = MessageTypeRouter::retrieve_message_type(
+            state.query_bus(),
+            &actor,
+            *schemas_path.as_ref(),
+            identity,
+        )
+        .await?;
 
         let cmd = CreateSchemaCommandBuilder::default()
             .schema_id(new_id!())
-            .message_type_id(body.message_type_id)
-            .channel_id(channel_id)
+            .message_type_id(*schemas_path.as_ref())
             .schema(
                 JsonSchema::try_from(body.schema)
                     .map_err(ApiError::from)
@@ -128,13 +122,13 @@ impl SchemaRouter {
             .await
             .map(|schema| {
                 ApiResponse::Created(
-                    ResourceLink::Schema(*channel.id(), *schema.id()),
+                    ResourceLink::Schema(*message_type.id(), *schema.id()),
                     schema.into(),
                 )
             })?)
     }
 
-    #[tracing::instrument]
+    #[tracing::instrument(skip(state))]
     pub async fn update_schema(
         schema_path: Path<(Id, Id)>,
         state: Data<AppState>,
@@ -168,7 +162,7 @@ impl SchemaRouter {
             })?)
     }
 
-    #[tracing::instrument]
+    #[tracing::instrument(skip(state))]
     pub async fn delete_schema(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
@@ -195,7 +189,7 @@ impl SchemaRouter {
             .map(|_| ApiResponse::OkEmpty(EmptyResource))?)
     }
 
-    #[tracing::instrument]
+    #[tracing::instrument(skip(state))]
     pub async fn find_schema(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,

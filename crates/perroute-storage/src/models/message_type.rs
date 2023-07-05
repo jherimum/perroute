@@ -117,16 +117,12 @@ impl MessageType {
         .tap_err(log_query_error!())
     }
 
-    pub async fn query_by_channel_id<'e, E: PgExecutor<'e>>(
-        exec: E,
-        channel_id: &Id,
-    ) -> Result<Vec<Self>, sqlx::Error> {
+    pub async fn query<'e, E: PgExecutor<'e>>(exec: E) -> Result<Vec<Self>, sqlx::Error> {
         sqlx::query_as(
             r#"
-                    SELECT * FROM message_types WHERE channel_id= $1
+                    SELECT * FROM message_types
                 "#,
         )
-        .bind(channel_id)
         .fetch_all(exec)
         .await
         .tap_err(log_query_error!())

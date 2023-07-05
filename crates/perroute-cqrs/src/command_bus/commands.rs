@@ -7,7 +7,6 @@ use perroute_commons::{
 };
 use perroute_storage::models::command_log::{CommandLog, CommandLogBuilder};
 use serde::Serialize;
-use serde_json::Value;
 use std::fmt::Debug;
 use strum_macros::Display;
 
@@ -142,7 +141,6 @@ pub struct DeleteMessageTypeCommand {
 pub struct CreateSchemaCommand {
     schema_id: Id,
     message_type_id: Id,
-    channel_id: Id,
     schema: JsonSchema,
 }
 

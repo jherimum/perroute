@@ -27,7 +27,6 @@ pub enum QueryType {
     QueryChannels,
 
     FindMessageTypeQuery,
-    FindChannelMessageTypeQuery,
     QueryChannelMessageTypes,
 
     QuerySchemas,
@@ -55,18 +54,10 @@ pub struct FindMessageTypeQuery {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Builder, Getters)]
-pub struct FindChannelMessageTypeQuery {
-    channel_id: Id,
-    message_type_id: Id,
-}
+pub struct QueryMessageTypesQuery {}
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Builder, Getters)]
-pub struct QueryMessageTypesQuery {
-    channel_id: Id,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Builder, Getters)]
-pub struct QuerySchemasQuery {
+pub struct QueryMessageTypeSchemasQuery {
     message_type_id: Id,
 }
 
@@ -78,27 +69,18 @@ pub struct FindSchemaQuery {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Builder, Getters)]
-pub struct FindSchemaByIdQuery {
-    id: Id,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Builder, Getters)]
-pub struct FindChannelMessageTypeSchemaQuery {
-    channel_id: Id,
+pub struct FindMessageTypeSchemaQuery {
+    message_type_id: Id,
     schema_id: Id,
 }
 
 impl_query!(FindChannelByIdQuery, QueryType::FindChannelById);
 impl_query!(FindChannelByCodeQuery, QueryType::FindChannelByCode);
 impl_query!(QueryChannelsQuery, QueryType::QueryChannels);
-impl_query!(FindChannelMessageTypeQuery, QueryType::FindMessageTypeQuery);
+
 impl_query!(FindMessageTypeQuery, QueryType::FindMessageTypeQuery);
 impl_query!(QueryMessageTypesQuery, QueryType::QueryChannelMessageTypes);
 
-impl_query!(QuerySchemasQuery, QueryType::QuerySchemas);
+impl_query!(QueryMessageTypeSchemasQuery, QueryType::QuerySchemas);
 impl_query!(FindSchemaQuery, QueryType::FindSchema);
-impl_query!(FindSchemaByIdQuery, QueryType::FindSchemaById);
-impl_query!(
-    FindChannelMessageTypeSchemaQuery,
-    QueryType::FindChannelMessageTypeSchema
-);
+impl_query!(FindMessageTypeSchemaQuery, QueryType::FindSchemaById);

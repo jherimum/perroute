@@ -21,7 +21,7 @@ impl CommandHandler for CreateTemplateCommandHandler {
     async fn handle<'tx, 'a>(
         &self,
         ctx: &mut CommandBusContext<'tx, 'a>,
-        cmd: Self::Command,
+        _: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
         todo!()
     }

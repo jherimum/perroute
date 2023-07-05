@@ -62,13 +62,15 @@ fn routes(state: AppState) -> Scope {
                 .route(web::post().to(MessageTypeRouter::create_message_type)),
         )
         .service(
-            web::scope("/{message_type_id}").service(
-                web::resource("")
-                    .name(MESSAGE_TYPE_RESOURCE_NAME)
-                    .route(web::get().to(MessageTypeRouter::find_message_type))
-                    .route(web::put().to(MessageTypeRouter::update_message_type))
-                    .route(web::delete().to(MessageTypeRouter::delete_message_type)),
-            ),
+            web::scope("/{message_type_id}")
+                .service(
+                    web::resource("")
+                        .name(MESSAGE_TYPE_RESOURCE_NAME)
+                        .route(web::get().to(MessageTypeRouter::find_message_type))
+                        .route(web::put().to(MessageTypeRouter::update_message_type))
+                        .route(web::delete().to(MessageTypeRouter::delete_message_type)),
+                )
+                .service(schemas),
         );
 
     let routes = web::scope("/routes")
@@ -96,22 +98,23 @@ fn routes(state: AppState) -> Scope {
                 .route(web::post().to(ChannelRouter::create_channel)),
         )
         .service(
-            web::scope("/{channel_id}")
-                .service(
-                    web::resource("")
-                        .name(CHANNEL_RESOURCE_NAME)
-                        .route(web::get().to(ChannelRouter::find_channel))
-                        .route(web::put().to(ChannelRouter::update_channel))
-                        .route(web::delete().to(ChannelRouter::delete_channel)),
-                )
-                .service(message_types)
-                .service(routes)
-                .service(templates)
-                .service(schemas),
+            web::scope("/{channel_id}").service(
+                web::resource("")
+                    .name(CHANNEL_RESOURCE_NAME)
+                    .route(web::get().to(ChannelRouter::find_channel))
+                    .route(web::put().to(ChannelRouter::update_channel))
+                    .route(web::delete().to(ChannelRouter::delete_channel)),
+            ),
         );
 
     web::scope("/api")
-        .service(web::scope("/v1").service(channels))
+        .service(
+            web::scope("/v1")
+                .service(channels)
+                .service(message_types)
+                .service(routes)
+                .service(templates),
+        )
         .app_data(Data::new(state))
 }
 

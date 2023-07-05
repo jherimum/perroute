@@ -35,10 +35,13 @@ pub enum Linkrelation {
 pub enum ResourceLink {
     Channel(Id),
     Channels,
-    MessageType(Id, Id),
-    MessageTypes(Id),
+
+    MessageType(Id),
+    MessageTypes,
+
     Schemas(Id),
     Schema(Id, Id),
+
     Routes(Id),
     Route(Id, Id),
 }
@@ -48,20 +51,19 @@ impl AsUrl for ResourceLink {
         match self {
             ResourceLink::Channel(id) => req.url_for(CHANNEL_RESOURCE_NAME, [id.to_string()]),
             ResourceLink::Channels => req.url_for_static(CHANNELS_RESOURCE_NAME),
-            ResourceLink::MessageTypes(channel_code) => {
-                req.url_for(MESSAGE_TYPES_RESOURCE_NAME, [channel_code.to_string()])
+
+            ResourceLink::MessageTypes => req.url_for_static(MESSAGE_TYPES_RESOURCE_NAME),
+            ResourceLink::MessageType(message_type_id) => {
+                req.url_for(MESSAGE_TYPE_RESOURCE_NAME, [message_type_id.to_string()])
             }
-            ResourceLink::MessageType(channel_id, message_type_id) => req.url_for(
-                MESSAGE_TYPE_RESOURCE_NAME,
-                [channel_id.to_string(), message_type_id.to_string()],
-            ),
-            ResourceLink::Schemas(channel_id) => {
-                req.url_for(SCHEMAS_RESOURCE_NAME, [channel_id.to_string()])
+            ResourceLink::Schemas(message_type_id) => {
+                req.url_for(SCHEMAS_RESOURCE_NAME, [message_type_id.to_string()])
             }
-            ResourceLink::Schema(channel_id, schema_id) => req.url_for(
+            ResourceLink::Schema(message_type_id, schema_id) => req.url_for(
                 SCHEMA_RESOURCE_NAME,
-                [channel_id.to_string(), schema_id.to_string()],
+                [message_type_id.to_string(), schema_id.to_string()],
             ),
+
             ResourceLink::Routes(channel_id) => {
                 req.url_for(ROUTES_RESOURCE_NAME, [channel_id.to_string()])
             }

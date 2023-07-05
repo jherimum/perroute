@@ -41,11 +41,6 @@ impl From<Channel> for SingleResource<ChannelResource> {
             .with_data(value.clone().into())
             .with_link(Linkrelation::Self_, ResourceLink::Channel(*value.id()))
             .with_link(Linkrelation::Channels, ResourceLink::Channels)
-            .with_link(
-                Linkrelation::MessageTypes,
-                ResourceLink::MessageTypes(*value.id()),
-            )
-            .with_link(Linkrelation::Routes, ResourceLink::Routes(*value.id()))
     }
 }
 
