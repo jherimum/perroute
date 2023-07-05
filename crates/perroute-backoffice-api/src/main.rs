@@ -1,12 +1,13 @@
 use actix_web::{
     web::{self, Data},
-    App, HttpServer, Scope,
+    App, HttpServer, Route, Scope,
 };
 use anyhow::{Context, Result};
 use perroute_backoffice_api::{
     app::AppState,
     routes::{
         channel::{ChannelRouter, CHANNELS_RESOURCE_NAME, CHANNEL_RESOURCE_NAME},
+        health::HealthRouter,
         message_type::{
             MessageTypeRouter, MESSAGE_TYPES_RESOURCE_NAME, MESSAGE_TYPE_RESOURCE_NAME,
         },
@@ -107,13 +108,16 @@ fn routes(state: AppState) -> Scope {
             ),
         );
 
-    web::scope("/api")
+    web::scope("")
+        .service(web::resource("health").route(web::get().to(HealthRouter::health)))
         .service(
-            web::scope("/v1")
-                .service(channels)
-                .service(message_types)
-                .service(routes)
-                .service(templates),
+            web::scope("/api").service(
+                web::scope("/v1")
+                    .service(channels)
+                    .service(message_types)
+                    .service(routes)
+                    .service(templates),
+            ),
         )
         .app_data(Data::new(state))
 }

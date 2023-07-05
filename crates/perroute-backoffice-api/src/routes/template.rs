@@ -15,7 +15,6 @@ impl TemplateRouter {
     pub async fn query_templates(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
-        channel_path: Path<Id>,
     ) -> impl Responder {
         HttpResponse::Ok().finish()
     }
