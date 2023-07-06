@@ -3,7 +3,6 @@ use serde::{de::Visitor, Deserialize, Serialize};
 use sqlx::Type;
 use std::{fmt::Display, str::FromStr};
 
-//TODO: generate only for tests
 #[macro_export]
 macro_rules! code {
     ($code:expr) => {

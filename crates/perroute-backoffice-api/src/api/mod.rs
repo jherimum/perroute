@@ -13,6 +13,7 @@ use url::Url;
 use self::response::AsUrl;
 
 pub mod models;
+pub mod prelude;
 pub mod response;
 
 #[derive(Debug, PartialEq, Eq, Hash, Serialize, Clone, Copy, strum_macros::Display)]

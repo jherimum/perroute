@@ -1,36 +1,16 @@
-use crate::api::response::{
-    ApiResult, CollectionResourceModel, EmptyApiResult, NewApiResponse, SingleResourceModel,
-};
+use super::prelude::*;
 use crate::api::ResourceLink;
 use crate::{
     api::models::message_type::{
         CreateMessageTypeRequest, MessageTypeResource, UpdateMessageTypeRequest,
     },
-    app::AppState,
-    error::ApiError,
     extractors::actor::ActorExtractor,
 };
-use actix_web::web::Data;
-use actix_web::web::Json;
-use actix_web::web::Path;
-use perroute_commons::new_id;
-use perroute_commons::types::actor::Actor;
-use perroute_commons::types::id::Id;
-use perroute_cqrs::command_bus::commands::{
-    DeleteMessageTypeCommandBuilder, UpdateMessageTypeCommandBuilder,
-};
+use perroute_cqrs::command_bus::handlers::message_type::create_message_type::CreateMessageTypeCommandHandler;
 use perroute_cqrs::command_bus::handlers::message_type::delete_message_type::DeleteMessageTypeCommandHandler;
 use perroute_cqrs::command_bus::handlers::message_type::update_message_type::UpdateMessageTypeCommandHandler;
-use perroute_cqrs::command_bus::{
-    commands::CreateMessageTypeCommandBuilder,
-    handlers::message_type::create_message_type::CreateMessageTypeCommandHandler,
-};
-use perroute_cqrs::query_bus::bus::QueryBus;
 use perroute_cqrs::query_bus::handlers::message_type::find_message_type::FindMessageTypeQueryHandler;
 use perroute_cqrs::query_bus::handlers::message_type::query_message_types::QueryMessageTypesHandler;
-use perroute_cqrs::query_bus::queries::{
-    FindMessageTypeQueryBuilder, QueryMessageTypesQueryBuilder,
-};
 use perroute_storage::models::message_type::MessageType;
 use std::convert::identity;
 
