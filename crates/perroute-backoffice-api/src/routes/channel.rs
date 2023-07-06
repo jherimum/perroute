@@ -10,7 +10,7 @@ use crate::{
     error::ApiError,
     extractors::actor::ActorExtractor,
 };
-use actix_web::web::{Data, Json, Path};
+use actix_web::web;
 use anyhow::Context;
 use perroute_commons::{
     new_id,
@@ -19,7 +19,8 @@ use perroute_commons::{
 use perroute_cqrs::{
     command_bus::{
         commands::{
-            CreateChannelCommandBuilder, DeleteChannelCommandBuilder, UpdateChannelCommandBuilder,
+            CreateChannelCommand, CreateChannelCommandBuilder, DeleteChannelCommandBuilder,
+            UpdateChannelCommandBuilder,
         },
         handlers::channel::{
             create_channel::CreateChannelCommandHandler,
@@ -50,11 +51,11 @@ pub struct ChannelRouter;
 impl ChannelRouter {
     #[tracing::instrument(skip(state))]
     pub async fn create_channel(
-        state: Data<AppState>,
+        state: web::Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
-        Json(body): Json<CreateChannelRequest>,
+        web::Json(body): web::Json<CreateChannelRequest>,
     ) -> SingleResult {
-        let cmd = CreateChannelCommandBuilder::default()
+        let cmd: CreateChannelCommand = CreateChannelCommandBuilder::default()
             .channel_id(new_id!())
             .code(body.code().clone())
             .name(body.name().clone())
@@ -74,12 +75,11 @@ impl ChannelRouter {
 
     #[tracing::instrument(skip(state))]
     pub async fn find_channel(
-        state: Data<AppState>,
+        state: web::Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
-        path: Path<Id>,
+        path: web::Path<Id>,
     ) -> SingleResult {
-        let channel_id = path.into_inner();
-        Self::retrieve_channel(state.query_bus(), &actor, channel_id, {
+        Self::retrieve_channel(state.query_bus(), &actor, path.into_inner(), {
             NewApiResponse::ok
         })
         .await
@@ -87,7 +87,7 @@ impl ChannelRouter {
 
     #[tracing::instrument(skip(state))]
     pub async fn query_channels(
-        state: Data<AppState>,
+        state: web::Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
     ) -> CollectionResult {
         let query = QueryChannelsQueryBuilder::default().build().unwrap();
@@ -101,13 +101,13 @@ impl ChannelRouter {
 
     #[tracing::instrument(skip(state))]
     pub async fn update_channel(
-        state: Data<AppState>,
+        state: web::Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
-        path: Path<Id>,
-        Json(body): Json<UpdateChannelRequest>,
+        path: web::Path<Id>,
+        web::Json(body): web::Json<UpdateChannelRequest>,
     ) -> SingleResult {
-        let id = path.into_inner();
-        let channel = Self::retrieve_channel(state.query_bus(), &actor, id, identity).await?;
+        let channel =
+            Self::retrieve_channel(state.query_bus(), &actor, path.into_inner(), identity).await?;
 
         let cmd = UpdateChannelCommandBuilder::default()
             .channel_id(*channel.id())
@@ -126,13 +126,12 @@ impl ChannelRouter {
 
     #[tracing::instrument(skip(state))]
     pub async fn delete_channel(
-        state: Data<AppState>,
+        state: web::Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
-        path: Path<Id>,
+        path: web::Path<Id>,
     ) -> EmptyApiResult {
-        let channel_id = path.into_inner();
         let channel =
-            Self::retrieve_channel(state.query_bus(), &actor, channel_id, identity).await?;
+            Self::retrieve_channel(state.query_bus(), &actor, path.into_inner(), identity).await?;
 
         let cmd = DeleteChannelCommandBuilder::default()
             .channel_id(*channel.id())
