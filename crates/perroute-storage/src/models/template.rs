@@ -21,7 +21,7 @@ pub struct Template {
     subject: TemplateSnippet,
 
     #[setters(skip)]
-    channel_id: Id,
+    schema_id: Id,
 }
 
 impl Template {

@@ -36,6 +36,42 @@ CREATE TABLE command_logs(
 
 	CONSTRAINT command_logs_pk	PRIMARY KEY (id)
 
-)
+);
 
 
+create table message_types(
+    id          uuid            not null,
+    code        varchar(50)     not null,    
+    description varchar(500)    not null,
+    enabled     boolean         not null,
+    channel_id  uuid            not null,    
+    CONSTRAINT message_types_pk PRIMARY KEY (id),
+    CONSTRAINT message_types_code UNIQUE (code),
+    CONSTRAINT message_types_channel_fk FOREIGN KEY (channel_id) REFERENCES channels(id)
+);
+
+create table schemas(
+    id              uuid    NOT NULL,
+    schema          jsonb   NOT NULL,
+    version         integer NOT NULL,
+    published       boolean NOT NULL,
+    message_type_id uuid    NOT NULL,
+    channel_id      uuid    NOT NULL,
+
+    CONSTRAINT schemas_pk PRIMARY KEY (id),
+    CONSTRAINT schemas_message_type_fk FOREIGN KEY (message_type_id) REFERENCES message_types(id),
+    CONSTRAINT schemas_message_type_number UNIQUE (message_type_id, version),
+    CONSTRAINT schemas_channel_fk FOREIGN KEY (channel_id) REFERENCES channels(id)
+);
+
+create table templates(
+    id              uuid            not null,
+    code            varchar(255)    not null,
+    description     varchar(100)    null,
+    template        text            not null,
+    schema_id       uuid            not null,
+
+    constraint templates_pk primary key (id),
+    constraint templates_schema_fk foreign key (channel_id) references schemas(id),
+    constraint templates_code_channel_un unique (code, channel_id)
+);
