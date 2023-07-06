@@ -1,9 +1,11 @@
 use super::message_type::MessageTypeRouter;
 use crate::api::models::schema::UpdateSchemaRequest;
+use crate::api::response::{
+    ApiResult, CollectionResourceModel, EmptyApiResult, NewApiResponse, SingleResourceModel,
+};
 use crate::{
     api::{
         models::schema::{CreateSchemaRequest, SchemaResource},
-        response::{ApiResponse, ApiResult, EmptyResource},
         ResourceLink,
     },
     app::AppState,
@@ -39,6 +41,9 @@ use tap::TapFallible;
 pub const SCHEMAS_RESOURCE_NAME: &str = "schemas";
 pub const SCHEMA_RESOURCE_NAME: &str = "schema";
 
+pub type SingleResult = ApiResult<SingleResourceModel<SchemaResource>>;
+pub type CollectionResult = ApiResult<CollectionResourceModel<SchemaResource>>;
+
 pub struct SchemaRouter;
 
 impl SchemaRouter {
@@ -68,7 +73,7 @@ impl SchemaRouter {
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
         schemas_path: Path<Id>,
-    ) -> ApiResult<SchemaResource> {
+    ) -> CollectionResult {
         let message_type = MessageTypeRouter::retrieve_message_type(
             state.query_bus(),
             &actor,
@@ -86,7 +91,7 @@ impl SchemaRouter {
             .query_bus()
             .execute::<_, QueryMessageTypeSchemasQueryHandler, _>(&actor, &query)
             .await
-            .map(|schemas| ApiResponse::OkCollection((message_type, schemas).into()))
+            .map(|schemas| NewApiResponse::ok((message_type, schemas)))
             .map_err(ApiError::from)
     }
 
@@ -96,7 +101,7 @@ impl SchemaRouter {
         ActorExtractor(actor): ActorExtractor,
         schemas_path: Path<Id>,
         Json(body): Json<CreateSchemaRequest>,
-    ) -> ApiResult<SchemaResource> {
+    ) -> SingleResult {
         let message_type = MessageTypeRouter::retrieve_message_type(
             state.query_bus(),
             &actor,
@@ -121,9 +126,9 @@ impl SchemaRouter {
             .execute::<_, CreateSchemaCommandHandler, _>(&actor, &cmd)
             .await
             .map(|schema| {
-                ApiResponse::Created(
+                NewApiResponse::created(
                     ResourceLink::Schema(*message_type.id(), *schema.id()),
-                    schema.into(),
+                    schema,
                 )
             })?)
     }
@@ -134,7 +139,7 @@ impl SchemaRouter {
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
         Json(body): Json<UpdateSchemaRequest>,
-    ) -> ApiResult<SchemaResource> {
+    ) -> SingleResult {
         let schema = Self::retrieve_schema(
             state.query_bus(),
             &actor,
@@ -154,12 +159,7 @@ impl SchemaRouter {
             .command_bus()
             .execute::<_, UpdateSchemaCommandHandler, _>(&actor, &cmd)
             .await
-            .map(|schema| {
-                ApiResponse::Created(
-                    ResourceLink::Schema(*schema.channel_id(), *schema.id()),
-                    schema.into(),
-                )
-            })?)
+            .map(NewApiResponse::ok)?)
     }
 
     #[tracing::instrument(skip(state))]
@@ -167,7 +167,7 @@ impl SchemaRouter {
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
         schema_path: Path<(Id, Id)>,
-    ) -> ApiResult<EmptyResource> {
+    ) -> EmptyApiResult {
         let schema = Self::retrieve_schema(
             state.query_bus(),
             &actor,
@@ -186,7 +186,7 @@ impl SchemaRouter {
             .command_bus()
             .execute::<_, DeleteSchemaCommandHandler, _>(&actor, &cmd)
             .await
-            .map(|_| ApiResponse::OkEmpty(EmptyResource))?)
+            .map(|_| NewApiResponse::ok_empty())?)
     }
 
     #[tracing::instrument(skip(state))]
@@ -194,18 +194,13 @@ impl SchemaRouter {
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
         schema_path: Path<(Id, Id)>,
-    ) -> ApiResult<SchemaResource> {
+    ) -> SingleResult {
         Self::retrieve_schema(
             state.query_bus(),
             &actor,
             schema_path.0,
             schema_path.1,
-            |schema| {
-                ApiResponse::Created(
-                    ResourceLink::Schema(*schema.channel_id(), *schema.id()),
-                    schema.into(),
-                )
-            },
+            NewApiResponse::ok,
         )
         .await
     }

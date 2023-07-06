@@ -1,7 +1,8 @@
 use crate::api::{
-    response::{CollectionResource, Resource, SingleResource},
+    response::{CollectionResourceModel, Links, ResourceBuilder, SingleResourceModel},
     Linkrelation, ResourceLink,
 };
+use actix_web::HttpRequest;
 use derive_getters::Getters;
 use perroute_commons::types::code::Code;
 use perroute_storage::models::channel::Channel;
@@ -24,8 +25,6 @@ pub struct ChannelResource {
     name: String,
 }
 
-impl Resource for ChannelResource {}
-
 impl From<Channel> for ChannelResource {
     fn from(value: Channel) -> Self {
         ChannelResource {
@@ -35,19 +34,25 @@ impl From<Channel> for ChannelResource {
     }
 }
 
-impl From<Channel> for SingleResource<ChannelResource> {
-    fn from(value: Channel) -> Self {
-        SingleResource::default()
-            .with_data(value.clone().into())
-            .with_link(Linkrelation::Self_, ResourceLink::Channel(*value.id()))
-            .with_link(Linkrelation::Channels, ResourceLink::Channels)
+impl ResourceBuilder<SingleResourceModel<ChannelResource>> for Channel {
+    fn build(&self, req: &HttpRequest) -> SingleResourceModel<ChannelResource> {
+        SingleResourceModel {
+            data: Some(ChannelResource::from(self.clone())),
+            links: Links::default()
+                .add(Linkrelation::Self_, ResourceLink::Channel(*self.id()))
+                .add(Linkrelation::Channels, ResourceLink::Channels)
+                .as_url_map(req),
+        }
     }
 }
 
-impl From<Vec<Channel>> for CollectionResource<ChannelResource> {
-    fn from(value: Vec<Channel>) -> Self {
-        CollectionResource::default()
-            .with_link(Linkrelation::Self_, ResourceLink::Channels)
-            .with_resources(value.into_iter().map(Channel::into).collect())
+impl ResourceBuilder<CollectionResourceModel<ChannelResource>> for Vec<Channel> {
+    fn build(&self, req: &HttpRequest) -> CollectionResourceModel<ChannelResource> {
+        CollectionResourceModel {
+            data: self.iter().map(|c| c.build(req)).collect(),
+            links: Links::default()
+                .add(Linkrelation::Self_, ResourceLink::Channels)
+                .as_url_map(req),
+        }
     }
 }

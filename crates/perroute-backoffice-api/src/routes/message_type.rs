@@ -1,11 +1,10 @@
-use crate::api::response::{ApiResponse, EmptyResource};
+use crate::api::response::{
+    ApiResult, CollectionResourceModel, EmptyApiResult, NewApiResponse, SingleResourceModel,
+};
 use crate::api::ResourceLink;
 use crate::{
-    api::{
-        models::message_type::{
-            CreateMessageTypeRequest, MessageTypeResource, UpdateMessageTypeRequest,
-        },
-        response::ApiResult,
+    api::models::message_type::{
+        CreateMessageTypeRequest, MessageTypeResource, UpdateMessageTypeRequest,
     },
     app::AppState,
     error::ApiError,
@@ -38,6 +37,9 @@ use std::convert::identity;
 pub const MESSAGE_TYPES_RESOURCE_NAME: &str = "message_types";
 pub const MESSAGE_TYPE_RESOURCE_NAME: &str = "message_type";
 
+type CollectionResult = ApiResult<CollectionResourceModel<MessageTypeResource>>;
+type SingleResult = ApiResult<SingleResourceModel<MessageTypeResource>>;
+
 pub struct MessageTypeRouter;
 
 impl MessageTypeRouter {
@@ -63,13 +65,13 @@ impl MessageTypeRouter {
     pub async fn query_message_types(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
-    ) -> ApiResult<MessageTypeResource> {
+    ) -> CollectionResult {
         let query = QueryMessageTypesQueryBuilder::default().build().unwrap();
         let message_types = state
             .query_bus()
             .execute::<_, QueryMessageTypesHandler, _>(&actor, &query)
             .await?;
-        Ok(ApiResponse::OkCollection(message_types.into()))
+        Ok(NewApiResponse::ok(message_types))
     }
 
     #[tracing::instrument(skip(state))]
@@ -77,7 +79,7 @@ impl MessageTypeRouter {
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
         Json(body): Json<CreateMessageTypeRequest>,
-    ) -> ApiResult<MessageTypeResource> {
+    ) -> SingleResult {
         let cmd = CreateMessageTypeCommandBuilder::default()
             .message_type_id(new_id!())
             .channel_id(*body.channel_id())
@@ -91,10 +93,7 @@ impl MessageTypeRouter {
             .execute::<_, CreateMessageTypeCommandHandler, _>(&actor, &cmd)
             .await
             .map(|message_type| {
-                ApiResponse::Created(
-                    ResourceLink::MessageType(*message_type.id()),
-                    message_type.into(),
-                )
+                NewApiResponse::created(ResourceLink::MessageType(*message_type.id()), message_type)
             })?)
     }
 
@@ -104,7 +103,7 @@ impl MessageTypeRouter {
         ActorExtractor(actor): ActorExtractor,
         message_types_path: Path<Id>,
         Json(body): Json<UpdateMessageTypeRequest>,
-    ) -> ApiResult<MessageTypeResource> {
+    ) -> SingleResult {
         let message_type = Self::retrieve_message_type(
             state.query_bus(),
             &actor,
@@ -124,7 +123,7 @@ impl MessageTypeRouter {
             .command_bus()
             .execute::<_, UpdateMessageTypeCommandHandler, _>(&actor, &cmd)
             .await
-            .map(|message_type| ApiResponse::OkSingle(message_type.into()))?)
+            .map(NewApiResponse::ok)?)
     }
 
     #[tracing::instrument(skip(state))]
@@ -132,7 +131,7 @@ impl MessageTypeRouter {
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
         message_types_path: Path<Id>,
-    ) -> ApiResult<EmptyResource> {
+    ) -> EmptyApiResult {
         let message_type = Self::retrieve_message_type(
             state.query_bus(),
             &actor,
@@ -150,7 +149,7 @@ impl MessageTypeRouter {
             .command_bus()
             .execute::<_, DeleteMessageTypeCommandHandler, _>(&actor, &cmd)
             .await
-            .map(|_| ApiResponse::OkEmpty(EmptyResource))?)
+            .map(|_| NewApiResponse::ok_empty())?)
     }
 
     #[tracing::instrument(skip(state))]
@@ -158,12 +157,12 @@ impl MessageTypeRouter {
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
         path: Path<Id>,
-    ) -> ApiResult<MessageTypeResource> {
+    ) -> SingleResult {
         Self::retrieve_message_type(
             state.query_bus(),
             &actor,
             path.into_inner(),
-            |message_type| ApiResponse::OkSingle(message_type.into()),
+            NewApiResponse::ok,
         )
         .await
     }

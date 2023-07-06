@@ -1,5 +1,5 @@
 use crate::api::{
-    response::{CollectionResource, Resource, SingleResource},
+    response::{CollectionResourceModel, Links, ResourceBuilder, SingleResourceModel},
     Linkrelation, ResourceLink,
 };
 use derive_getters::Getters;
@@ -27,39 +27,43 @@ pub struct MessageTypeResource {
     enabled: bool,
 }
 
-impl Resource for MessageTypeResource {}
-
-impl From<MessageType> for SingleResource<MessageTypeResource> {
-    fn from(value: MessageType) -> Self {
-        SingleResource::default()
-            .with_data(value.clone().into())
-            .with_link(Linkrelation::Self_, ResourceLink::MessageType(*value.id()))
-            .with_link(Linkrelation::MessageTypes, ResourceLink::MessageTypes)
-            .with_link(
-                Linkrelation::Channel,
-                ResourceLink::Channel(*value.channel_id()),
-            )
-            .with_link(
-                Linkrelation::Schemas,
-                ResourceLink::Schemas(*value.channel_id()),
-            )
-    }
-}
-
-impl From<Vec<MessageType>> for CollectionResource<MessageTypeResource> {
-    fn from(value: Vec<MessageType>) -> Self {
-        CollectionResource::default()
-            .with_link(Linkrelation::Self_, ResourceLink::MessageTypes)
-            .with_resources(value.into_iter().map(MessageType::into).collect())
-    }
-}
-
 impl From<MessageType> for MessageTypeResource {
     fn from(value: MessageType) -> Self {
         MessageTypeResource {
             code: value.code().to_owned(),
             description: value.description().to_owned(),
             enabled: *value.enabled(),
+        }
+    }
+}
+
+impl ResourceBuilder<SingleResourceModel<MessageTypeResource>> for MessageType {
+    fn build(&self, req: &actix_web::HttpRequest) -> SingleResourceModel<MessageTypeResource> {
+        SingleResourceModel {
+            data: Some(self.clone().into()),
+            links: Links::default()
+                .add(Linkrelation::Self_, ResourceLink::MessageType(*self.id()))
+                .add(Linkrelation::MessageTypes, ResourceLink::MessageTypes)
+                .add(
+                    Linkrelation::Channel,
+                    ResourceLink::Channel(*self.channel_id()),
+                )
+                .add(
+                    Linkrelation::Schemas,
+                    ResourceLink::Schemas(*self.channel_id()),
+                )
+                .as_url_map(req),
+        }
+    }
+}
+
+impl ResourceBuilder<CollectionResourceModel<MessageTypeResource>> for Vec<MessageType> {
+    fn build(&self, req: &actix_web::HttpRequest) -> CollectionResourceModel<MessageTypeResource> {
+        CollectionResourceModel {
+            data: self.iter().map(|c| c.build(req)).collect(),
+            links: Links::default()
+                .add(Linkrelation::Self_, ResourceLink::MessageTypes)
+                .as_url_map(req),
         }
     }
 }

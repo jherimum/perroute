@@ -1,6 +1,6 @@
 use actix_web::{
     web::{self, Data},
-    App, HttpServer, Route, Scope,
+    App, HttpServer, Scope,
 };
 use anyhow::{Context, Result};
 use perroute_backoffice_api::{

@@ -1,7 +1,9 @@
 use crate::{
     api::{
         models::channel::{ChannelResource, CreateChannelRequest, UpdateChannelRequest},
-        response::{ApiResponse, ApiResult, EmptyResource},
+        response::{
+            ApiResult, CollectionResourceModel, EmptyApiResult, NewApiResponse, SingleResourceModel,
+        },
         ResourceLink,
     },
     app::AppState,
@@ -40,6 +42,9 @@ use tap::TapFallible;
 pub const CHANNEL_RESOURCE_NAME: &str = "channel";
 pub const CHANNELS_RESOURCE_NAME: &str = "channels";
 
+pub type SingleResult = ApiResult<SingleResourceModel<ChannelResource>>;
+pub type CollectionResult = ApiResult<CollectionResourceModel<ChannelResource>>;
+
 pub struct ChannelRouter;
 
 impl ChannelRouter {
@@ -48,7 +53,7 @@ impl ChannelRouter {
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
         Json(body): Json<CreateChannelRequest>,
-    ) -> ApiResult<ChannelResource> {
+    ) -> SingleResult {
         let cmd = CreateChannelCommandBuilder::default()
             .channel_id(new_id!())
             .code(body.code().clone())
@@ -63,7 +68,7 @@ impl ChannelRouter {
             .await
             .tap_err(|e| tracing::error!("Failed to create channel: {e}"))
             .map(|channel| {
-                ApiResponse::Created(ResourceLink::Channel(*channel.id()), channel.into())
+                NewApiResponse::created(ResourceLink::Channel(*channel.id()), channel)
             })?)
     }
 
@@ -72,10 +77,10 @@ impl ChannelRouter {
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
         path: Path<Id>,
-    ) -> ApiResult<ChannelResource> {
+    ) -> SingleResult {
         let channel_id = path.into_inner();
-        Self::retrieve_channel(state.query_bus(), &actor, channel_id, |channel| {
-            ApiResponse::OkSingle(channel.into())
+        Self::retrieve_channel(state.query_bus(), &actor, channel_id, {
+            NewApiResponse::ok
         })
         .await
     }
@@ -84,13 +89,13 @@ impl ChannelRouter {
     pub async fn query_channels(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
-    ) -> ApiResult<ChannelResource> {
+    ) -> CollectionResult {
         let query = QueryChannelsQueryBuilder::default().build().unwrap();
         state
             .query_bus()
             .execute::<_, QueryChannelsQueryHandler, _>(&actor, &query)
             .await
-            .map(|channels| ApiResponse::OkCollection(channels.into()))
+            .map(NewApiResponse::ok)
             .map_err(ApiError::from)
     }
 
@@ -100,7 +105,7 @@ impl ChannelRouter {
         ActorExtractor(actor): ActorExtractor,
         path: Path<Id>,
         Json(body): Json<UpdateChannelRequest>,
-    ) -> ApiResult<ChannelResource> {
+    ) -> SingleResult {
         let id = path.into_inner();
         let channel = Self::retrieve_channel(state.query_bus(), &actor, id, identity).await?;
 
@@ -116,7 +121,7 @@ impl ChannelRouter {
             .execute::<_, UpdateChannelCommandHandler, _>(&actor, &cmd)
             .await
             .tap_err(|e| tracing::error!("Failed to update channel: {e}"))
-            .map(|channel| ApiResponse::OkSingle(channel.into()))?)
+            .map(NewApiResponse::ok)?)
     }
 
     #[tracing::instrument(skip(state))]
@@ -124,7 +129,7 @@ impl ChannelRouter {
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
         path: Path<Id>,
-    ) -> ApiResult<EmptyResource> {
+    ) -> EmptyApiResult {
         let channel_id = path.into_inner();
         let channel =
             Self::retrieve_channel(state.query_bus(), &actor, channel_id, identity).await?;
@@ -140,7 +145,7 @@ impl ChannelRouter {
             .execute::<_, DeleteChannelCommandHandler, _>(&actor, &cmd)
             .await
             .tap_err(|e| tracing::error!("Failed to delete channel: {e}"))
-            .map(|_| ApiResponse::OkEmpty(EmptyResource))?)
+            .map(|_| NewApiResponse::ok_empty())?)
     }
 
     pub async fn retrieve_channel<R>(

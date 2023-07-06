@@ -1,7 +1,7 @@
 use crate::{
     api::{
         models::template::{CreateTemplateRequest, UpdateTemplateRequest},
-        response::{ApiResponse, ApiResult, EmptyResource},
+        response::{EmptyApiResult, NewApiResponse},
     },
     app::AppState,
     extractors::actor::ActorExtractor,
@@ -48,7 +48,7 @@ impl TemplateRouter {
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
         Json(body): Json<CreateTemplateRequest>,
-    ) -> ApiResult<EmptyResource> {
+    ) -> EmptyApiResult {
         let cmd = CreateTemplateCommandBuilder::default()
             .template_id(new_id!())
             .schema_id(body.schema_id)
@@ -63,7 +63,7 @@ impl TemplateRouter {
             .execute::<_, CreateTemplateCommandHandler, _>(&actor, &cmd)
             .await?;
 
-        Ok(ApiResponse::OkEmpty(EmptyResource))
+        Ok(NewApiResponse::ok_empty())
     }
 
     #[tracing::instrument]
@@ -72,7 +72,7 @@ impl TemplateRouter {
         ActorExtractor(actor): ActorExtractor,
         template_path: Path<Id>,
         Json(body): Json<UpdateTemplateRequest>,
-    ) -> ApiResult<EmptyResource> {
+    ) -> EmptyApiResult {
         let cmd = UpdateTemplateCommandBuilder::default()
             .template_id(template_path.into_inner())
             .html(body.html.map(Into::into))
@@ -85,7 +85,7 @@ impl TemplateRouter {
             .execute::<_, UpdateTemplateCommandHandler, _>(&actor, &cmd)
             .await?;
 
-        Ok(ApiResponse::OkEmpty(EmptyResource))
+        Ok(NewApiResponse::ok_empty())
     }
 
     #[tracing::instrument]
@@ -93,7 +93,7 @@ impl TemplateRouter {
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
         template_path: Path<Id>,
-    ) -> ApiResult<EmptyResource> {
+    ) -> EmptyApiResult {
         let cmd = DeleteTemplateCommandBuilder::default()
             .template_id(template_path.into_inner())
             .build()
@@ -103,7 +103,7 @@ impl TemplateRouter {
             .execute::<_, DeleteTemplateCommandHandler, _>(&actor, &cmd)
             .await?;
 
-        Ok(ApiResponse::OkEmpty(EmptyResource))
+        Ok(NewApiResponse::ok_empty())
     }
 
     #[tracing::instrument]
@@ -111,7 +111,7 @@ impl TemplateRouter {
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
         template_path: Path<(Id, Id)>,
-    ) -> impl Responder {
-        HttpResponse::Ok().finish()
+    ) -> EmptyApiResult {
+        Ok(NewApiResponse::ok_empty())
     }
 }

@@ -1,8 +1,8 @@
 use crate::api::{
-    response::{CollectionResource, Resource, SingleResource},
+    response::{CollectionResourceModel, Links, ResourceBuilder, SingleResourceModel},
     Linkrelation, ResourceLink,
 };
-use perroute_commons::types::{id::Id, json_schema::JsonSchema};
+use perroute_commons::types::json_schema::JsonSchema;
 use perroute_storage::models::{
     message_type::MessageType,
     schema::{Schema, Version},
@@ -27,8 +27,6 @@ pub struct SchemaResource {
     published: bool,
 }
 
-impl Resource for SchemaResource {}
-
 impl From<Schema> for SchemaResource {
     fn from(value: Schema) -> Self {
         SchemaResource {
@@ -39,25 +37,31 @@ impl From<Schema> for SchemaResource {
     }
 }
 
-impl From<Schema> for SingleResource<SchemaResource> {
-    fn from(value: Schema) -> Self {
-        SingleResource::default()
-            .with_data(value.clone().into())
-            .with_link(
-                Linkrelation::Self_,
-                ResourceLink::Schema(*value.channel_id(), *value.id()),
-            )
-            .with_link(
-                Linkrelation::Schemas,
-                ResourceLink::Schemas(*value.channel_id()),
-            )
+impl ResourceBuilder<SingleResourceModel<SchemaResource>> for Schema {
+    fn build(&self, req: &actix_web::HttpRequest) -> SingleResourceModel<SchemaResource> {
+        SingleResourceModel {
+            data: Some(self.clone().into()),
+            links: Links::default()
+                .add(
+                    Linkrelation::Self_,
+                    ResourceLink::Schema(*self.channel_id(), *self.id()),
+                )
+                .add(
+                    Linkrelation::Schemas,
+                    ResourceLink::Schemas(*self.channel_id()),
+                )
+                .as_url_map(req),
+        }
     }
 }
 
-impl From<(MessageType, Vec<Schema>)> for CollectionResource<SchemaResource> {
-    fn from(value: (MessageType, Vec<Schema>)) -> Self {
-        CollectionResource::default()
-            .with_link(Linkrelation::Self_, ResourceLink::Schemas(*value.0.id()))
-            .with_resources(value.1.into_iter().map(Schema::into).collect())
+impl ResourceBuilder<CollectionResourceModel<SchemaResource>> for (MessageType, Vec<Schema>) {
+    fn build(&self, req: &actix_web::HttpRequest) -> CollectionResourceModel<SchemaResource> {
+        CollectionResourceModel {
+            data: self.1.iter().map(|s| s.build(req)).collect(),
+            links: Links::default()
+                .add(Linkrelation::Self_, ResourceLink::Schemas(*self.0.id()))
+                .as_url_map(req),
+        }
     }
 }
