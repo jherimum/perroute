@@ -19,7 +19,7 @@ impl CommandHandler for UpdateSchemaCommandHandler {
         ctx: &mut CommandBusContext<'tx, 'a>,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
-        Schema::find_by_id(ctx.tx(), cmd.schema_id())
+        Schema::find_by_id(ctx.tx(), *cmd.schema_id())
             .await?
             .unwrap()
             .set_schema(JsonSchema::try_from(cmd.schema().clone()).unwrap())

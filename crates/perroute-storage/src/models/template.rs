@@ -1,7 +1,7 @@
 use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
-use perroute_commons::types::{code::Code, id::Id, template::TemplateSnippet};
+use perroute_commons::types::{id::Id, template::TemplateSnippet};
 use sqlx::{FromRow, PgExecutor};
 
 #[derive(Debug, FromRow, PartialEq, Eq, Clone, Getters, Setters, Builder)]
@@ -11,17 +11,16 @@ use sqlx::{FromRow, PgExecutor};
 pub struct Template {
     #[setters(skip)]
     id: Id,
-
-    #[setters(skip)]
-    code: Code,
-
-    description: String,
-    html: TemplateSnippet,
-    text: TemplateSnippet,
-    subject: TemplateSnippet,
-
+    name: String,
+    subject: Option<TemplateSnippet>,
+    html: Option<TemplateSnippet>,
+    text: Option<TemplateSnippet>,
     #[setters(skip)]
     schema_id: Id,
+    #[setters(skip)]
+    message_type_id: Id,
+    #[setters(skip)]
+    channel_id: Id,
 }
 
 impl Template {
@@ -37,7 +36,14 @@ impl Template {
         todo!("Implement Template::update")
     }
 
-    pub async fn delete<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Self, sqlx::Error> {
+    pub async fn delete<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<bool, sqlx::Error> {
+        todo!("Implement Template::delete")
+    }
+
+    pub async fn find_by_id<'e, E: PgExecutor<'e>>(
+        exec: E,
+        id: Id,
+    ) -> Result<Option<Self>, sqlx::Error> {
         todo!("Implement Template::delete")
     }
 }

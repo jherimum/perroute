@@ -130,9 +130,8 @@ command!(
     CreateTemplateCommand,
     CommandType::CreateTemplate,
     template_id: Id,
-    channel_id: Id,
-    code: Code,
-    description: String,
+    schema_id: Id,
+    name: String,
     html: Option<TemplateSnippet>,
     text: Option<TemplateSnippet>,
     subject: Option<TemplateSnippet>
@@ -142,7 +141,7 @@ command!(
     UpdateTemplateCommand,
     CommandType::UpdateTemplate,
     template_id: Id,
-    description: String,
+    name: String,
     html: Option<TemplateSnippet>,
     text: Option<TemplateSnippet>,
     subject: Option<TemplateSnippet>

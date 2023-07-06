@@ -1,9 +1,11 @@
-use async_trait::async_trait;
-use perroute_storage::models::template::Template;
-
 use crate::command_bus::{
     bus::CommandBusContext, commands::CreateTemplateCommand, error::CommandBusError,
     handlers::CommandHandler,
+};
+use async_trait::async_trait;
+use perroute_storage::models::{
+    schema::Schema,
+    template::{Template, TemplateBuilder},
 };
 
 #[derive(Debug)]
@@ -21,8 +23,25 @@ impl CommandHandler for CreateTemplateCommandHandler {
     async fn handle<'tx, 'a>(
         &self,
         ctx: &mut CommandBusContext<'tx, 'a>,
-        _: Self::Command,
+        cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
-        todo!()
+        let schema = Schema::find_by_id(ctx.pool(), *cmd.schema_id())
+            .await?
+            .unwrap();
+
+        TemplateBuilder::default()
+            .id(*cmd.template_id())
+            .name(cmd.name())
+            .subject(cmd.subject().clone())
+            .text(cmd.text().clone())
+            .html(cmd.html().clone())
+            .schema_id(*cmd.schema_id())
+            .message_type_id(*schema.message_type_id())
+            .channel_id(*schema.channel_id())
+            .build()
+            .unwrap()
+            .save(ctx.pool())
+            .await
+            .map_err(Into::into)
     }
 }

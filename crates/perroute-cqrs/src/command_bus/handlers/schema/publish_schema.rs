@@ -17,7 +17,7 @@ impl CommandHandler for PublishSchemaCommandHandler {
         ctx: &mut CommandBusContext<'tx, 'a>,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
-        Schema::find_by_id(ctx.tx(), cmd.schema_id())
+        Schema::find_by_id(ctx.tx(), *cmd.schema_id())
             .await
             .unwrap()
             .unwrap()

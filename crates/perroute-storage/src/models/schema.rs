@@ -102,7 +102,7 @@ impl Schema {
 
     pub async fn find_by_id<'e, E: PgExecutor<'e>>(
         exec: E,
-        id: &Id,
+        id: Id,
     ) -> Result<Option<Self>, sqlx::Error> {
         sqlx::query_as(
             r#"

@@ -16,7 +16,11 @@ use super::{
             create_schema::CreateSchemaCommandHandler, delete_schema::DeleteSchemaCommandHandler,
             update_schema::UpdateSchemaCommandHandler,
         },
-        template::create_template::CreateTemplateCommandHandler,
+        template::{
+            create_template::CreateTemplateCommandHandler,
+            delete_template::DeleteTemplateCommandHandler,
+            update_template::UpdateTemplateCommandHandler,
+        },
         CommandHandler,
     },
 };
@@ -120,6 +124,8 @@ impl CommandBus {
             .with_handler(DeleteSchemaCommandHandler)
             .with_handler(UpdateSchemaCommandHandler)
             .with_handler(CreateTemplateCommandHandler)
+            .with_handler(UpdateTemplateCommandHandler)
+            .with_handler(DeleteTemplateCommandHandler)
             .build()
     }
 

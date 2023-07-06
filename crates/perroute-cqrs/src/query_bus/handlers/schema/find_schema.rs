@@ -18,7 +18,7 @@ impl QueryHandler for FindSchemaQueryHandler {
         ctx: &QueryBusContext,
         query: &Self::Query,
     ) -> Result<Self::Output, QueryBusError> {
-        Schema::find_by_id(ctx.pool(), query.message_type_id())
+        Schema::find_by_id(ctx.pool(), *query.message_type_id())
             .await
             .map_err(Into::into)
     }

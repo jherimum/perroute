@@ -51,8 +51,8 @@ impl TemplateRouter {
     ) -> ApiResult<EmptyResource> {
         let cmd = CreateTemplateCommandBuilder::default()
             .template_id(new_id!())
-            .channel_id(body.channel_id)
-            .code(body.code)
+            .schema_id(body.schema_id)
+            .name(body.name)
             .html(body.html.map(Into::into))
             .text(body.text.map(Into::into))
             .subject(body.subject.map(Into::into))
