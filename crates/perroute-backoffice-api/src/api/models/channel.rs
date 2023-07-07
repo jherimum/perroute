@@ -4,7 +4,7 @@ use crate::api::{
 };
 use actix_web::HttpRequest;
 use derive_getters::Getters;
-use perroute_commons::types::code::Code;
+use perroute_commons::{prelude::Id, types::code::Code};
 use perroute_storage::models::channel::Channel;
 use serde::Serialize;
 
@@ -21,6 +21,7 @@ pub struct UpdateChannelRequest {
 
 #[derive(Clone, Serialize, Debug)]
 pub struct ChannelResource {
+    id: Id,
     code: Code,
     name: String,
 }
@@ -28,6 +29,7 @@ pub struct ChannelResource {
 impl From<Channel> for ChannelResource {
     fn from(value: Channel) -> Self {
         ChannelResource {
+            id: value.id().to_owned(),
             code: value.code().to_owned(),
             name: value.name().to_owned(),
         }
@@ -41,6 +43,11 @@ impl ResourceBuilder<SingleResourceModel<ChannelResource>> for Channel {
             links: Links::default()
                 .add(Linkrelation::Self_, ResourceLink::Channel(*self.id()))
                 .add(Linkrelation::Channels, ResourceLink::Channels)
+                .add(
+                    Linkrelation::MessageTypes,
+                    ResourceLink::MessageTypes(*self.id()),
+                )
+                .add(Linkrelation::Routes, ResourceLink::Routes(*self.id()))
                 .as_url_map(req),
         }
     }

@@ -86,7 +86,7 @@ impl SchemaRouter {
             .await
             .map(|schema| {
                 NewApiResponse::created(
-                    ResourceLink::Schema(*message_type.id(), *schema.id()),
+                    ResourceLink::Schema(*schema.channel_id(), *message_type.id(), *schema.id()),
                     schema,
                 )
             })?)

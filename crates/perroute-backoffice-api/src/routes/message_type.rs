@@ -43,7 +43,7 @@ impl MessageTypeRouter {
             .query_bus()
             .execute::<_, QueryMessageTypesHandler, _>(&actor, &query)
             .await?;
-        Ok(NewApiResponse::ok(message_types))
+        Ok(NewApiResponse::ok((channel, message_types)))
     }
 
     #[tracing::instrument(skip(state))]
@@ -69,7 +69,10 @@ impl MessageTypeRouter {
             .execute::<_, CreateMessageTypeCommandHandler, _>(&actor, &cmd)
             .await
             .map(|message_type| {
-                NewApiResponse::created(ResourceLink::MessageType(*message_type.id()), message_type)
+                NewApiResponse::created(
+                    ResourceLink::MessageType(*message_type.channel_id(), *message_type.id()),
+                    message_type,
+                )
             })?)
     }
 
@@ -142,7 +145,7 @@ impl MessageTypeRouter {
         map: impl FnOnce(MessageType) -> R,
     ) -> Result<R, ApiError> {
         let query = FindMessageTypeQueryBuilder::default()
-            .message_type_id(path.0)
+            .message_type_id(path.1)
             .channel_id(Some(path.0))
             .build()
             .unwrap();

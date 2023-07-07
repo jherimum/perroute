@@ -46,13 +46,15 @@ fn routes(state: AppState) -> Scope {
                 .route(web::post().to(SchemaRouter::create_schema)),
         )
         .service(
-            web::scope("/{schema_id}").service(
-                web::resource("")
-                    .name(SCHEMA_RESOURCE_NAME)
-                    .route(web::get().to(SchemaRouter::find_schema))
-                    .route(web::put().to(SchemaRouter::update_schema))
-                    .route(web::delete().to(SchemaRouter::delete_schema)),
-            ),
+            web::scope("/{schema_id}")
+                .service(
+                    web::resource("")
+                        .name(SCHEMA_RESOURCE_NAME)
+                        .route(web::get().to(SchemaRouter::find_schema))
+                        .route(web::put().to(SchemaRouter::update_schema))
+                        .route(web::delete().to(SchemaRouter::delete_schema)),
+                )
+                .service(templates),
         );
 
     let message_types = web::scope("/message_types")
@@ -99,26 +101,21 @@ fn routes(state: AppState) -> Scope {
                 .route(web::post().to(ChannelRouter::create_channel)),
         )
         .service(
-            web::scope("/{channel_id}").service(
-                web::resource("")
-                    .name(CHANNEL_RESOURCE_NAME)
-                    .route(web::get().to(ChannelRouter::find_channel))
-                    .route(web::put().to(ChannelRouter::update_channel))
-                    .route(web::delete().to(ChannelRouter::delete_channel)),
-            ),
+            web::scope("/{channel_id}")
+                .service(
+                    web::resource("")
+                        .name(CHANNEL_RESOURCE_NAME)
+                        .route(web::get().to(ChannelRouter::find_channel))
+                        .route(web::put().to(ChannelRouter::update_channel))
+                        .route(web::delete().to(ChannelRouter::delete_channel)),
+                )
+                .service(routes)
+                .service(message_types),
         );
 
     web::scope("")
         .service(web::resource("health").route(web::get().to(HealthRouter::health)))
-        .service(
-            web::scope("/api").service(
-                web::scope("/v1")
-                    .service(channels)
-                    .service(message_types)
-                    .service(routes)
-                    .service(templates),
-            ),
-        )
+        .service(web::scope("/api").service(web::scope("/v1").service(channels)))
         .app_data(Data::new(state))
 }
 
