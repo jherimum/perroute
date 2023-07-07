@@ -23,24 +23,6 @@ type SingleResult = ApiResult<SingleResourceModel<MessageTypeResource>>;
 pub struct MessageTypeRouter;
 
 impl MessageTypeRouter {
-    pub async fn retrieve_message_type<R>(
-        query_bus: &QueryBus,
-        actor: &Actor,
-        message_type_id: Id,
-        map: impl FnOnce(MessageType) -> R,
-    ) -> Result<R, ApiError> {
-        let query = FindMessageTypeQueryBuilder::default()
-            .message_type_id(message_type_id)
-            .build()
-            .unwrap();
-
-        query_bus
-            .execute::<_, FindMessageTypeQueryHandler, _>(actor, &query)
-            .await?
-            .ok_or_else(|| ApiError::MessageTypeNotFound(message_type_id))
-            .map(map)
-    }
-
     #[tracing::instrument(skip(state))]
     pub async fn query_message_types(
         state: Data<AppState>,
@@ -145,5 +127,23 @@ impl MessageTypeRouter {
             NewApiResponse::ok,
         )
         .await
+    }
+
+    pub async fn retrieve_message_type<R>(
+        query_bus: &QueryBus,
+        actor: &Actor,
+        message_type_id: Id,
+        map: impl FnOnce(MessageType) -> R,
+    ) -> Result<R, ApiError> {
+        let query = FindMessageTypeQueryBuilder::default()
+            .message_type_id(message_type_id)
+            .build()
+            .unwrap();
+
+        query_bus
+            .execute::<_, FindMessageTypeQueryHandler, _>(actor, &query)
+            .await?
+            .ok_or_else(|| ApiError::MessageTypeNotFound(message_type_id))
+            .map(map)
     }
 }
