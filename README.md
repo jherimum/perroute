@@ -59,3 +59,31 @@ Authorization error 401 Unauthorized
 Authentication error 403 Forbidden
 For methods not supported 405
 Generic server error 500
+
+
+
+
+
+
+
+/connections
+/connections:/id
+
+/channels
+/channels/:id
+
+/channels/:id/message_types
+/channels/:id/message_types/:id
+
+/channels/:id/message_types/:id/schemas
+/channels/:id/message_types/:id/schemas/:version
+
+/channels/:id/message_types/:id/schemas/:version/templates
+/channels/:id/message_types/:id/schemas/:version/templates/:id
+
+/channels/:id/routes
+/channels/:id/routes/id
+
+/messages
+
+/connectors
