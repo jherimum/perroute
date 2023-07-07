@@ -27,37 +27,16 @@ pub type CollectionResult = ApiResult<CollectionResourceModel<SchemaResource>>;
 pub struct SchemaRouter;
 
 impl SchemaRouter {
-    pub async fn retrieve_schema<R>(
-        query_bus: &QueryBus,
-        actor: &Actor,
-        message_type_id: Id,
-        schema_id: Id,
-        map: impl FnOnce(Schema) -> R,
-    ) -> Result<R, ApiError> {
-        let query = FindMessageTypeSchemaQueryBuilder::default()
-            .message_type_id(message_type_id)
-            .schema_id(schema_id)
-            .build()
-            .unwrap();
-
-        query_bus
-            .execute::<_, FindMessageTypeSchemaQueryHandler, _>(actor, &query)
-            .await
-            .unwrap()
-            .ok_or_else(|| ApiError::SchemaNotFound(schema_id))
-            .map(map)
-    }
-
     #[tracing::instrument(skip(state))]
     pub async fn query_schemas(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
-        schemas_path: Path<Id>,
+        path: Path<(Id, Id)>,
     ) -> CollectionResult {
         let message_type = MessageTypeRouter::retrieve_message_type(
             state.query_bus(),
             &actor,
-            schemas_path.into_inner(),
+            *path.as_ref(),
             identity,
         )
         .await?;
@@ -79,20 +58,20 @@ impl SchemaRouter {
     pub async fn create_schema(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
-        schemas_path: Path<Id>,
+        path: Path<(Id, Id)>,
         Json(body): Json<CreateSchemaRequest>,
     ) -> SingleResult {
         let message_type = MessageTypeRouter::retrieve_message_type(
             state.query_bus(),
             &actor,
-            *schemas_path.as_ref(),
+            *path.as_ref(),
             identity,
         )
         .await?;
 
         let cmd = CreateSchemaCommandBuilder::default()
             .schema_id(new_id!())
-            .message_type_id(*schemas_path.as_ref())
+            .message_type_id(*message_type.id())
             .schema(
                 JsonSchema::try_from(body.schema)
                     .map_err(ApiError::from)
@@ -115,19 +94,13 @@ impl SchemaRouter {
 
     #[tracing::instrument(skip(state))]
     pub async fn update_schema(
-        schema_path: Path<(Id, Id)>,
+        path: Path<(Id, Id, Id)>,
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
         Json(body): Json<UpdateSchemaRequest>,
     ) -> SingleResult {
-        let schema = Self::retrieve_schema(
-            state.query_bus(),
-            &actor,
-            schema_path.0,
-            schema_path.1,
-            identity,
-        )
-        .await?;
+        let schema =
+            Self::retrieve_schema(state.query_bus(), &actor, *path.as_ref(), identity).await?;
 
         let cmd = UpdateSchemaCommandBuilder::default()
             .schema_id(*schema.id())
@@ -146,16 +119,10 @@ impl SchemaRouter {
     pub async fn delete_schema(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
-        schema_path: Path<(Id, Id)>,
+        path: Path<(Id, Id, Id)>,
     ) -> EmptyApiResult {
-        let schema = Self::retrieve_schema(
-            state.query_bus(),
-            &actor,
-            schema_path.0,
-            schema_path.1,
-            identity,
-        )
-        .await?;
+        let schema =
+            Self::retrieve_schema(state.query_bus(), &actor, *path.as_ref(), identity).await?;
 
         let cmd = DeleteSchemaCommandBuilder::default()
             .schema_id(*schema.id())
@@ -173,15 +140,35 @@ impl SchemaRouter {
     pub async fn find_schema(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
-        schema_path: Path<(Id, Id)>,
+        path: Path<(Id, Id, Id)>,
     ) -> SingleResult {
         Self::retrieve_schema(
             state.query_bus(),
             &actor,
-            schema_path.0,
-            schema_path.1,
+            *path.as_ref(),
             NewApiResponse::ok,
         )
         .await
+    }
+
+    pub async fn retrieve_schema<R>(
+        query_bus: &QueryBus,
+        actor: &Actor,
+        path: (Id, Id, Id),
+        map: impl FnOnce(Schema) -> R,
+    ) -> Result<R, ApiError> {
+        let query = FindMessageTypeSchemaQueryBuilder::default()
+            .schema_id(path.2)
+            .message_type_id(Some(path.1))
+            .channel_id(Some(path.0))
+            .build()
+            .unwrap();
+
+        query_bus
+            .execute::<_, FindMessageTypeSchemaQueryHandler, _>(actor, &query)
+            .await
+            .unwrap()
+            .ok_or_else(|| ApiError::SchemaNotFound(path.1))
+            .map(map)
     }
 }

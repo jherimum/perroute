@@ -1,3 +1,4 @@
+use super::channel::ChannelRouter;
 use super::prelude::*;
 use crate::api::ResourceLink;
 use crate::{
@@ -27,8 +28,17 @@ impl MessageTypeRouter {
     pub async fn query_message_types(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
+        path: Path<Id>,
     ) -> CollectionResult {
-        let query = QueryMessageTypesQueryBuilder::default().build().unwrap();
+        let channel =
+            ChannelRouter::retrieve_channel(state.query_bus(), &actor, *path.as_ref(), identity)
+                .await?;
+
+        let query = QueryMessageTypesQueryBuilder::default()
+            .channel_id(Some(*channel.id()))
+            .build()
+            .unwrap();
+
         let message_types = state
             .query_bus()
             .execute::<_, QueryMessageTypesHandler, _>(&actor, &query)
@@ -41,10 +51,14 @@ impl MessageTypeRouter {
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
         Json(body): Json<CreateMessageTypeRequest>,
+        path: Path<Id>,
     ) -> SingleResult {
+        let channel =
+            ChannelRouter::retrieve_channel(state.query_bus(), &actor, *path.as_ref(), identity)
+                .await?;
+
         let cmd = CreateMessageTypeCommandBuilder::default()
-            .message_type_id(new_id!())
-            .channel_id(*body.channel_id())
+            .channel_id(*channel.id())
             .code(body.code().clone())
             .description(body.description().to_owned())
             .build()
@@ -63,16 +77,12 @@ impl MessageTypeRouter {
     pub async fn update_message_type(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
-        message_types_path: Path<Id>,
+        path: Path<(Id, Id)>,
         Json(body): Json<UpdateMessageTypeRequest>,
     ) -> SingleResult {
-        let message_type = Self::retrieve_message_type(
-            state.query_bus(),
-            &actor,
-            message_types_path.into_inner(),
-            identity,
-        )
-        .await?;
+        let message_type =
+            Self::retrieve_message_type(state.query_bus(), &actor, *path.as_ref(), identity)
+                .await?;
 
         let cmd = UpdateMessageTypeCommandBuilder::default()
             .message_type_id(*message_type.id())
@@ -92,15 +102,11 @@ impl MessageTypeRouter {
     pub async fn delete_message_type(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
-        message_types_path: Path<Id>,
+        path: Path<(Id, Id)>,
     ) -> EmptyApiResult {
-        let message_type = Self::retrieve_message_type(
-            state.query_bus(),
-            &actor,
-            message_types_path.into_inner(),
-            identity,
-        )
-        .await?;
+        let message_type =
+            Self::retrieve_message_type(state.query_bus(), &actor, *path.as_ref(), identity)
+                .await?;
 
         let cmd = DeleteMessageTypeCommandBuilder::default()
             .message_type_id(*message_type.id())
@@ -118,12 +124,12 @@ impl MessageTypeRouter {
     pub async fn find_message_type(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
-        path: Path<Id>,
+        path: Path<(Id, Id)>,
     ) -> SingleResult {
         Self::retrieve_message_type(
             state.query_bus(),
             &actor,
-            path.into_inner(),
+            *path.as_ref(),
             NewApiResponse::ok,
         )
         .await
@@ -132,18 +138,19 @@ impl MessageTypeRouter {
     pub async fn retrieve_message_type<R>(
         query_bus: &QueryBus,
         actor: &Actor,
-        message_type_id: Id,
+        path: (Id, Id),
         map: impl FnOnce(MessageType) -> R,
     ) -> Result<R, ApiError> {
         let query = FindMessageTypeQueryBuilder::default()
-            .message_type_id(message_type_id)
+            .message_type_id(path.0)
+            .channel_id(Some(path.0))
             .build()
             .unwrap();
 
         query_bus
             .execute::<_, FindMessageTypeQueryHandler, _>(actor, &query)
             .await?
-            .ok_or_else(|| ApiError::MessageTypeNotFound(message_type_id))
+            .ok_or_else(|| ApiError::MessageTypeNotFound(path.0))
             .map(map)
     }
 }

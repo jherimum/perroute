@@ -43,10 +43,15 @@ query!(QueryChannelsQuery, QueryType::QueryChannels);
 query!(
     FindMessageTypeQuery,
     QueryType::FindMessageTypeQuery,
-    message_type_id: Id
+    message_type_id: Id,
+    channel_id: Option<Id>
 );
 
-query!(QueryMessageTypesQuery, QueryType::QueryMessageTypes);
+query!(
+    QueryMessageTypesQuery,
+    QueryType::QueryMessageTypes,
+    channel_id: Option<Id>
+);
 
 query!(
     QueryMessageTypeSchemasQuery,
@@ -65,8 +70,9 @@ query!(
 query!(
     FindMessageTypeSchemaQuery,
     QueryType::FindChannelMessageTypeSchema,
-    message_type_id: Id,
-    schema_id: Id
+    schema_id: Id,
+    message_type_id: Option<Id>,
+    channel_id: Option<Id>
 );
 
 query!(QueryTemplatesQuery, QueryType::QueryTemplates);

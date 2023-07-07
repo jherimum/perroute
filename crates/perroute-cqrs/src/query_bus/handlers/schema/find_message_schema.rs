@@ -18,8 +18,9 @@ impl QueryHandler for FindMessageTypeSchemaQueryHandler {
         ctx: &QueryBusContext,
         query: &Self::Query,
     ) -> Result<Self::Output, QueryBusError> {
-        Schema::find_message_type_id_and_id(ctx.pool(), query.message_type_id(), query.schema_id())
-            .await
-            .map_err(Into::into)
+        // Schema::find_message_type_id_and_id(ctx.pool(), query.message_type_id(), query.schema_id())
+        //     .await
+        //     .map_err(Into::into)
+        todo!()
     }
 }

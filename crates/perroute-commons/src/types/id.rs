@@ -13,7 +13,7 @@ macro_rules! new_id {
 #[error("Invalid id {0}")]
 pub struct ParseError(#[from] uuid::Error);
 
-#[derive(Debug, PartialEq, Eq, Clone, Type, Copy, Deserialize, Serialize, Default)]
+#[derive(Debug, PartialEq, Eq, Clone, Type, Copy, Deserialize, Serialize)]
 #[sqlx(transparent)]
 #[serde(transparent)]
 pub struct Id(pub uuid::Uuid);
@@ -21,6 +21,12 @@ pub struct Id(pub uuid::Uuid);
 impl Id {
     pub fn new() -> Self {
         Self(uuid::Uuid::new_v4())
+    }
+}
+
+impl Default for Id {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

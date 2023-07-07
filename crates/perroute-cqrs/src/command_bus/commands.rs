@@ -8,7 +8,7 @@ use serde::Serialize;
 use std::fmt::Debug;
 use strum_macros::Display;
 
-use crate::command;
+use crate::{command, impl_command};
 
 pub trait Command: Debug + Serialize + Clone + PartialEq + Eq + Send + Sync {
     fn ty(&self) -> CommandType;
@@ -74,14 +74,28 @@ command!(
     channel_id: Id,
     name: String
 );
-command!(
-    CreateMessageTypeCommand,
-    CommandType::CreateMessageType,
+
+#[derive(
+    Debug, serde::Serialize, Clone, PartialEq, Eq, derive_builder::Builder, derive_getters::Getters,
+)]
+pub struct CreateMessageTypeCommand {
+    #[builder(default)]
     message_type_id: Id,
     code: Code,
     description: String,
-    channel_id: Id
-);
+    channel_id: Id,
+}
+
+impl_command!(CreateMessageTypeCommand, CommandType::CreateMessageType);
+
+// command!(
+//     CreateMessageTypeCommand,
+//     CommandType::CreateMessageType,
+//     message_type_id: Id,
+//     code: Code,
+//     description: String,
+//     channel_id: Id
+// );
 
 command!(
     UpdateMessageTypeCommand,
