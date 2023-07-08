@@ -12,7 +12,7 @@ pub trait Query: Debug + Serialize + Clone + PartialEq + Eq + Send + Sync {
 #[derive(Debug, Clone, PartialEq, Eq, Display)]
 pub enum QueryType {
     FindChannelByCode,
-    FindChannelById,
+    FindChannelId,
     QueryChannels,
 
     FindMessageTypeQuery,
@@ -32,11 +32,7 @@ query!(
     QueryType::FindChannelByCode,
     channel_code: Code
 );
-query!(
-    FindChannelByIdQuery,
-    QueryType::FindChannelById,
-    channel_id: Id
-);
+query!(FindChannelQuery, QueryType::FindChannelId, channel_id: Id);
 
 query!(QueryChannelsQuery, QueryType::QueryChannels);
 

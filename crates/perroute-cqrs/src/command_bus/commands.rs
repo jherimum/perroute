@@ -1,4 +1,6 @@
 use chrono::Utc;
+use derive_builder::Builder;
+use derive_getters::Getters;
 use perroute_commons::{
     new_id,
     types::{actor::Actor, code::Code, id::Id, json_schema::JsonSchema, template::TemplateSnippet},
@@ -56,13 +58,16 @@ impl From<CommandType> for String {
     }
 }
 
-command!(
-    CreateChannelCommand,
-    CommandType::CreateChannel,
+#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
+pub struct CreateChannelCommand {
+    #[builder(default)]
     channel_id: Id,
     code: Code,
-    name: String
-);
+    name: String,
+}
+
+impl_command!(CreateChannelCommand, CommandType::CreateChannel);
+
 command!(
     DeleteChannelCommand,
     CommandType::DeleteChannel,
@@ -75,9 +80,7 @@ command!(
     name: String
 );
 
-#[derive(
-    Debug, serde::Serialize, Clone, PartialEq, Eq, derive_builder::Builder, derive_getters::Getters,
-)]
+#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
 pub struct CreateMessageTypeCommand {
     #[builder(default)]
     message_type_id: Id,

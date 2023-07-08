@@ -3,11 +3,34 @@ use perroute_commons::{
     rest::RestError,
     types::{id::Id, json_schema::JsonSchemaError},
 };
-use perroute_cqrs::{command_bus::error::CommandBusError, query_bus::error::QueryBusError};
+use perroute_cqrs::{
+    command_bus::error::CommandBusError,
+    prelude::{
+        CreateChannelCommandBuilderError, DeleteChannelCommandBuilderError,
+        FindChannelQueryBuilderError, QueryChannelsQueryBuilderError,
+        UpdateChannelCommandBuilderError,
+    },
+    query_bus::error::QueryBusError,
+};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum ApiError {
+    #[error(transparent)]
+    FindChannelQueryBuilder(#[from] FindChannelQueryBuilderError),
+
+    #[error(transparent)]
+    DeleteChannelCommandBuilder(#[from] DeleteChannelCommandBuilderError),
+
+    #[error(transparent)]
+    UpdateChannelCommandBuilder(#[from] UpdateChannelCommandBuilderError),
+
+    #[error(transparent)]
+    QueryChannelsQueryBuilder(#[from] QueryChannelsQueryBuilderError),
+
+    #[error(transparent)]
+    CreateChannelCommandBuilder(#[from] CreateChannelCommandBuilderError),
+
     #[error(transparent)]
     JsonChema(#[from] JsonSchemaError),
 

@@ -1,7 +1,7 @@
 use crate::query_bus::{
     bus::{QueryBusContext, QueryHandler},
     error::QueryBusError,
-    queries::FindChannelByIdQuery,
+    queries::FindChannelQuery,
 };
 use async_trait::async_trait;
 use perroute_storage::models::channel::Channel;
@@ -10,7 +10,7 @@ pub struct FindChannelByIdHandler;
 
 #[async_trait]
 impl QueryHandler for FindChannelByIdHandler {
-    type Query = FindChannelByIdQuery;
+    type Query = FindChannelQuery;
     type Output = Option<Channel>;
 
     #[tracing::instrument(name = "find_channel_by_id_handler", skip(self, ctx))]

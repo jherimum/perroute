@@ -6,8 +6,6 @@ use crate::{
     },
     extractors::actor::ActorExtractor,
 };
-
-use anyhow::Context;
 use perroute_cqrs::{
     command_bus::handlers::channel::{
         create_channel::CreateChannelCommandHandler, delete_channel::DeleteChannelCommandHandler,
@@ -36,12 +34,10 @@ impl ChannelRouter {
         Json(body): Json<CreateChannelRequest>,
     ) -> SingleResult {
         let cmd: CreateChannelCommand = CreateChannelCommandBuilder::default()
-            .channel_id(new_id!())
             .code(body.code().clone())
             .name(body.name().clone())
             .build()
-            .tap_err(|e| tracing::error!("Failed to build CreateChannelCommand: {}", e))
-            .with_context(|| "Failed to build CreateChannelCommand")?;
+            .tap_err(|e| tracing::error!("Failed to build CreateChannelCommand: {e}"))?;
 
         Ok(state
             .command_bus()
@@ -70,11 +66,14 @@ impl ChannelRouter {
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
     ) -> CollectionResult {
-        let query = QueryChannelsQueryBuilder::default().build().unwrap();
+        let query = QueryChannelsQueryBuilder::default()
+            .build()
+            .tap_err(|e| tracing::error!("Failed to build QueryChannelsQuery: {e}"))?;
         state
             .query_bus()
             .execute::<_, QueryChannelsQueryHandler, _>(&actor, &query)
             .await
+            .tap_err(|e| tracing::error!("Failed to query channels: {e}"))
             .map(NewApiResponse::ok)
             .map_err(ApiError::from)
     }
@@ -93,8 +92,7 @@ impl ChannelRouter {
             .channel_id(*channel.id())
             .name(body.name)
             .build()
-            .tap_err(|e| tracing::error!("Failed to build UpdateChannelCommand: {}", e))
-            .with_context(|| "Failed to build UpdateChannelCommand")?;
+            .tap_err(|e| tracing::error!("Failed to build UpdateChannelCommand: {e}"))?;
 
         Ok(state
             .command_bus()
@@ -116,8 +114,7 @@ impl ChannelRouter {
         let cmd = DeleteChannelCommandBuilder::default()
             .channel_id(*channel.id())
             .build()
-            .tap_err(|e| tracing::error!("Failed to build DeleteChannelCommand: {}", e))
-            .with_context(|| "Failed to build DeleteChannelCommand")?;
+            .tap_err(|e| tracing::error!("Failed to build DeleteChannelCommand: {e}"))?;
 
         Ok(state
             .command_bus()
@@ -133,11 +130,10 @@ impl ChannelRouter {
         id: Id,
         map: impl FnOnce(Channel) -> R,
     ) -> Result<R, ApiError> {
-        let query = FindChannelByIdQueryBuilder::default()
+        let query = FindChannelQueryBuilder::default()
             .channel_id(id)
             .build()
-            .tap_err(|e| tracing::error!("Failed to build FindChannelByCodeQuery: {}", e))
-            .with_context(|| "Failed to build FindChannelByCodeQuery")?;
+            .tap_err(|e| tracing::error!("Failed to build FindChannelByCodeQuery: {e}"))?;
 
         query_bus
             .execute::<_, FindChannelByIdHandler, _>(actor, &query)
