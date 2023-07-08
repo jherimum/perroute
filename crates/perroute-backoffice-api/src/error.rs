@@ -67,9 +67,6 @@ pub enum ApiError {
     QueryBus(#[from] QueryBusError),
 
     #[error(transparent)]
-    Rest(#[from] RestError),
-
-    #[error(transparent)]
     Unexpected(#[from] anyhow::Error),
 
     #[error("{0}")]
@@ -79,7 +76,7 @@ pub enum ApiError {
 impl From<&ApiError> for RestError {
     fn from(value: &ApiError) -> Self {
         match value {
-            ApiError::Rest(e) => e.clone(),
+            ApiError::ChannelNotFound(_) => RestError::NotFound(value.to_string()),
             ApiError::CommandBus(error) => match error {
                 CommandBusError::ExpectedError(e) => RestError::UnprocessableEntity(e.to_string()),
                 _ => RestError::InternalServer,
