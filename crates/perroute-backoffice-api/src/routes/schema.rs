@@ -48,7 +48,7 @@ impl SchemaRouter {
             .query_bus()
             .execute::<_, QueryMessageTypeSchemasQueryHandler, _>(&actor, &query)
             .await
-            .map(|schemas| NewApiResponse::ok((message_type, schemas)))
+            .map(|schemas| ApiResponse::ok((message_type, schemas)))
             .map_err(ApiError::from)
     }
 
@@ -83,7 +83,7 @@ impl SchemaRouter {
             .execute::<_, CreateSchemaCommandHandler, _>(&actor, &cmd)
             .await
             .map(|schema| {
-                NewApiResponse::created(
+                ApiResponse::created(
                     ResourceLink::Schema(*schema.channel_id(), *message_type.id(), *schema.id()),
                     schema,
                 )
@@ -110,7 +110,7 @@ impl SchemaRouter {
             .command_bus()
             .execute::<_, UpdateSchemaCommandHandler, _>(&actor, &cmd)
             .await
-            .map(NewApiResponse::ok)?)
+            .map(ApiResponse::ok)?)
     }
 
     #[tracing::instrument(skip(state))]
@@ -131,7 +131,7 @@ impl SchemaRouter {
             .command_bus()
             .execute::<_, DeleteSchemaCommandHandler, _>(&actor, &cmd)
             .await
-            .map(|_| NewApiResponse::ok_empty())?)
+            .map(|_| ApiResponse::ok_empty())?)
     }
 
     #[tracing::instrument(skip(state))]
@@ -140,13 +140,7 @@ impl SchemaRouter {
         ActorExtractor(actor): ActorExtractor,
         path: Path<(Id, Id, Id)>,
     ) -> SingleResult {
-        Self::retrieve_schema(
-            state.query_bus(),
-            &actor,
-            *path.as_ref(),
-            NewApiResponse::ok,
-        )
-        .await
+        Self::retrieve_schema(state.query_bus(), &actor, *path.as_ref(), ApiResponse::ok).await
     }
 
     pub async fn retrieve_schema<R>(

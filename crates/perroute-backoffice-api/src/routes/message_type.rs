@@ -45,7 +45,7 @@ impl MessageTypeRouter {
             .await
             .tap_err(|e| tracing::error!("Failed to query message types: {e}"))?;
 
-        Ok(NewApiResponse::ok((channel, message_types)))
+        Ok(ApiResponse::ok((channel, message_types)))
     }
 
     #[tracing::instrument(skip(state))]
@@ -72,7 +72,7 @@ impl MessageTypeRouter {
             .await
             .tap_err(|e| tracing::error!("Failed to create message type: {e}"))
             .map(|message_type| {
-                NewApiResponse::created(
+                ApiResponse::created(
                     ResourceLink::MessageType(*message_type.channel_id(), *message_type.id()),
                     message_type,
                 )
@@ -102,7 +102,7 @@ impl MessageTypeRouter {
             .execute::<_, UpdateMessageTypeCommandHandler, _>(&actor, &cmd)
             .await
             .tap_err(|e| tracing::error!("Failed to update message type: {e}"))
-            .map(NewApiResponse::ok)?)
+            .map(ApiResponse::ok)?)
     }
 
     #[tracing::instrument(skip(state))]
@@ -125,7 +125,7 @@ impl MessageTypeRouter {
             .execute::<_, DeleteMessageTypeCommandHandler, _>(&actor, &cmd)
             .await
             .tap_err(|e| tracing::error!("Failed to delete message type: {e}"))
-            .map(|_| NewApiResponse::ok_empty())?)
+            .map(|_| ApiResponse::ok_empty())?)
     }
 
     #[tracing::instrument(skip(state))]
@@ -134,13 +134,8 @@ impl MessageTypeRouter {
         ActorExtractor(actor): ActorExtractor,
         path: Path<(Id, Id)>,
     ) -> SingleResult {
-        Self::retrieve_message_type(
-            state.query_bus(),
-            &actor,
-            *path.as_ref(),
-            NewApiResponse::ok,
-        )
-        .await
+        Self::retrieve_message_type(state.query_bus(), &actor, *path.as_ref(), ApiResponse::ok)
+            .await
     }
 
     pub async fn retrieve_message_type<R>(

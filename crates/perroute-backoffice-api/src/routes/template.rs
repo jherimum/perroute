@@ -3,7 +3,7 @@ use std::convert::identity;
 use crate::{
     api::{
         models::template::{CreateTemplateRequest, UpdateTemplateRequest},
-        response::{EmptyApiResult, NewApiResponse},
+        response::{ApiResponse, EmptyApiResult},
     },
     app::AppState,
     error::ApiError,
@@ -78,7 +78,7 @@ impl TemplateRouter {
             .execute::<_, CreateTemplateCommandHandler, _>(&actor, &cmd)
             .await?;
 
-        Ok(NewApiResponse::ok_empty())
+        Ok(ApiResponse::ok_empty())
     }
 
     #[tracing::instrument]
@@ -104,7 +104,7 @@ impl TemplateRouter {
             .execute::<_, UpdateTemplateCommandHandler, _>(&actor, &cmd)
             .await?;
 
-        Ok(NewApiResponse::ok_empty())
+        Ok(ApiResponse::ok_empty())
     }
 
     #[tracing::instrument]
@@ -125,7 +125,7 @@ impl TemplateRouter {
             .execute::<_, DeleteTemplateCommandHandler, _>(&actor, &cmd)
             .await?;
 
-        Ok(NewApiResponse::ok_empty())
+        Ok(ApiResponse::ok_empty())
     }
 
     #[tracing::instrument]
@@ -138,7 +138,7 @@ impl TemplateRouter {
             .await
             .unwrap();
 
-        Ok(NewApiResponse::ok_empty())
+        Ok(ApiResponse::ok_empty())
     }
 
     pub async fn retrieve_template<R>(

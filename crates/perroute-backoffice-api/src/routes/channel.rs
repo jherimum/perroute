@@ -42,9 +42,7 @@ impl ChannelRouter {
             .execute::<_, CreateChannelCommandHandler, _>(&actor, &cmd)
             .await
             .tap_err(|e| tracing::error!("Failed to create channel: {e}"))
-            .map(|channel| {
-                NewApiResponse::created(ResourceLink::Channel(*channel.id()), channel)
-            })?)
+            .map(|channel| ApiResponse::created(ResourceLink::Channel(*channel.id()), channel))?)
     }
 
     #[tracing::instrument(skip(state))]
@@ -54,7 +52,7 @@ impl ChannelRouter {
         path: Path<Id>,
     ) -> SingleResult {
         Self::retrieve_channel(state.query_bus(), &actor, path.into_inner(), {
-            NewApiResponse::ok
+            ApiResponse::ok
         })
         .await
     }
@@ -72,7 +70,7 @@ impl ChannelRouter {
             .execute::<_, QueryChannelsQueryHandler, _>(&actor, &query)
             .await
             .tap_err(|e| tracing::error!("Failed to query channels: {e}"))
-            .map(NewApiResponse::ok)
+            .map(ApiResponse::ok)
             .map_err(ApiError::from)
     }
 
@@ -97,7 +95,7 @@ impl ChannelRouter {
             .execute::<_, UpdateChannelCommandHandler, _>(&actor, &cmd)
             .await
             .tap_err(|e| tracing::error!("Failed to update channel: {e}"))
-            .map(NewApiResponse::ok)?)
+            .map(ApiResponse::ok)?)
     }
 
     #[tracing::instrument(skip(state))]
@@ -119,7 +117,7 @@ impl ChannelRouter {
             .execute::<_, DeleteChannelCommandHandler, _>(&actor, &cmd)
             .await
             .tap_err(|e| tracing::error!("Failed to delete channel: {e}"))
-            .map(|_| NewApiResponse::ok_empty())?)
+            .map(|_| ApiResponse::ok_empty())?)
     }
 
     pub async fn retrieve_channel<R>(
