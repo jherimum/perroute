@@ -1,3 +1,4 @@
+use self::response::AsUrl;
 use crate::routes::{
     channel::{CHANNELS_RESOURCE_NAME, CHANNEL_RESOURCE_NAME},
     message_type::{MESSAGE_TYPES_RESOURCE_NAME, MESSAGE_TYPE_RESOURCE_NAME},
@@ -10,8 +11,6 @@ use perroute_commons::types::id::Id;
 use serde::Serialize;
 use tap::TapFallible;
 use url::Url;
-
-use self::response::AsUrl;
 
 pub mod models;
 pub mod prelude;
