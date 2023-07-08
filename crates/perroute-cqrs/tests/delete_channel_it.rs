@@ -39,7 +39,7 @@ fn test_when_successfully_deleted(pool: PgPool) {
         .await
         .expect("Failed to delete channel");
 
-    assert!(Channel::find_by_id(ctx.tx(), &channel_id)
+    assert!(Channel::find_by_id(ctx.tx(), channel_id)
         .await
         .expect("Failed to find channel")
         .is_none());

@@ -1,10 +1,46 @@
-use crate::log_query_error;
+use crate::{
+    log_query_error,
+    query::{ModelQuery, ModelQueryFetch},
+};
 use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::types::{code::Code, id::Id};
-use sqlx::{FromRow, PgExecutor};
+use sqlx::{FromRow, PgExecutor, QueryBuilder};
 use tap::TapFallible;
+
+pub struct ChannelsQuery {
+    pub id: Option<Id>,
+    pub code: Option<Code>,
+}
+impl ModelQuery<Channel> for ChannelsQuery {
+    fn query_builder(&self, count: bool) -> sqlx::QueryBuilder<'_, sqlx::Postgres> {
+        let mut builder = QueryBuilder::new({
+            if count {
+                "SELECT COUNT(*)"
+            } else {
+                "SELECT *"
+            }
+        });
+
+        builder.push(" FROM channels where 1=1");
+
+        if let Some(id) = self.id {
+            builder.push(" AND id = ");
+            builder.push_bind(id);
+        }
+
+        if let Some(code) = self.code.clone() {
+            builder.push(" AND code = ");
+            builder.push_bind(code);
+        }
+
+        builder
+    }
+}
+
+#[async_trait::async_trait]
+impl ModelQueryFetch<Channel> for ChannelsQuery {}
 
 #[derive(Debug, FromRow, PartialEq, Eq, Clone, Getters, Setters, Builder)]
 #[builder(setter(into))]
@@ -24,10 +60,14 @@ impl Channel {
         exec: E,
         code: &Code,
     ) -> Result<bool, sqlx::Error> {
-        Ok(Self::find_by_code(exec, code)
-            .await
-            .tap_err(|e| tracing::error!("Failed to find by code: {e}"))?
-            .map_or_else(|| false, |_| true))
+        ChannelsQuery {
+            id: None,
+            code: Some(code.clone()),
+        }
+        .count(exec)
+        .await
+        .tap_err(log_query_error!())
+        .map(|result| result > 0)
     }
 
     #[tracing::instrument(name = "channel.save", skip(exec))]
@@ -64,13 +104,15 @@ impl Channel {
     #[tracing::instrument(name = "channel.find_by_id", skip(exec))]
     pub async fn find_by_id<'e, E: PgExecutor<'e>>(
         exec: E,
-        id: &Id,
+        id: Id,
     ) -> Result<Option<Self>, sqlx::Error> {
-        sqlx::query_as("SELECT * FROM channels WHERE id = $1")
-            .bind(id)
-            .fetch_optional(exec)
-            .await
-            .tap_err(log_query_error!())
+        ChannelsQuery {
+            id: Some(id),
+            code: None,
+        }
+        .one(exec)
+        .await
+        .tap_err(log_query_error!())
     }
 
     #[tracing::instrument(name = "channel.find_by_code", skip(exec))]
@@ -78,17 +120,22 @@ impl Channel {
         exec: E,
         code: &Code,
     ) -> Result<Option<Self>, sqlx::Error> {
-        sqlx::query_as("SELECT * FROM channels WHERE code = $1")
-            .bind(code)
-            .fetch_optional(exec)
-            .await
-            .tap_err(log_query_error!())
+        ChannelsQuery {
+            id: None,
+            code: Some(code.clone()),
+        }
+        .one(exec)
+        .await
+        .tap_err(log_query_error!())
     }
 
     pub async fn query<'e, E: PgExecutor<'e>>(exec: E) -> Result<Vec<Self>, sqlx::Error> {
-        sqlx::query_as("SELECT * FROM channels")
-            .fetch_all(exec)
-            .await
-            .tap_err(log_query_error!())
+        ChannelsQuery {
+            id: None,
+            code: None,
+        }
+        .many(exec)
+        .await
+        .tap_err(log_query_error!())
     }
 }

@@ -5,7 +5,7 @@ use std::str::FromStr;
 
 #[sqlx::test]
 async fn test_channel_find_by_id(pool: PgPool) {
-    let channel = Channel::find_by_id(&pool, &new_id!()).await.unwrap();
+    let channel = Channel::find_by_id(&pool, new_id!()).await.unwrap();
     assert!(channel.is_none());
 
     let channel = ChannelBuilder::default()
@@ -19,7 +19,7 @@ async fn test_channel_find_by_id(pool: PgPool) {
         .expect("failed to save channel");
 
     assert_eq!(
-        Channel::find_by_id(&pool, channel.id()).await.unwrap(),
+        Channel::find_by_id(&pool, *channel.id()).await.unwrap(),
         Some(channel)
     );
 }
@@ -61,7 +61,7 @@ async fn test_channel_save(pool: PgPool) {
         .unwrap();
 
     assert_eq!(
-        Channel::find_by_id(&pool, &channel_id).await.unwrap(),
+        Channel::find_by_id(&pool, channel_id).await.unwrap(),
         Some(channel)
     );
 }
@@ -86,7 +86,7 @@ async fn test_channel_update(pool: PgPool) {
         .unwrap();
 
     assert_eq!(
-        Channel::find_by_id(&pool, &channel_id).await.unwrap(),
+        Channel::find_by_id(&pool, channel_id).await.unwrap(),
         Some(channel)
     );
 }
@@ -123,7 +123,7 @@ async fn test_channel_delete(pool: PgPool) {
         .await
         .unwrap();
 
-    assert!(Channel::find_by_id(&pool, &channel_id)
+    assert!(Channel::find_by_id(&pool, channel_id)
         .await
         .unwrap()
         .is_some());
@@ -131,7 +131,7 @@ async fn test_channel_delete(pool: PgPool) {
     let deleted = channel.delete(&pool).await.unwrap();
     assert!(deleted);
 
-    assert!(Channel::find_by_id(&pool, &channel_id)
+    assert!(Channel::find_by_id(&pool, channel_id)
         .await
         .unwrap()
         .is_none());

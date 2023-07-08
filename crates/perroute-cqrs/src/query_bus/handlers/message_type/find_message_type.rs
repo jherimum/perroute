@@ -18,7 +18,7 @@ impl QueryHandler for FindMessageTypeQueryHandler {
         ctx: &QueryBusContext,
         query: &Self::Query,
     ) -> Result<Self::Output, QueryBusError> {
-        MessageType::find_by_id(ctx.pool(), query.message_type_id())
+        MessageType::find_one(ctx.pool(), *query.message_type_id(), *query.channel_id())
             .await
             .map_err(Into::into)
     }

@@ -16,11 +16,14 @@ use super::{
 
 #[derive(Debug, thiserror::Error)]
 pub enum CommandBusError {
+    #[error("{0}")]
+    ExpectedError(&'static str),
+
     #[error("Command handler not found for command {0}")]
     HandlerNotFound(CommandType),
 
-    #[error(transparent)]
-    UnexpectedError(#[from] anyhow::Error),
+    #[error("{0}")]
+    UnexpectedError(&'static str),
 
     #[error(transparent)]
     DatabaseError(#[from] sqlx::Error),

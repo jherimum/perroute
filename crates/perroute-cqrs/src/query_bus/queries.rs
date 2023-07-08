@@ -46,7 +46,7 @@ query!(
 query!(
     QueryMessageTypesQuery,
     QueryType::QueryMessageTypes,
-    channel_id: Option<Id>
+    channel_id: Id
 );
 
 query!(

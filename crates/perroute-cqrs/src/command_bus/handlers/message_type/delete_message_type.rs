@@ -24,7 +24,7 @@ impl CommandHandler for DeleteMessageTypeCommandHandler {
         ctx: &mut CommandBusContext<'tx, 'a>,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
-        MessageType::find_by_id(ctx.tx(), cmd.message_type_id())
+        MessageType::find_one(ctx.tx(), *cmd.message_type_id(), None)
             .await?
             .ok_or_else(|| DeleteMessageTypeError::MessageTypeNotFound(*cmd.message_type_id()))?
             .delete(ctx.tx())

@@ -27,7 +27,7 @@ impl CommandHandler for CreateSchemaCommandHandler {
         ctx: &mut CommandBusContext<'tx, 'a>,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
-        let mt = MessageType::find_by_id(ctx.tx(), cmd.message_type_id())
+        let mt = MessageType::find_one(ctx.tx(), *cmd.message_type_id(), None)
             .await?
             .unwrap();
         let actual_version = Schema::max_version_number(ctx.tx(), mt.id()).await?;

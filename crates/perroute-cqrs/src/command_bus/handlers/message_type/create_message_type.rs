@@ -31,7 +31,7 @@ impl CommandHandler for CreateMessageTypeCommandHandler {
         ctx: &mut CommandBusContext<'tx, 'a>,
         cmd: Self::Command,
     ) -> Result<MessageType, CommandBusError> {
-        if MessageType::exists_code(ctx.tx(), cmd.channel_id(), cmd.code()).await? {
+        if MessageType::exists_code(ctx.tx(), *cmd.channel_id(), cmd.code().clone()).await? {
             return Err(CreateMessageTypeError::CodeAlreadyExists(cmd.code().clone()).into());
         }
 

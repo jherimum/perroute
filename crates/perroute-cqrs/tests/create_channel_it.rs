@@ -35,7 +35,7 @@ fn test_when_successfully_created(pool: PgPool) {
         .await
         .expect("Failed to create channel");
 
-    let channel = Channel::find_by_id(ctx.tx(), command.channel_id())
+    let channel = Channel::find_by_id(ctx.tx(), *command.channel_id())
         .await
         .expect("Failed to find channel");
     assert_eq!(

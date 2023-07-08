@@ -1,10 +1,10 @@
-use super::retrieve_channel;
 use crate::command_bus::{
     bus::CommandBusContext, commands::DeleteChannelCommand, error::CommandBusError,
     handlers::CommandHandler,
 };
 use async_trait::async_trait;
 use perroute_commons::types::id::Id;
+use perroute_storage::models::{channel::Channel, message_type::MessageType};
 use tap::TapFallible;
 
 #[derive(Debug)]
@@ -27,13 +27,27 @@ impl CommandHandler for DeleteChannelCommandHandler {
         ctx: &mut CommandBusContext<'ctx, 'a>,
         command: Self::Command,
     ) -> Result<bool, CommandBusError> {
-        retrieve_channel(ctx, command.channel_id(), |id| {
-            DeleteChannelError::ChannelNotFound(id).into()
-        })
-        .await?
-        .delete(ctx.tx())
-        .await
-        .tap_err(|e| tracing::error!("Failed to delete channel {}: {e}", command.channel_id()))
-        .map_err(CommandBusError::from)
+        let channel = Channel::find_by_id(ctx.tx(), *command.channel_id()).await?;
+
+        if let Some(channel) = channel {
+            let message_types =
+                MessageType::find_by_channel(ctx.pool(), *command.channel_id()).await?;
+
+            if message_types.is_empty() {
+                channel
+                    .delete(ctx.tx())
+                    .await
+                    .tap_err(|e| {
+                        tracing::error!("Failed to delete channel {}: {e}", command.channel_id())
+                    })
+                    .map_err(CommandBusError::from)
+            } else {
+                Err(CommandBusError::ExpectedError(
+                    "There are message types registered for this channel",
+                ))
+            }
+        } else {
+            Ok(false)
+        }
     }
 }

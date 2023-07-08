@@ -2,7 +2,6 @@ use super::{
     error::QueryBusError,
     handlers::{
         channel::{
-            find_channel_by_code::FindChannelByCodeHandler,
             find_channel_by_id::FindChannelByIdHandler, query_channels::QueryChannelsQueryHandler,
         },
         message_type::{
@@ -67,7 +66,6 @@ impl QueryBus {
     pub fn complete(pool: PgPool) -> Self {
         Self::builder()
             .with_pool(pool)
-            .with_handler(FindChannelByCodeHandler)
             .with_handler(FindChannelByIdHandler)
             .with_handler(QueryChannelsQueryHandler)
             .with_handler(QueryMessageTypesHandler)

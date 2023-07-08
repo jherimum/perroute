@@ -8,8 +8,6 @@ use perroute_commons::types::id::Id;
 use perroute_storage::models::channel::Channel;
 use tap::TapFallible;
 
-use super::retrieve_channel;
-
 #[derive(Debug, new)]
 pub struct UpdateChannelCommandHandler;
 
@@ -30,14 +28,20 @@ impl CommandHandler for UpdateChannelCommandHandler {
         ctx: &mut CommandBusContext<'ctx, 'a>,
         command: Self::Command,
     ) -> Result<Channel, CommandBusError> {
-        retrieve_channel(ctx, command.channel_id(), |id| {
-            UpdateChannelError::ChannelNotFound(id).into()
-        })
-        .await?
-        .set_name(command.name().to_owned())
-        .update(ctx.tx())
-        .await
-        .tap_err(|e| tracing::error!("Error while updating channel {}: {e}", command.channel_id()))
-        .map_err(CommandBusError::from)
+        let channel = Channel::find_by_id(ctx.tx(), *command.channel_id()).await?;
+
+        if let Some(channel) = channel {
+            channel
+                .set_name(command.name().to_owned())
+                .update(ctx.tx())
+                .await
+                .tap_err(|e| {
+                    tracing::error!("Error while updating channel {}: {e}", command.channel_id())
+                })
+                .map_err(CommandBusError::from)
+        } else {
+            tracing::error!("Channel {} not found", command.channel_id());
+            Err(CommandBusError::UnexpectedError("Channel do not exists"))
+        }
     }
 }

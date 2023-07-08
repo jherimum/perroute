@@ -35,14 +35,16 @@ impl MessageTypeRouter {
                 .await?;
 
         let query = QueryMessageTypesQueryBuilder::default()
-            .channel_id(Some(*channel.id()))
+            .channel_id(*channel.id())
             .build()
-            .unwrap();
+            .tap_err(|e| tracing::error!("Failed to build QueryMessageTypesQuery: {e}"))?;
 
         let message_types = state
             .query_bus()
             .execute::<_, QueryMessageTypesHandler, _>(&actor, &query)
-            .await?;
+            .await
+            .tap_err(|e| tracing::error!("Failed to query message types: {e}"))?;
+
         Ok(NewApiResponse::ok((channel, message_types)))
     }
 
@@ -62,12 +64,13 @@ impl MessageTypeRouter {
             .code(body.code().clone())
             .description(body.description().to_owned())
             .build()
-            .unwrap();
+            .tap_err(|e| tracing::error!("Failed to build CreateMessageTypeCommand:{e}"))?;
 
         Ok(state
             .command_bus()
             .execute::<_, CreateMessageTypeCommandHandler, _>(&actor, &cmd)
             .await
+            .tap_err(|e| tracing::error!("Failed to create message type: {e}"))
             .map(|message_type| {
                 NewApiResponse::created(
                     ResourceLink::MessageType(*message_type.channel_id(), *message_type.id()),
@@ -92,12 +95,13 @@ impl MessageTypeRouter {
             .description(body.description().to_owned())
             .enabled(*body.enabled())
             .build()
-            .unwrap();
+            .tap_err(|e| tracing::error!("Failed to build UpdateMessageTypeCommand: {e}"))?;
 
         Ok(state
             .command_bus()
             .execute::<_, UpdateMessageTypeCommandHandler, _>(&actor, &cmd)
             .await
+            .tap_err(|e| tracing::error!("Failed to update message type: {e}"))
             .map(NewApiResponse::ok)?)
     }
 
@@ -114,12 +118,13 @@ impl MessageTypeRouter {
         let cmd = DeleteMessageTypeCommandBuilder::default()
             .message_type_id(*message_type.id())
             .build()
-            .unwrap();
+            .tap_err(|e| tracing::error!("Failed to build DeleteMessageTypeCommand: {e}"))?;
 
         Ok(state
             .command_bus()
             .execute::<_, DeleteMessageTypeCommandHandler, _>(&actor, &cmd)
             .await
+            .tap_err(|e| tracing::error!("Failed to delete message type: {e}"))
             .map(|_| NewApiResponse::ok_empty())?)
     }
 
@@ -145,14 +150,15 @@ impl MessageTypeRouter {
         map: impl FnOnce(MessageType) -> R,
     ) -> Result<R, ApiError> {
         let query = FindMessageTypeQueryBuilder::default()
-            .message_type_id(path.1)
             .channel_id(Some(path.0))
+            .message_type_id(path.1)
             .build()
-            .unwrap();
+            .tap_err(|e| tracing::error!("Failed to build FindMessageTypeQuery: {e}"))?;
 
         query_bus
             .execute::<_, FindMessageTypeQueryHandler, _>(actor, &query)
-            .await?
+            .await
+            .tap_err(|e| tracing::error!("Faled to retrieve message type:{e}"))?
             .ok_or_else(|| ApiError::MessageTypeNotFound(path.0))
             .map(map)
     }

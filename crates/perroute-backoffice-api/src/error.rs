@@ -6,9 +6,11 @@ use perroute_commons::{
 use perroute_cqrs::{
     command_bus::error::CommandBusError,
     prelude::{
-        CreateChannelCommandBuilderError, DeleteChannelCommandBuilderError,
-        FindChannelQueryBuilderError, QueryChannelsQueryBuilderError,
-        UpdateChannelCommandBuilderError,
+        CreateChannelCommandBuilderError, CreateMessageTypeCommandBuilderError,
+        DeleteChannelCommandBuilderError, DeleteMessageTypeCommandBuilderError,
+        FindChannelQueryBuilderError, FindMessageTypeQueryBuilderError,
+        QueryChannelsQueryBuilderError, QueryMessageTypesQueryBuilderError,
+        UpdateChannelCommandBuilderError, UpdateMessageTypeCommandBuilderError,
     },
     query_bus::error::QueryBusError,
 };
@@ -16,6 +18,21 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum ApiError {
+    #[error(transparent)]
+    FindMessageTypeQueryBuilder(#[from] FindMessageTypeQueryBuilderError),
+
+    #[error(transparent)]
+    DeleteMessageTypeCommandBuilder(#[from] DeleteMessageTypeCommandBuilderError),
+
+    #[error(transparent)]
+    UpdateMessageTypeCommandBuilder(#[from] UpdateMessageTypeCommandBuilderError),
+
+    #[error(transparent)]
+    CreateMessageTypeCommandBuilder(#[from] CreateMessageTypeCommandBuilderError),
+
+    #[error(transparent)]
+    QueryMessageTypesQueryBuilder(#[from] QueryMessageTypesQueryBuilderError),
+
     #[error(transparent)]
     FindChannelQueryBuilder(#[from] FindChannelQueryBuilderError),
 
@@ -63,6 +80,10 @@ impl From<&ApiError> for RestError {
     fn from(value: &ApiError) -> Self {
         match value {
             ApiError::Rest(e) => e.clone(),
+            ApiError::CommandBus(error) => match error {
+                CommandBusError::ExpectedError(e) => RestError::UnprocessableEntity(e.to_string()),
+                _ => RestError::InternalServer,
+            },
             _ => RestError::InternalServer,
         }
     }
