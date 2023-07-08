@@ -1,7 +1,10 @@
-use crate::{error::ApiError, links::ResourceLink};
+use crate::error::ApiError;
 use actix_web::{body::BoxBody, HttpRequest, HttpResponse, Responder};
 use serde::Serialize;
-use std::{collections::HashMap, fmt::Display};
+use std::{
+    collections::HashMap,
+    fmt::{Debug, Display},
+};
 use url::Url;
 
 pub type ApiResult<R> = Result<ApiResponse<R>, ApiError>;
@@ -33,7 +36,7 @@ pub struct CollectionResourceModel<D: Serialize> {
 
 pub enum ApiResponse<E: Serialize> {
     Ok(Option<Box<dyn ResourceBuilder<E>>>),
-    Created(ResourceLink, Option<Box<dyn ResourceBuilder<E>>>),
+    Created(Box<dyn AsUrl>, Option<Box<dyn ResourceBuilder<E>>>),
 }
 
 impl<E: Serialize> ApiResponse<E> {
@@ -41,8 +44,11 @@ impl<E: Serialize> ApiResponse<E> {
         Self::Ok(Some(Box::new(resource)))
     }
 
-    pub fn created<R: ResourceBuilder<E> + 'static>(link: ResourceLink, resource: R) -> Self {
-        Self::Created(link, Some(Box::new(resource)))
+    pub fn created<R: ResourceBuilder<E> + 'static, L: AsUrl + 'static>(
+        link: L,
+        resource: R,
+    ) -> Self {
+        Self::Created(Box::new(link), Some(Box::new(resource)))
     }
 
     pub fn ok_empty() -> Self {
@@ -73,16 +79,16 @@ impl<D: Serialize> Responder for ApiResponse<D> {
     }
 }
 
-pub trait AsUrl {
+pub trait AsUrl: Debug {
     fn as_url(&self, req: &HttpRequest) -> Url;
 }
 
-#[derive(Debug, Clone, Serialize, Default)]
-pub struct Links(HashMap<String, ResourceLink>);
+#[derive(Debug, Default)]
+pub struct Links(HashMap<String, Box<dyn AsUrl>>);
 
 impl Links {
-    pub fn add(mut self, rel: impl Display, link: ResourceLink) -> Self {
-        self.0.insert(rel.to_string(), link);
+    pub fn add<L: AsUrl + 'static>(mut self, rel: impl Display, link: L) -> Self {
+        self.0.insert(rel.to_string(), Box::new(link));
         self
     }
 
