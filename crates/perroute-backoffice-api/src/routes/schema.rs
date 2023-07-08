@@ -1,11 +1,9 @@
 use super::message_type::MessageTypeRouter;
 use super::prelude::*;
 use crate::api::models::schema::UpdateSchemaRequest;
+use crate::links::ResourceLink;
 use crate::{
-    api::{
-        models::schema::{CreateSchemaRequest, SchemaResource},
-        ResourceLink,
-    },
+    api::models::schema::{CreateSchemaRequest, SchemaResource},
     app::AppState,
     extractors::actor::ActorExtractor,
 };

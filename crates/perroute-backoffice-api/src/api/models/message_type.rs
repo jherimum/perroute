@@ -1,6 +1,6 @@
-use crate::api::{
-    response::{CollectionResourceModel, Links, ResourceBuilder, SingleResourceModel},
-    Linkrelation, ResourceLink,
+use crate::{
+    api::response::{CollectionResourceModel, Links, ResourceBuilder, SingleResourceModel},
+    links::{Linkrelation, ResourceLink},
 };
 use derive_getters::Getters;
 use perroute_commons::{prelude::Id, types::code::Code};

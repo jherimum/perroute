@@ -1,10 +1,8 @@
 use super::prelude::*;
 use crate::{
-    api::{
-        models::channel::{ChannelResource, CreateChannelRequest, UpdateChannelRequest},
-        ResourceLink,
-    },
+    api::models::channel::{ChannelResource, CreateChannelRequest, UpdateChannelRequest},
     extractors::actor::ActorExtractor,
+    links::ResourceLink,
 };
 use perroute_cqrs::{
     command_bus::handlers::channel::{

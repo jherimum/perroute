@@ -1,11 +1,11 @@
 use super::channel::ChannelRouter;
 use super::prelude::*;
-use crate::api::ResourceLink;
 use crate::{
     api::models::message_type::{
         CreateMessageTypeRequest, MessageTypeResource, UpdateMessageTypeRequest,
     },
     extractors::actor::ActorExtractor,
+    links::ResourceLink,
 };
 use perroute_cqrs::command_bus::handlers::message_type::create_message_type::CreateMessageTypeCommandHandler;
 use perroute_cqrs::command_bus::handlers::message_type::delete_message_type::DeleteMessageTypeCommandHandler;

@@ -1,6 +1,6 @@
-use crate::api::{
-    response::{CollectionResourceModel, Links, ResourceBuilder, SingleResourceModel},
-    Linkrelation, ResourceLink,
+use crate::{
+    api::response::{CollectionResourceModel, Links, ResourceBuilder, SingleResourceModel},
+    links::{Linkrelation, ResourceLink},
 };
 use perroute_commons::types::json_schema::JsonSchema;
 use perroute_storage::models::{

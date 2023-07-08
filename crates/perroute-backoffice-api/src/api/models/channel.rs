@@ -1,6 +1,6 @@
-use crate::api::{
-    response::{CollectionResourceModel, Links, ResourceBuilder, SingleResourceModel},
-    Linkrelation, ResourceLink,
+use crate::{
+    api::response::{CollectionResourceModel, Links, ResourceBuilder, SingleResourceModel},
+    links::{Linkrelation, ResourceLink},
 };
 use actix_web::HttpRequest;
 use derive_getters::Getters;

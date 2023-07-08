@@ -1,5 +1,7 @@
-use super::{Linkrelation, ResourceLink};
-use crate::error::ApiError;
+use crate::{
+    error::ApiError,
+    links::{Linkrelation, ResourceLink},
+};
 use actix_web::{body::BoxBody, HttpRequest, HttpResponse, Responder};
 use serde::Serialize;
 use std::collections::HashMap;
