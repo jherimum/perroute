@@ -5,7 +5,7 @@ use crate::command_bus::{
 use async_trait::async_trait;
 use derive_new::new;
 use perroute_commons::types::id::Id;
-use perroute_storage::models::channel::Channel;
+use perroute_storage::models::channel::{Channel, ChannelsQueryBuilder};
 use tap::TapFallible;
 
 #[derive(Debug, new)]
@@ -28,7 +28,14 @@ impl CommandHandler for UpdateChannelCommandHandler {
         ctx: &mut CommandBusContext<'ctx, 'a>,
         command: Self::Command,
     ) -> Result<Channel, CommandBusError> {
-        let channel = Channel::find_by_id(ctx.tx(), *command.channel_id()).await?;
+        let channel = Channel::find(
+            ctx.tx(),
+            ChannelsQueryBuilder::default()
+                .id(Some(*command.channel_id()))
+                .build()
+                .unwrap(),
+        )
+        .await?;
 
         if let Some(channel) = channel {
             channel

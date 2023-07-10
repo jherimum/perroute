@@ -1,2 +1,2 @@
-pub mod find_channel_by_id;
+pub mod find_channel;
 pub mod query_channels;

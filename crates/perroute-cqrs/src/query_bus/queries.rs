@@ -11,7 +11,7 @@ pub trait Query: Debug + Serialize + Clone + PartialEq + Eq + Send + Sync {
 
 #[derive(Debug, Clone, PartialEq, Eq, Display)]
 pub enum QueryType {
-    FindChannelId,
+    FindChannel,
     QueryChannels,
 
     FindMessageTypeQuery,
@@ -26,7 +26,11 @@ pub enum QueryType {
     FindTemplate,
 }
 
-query!(FindChannelQuery, QueryType::FindChannelId, channel_id: Id);
+query!(
+    FindChannelQuery,
+    QueryType::FindChannel,
+    channel_id: Option<Id>
+);
 query!(QueryChannelsQuery, QueryType::QueryChannels);
 
 query!(

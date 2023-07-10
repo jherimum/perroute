@@ -4,12 +4,12 @@ use crate::query_bus::{
     queries::FindChannelQuery,
 };
 use async_trait::async_trait;
-use perroute_storage::models::channel::Channel;
+use perroute_storage::models::channel::{Channel, ChannelsQueryBuilder};
 
-pub struct FindChannelByIdHandler;
+pub struct FindChannelHanlder;
 
 #[async_trait]
-impl QueryHandler for FindChannelByIdHandler {
+impl QueryHandler for FindChannelHanlder {
     type Query = FindChannelQuery;
     type Output = Option<Channel>;
 
@@ -19,8 +19,14 @@ impl QueryHandler for FindChannelByIdHandler {
         ctx: &QueryBusContext,
         query: &Self::Query,
     ) -> Result<Self::Output, QueryBusError> {
-        Channel::find_by_id(ctx.pool(), *query.channel_id())
-            .await
-            .map_err(Into::into)
+        Channel::find(
+            ctx.pool(),
+            ChannelsQueryBuilder::default()
+                .id(*query.channel_id())
+                .build()
+                .unwrap(),
+        )
+        .await
+        .map_err(Into::into)
     }
 }

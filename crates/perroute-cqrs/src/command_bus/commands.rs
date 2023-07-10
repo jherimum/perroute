@@ -91,15 +91,6 @@ pub struct CreateMessageTypeCommand {
 
 impl_command!(CreateMessageTypeCommand, CommandType::CreateMessageType);
 
-// command!(
-//     CreateMessageTypeCommand,
-//     CommandType::CreateMessageType,
-//     message_type_id: Id,
-//     code: Code,
-//     description: String,
-//     channel_id: Id
-// );
-
 command!(
     UpdateMessageTypeCommand,
     CommandType::UpdateMessageType,

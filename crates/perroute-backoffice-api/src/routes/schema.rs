@@ -34,6 +34,7 @@ use tap::TapFallible;
 
 pub const SCHEMAS_RESOURCE_NAME: &str = "schemas";
 pub const SCHEMA_RESOURCE_NAME: &str = "schema";
+pub const SCHEMA_CLONE_RESOURCE_NAME: &str = "schema_clone";
 
 pub type SingleResult = ApiResult<SingleResourceModel<SchemaResource>>;
 pub type CollectionResult = ApiResult<CollectionResourceModel<SchemaResource>>;
@@ -41,6 +42,10 @@ pub type CollectionResult = ApiResult<CollectionResourceModel<SchemaResource>>;
 pub struct SchemaRouter;
 
 impl SchemaRouter {
+    pub async fn clone() -> String {
+        todo!()
+    }
+
     #[tracing::instrument(skip(state))]
     pub async fn query_schemas(
         state: Data<AppState>,

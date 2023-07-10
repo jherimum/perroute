@@ -12,7 +12,9 @@ use perroute_backoffice_api::{
             MessageTypeRouter, MESSAGE_TYPES_RESOURCE_NAME, MESSAGE_TYPE_RESOURCE_NAME,
         },
         route::{RouteRouter, ROUTES_RESOURCE_NAME, ROUTE_RESOURCE_NAME},
-        schema::{SchemaRouter, SCHEMAS_RESOURCE_NAME, SCHEMA_RESOURCE_NAME},
+        schema::{
+            SchemaRouter, SCHEMAS_RESOURCE_NAME, SCHEMA_CLONE_RESOURCE_NAME, SCHEMA_RESOURCE_NAME,
+        },
         template::{TemplateRouter, TEMPLATES_RESOURCE_NAME, TEMPLATE_RESOURCE_NAME},
     },
 };
@@ -53,6 +55,13 @@ fn routes(state: AppState) -> Scope {
                         .route(web::get().to(SchemaRouter::find_schema))
                         .route(web::put().to(SchemaRouter::update_schema))
                         .route(web::delete().to(SchemaRouter::delete_schema)),
+                )
+                .service(
+                    web::scope("/clone").service(
+                        web::resource("")
+                            .name(SCHEMA_CLONE_RESOURCE_NAME)
+                            .route(web::post().to(SchemaRouter::clone)),
+                    ),
                 )
                 .service(templates),
         );

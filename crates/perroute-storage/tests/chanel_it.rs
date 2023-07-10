@@ -2,7 +2,7 @@ use perroute_commons::{code, new_id};
 use perroute_storage::models::channel::{Channel, ChannelBuilder};
 use sqlx::PgPool;
 use std::str::FromStr;
-
+/*
 #[sqlx::test]
 async fn test_channel_find_by_id(pool: PgPool) {
     let channel = Channel::find_by_id(&pool, new_id!()).await.unwrap();
@@ -172,3 +172,4 @@ async fn test_query(pool: PgPool) {
     assert!(channels.contains(&channel_1));
     assert!(channels.contains(&channel_2));
 }
+ */

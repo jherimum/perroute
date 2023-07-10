@@ -4,7 +4,10 @@ use crate::command_bus::{
 };
 use async_trait::async_trait;
 use perroute_commons::types::id::Id;
-use perroute_storage::models::{channel::Channel, message_type::MessageType};
+use perroute_storage::models::{
+    channel::{Channel, ChannelsQueryBuilder},
+    message_type::MessageType,
+};
 use tap::TapFallible;
 
 #[derive(Debug)]
@@ -27,7 +30,14 @@ impl CommandHandler for DeleteChannelCommandHandler {
         ctx: &mut CommandBusContext<'ctx, 'a>,
         command: Self::Command,
     ) -> Result<bool, CommandBusError> {
-        let channel = Channel::find_by_id(ctx.tx(), *command.channel_id()).await?;
+        let channel = Channel::find(
+            ctx.tx(),
+            ChannelsQueryBuilder::default()
+                .id(Some(*command.channel_id()))
+                .build()
+                .unwrap(),
+        )
+        .await?;
 
         if let Some(channel) = channel {
             let message_types =

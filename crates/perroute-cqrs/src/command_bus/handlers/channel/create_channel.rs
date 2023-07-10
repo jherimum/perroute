@@ -4,7 +4,7 @@ use crate::command_bus::{
 };
 use async_trait::async_trait;
 use perroute_commons::types::code::Code;
-use perroute_storage::models::channel::{Channel, ChannelBuilder};
+use perroute_storage::models::channel::{Channel, ChannelBuilder, ChannelsQueryBuilder};
 use tap::TapFallible;
 
 #[derive(Debug)]
@@ -27,14 +27,20 @@ impl CommandHandler for CreateChannelCommandHandler {
         ctx: &mut CommandBusContext<'tx, 'a>,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
-        if Channel::exists_by_code(ctx.tx(), cmd.code())
-            .await
-            .tap_err(|e| {
-                tracing::error!(
-                    "Failed to checking if channel with code {} exists: {e}",
-                    cmd.code()
-                )
-            })?
+        if Channel::count(
+            ctx.tx(),
+            ChannelsQueryBuilder::default()
+                .code(Some(cmd.code().clone()))
+                .build()
+                .unwrap(),
+        )
+        .await
+        .tap_err(|e| {
+            tracing::error!(
+                "Failed to checking if channel with code {} exists: {e}",
+                cmd.code()
+            )
+        })? > 0
         {
             return Err(CommandBusError::ExpectedError(
                 "Channel with code already exists",

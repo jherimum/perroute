@@ -4,7 +4,7 @@ use crate::query_bus::{
     queries::QueryChannelsQuery,
 };
 use async_trait::async_trait;
-use perroute_storage::models::channel::Channel;
+use perroute_storage::models::channel::{Channel, ChannelsQuery};
 
 pub struct QueryChannelsQueryHandler;
 
@@ -19,7 +19,7 @@ impl QueryHandler for QueryChannelsQueryHandler {
         ctx: &QueryBusContext,
         _: &Self::Query,
     ) -> Result<Self::Output, QueryBusError> {
-        Channel::query(ctx.pool())
+        Channel::query(ctx.pool(), ChannelsQuery::all())
             .await
             .map_err(QueryBusError::from)
     }

@@ -9,9 +9,11 @@ use perroute_commons::types::{code::Code, id::Id};
 use sqlx::{FromRow, PgExecutor, QueryBuilder};
 use tap::TapFallible;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Builder)]
 pub struct ChannelsQuery {
+    #[builder(default)]
     id: Option<Id>,
+    #[builder(default)]
     code: Option<Code>,
 }
 
@@ -74,16 +76,25 @@ pub struct Channel {
 }
 
 impl Channel {
-    #[tracing::instrument(name = "channel.exists_by_code", skip(exec))]
-    pub async fn exists_by_code<'e, E: PgExecutor<'e>>(
+    pub async fn count<'e, E: PgExecutor<'e>>(
         exec: E,
-        code: &Code,
-    ) -> Result<bool, sqlx::Error> {
-        ChannelsQuery::by_code(code.clone())
-            .count(exec)
-            .await
-            .tap_err(log_query_error!())
-            .map(|result| result > 0)
+        query: ChannelsQuery,
+    ) -> Result<i64, sqlx::Error> {
+        query.count(exec).await
+    }
+
+    pub async fn query<'e, E: PgExecutor<'e>>(
+        exec: E,
+        query: ChannelsQuery,
+    ) -> Result<Vec<Channel>, sqlx::Error> {
+        query.many(exec).await
+    }
+
+    pub async fn find<'e, E: PgExecutor<'e>>(
+        exec: E,
+        query: ChannelsQuery,
+    ) -> Result<Option<Channel>, sqlx::Error> {
+        query.one(exec).await
     }
 
     #[tracing::instrument(name = "channel.save", skip(exec))]
@@ -115,34 +126,5 @@ impl Channel {
             .await
             .tap_err(log_query_error!())
             .map(|result| result.rows_affected() > 0)
-    }
-
-    #[tracing::instrument(name = "channel.find_by_id", skip(exec))]
-    pub async fn find_by_id<'e, E: PgExecutor<'e>>(
-        exec: E,
-        id: Id,
-    ) -> Result<Option<Self>, sqlx::Error> {
-        ChannelsQuery::by_id(id)
-            .one(exec)
-            .await
-            .tap_err(log_query_error!())
-    }
-
-    #[tracing::instrument(name = "channel.find_by_code", skip(exec))]
-    pub async fn find_by_code<'e, E: PgExecutor<'e>>(
-        exec: E,
-        code: &Code,
-    ) -> Result<Option<Self>, sqlx::Error> {
-        ChannelsQuery::by_code(code.clone())
-            .one(exec)
-            .await
-            .tap_err(log_query_error!())
-    }
-
-    pub async fn query<'e, E: PgExecutor<'e>>(exec: E) -> Result<Vec<Self>, sqlx::Error> {
-        ChannelsQuery::all()
-            .many(exec)
-            .await
-            .tap_err(log_query_error!())
     }
 }

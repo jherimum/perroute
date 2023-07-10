@@ -1,9 +1,76 @@
+use crate::{
+    log_query_error,
+    query::{ModelQuery, ModelQueryFetch, Projection},
+};
 use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::types::{id::Id, json_schema::JsonSchema};
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, PgExecutor, Type};
+use sqlx::{FromRow, PgExecutor, QueryBuilder, Type};
+use tap::TapFallible;
+
+#[derive(Debug, Default)]
+pub struct SchemasQuery {
+    id: Option<Id>,
+    message_type_id: Option<Id>,
+    channel_id: Option<Id>,
+}
+
+impl SchemasQuery {
+    pub fn by_id(id: Id) -> Self {
+        Self {
+            id: Some(id),
+            ..Default::default()
+        }
+    }
+
+    pub fn by_message_type_and_id(id: Id, message_type_id: Id) -> Self {
+        Self {
+            id: Some(id),
+            message_type_id: Some(message_type_id),
+            ..Default::default()
+        }
+    }
+
+    pub fn by_message_type(message_type_id: Id) -> Self {
+        Self {
+            message_type_id: Some(message_type_id),
+            ..Default::default()
+        }
+    }
+}
+
+impl ModelQuery<Schema> for SchemasQuery {
+    fn query_builder(&self, projection: Projection) -> sqlx::QueryBuilder<'_, sqlx::Postgres> {
+        let mut builder = QueryBuilder::new({
+            match projection {
+                Projection::Row => "SELECT *",
+                Projection::Count => "SELECT COUNT(*)",
+                Projection::Id => "SELECT id",
+            }
+        });
+
+        builder.push(" FROM schemas WHERE 1=1");
+
+        if let Some(id) = self.id {
+            builder.push(" AND id = ");
+            builder.push_bind(id);
+        }
+
+        if let Some(message_type_id) = self.message_type_id {
+            builder.push(" AND message_type_id = ");
+            builder.push_bind(message_type_id);
+        }
+
+        if let Some(channel_id) = self.channel_id {
+            builder.push(" AND channel_id = ");
+            builder.push_bind(channel_id);
+        }
+
+        builder
+    }
+}
 
 #[derive(Debug, PartialEq, Eq, Clone, Type, Serialize, Deserialize, Copy)]
 #[sqlx(transparent)]
@@ -104,36 +171,20 @@ impl Schema {
         exec: E,
         id: Id,
     ) -> Result<Option<Self>, sqlx::Error> {
-        sqlx::query_as(
-            r#"
-            SELECT * 
-            FROM schemas 
-            WHERE id= $1
-            "#,
-        )
-        .bind(id)
-        .fetch_optional(exec)
-        .await
+        SchemasQuery::by_id(id)
+            .one(exec)
+            .await
+            .tap_err(log_query_error!())
     }
 
     pub async fn find_message_type_id_and_id<'e, E: PgExecutor<'e>>(
         exec: E,
-        message_type_id: &Id,
-        id: &Id,
+        message_type_id: Id,
+        id: Id,
     ) -> Result<Option<Self>, sqlx::Error> {
-        sqlx::query_as(
-            r#"
-            SELECT * 
-            FROM schemas 
-            WHERE 
-                message_type_id= $1 
-                AND id= $2
-            "#,
-        )
-        .bind(message_type_id)
-        .bind(id)
-        .fetch_optional(exec)
-        .await
+        SchemasQuery::by_message_type_and_id(id, message_type_id)
+            .one(exec)
+            .await
     }
 
     pub async fn max_version_number(
@@ -156,18 +207,8 @@ impl Schema {
 
     pub async fn query<'e, E: PgExecutor<'e>>(
         exec: E,
-        message_type_id: &Id,
+        query: SchemasQuery,
     ) -> Result<Vec<Self>, sqlx::Error> {
-        sqlx::query_as(
-            r#"
-            SELECT * 
-            FROM schemas 
-            WHERE 
-                message_type_id= $1
-            "#,
-        )
-        .bind(message_type_id)
-        .fetch_all(exec)
-        .await
+        query.many(exec).await
     }
 }
