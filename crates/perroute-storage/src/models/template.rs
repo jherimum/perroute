@@ -2,7 +2,32 @@ use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::types::{id::Id, template::TemplateSnippet};
-use sqlx::{FromRow, PgExecutor};
+use sqlx::{FromRow, PgExecutor, QueryBuilder};
+
+use crate::{
+    query::{ModelQuery, Projection},
+    DatabaseModel,
+};
+
+impl DatabaseModel for Template {}
+
+#[derive(Debug, Builder)]
+pub struct TemplatesQuery {
+    id: Option<Id>,
+    schema_id: Option<Id>,
+    message_type_id: Option<Id>,
+    channel_id: Option<Id>,
+}
+
+impl ModelQuery<Template> for TemplatesQuery {
+    fn query_builder(&self, projection: Projection) -> QueryBuilder<'_, sqlx::Postgres> {
+        let mut builder = projection.query_builder();
+
+        builder.push(" FROM templates ");
+
+        builder
+    }
+}
 
 #[derive(Debug, FromRow, PartialEq, Eq, Clone, Getters, Setters, Builder)]
 #[builder(setter(into))]
@@ -24,10 +49,6 @@ pub struct Template {
 }
 
 impl Template {
-    pub async fn query<'e, E: PgExecutor<'e>>(exec: E) -> Result<Vec<Self>, sqlx::Error> {
-        todo!("Implement Template::query")
-    }
-
     pub async fn save<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Self, sqlx::Error> {
         todo!("Implement Template::save")
     }
@@ -37,13 +58,6 @@ impl Template {
     }
 
     pub async fn delete<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<bool, sqlx::Error> {
-        todo!("Implement Template::delete")
-    }
-
-    pub async fn find_by_id<'e, E: PgExecutor<'e>>(
-        exec: E,
-        id: Id,
-    ) -> Result<Option<Self>, sqlx::Error> {
         todo!("Implement Template::delete")
     }
 }

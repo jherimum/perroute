@@ -15,4 +15,4 @@ mod macros {
     }
 }
 
-pub trait Model {}
+pub trait DatabaseModel {}

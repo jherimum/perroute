@@ -3,7 +3,7 @@ use crate::command_bus::{
     handlers::CommandHandler,
 };
 use async_trait::async_trait;
-use perroute_storage::models::template::Template;
+use perroute_storage::{models::template::Template, query::FetchableModel};
 
 #[derive(Debug)]
 pub struct DeleteTemplateCommandHandler;
@@ -22,7 +22,7 @@ impl CommandHandler for DeleteTemplateCommandHandler {
         ctx: &mut CommandBusContext<'tx, 'a>,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
-        Template::find_by_id(ctx.pool(), *cmd.template_id())
+        Template::find(ctx.pool(), *cmd.template_id())
             .await?
             .unwrap()
             .delete(ctx.tx())
