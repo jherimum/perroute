@@ -4,7 +4,7 @@ use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::types::{id::Id, json_schema::JsonSchema};
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, PgExecutor, QueryBuilder, Type};
+use sqlx::{FromRow, PgExecutor, Type};
 
 #[derive(Debug, Default, Builder)]
 pub struct SchemasQuery {

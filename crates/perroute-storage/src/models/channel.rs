@@ -6,7 +6,7 @@ use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::types::{code::Code, id::Id};
-use sqlx::{FromRow, PgExecutor, QueryBuilder};
+use sqlx::{FromRow, PgExecutor};
 use tap::TapFallible;
 
 #[derive(Debug, Default, Builder)]
