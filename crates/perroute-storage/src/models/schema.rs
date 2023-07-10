@@ -45,13 +45,7 @@ impl SchemasQuery {
 
 impl ModelQuery<Schema> for SchemasQuery {
     fn query_builder(&self, projection: Projection) -> sqlx::QueryBuilder<'_, sqlx::Postgres> {
-        let mut builder = QueryBuilder::new({
-            match projection {
-                Projection::Row => "SELECT *",
-                Projection::Count => "SELECT COUNT(*)",
-                Projection::Id => "SELECT id",
-            }
-        });
+        let mut builder = projection.query_builder();
 
         builder.push(" FROM schemas WHERE 1=1");
 

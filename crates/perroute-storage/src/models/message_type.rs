@@ -79,13 +79,7 @@ impl MessageTypeQuery {
 
 impl ModelQuery<MessageType> for MessageTypeQuery {
     fn query_builder(&self, projection: Projection) -> QueryBuilder<'_, Postgres> {
-        let mut query_builder = QueryBuilder::new({
-            match projection {
-                Projection::Row => "SELECT *",
-                Projection::Count => "SELECT COUNT(*)",
-                Projection::Id => "SELECT id",
-            }
-        });
+        let mut query_builder = projection.query_builder();
 
         query_builder.push(" FROM message_types WHERE 1=1");
 
@@ -170,44 +164,4 @@ impl MessageType {
             .tap_err(log_query_error!())
             .map(|result| result.rows_affected() > 0)
     }
-
-    // pub async fn find_one<'e, E: PgExecutor<'e>>(
-    //     exec: E,
-    //     id: Id,
-    //     channel_id: Option<Id>,
-    // ) -> Result<Option<Self>, sqlx::Error> {
-    //     MessageTypeQuery::by_id_and_maybe_channel(id, channel_id)
-    //         .one(exec)
-    //         .await
-    // }
-
-    // pub async fn exists_code<'e, E: PgExecutor<'e>>(
-    //     exec: E,
-    //     channel_id: Id,
-    //     code: Code,
-    // ) -> Result<bool, sqlx::Error> {
-    //     MessageTypeQuery::by_channel_and_code(channel_id, code)
-    //         .count(exec)
-    //         .await
-    //         .map(|count| count > 0)
-    // }
-
-    // pub async fn find_by_channel_id_and_message_type_id<'e, E: PgExecutor<'e>>(
-    //     exec: E,
-    //     channel_id: Id,
-    //     message_type_id: Id,
-    // ) -> Result<Option<Self>, sqlx::Error> {
-    //     MessageTypeQuery::by_channel_and_id(channel_id, message_type_id)
-    //         .one(exec)
-    //         .await
-    // }
-
-    // pub async fn find_by_channel<'e, E: PgExecutor<'e>>(
-    //     exec: E,
-    //     channel_id: Id,
-    // ) -> Result<Vec<Self>, sqlx::Error> {
-    //     MessageTypeQuery::all_by_channel(channel_id)
-    //         .many(exec)
-    //         .await
-    // }
 }

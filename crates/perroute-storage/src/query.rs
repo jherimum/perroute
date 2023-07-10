@@ -53,3 +53,13 @@ pub enum Projection {
     Count,
     Id,
 }
+
+impl Projection {
+    pub fn query_builder<'qb>(&self) -> QueryBuilder<'qb, Postgres> {
+        QueryBuilder::new(match self {
+            Projection::Row => "SELECT *",
+            Projection::Count => "SELECT COUNT(*)",
+            Projection::Id => "SELECT id",
+        })
+    }
+}

@@ -39,13 +39,7 @@ impl ChannelsQuery {
 
 impl ModelQuery<Channel> for ChannelsQuery {
     fn query_builder(&self, projection: Projection) -> sqlx::QueryBuilder<'_, sqlx::Postgres> {
-        let mut builder = QueryBuilder::new({
-            match projection {
-                Projection::Row => "SELECT *",
-                Projection::Count => "SELECT COUNT(*)",
-                Projection::Id => "SELECT id",
-            }
-        });
+        let mut builder = projection.query_builder();
 
         builder.push(" FROM channels where 1=1");
 
