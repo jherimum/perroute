@@ -1,20 +1,22 @@
-use crate::{
-    log_query_error,
-    query::{ModelQuery, ModelQueryFetch, Projection},
-};
+use crate::query::{ModelQuery, ModelQueryFetch, Projection};
 use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::types::{id::Id, json_schema::JsonSchema};
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgExecutor, QueryBuilder, Type};
-use tap::TapFallible;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Builder)]
 pub struct SchemasQuery {
+    #[builder(default)]
     id: Option<Id>,
+    #[builder(default)]
     message_type_id: Option<Id>,
+    #[builder(default)]
     channel_id: Option<Id>,
+
+    #[builder(default)]
+    version: Option<Version>,
 }
 
 impl SchemasQuery {
@@ -66,6 +68,11 @@ impl ModelQuery<Schema> for SchemasQuery {
         if let Some(channel_id) = self.channel_id {
             builder.push(" AND channel_id = ");
             builder.push_bind(channel_id);
+        }
+
+        if let Some(version) = self.version {
+            builder.push(" AND version = ");
+            builder.push_bind(version);
         }
 
         builder
@@ -125,6 +132,27 @@ pub struct Schema {
 }
 
 impl Schema {
+    pub async fn count<'e, E: PgExecutor<'e>>(
+        exec: E,
+        query: SchemasQuery,
+    ) -> Result<i64, sqlx::Error> {
+        query.count(exec).await
+    }
+
+    pub async fn query<'e, E: PgExecutor<'e>>(
+        exec: E,
+        query: SchemasQuery,
+    ) -> Result<Vec<Schema>, sqlx::Error> {
+        query.many(exec).await
+    }
+
+    pub async fn find<'e, E: PgExecutor<'e>>(
+        exec: E,
+        query: SchemasQuery,
+    ) -> Result<Option<Schema>, sqlx::Error> {
+        query.one(exec).await
+    }
+
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
         sqlx::query_as(
             r#"
@@ -167,26 +195,6 @@ impl Schema {
             .map(|r| r.rows_affected() > 0)
     }
 
-    pub async fn find_by_id<'e, E: PgExecutor<'e>>(
-        exec: E,
-        id: Id,
-    ) -> Result<Option<Self>, sqlx::Error> {
-        SchemasQuery::by_id(id)
-            .one(exec)
-            .await
-            .tap_err(log_query_error!())
-    }
-
-    pub async fn find_message_type_id_and_id<'e, E: PgExecutor<'e>>(
-        exec: E,
-        message_type_id: Id,
-        id: Id,
-    ) -> Result<Option<Self>, sqlx::Error> {
-        SchemasQuery::by_message_type_and_id(id, message_type_id)
-            .one(exec)
-            .await
-    }
-
     pub async fn max_version_number(
         exec: &mut sqlx::PgConnection,
         message_type_id: &Id,
@@ -203,12 +211,5 @@ impl Schema {
         .fetch_optional(exec)
         .await
         .map(|r| r.unwrap_or_default())
-    }
-
-    pub async fn query<'e, E: PgExecutor<'e>>(
-        exec: E,
-        query: SchemasQuery,
-    ) -> Result<Vec<Self>, sqlx::Error> {
-        query.many(exec).await
     }
 }

@@ -1,5 +1,5 @@
 use perroute_commons::types::json_schema::JsonSchema;
-use perroute_storage::models::schema::Schema;
+use perroute_storage::models::schema::{Schema, SchemasQueryBuilder};
 
 use crate::command_bus::{
     bus::CommandBusContext, commands::UpdateSchemaCommand, error::CommandBusError,
@@ -19,12 +19,18 @@ impl CommandHandler for UpdateSchemaCommandHandler {
         ctx: &mut CommandBusContext<'tx, 'a>,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
-        Schema::find_by_id(ctx.tx(), *cmd.schema_id())
-            .await?
-            .unwrap()
-            .set_schema(JsonSchema::try_from(cmd.schema().clone()).unwrap())
-            .update(ctx.tx())
-            .await
-            .map_err(CommandBusError::from)
+        Schema::find(
+            ctx.tx(),
+            SchemasQueryBuilder::default()
+                .id(Some(*cmd.schema_id()))
+                .build()
+                .unwrap(),
+        )
+        .await?
+        .unwrap()
+        .set_schema(JsonSchema::try_from(cmd.schema().clone()).unwrap())
+        .update(ctx.tx())
+        .await
+        .map_err(CommandBusError::from)
     }
 }

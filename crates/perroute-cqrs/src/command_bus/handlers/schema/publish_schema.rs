@@ -2,7 +2,7 @@ use crate::command_bus::{
     bus::CommandBusContext, commands::PublishSchemaCommand, error::CommandBusError,
     handlers::CommandHandler,
 };
-use perroute_storage::models::schema::Schema;
+use perroute_storage::models::schema::{Schema, SchemasQueryBuilder};
 
 #[derive(Debug)]
 pub struct PublishSchemaCommandHandler;
@@ -17,13 +17,19 @@ impl CommandHandler for PublishSchemaCommandHandler {
         ctx: &mut CommandBusContext<'tx, 'a>,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
-        Schema::find_by_id(ctx.tx(), *cmd.schema_id())
-            .await
-            .unwrap()
-            .unwrap()
-            .set_published(true)
-            .update(ctx.tx())
-            .await
-            .map_err(CommandBusError::from)
+        Schema::find(
+            ctx.tx(),
+            SchemasQueryBuilder::default()
+                .id(Some(*cmd.schema_id()))
+                .build()
+                .unwrap(),
+        )
+        .await
+        .unwrap()
+        .unwrap()
+        .set_published(true)
+        .update(ctx.tx())
+        .await
+        .map_err(CommandBusError::from)
     }
 }

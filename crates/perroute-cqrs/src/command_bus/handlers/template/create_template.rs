@@ -4,7 +4,7 @@ use crate::command_bus::{
 };
 use async_trait::async_trait;
 use perroute_storage::models::{
-    schema::Schema,
+    schema::{Schema, SchemasQueryBuilder},
     template::{Template, TemplateBuilder},
 };
 
@@ -25,9 +25,15 @@ impl CommandHandler for CreateTemplateCommandHandler {
         ctx: &mut CommandBusContext<'tx, 'a>,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
-        let schema = Schema::find_by_id(ctx.pool(), *cmd.schema_id())
-            .await?
-            .unwrap();
+        let schema = Schema::find(
+            ctx.tx(),
+            SchemasQueryBuilder::default()
+                .id(Some(*cmd.schema_id()))
+                .build()
+                .unwrap(),
+        )
+        .await?
+        .unwrap();
 
         TemplateBuilder::default()
             .id(*cmd.template_id())

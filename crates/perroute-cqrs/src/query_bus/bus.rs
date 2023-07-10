@@ -6,10 +6,7 @@ use super::{
             find_message_type::FindMessageTypeQueryHandler,
             query_message_types::QueryMessageTypesHandler,
         },
-        schema::{
-            find_message_schema::FindMessageTypeSchemaQueryHandler,
-            query_message_type_schemas::QueryMessageTypeSchemasQueryHandler,
-        },
+        schema::{find_schema::FindSchemaQueryHandler, query_schemas::QuerySchemasQueryHandler},
     },
     queries::Query,
 };
@@ -68,8 +65,8 @@ impl QueryBus {
             .with_handler(QueryChannelsQueryHandler)
             .with_handler(QueryMessageTypesHandler)
             .with_handler(FindMessageTypeQueryHandler)
-            .with_handler(QueryMessageTypeSchemasQueryHandler)
-            .with_handler(FindMessageTypeSchemaQueryHandler)
+            .with_handler(QuerySchemasQueryHandler)
+            .with_handler(FindSchemaQueryHandler)
             .build()
     }
 

@@ -1,4 +1,4 @@
-use perroute_storage::models::schema::Schema;
+use perroute_storage::models::schema::{Schema, SchemasQueryBuilder};
 
 use crate::command_bus::{
     bus::CommandBusContext, commands::DeleteSchemaCommand, error::CommandBusError,
@@ -18,12 +18,18 @@ impl CommandHandler for DeleteSchemaCommandHandler {
         ctx: &mut CommandBusContext<'tx, 'a>,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
-        Schema::find_by_id(ctx.tx(), *cmd.schema_id())
-            .await
-            .unwrap()
-            .unwrap()
-            .delete(ctx.tx())
-            .await
-            .map_err(CommandBusError::from)
+        Schema::find(
+            ctx.tx(),
+            SchemasQueryBuilder::default()
+                .id(Some(*cmd.schema_id()))
+                .build()
+                .unwrap(),
+        )
+        .await
+        .unwrap()
+        .unwrap()
+        .delete(ctx.tx())
+        .await
+        .map_err(CommandBusError::from)
     }
 }

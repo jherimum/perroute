@@ -19,8 +19,6 @@ pub enum QueryType {
 
     QuerySchemas,
     FindSchema,
-    FindSchemaById,
-    FindChannelMessageTypeSchema,
 
     QueryTemplates,
     FindTemplate,
@@ -47,7 +45,7 @@ query!(
 );
 
 query!(
-    QueryMessageTypeSchemasQuery,
+    QuerySchemasQuery,
     QueryType::QuerySchemas,
     message_type_id: Id
 );
@@ -55,17 +53,9 @@ query!(
 query!(
     FindSchemaQuery,
     QueryType::FindSchema,
-    channel_id: Id,
-    message_type_id: Id,
-    version: Id
-);
-
-query!(
-    FindMessageTypeSchemaQuery,
-    QueryType::FindChannelMessageTypeSchema,
-    schema_id: Id,
+    channel_id: Option<Id>,
     message_type_id: Option<Id>,
-    channel_id: Option<Id>
+    schema_id: Id
 );
 
 query!(QueryTemplatesQuery, QueryType::QueryTemplates);

@@ -23,11 +23,9 @@ use perroute_cqrs::command_bus::handlers::schema::{
     update_schema::UpdateSchemaCommandHandler,
 };
 use perroute_cqrs::query_bus::bus::QueryBus;
-use perroute_cqrs::query_bus::handlers::schema::find_message_schema::FindMessageTypeSchemaQueryHandler;
-use perroute_cqrs::query_bus::handlers::schema::query_message_type_schemas::QueryMessageTypeSchemasQueryHandler;
-use perroute_cqrs::query_bus::queries::{
-    FindMessageTypeSchemaQueryBuilder, QueryMessageTypeSchemasQueryBuilder,
-};
+use perroute_cqrs::query_bus::handlers::schema::find_schema::FindSchemaQueryHandler;
+use perroute_cqrs::query_bus::handlers::schema::query_schemas::QuerySchemasQueryHandler;
+use perroute_cqrs::query_bus::queries::{FindSchemaQueryBuilder, QuerySchemasQueryBuilder};
 use perroute_storage::models::schema::Schema;
 use std::convert::identity;
 use tap::TapFallible;
@@ -60,14 +58,14 @@ impl SchemaRouter {
         )
         .await?;
 
-        let query = QueryMessageTypeSchemasQueryBuilder::default()
+        let query = QuerySchemasQueryBuilder::default()
             .message_type_id(*message_type.id())
             .build()
             .unwrap();
 
         state
             .query_bus()
-            .execute::<_, QueryMessageTypeSchemasQueryHandler, _>(&actor, &query)
+            .execute::<_, QuerySchemasQueryHandler, _>(&actor, &query)
             .await
             .map(|schemas| ApiResponse::ok((message_type, schemas)))
             .map_err(ApiError::from)
@@ -170,7 +168,7 @@ impl SchemaRouter {
         path: (Id, Id, Id),
         map: impl FnOnce(Schema) -> R,
     ) -> Result<R, ApiError> {
-        let query = FindMessageTypeSchemaQueryBuilder::default()
+        let query = FindSchemaQueryBuilder::default()
             .schema_id(path.2)
             .message_type_id(Some(path.1))
             .channel_id(Some(path.0))
@@ -178,7 +176,7 @@ impl SchemaRouter {
             .unwrap();
 
         query_bus
-            .execute::<_, FindMessageTypeSchemaQueryHandler, _>(actor, &query)
+            .execute::<_, FindSchemaQueryHandler, _>(actor, &query)
             .await
             .unwrap()
             .ok_or_else(|| ApiError::SchemaNotFound(path.1))

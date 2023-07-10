@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use perroute_storage::models::schema::Schema;
+use perroute_storage::models::schema::{Schema, SchemasQueryBuilder};
 
 use crate::query_bus::{
     bus::{QueryBusContext, QueryHandler},
@@ -18,8 +18,13 @@ impl QueryHandler for FindSchemaQueryHandler {
         ctx: &QueryBusContext,
         query: &Self::Query,
     ) -> Result<Self::Output, QueryBusError> {
-        Schema::find_by_id(ctx.pool(), *query.message_type_id())
-            .await
-            .map_err(Into::into)
+        let query = SchemasQueryBuilder::default()
+            .id(Some(*query.schema_id()))
+            .channel_id(*query.channel_id())
+            .message_type_id(*query.message_type_id())
+            .build()
+            .unwrap();
+
+        Schema::find(ctx.pool(), query).await.map_err(Into::into)
     }
 }

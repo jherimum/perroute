@@ -4,16 +4,16 @@ use perroute_storage::models::schema::{Schema, SchemasQuery};
 use crate::query_bus::{
     bus::{QueryBusContext, QueryHandler},
     error::QueryBusError,
-    queries::QueryMessageTypeSchemasQuery,
+    queries::QuerySchemasQuery,
 };
 
 #[derive(Debug)]
-pub struct QueryMessageTypeSchemasQueryHandler;
+pub struct QuerySchemasQueryHandler;
 
 #[async_trait]
-impl QueryHandler for QueryMessageTypeSchemasQueryHandler {
+impl QueryHandler for QuerySchemasQueryHandler {
     type Output = Vec<Schema>;
-    type Query = QueryMessageTypeSchemasQuery;
+    type Query = QuerySchemasQuery;
 
     async fn handle(
         &self,
