@@ -1,4 +1,4 @@
-use perroute_commons::prelude::Id;
+use perroute_commons::types::id::Id;
 use sqlx::{postgres::PgRow, FromRow, PgExecutor, Postgres, QueryBuilder, Row};
 
 #[async_trait::async_trait]

@@ -4,15 +4,21 @@ use perroute_commons::{
     types::{id::Id, json_schema::JsonSchemaError},
 };
 use perroute_cqrs::{
-    command_bus::error::CommandBusError,
-    prelude::{
-        CreateChannelCommandBuilderError, CreateMessageTypeCommandBuilderError,
-        DeleteChannelCommandBuilderError, DeleteMessageTypeCommandBuilderError,
-        FindChannelQueryBuilderError, FindMessageTypeQueryBuilderError,
-        QueryChannelsQueryBuilderError, QueryMessageTypesQueryBuilderError,
-        UpdateChannelCommandBuilderError, UpdateMessageTypeCommandBuilderError,
+    command_bus::{
+        commands::{
+            CreateChannelCommandBuilderError, CreateMessageTypeCommandBuilderError,
+            DeleteChannelCommandBuilderError, DeleteMessageTypeCommandBuilderError,
+            UpdateChannelCommandBuilderError, UpdateMessageTypeCommandBuilderError,
+        },
+        error::CommandBusError,
     },
-    query_bus::error::QueryBusError,
+    query_bus::{
+        error::QueryBusError,
+        queries::{
+            FindChannelQueryBuilderError, FindMessageTypeQueryBuilderError,
+            QueryChannelsQueryBuilderError, QueryMessageTypesQueryBuilderError,
+        },
+    },
 };
 use thiserror::Error;
 

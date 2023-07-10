@@ -1,20 +1,36 @@
 use super::message_type::MessageTypeRouter;
-use super::prelude::*;
 use crate::api::models::schema::UpdateSchemaRequest;
+use crate::api::response::{
+    ApiResponse, ApiResult, CollectionResourceModel, EmptyApiResult, SingleResourceModel,
+};
+use crate::error::ApiError;
 use crate::links::ResourceLink;
 use crate::{
     api::models::schema::{CreateSchemaRequest, SchemaResource},
     app::AppState,
     extractors::actor::ActorExtractor,
 };
+use actix_web::web::{Data, Json, Path};
+use perroute_commons::new_id;
+use perroute_commons::types::actor::Actor;
+use perroute_commons::types::id::Id;
+use perroute_commons::types::json_schema::JsonSchema;
+use perroute_cqrs::command_bus::commands::{
+    CreateSchemaCommandBuilder, DeleteSchemaCommandBuilder, UpdateSchemaCommandBuilder,
+};
 use perroute_cqrs::command_bus::handlers::schema::{
     create_schema::CreateSchemaCommandHandler, delete_schema::DeleteSchemaCommandHandler,
     update_schema::UpdateSchemaCommandHandler,
 };
+use perroute_cqrs::query_bus::bus::QueryBus;
 use perroute_cqrs::query_bus::handlers::schema::find_message_schema::FindMessageTypeSchemaQueryHandler;
 use perroute_cqrs::query_bus::handlers::schema::query_message_type_schemas::QueryMessageTypeSchemasQueryHandler;
+use perroute_cqrs::query_bus::queries::{
+    FindMessageTypeSchemaQueryBuilder, QueryMessageTypeSchemasQueryBuilder,
+};
 use perroute_storage::models::schema::Schema;
 use std::convert::identity;
+use tap::TapFallible;
 
 pub const SCHEMAS_RESOURCE_NAME: &str = "schemas";
 pub const SCHEMA_RESOURCE_NAME: &str = "schema";

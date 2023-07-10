@@ -13,7 +13,10 @@ use actix_web::{
     web::{Data, Json, Path},
     HttpResponse, Responder,
 };
-use perroute_commons::{new_id, prelude::Actor, types::id::Id};
+use perroute_commons::{
+    new_id,
+    types::{actor::Actor, id::Id},
+};
 use perroute_cqrs::{
     command_bus::{
         commands::{
@@ -26,7 +29,7 @@ use perroute_cqrs::{
             update_template::UpdateTemplateCommandHandler,
         },
     },
-    prelude::QueryBus,
+    query_bus::bus::QueryBus,
 };
 use perroute_storage::models::template::Template;
 

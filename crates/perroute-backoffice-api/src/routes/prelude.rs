@@ -1,9 +1,0 @@
-pub use crate::api::prelude::*;
-pub use crate::app::AppState;
-pub use crate::error::ApiError;
-pub use actix_web::web::Data;
-pub use actix_web::web::Json;
-pub use actix_web::web::Path;
-pub use perroute_commons::prelude::*;
-pub use perroute_cqrs::prelude::*;
-pub use tap::prelude::*;

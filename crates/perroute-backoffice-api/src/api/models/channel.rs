@@ -1,11 +1,10 @@
 use crate::{
-    api::response::{Links, ResourceBuilder},
+    api::response::{Links, ResourceBuilder, ResourceModel},
     links::{Linkrelation, ResourceLink},
-    routes::prelude::ResourceModel,
 };
 use actix_web::HttpRequest;
 use derive_getters::Getters;
-use perroute_commons::{prelude::Id, types::code::Code};
+use perroute_commons::types::{code::Code, id::Id};
 use perroute_storage::models::channel::Channel;
 use serde::Serialize;
 

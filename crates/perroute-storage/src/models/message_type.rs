@@ -64,6 +64,14 @@ impl MessageTypeQuery {
             ..Default::default()
         }
     }
+
+    pub fn by_id_and_maybe_channel(id: Id, channel_id: Option<Id>) -> Self {
+        Self {
+            channel_id,
+            id: Some(id),
+            ..Default::default()
+        }
+    }
 }
 
 impl ModelQuery<MessageType> for MessageTypeQuery {
@@ -142,9 +150,9 @@ impl MessageType {
     pub async fn find_one<'e, E: PgExecutor<'e>>(
         exec: E,
         id: Id,
-        channel_id: Id,
+        channel_id: Option<Id>,
     ) -> Result<Option<Self>, sqlx::Error> {
-        MessageTypeQuery::by_channel_and_id(channel_id, id)
+        MessageTypeQuery::by_id_and_maybe_channel(id, channel_id)
             .one(exec)
             .await
     }

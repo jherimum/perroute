@@ -3,7 +3,7 @@ use crate::{
     links::{Linkrelation, ResourceLink},
 };
 use derive_getters::Getters;
-use perroute_commons::{prelude::Id, types::code::Code};
+use perroute_commons::types::{code::Code, id::Id};
 use perroute_storage::models::{channel::Channel, message_type::MessageType};
 use serde::Serialize;
 

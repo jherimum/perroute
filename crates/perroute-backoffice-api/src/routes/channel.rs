@@ -1,20 +1,38 @@
-use super::prelude::*;
 use crate::{
-    api::models::channel::{ChannelResource, CreateChannelRequest, UpdateChannelRequest},
+    api::{
+        models::channel::{ChannelResource, CreateChannelRequest, UpdateChannelRequest},
+        response::{ApiResponse, ApiResult, EmptyApiResult, ResourceModel},
+    },
+    app::AppState,
+    error::ApiError,
     extractors::actor::ActorExtractor,
     links::ResourceLink,
 };
+use actix_web::web::{Data, Json, Path};
+use perroute_commons::types::{actor::Actor, id::Id};
 use perroute_cqrs::{
-    command_bus::handlers::channel::{
-        create_channel::CreateChannelCommandHandler, delete_channel::DeleteChannelCommandHandler,
-        update_channel::UpdateChannelCommandHandler,
+    command_bus::{
+        commands::{
+            CreateChannelCommand, CreateChannelCommandBuilder, DeleteChannelCommandBuilder,
+            UpdateChannelCommandBuilder,
+        },
+        handlers::channel::{
+            create_channel::CreateChannelCommandHandler,
+            delete_channel::DeleteChannelCommandHandler,
+            update_channel::UpdateChannelCommandHandler,
+        },
     },
-    query_bus::handlers::channel::{
-        find_channel_by_id::FindChannelByIdHandler, query_channels::QueryChannelsQueryHandler,
+    query_bus::{
+        bus::QueryBus,
+        handlers::channel::{
+            find_channel_by_id::FindChannelByIdHandler, query_channels::QueryChannelsQueryHandler,
+        },
+        queries::{FindChannelQueryBuilder, QueryChannelsQueryBuilder},
     },
 };
 use perroute_storage::models::channel::Channel;
 use std::convert::identity;
+use tap::TapFallible;
 
 pub const CHANNEL_RESOURCE_NAME: &str = "channel";
 pub const CHANNELS_RESOURCE_NAME: &str = "channels";
@@ -31,7 +49,7 @@ impl ChannelRouter {
         ActorExtractor(actor): ActorExtractor,
         Json(body): Json<CreateChannelRequest>,
     ) -> SingleResult {
-        let cmd: CreateChannelCommand = CreateChannelCommandBuilder::default()
+        let cmd = CreateChannelCommandBuilder::default()
             .code(body.code().clone())
             .name(body.name().clone())
             .build()

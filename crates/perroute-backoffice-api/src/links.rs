@@ -1,16 +1,18 @@
 use actix_web::HttpRequest;
-use perroute_commons::prelude::Id;
+use perroute_commons::types::id::Id;
 use serde::Serialize;
 use tap::TapFallible;
 use url::Url;
 
-use crate::routes::{
-    channel::{CHANNELS_RESOURCE_NAME, CHANNEL_RESOURCE_NAME},
-    message_type::{MESSAGE_TYPES_RESOURCE_NAME, MESSAGE_TYPE_RESOURCE_NAME},
-    prelude::AsUrl,
-    route::{ROUTES_RESOURCE_NAME, ROUTE_RESOURCE_NAME},
-    schema::{SCHEMAS_RESOURCE_NAME, SCHEMA_RESOURCE_NAME},
-    template::{TEMPLATES_RESOURCE_NAME, TEMPLATE_RESOURCE_NAME},
+use crate::{
+    api::response::AsUrl,
+    routes::{
+        channel::{CHANNELS_RESOURCE_NAME, CHANNEL_RESOURCE_NAME},
+        message_type::{MESSAGE_TYPES_RESOURCE_NAME, MESSAGE_TYPE_RESOURCE_NAME},
+        route::{ROUTES_RESOURCE_NAME, ROUTE_RESOURCE_NAME},
+        schema::{SCHEMAS_RESOURCE_NAME, SCHEMA_RESOURCE_NAME},
+        template::{TEMPLATES_RESOURCE_NAME, TEMPLATE_RESOURCE_NAME},
+    },
 };
 
 #[derive(Debug, PartialEq, Eq, Hash, Serialize, Clone, Copy, strum_macros::Display)]
