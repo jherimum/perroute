@@ -3,7 +3,10 @@ use crate::command_bus::{
     handlers::CommandHandler,
 };
 use perroute_commons::types::id::Id;
-use perroute_storage::models::message_type::{MessageType, MessageTypeQueryBuilder};
+use perroute_storage::{
+    models::message_type::{MessageType, MessageTypeQueryBuilder},
+    query::FetchableModel,
+};
 
 #[derive(Debug, thiserror::Error)]
 pub enum UpdateMessageTypeError {

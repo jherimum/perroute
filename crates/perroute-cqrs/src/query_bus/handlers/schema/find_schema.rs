@@ -1,5 +1,8 @@
 use async_trait::async_trait;
-use perroute_storage::models::schema::{Schema, SchemasQueryBuilder};
+use perroute_storage::{
+    models::schema::{Schema, SchemasQueryBuilder},
+    query::FetchableModel,
+};
 
 use crate::query_bus::{
     bus::{QueryBusContext, QueryHandler},

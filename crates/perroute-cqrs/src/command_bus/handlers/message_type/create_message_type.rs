@@ -6,10 +6,13 @@ use perroute_commons::{
     new_id,
     types::{code::Code, json_schema::JsonSchema},
 };
-use perroute_storage::models::{
-    message_type::{MessageType, MessageTypeBuilder, MessageTypeQueryBuilder},
-    schema::SchemaBuilder,
-    schema::Version,
+use perroute_storage::{
+    models::{
+        message_type::{MessageType, MessageTypeBuilder, MessageTypeQueryBuilder},
+        schema::SchemaBuilder,
+        schema::Version,
+    },
+    query::FetchableModel,
 };
 
 #[derive(Debug, thiserror::Error)]

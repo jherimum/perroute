@@ -1,4 +1,7 @@
-use perroute_storage::models::schema::{Schema, SchemasQueryBuilder};
+use perroute_storage::{
+    models::schema::{Schema, SchemasQueryBuilder},
+    query::FetchableModel,
+};
 
 use crate::command_bus::{
     bus::CommandBusContext, commands::DeleteSchemaCommand, error::CommandBusError,

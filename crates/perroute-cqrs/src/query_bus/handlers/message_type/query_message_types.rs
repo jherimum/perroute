@@ -4,7 +4,10 @@ use crate::query_bus::{
     queries::QueryMessageTypesQuery,
 };
 use async_trait::async_trait;
-use perroute_storage::models::message_type::{MessageType, MessageTypeQueryBuilder};
+use perroute_storage::{
+    models::message_type::{MessageType, MessageTypeQueryBuilder},
+    query::FetchableModel,
+};
 
 pub struct QueryMessageTypesHandler;
 

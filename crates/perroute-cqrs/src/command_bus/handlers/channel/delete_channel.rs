@@ -4,9 +4,12 @@ use crate::command_bus::{
 };
 use async_trait::async_trait;
 use perroute_commons::types::id::Id;
-use perroute_storage::models::{
-    channel::{Channel, ChannelsQueryBuilder},
-    message_type::{MessageType, MessageTypeQueryBuilder},
+use perroute_storage::{
+    models::{
+        channel::{Channel, ChannelsQueryBuilder},
+        message_type::{MessageType, MessageTypeQueryBuilder},
+    },
+    query::FetchableModel,
 };
 use tap::TapFallible;
 

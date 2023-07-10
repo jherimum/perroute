@@ -3,9 +3,12 @@ use crate::command_bus::{
     handlers::CommandHandler,
 };
 use perroute_commons::{new_id, types::json_schema::JsonSchemaError};
-use perroute_storage::models::{
-    message_type::{MessageType, MessageTypeQueryBuilder},
-    schema::{Schema, SchemaBuilder},
+use perroute_storage::{
+    models::{
+        message_type::{MessageType, MessageTypeQueryBuilder},
+        schema::{Schema, SchemaBuilder},
+    },
+    query::FetchableModel,
 };
 
 #[derive(Debug, thiserror::Error)]

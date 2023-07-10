@@ -3,9 +3,12 @@ use crate::command_bus::{
     handlers::CommandHandler,
 };
 use async_trait::async_trait;
-use perroute_storage::models::{
-    schema::{Schema, SchemasQueryBuilder},
-    template::{Template, TemplateBuilder},
+use perroute_storage::{
+    models::{
+        schema::{Schema, SchemasQueryBuilder},
+        template::{Template, TemplateBuilder},
+    },
+    query::FetchableModel,
 };
 
 #[derive(Debug)]

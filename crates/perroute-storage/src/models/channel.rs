@@ -1,6 +1,6 @@
 use crate::{
     log_query_error,
-    query::{ModelQuery, ModelQueryFetch, Projection},
+    query::{ModelQuery, Projection},
 };
 use derive_builder::Builder;
 use derive_getters::Getters;
@@ -70,27 +70,6 @@ pub struct Channel {
 }
 
 impl Channel {
-    pub async fn count<'e, E: PgExecutor<'e>>(
-        exec: E,
-        query: ChannelsQuery,
-    ) -> Result<i64, sqlx::Error> {
-        query.count(exec).await
-    }
-
-    pub async fn query<'e, E: PgExecutor<'e>>(
-        exec: E,
-        query: ChannelsQuery,
-    ) -> Result<Vec<Channel>, sqlx::Error> {
-        query.many(exec).await
-    }
-
-    pub async fn find<'e, E: PgExecutor<'e>>(
-        exec: E,
-        query: ChannelsQuery,
-    ) -> Result<Option<Channel>, sqlx::Error> {
-        query.one(exec).await
-    }
-
     #[tracing::instrument(name = "channel.save", skip(exec))]
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
         sqlx::query_as("INSERT INTO channels (id, code, name) VALUES($1, $2, $3) RETURNING *")

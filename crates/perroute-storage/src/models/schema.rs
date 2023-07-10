@@ -126,27 +126,6 @@ pub struct Schema {
 }
 
 impl Schema {
-    pub async fn count<'e, E: PgExecutor<'e>>(
-        exec: E,
-        query: SchemasQuery,
-    ) -> Result<i64, sqlx::Error> {
-        query.count(exec).await
-    }
-
-    pub async fn query<'e, E: PgExecutor<'e>>(
-        exec: E,
-        query: SchemasQuery,
-    ) -> Result<Vec<Schema>, sqlx::Error> {
-        query.many(exec).await
-    }
-
-    pub async fn find<'e, E: PgExecutor<'e>>(
-        exec: E,
-        query: SchemasQuery,
-    ) -> Result<Option<Schema>, sqlx::Error> {
-        query.one(exec).await
-    }
-
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
         sqlx::query_as(
             r#"

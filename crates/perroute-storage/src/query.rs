@@ -2,6 +2,26 @@ use perroute_commons::types::id::Id;
 use sqlx::{postgres::PgRow, FromRow, PgExecutor, Postgres, QueryBuilder, Row};
 
 #[async_trait::async_trait]
+pub trait FetchableModel<Q: ModelQuery<M>, M> {
+    async fn count<'e, E: PgExecutor<'e>>(exec: E, query: Q) -> Result<i64, sqlx::Error>;
+    async fn query<'e, E: PgExecutor<'e>>(exec: E, query: Q) -> Result<Vec<M>, sqlx::Error>;
+    async fn find<'e, E: PgExecutor<'e>>(exec: E, query: Q) -> Result<Option<M>, sqlx::Error>;
+}
+
+#[async_trait::async_trait]
+impl<M, Q: ModelQuery<M> + ModelQueryFetch<M> + Send + Sync + 'static> FetchableModel<Q, M> for M {
+    async fn count<'e, E: PgExecutor<'e>>(exec: E, query: Q) -> Result<i64, sqlx::Error> {
+        query.count(exec).await
+    }
+    async fn query<'e, E: PgExecutor<'e>>(exec: E, query: Q) -> Result<Vec<M>, sqlx::Error> {
+        query.many(exec).await
+    }
+    async fn find<'e, E: PgExecutor<'e>>(exec: E, query: Q) -> Result<Option<M>, sqlx::Error> {
+        query.one(exec).await
+    }
+}
+
+#[async_trait::async_trait]
 pub trait ModelQueryFetch<M> {
     async fn count<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<i64, sqlx::Error>;
     async fn one<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Option<M>, sqlx::Error>;

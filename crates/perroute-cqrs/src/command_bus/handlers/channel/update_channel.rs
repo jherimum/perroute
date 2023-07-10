@@ -5,7 +5,10 @@ use crate::command_bus::{
 use async_trait::async_trait;
 use derive_new::new;
 use perroute_commons::types::id::Id;
-use perroute_storage::models::channel::{Channel, ChannelsQueryBuilder};
+use perroute_storage::{
+    models::channel::{Channel, ChannelsQueryBuilder},
+    query::FetchableModel,
+};
 use tap::TapFallible;
 
 #[derive(Debug, new)]

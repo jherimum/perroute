@@ -1,5 +1,8 @@
 use perroute_commons::types::json_schema::JsonSchema;
-use perroute_storage::models::schema::{Schema, SchemasQueryBuilder};
+use perroute_storage::{
+    models::schema::{Schema, SchemasQueryBuilder},
+    query::FetchableModel,
+};
 
 use crate::command_bus::{
     bus::CommandBusContext, commands::UpdateSchemaCommand, error::CommandBusError,

@@ -4,7 +4,10 @@ use crate::query_bus::{
     queries::FindChannelQuery,
 };
 use async_trait::async_trait;
-use perroute_storage::models::channel::{Channel, ChannelsQueryBuilder};
+use perroute_storage::{
+    models::channel::{Channel, ChannelsQueryBuilder},
+    query::FetchableModel,
+};
 
 pub struct FindChannelHanlder;
 

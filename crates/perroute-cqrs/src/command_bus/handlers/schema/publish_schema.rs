@@ -2,7 +2,10 @@ use crate::command_bus::{
     bus::CommandBusContext, commands::PublishSchemaCommand, error::CommandBusError,
     handlers::CommandHandler,
 };
-use perroute_storage::models::schema::{Schema, SchemasQueryBuilder};
+use perroute_storage::{
+    models::schema::{Schema, SchemasQueryBuilder},
+    query::FetchableModel,
+};
 
 #[derive(Debug)]
 pub struct PublishSchemaCommandHandler;
