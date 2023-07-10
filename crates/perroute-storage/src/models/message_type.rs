@@ -7,7 +7,7 @@ use tap::TapFallible;
 
 use crate::{
     log_query_error,
-    query::{ModelQuery, ModelQueryFetch},
+    query::{ModelQuery, ModelQueryFetch, Projection},
 };
 
 #[derive(Debug, FromRow, PartialEq, Eq, Clone, Getters, Setters, Builder)]
@@ -28,9 +28,6 @@ pub struct MessageType {
     channel_id: Id,
 }
 
-#[async_trait::async_trait]
-impl ModelQueryFetch<MessageType> for MessageTypeQuery {}
-
 pub struct MessageTypeQuery {
     id: Option<Id>,
     code: Option<Code>,
@@ -38,12 +35,12 @@ pub struct MessageTypeQuery {
 }
 
 impl ModelQuery<MessageType> for MessageTypeQuery {
-    fn query_builder(&self, count: bool) -> QueryBuilder<'_, Postgres> {
+    fn query_builder(&self, projection: Projection) -> QueryBuilder<'_, Postgres> {
         let mut query_builder = QueryBuilder::new({
-            if count {
-                "SELECT COUNT(*)"
-            } else {
-                "SELECT *"
+            match projection {
+                Projection::Row => "SELECT *",
+                Projection::Count => "SELECT COUNT(*)",
+                Projection::Id => "SELECT id",
             }
         });
 

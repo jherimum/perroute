@@ -23,6 +23,12 @@ impl ResourceBuilder<()> for EmptyResourceBuilder {
 }
 
 #[derive(Debug, Serialize, Clone)]
+pub struct ResourceModel<D: Serialize> {
+    pub data: Option<D>,
+    pub links: HashMap<String, Url>,
+}
+
+#[derive(Debug, Serialize, Clone)]
 pub struct SingleResourceModel<D: Serialize> {
     pub data: Option<D>,
     pub links: HashMap<String, Url>,

@@ -19,8 +19,8 @@ use std::convert::identity;
 pub const CHANNEL_RESOURCE_NAME: &str = "channel";
 pub const CHANNELS_RESOURCE_NAME: &str = "channels";
 
-pub type SingleResult = ApiResult<SingleResourceModel<ChannelResource>>;
-pub type CollectionResult = ApiResult<CollectionResourceModel<ChannelResource>>;
+pub type SingleResult = ApiResult<ResourceModel<ChannelResource>>;
+pub type CollectionResult = ApiResult<ResourceModel<Vec<ResourceModel<ChannelResource>>>>;
 
 pub struct ChannelRouter;
 

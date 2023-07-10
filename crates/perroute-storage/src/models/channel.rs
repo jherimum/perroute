@@ -1,6 +1,6 @@
 use crate::{
     log_query_error,
-    query::{ModelQuery, ModelQueryFetch},
+    query::{ModelQuery, ModelQueryFetch, Projection},
 };
 use derive_builder::Builder;
 use derive_getters::Getters;
@@ -14,12 +14,12 @@ pub struct ChannelsQuery {
     pub code: Option<Code>,
 }
 impl ModelQuery<Channel> for ChannelsQuery {
-    fn query_builder(&self, count: bool) -> sqlx::QueryBuilder<'_, sqlx::Postgres> {
+    fn query_builder(&self, projection: Projection) -> sqlx::QueryBuilder<'_, sqlx::Postgres> {
         let mut builder = QueryBuilder::new({
-            if count {
-                "SELECT COUNT(*)"
-            } else {
-                "SELECT *"
+            match projection {
+                Projection::Row => "SELECT *",
+                Projection::Count => "SELECT COUNT(*)",
+                Projection::Id => "SELECT id",
             }
         });
 
@@ -38,9 +38,6 @@ impl ModelQuery<Channel> for ChannelsQuery {
         builder
     }
 }
-
-#[async_trait::async_trait]
-impl ModelQueryFetch<Channel> for ChannelsQuery {}
 
 #[derive(Debug, FromRow, PartialEq, Eq, Clone, Getters, Setters, Builder)]
 #[builder(setter(into))]

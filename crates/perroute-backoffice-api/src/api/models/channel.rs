@@ -1,6 +1,7 @@
 use crate::{
-    api::response::{CollectionResourceModel, Links, ResourceBuilder, SingleResourceModel},
+    api::response::{Links, ResourceBuilder},
     links::{Linkrelation, ResourceLink},
+    routes::prelude::ResourceModel,
 };
 use actix_web::HttpRequest;
 use derive_getters::Getters;
@@ -36,9 +37,9 @@ impl From<Channel> for ChannelResource {
     }
 }
 
-impl ResourceBuilder<SingleResourceModel<ChannelResource>> for Channel {
-    fn build(&self, req: &HttpRequest) -> SingleResourceModel<ChannelResource> {
-        SingleResourceModel {
+impl ResourceBuilder<ResourceModel<ChannelResource>> for Channel {
+    fn build(&self, req: &HttpRequest) -> ResourceModel<ChannelResource> {
+        ResourceModel {
             data: Some(ChannelResource::from(self.clone())),
             links: Links::default()
                 .add(Linkrelation::Self_, ResourceLink::Channel(*self.id()))
@@ -53,10 +54,10 @@ impl ResourceBuilder<SingleResourceModel<ChannelResource>> for Channel {
     }
 }
 
-impl ResourceBuilder<CollectionResourceModel<ChannelResource>> for Vec<Channel> {
-    fn build(&self, req: &HttpRequest) -> CollectionResourceModel<ChannelResource> {
-        CollectionResourceModel {
-            data: self.iter().map(|c| c.build(req)).collect(),
+impl ResourceBuilder<ResourceModel<Vec<ResourceModel<ChannelResource>>>> for Vec<Channel> {
+    fn build(&self, req: &HttpRequest) -> ResourceModel<Vec<ResourceModel<ChannelResource>>> {
+        ResourceModel {
+            data: Some(self.iter().map(|c| c.build(req)).collect()),
             links: Links::default()
                 .add(Linkrelation::Self_, ResourceLink::Channels)
                 .as_url_map(req),
