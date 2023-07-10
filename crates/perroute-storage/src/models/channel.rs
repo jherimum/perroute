@@ -1,6 +1,7 @@
 use crate::{
     log_query_error,
     query::{ModelQuery, Projection},
+    Model,
 };
 use derive_builder::Builder;
 use derive_getters::Getters;
@@ -56,6 +57,8 @@ impl ModelQuery<Channel> for ChannelsQuery {
         builder
     }
 }
+
+impl Model for Channel {}
 
 #[derive(Debug, FromRow, PartialEq, Eq, Clone, Getters, Setters, Builder)]
 #[builder(setter(into))]

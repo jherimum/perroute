@@ -1,6 +1,7 @@
 use crate::{
     log_query_error,
-    query::{ModelQuery, ModelQueryFetch, Projection},
+    query::{ModelQuery, Projection},
+    Model,
 };
 use derive_builder::Builder;
 use derive_getters::Getters;
@@ -8,6 +9,8 @@ use derive_setters::Setters;
 use perroute_commons::types::{code::Code, id::Id};
 use sqlx::{FromRow, PgExecutor, Postgres, QueryBuilder};
 use tap::TapFallible;
+
+impl Model for MessageType {}
 
 #[derive(Debug, FromRow, PartialEq, Eq, Clone, Getters, Setters, Builder)]
 #[builder(setter(into))]

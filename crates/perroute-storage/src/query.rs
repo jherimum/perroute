@@ -1,6 +1,8 @@
 use perroute_commons::types::id::Id;
 use sqlx::{postgres::PgRow, FromRow, PgExecutor, Postgres, QueryBuilder, Row};
 
+use crate::Model;
+
 #[async_trait::async_trait]
 pub trait FetchableModel<Q: ModelQuery<M>, M> {
     async fn count<'e, E: PgExecutor<'e>>(exec: E, query: Q) -> Result<i64, sqlx::Error>;
@@ -9,7 +11,11 @@ pub trait FetchableModel<Q: ModelQuery<M>, M> {
 }
 
 #[async_trait::async_trait]
-impl<M, Q: ModelQuery<M> + ModelQueryFetch<M> + Send + Sync + 'static> FetchableModel<Q, M> for M {
+impl<Q, M> FetchableModel<Q, M> for M
+where
+    Q: ModelQuery<M> + ModelQueryFetch<M> + Send + Sync + 'static,
+    M: Model,
+{
     async fn count<'e, E: PgExecutor<'e>>(exec: E, query: Q) -> Result<i64, sqlx::Error> {
         query.count(exec).await
     }

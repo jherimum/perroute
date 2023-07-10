@@ -1,4 +1,4 @@
-use perroute_commons::types::{code::Code, id::Id};
+use perroute_commons::types::id::Id;
 use serde::Serialize;
 use std::fmt::Debug;
 use strum_macros::Display;

@@ -1,10 +1,15 @@
-use crate::query::{ModelQuery, ModelQueryFetch, Projection};
+use crate::{
+    query::{ModelQuery, Projection},
+    Model,
+};
 use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::types::{id::Id, json_schema::JsonSchema};
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgExecutor, Type};
+
+impl Model for Schema {}
 
 #[derive(Debug, Default, Builder)]
 pub struct SchemasQuery {

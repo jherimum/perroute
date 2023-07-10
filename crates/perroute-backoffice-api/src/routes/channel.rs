@@ -13,8 +13,7 @@ use perroute_commons::types::{actor::Actor, id::Id};
 use perroute_cqrs::{
     command_bus::{
         commands::{
-            CreateChannelCommand, CreateChannelCommandBuilder, DeleteChannelCommandBuilder,
-            UpdateChannelCommandBuilder,
+            CreateChannelCommandBuilder, DeleteChannelCommandBuilder, UpdateChannelCommandBuilder,
         },
         handlers::channel::{
             create_channel::CreateChannelCommandHandler,

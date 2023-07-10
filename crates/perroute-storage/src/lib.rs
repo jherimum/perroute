@@ -14,3 +14,5 @@ mod macros {
         };
     }
 }
+
+pub trait Model {}
