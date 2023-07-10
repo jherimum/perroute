@@ -3,7 +3,7 @@ use crate::command_bus::{
     handlers::CommandHandler,
 };
 use perroute_commons::types::id::Id;
-use perroute_storage::models::message_type::MessageType;
+use perroute_storage::models::message_type::{MessageType, MessageTypeQueryBuilder};
 
 #[derive(thiserror::Error, Debug, Clone)]
 pub enum DeleteMessageTypeError {
@@ -24,11 +24,17 @@ impl CommandHandler for DeleteMessageTypeCommandHandler {
         ctx: &mut CommandBusContext<'tx, 'a>,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
-        MessageType::find_one(ctx.tx(), *cmd.message_type_id(), None)
-            .await?
-            .ok_or_else(|| DeleteMessageTypeError::MessageTypeNotFound(*cmd.message_type_id()))?
-            .delete(ctx.tx())
-            .await
-            .map_err(CommandBusError::from)
+        MessageType::find(
+            ctx.tx(),
+            MessageTypeQueryBuilder::default()
+                .id(Some(*cmd.message_type_id()))
+                .build()
+                .unwrap(),
+        )
+        .await?
+        .ok_or_else(|| DeleteMessageTypeError::MessageTypeNotFound(*cmd.message_type_id()))?
+        .delete(ctx.tx())
+        .await
+        .map_err(CommandBusError::from)
     }
 }

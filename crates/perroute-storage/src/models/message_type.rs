@@ -27,10 +27,13 @@ pub struct MessageType {
     channel_id: Id,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Builder)]
 pub struct MessageTypeQuery {
+    #[builder(default)]
     id: Option<Id>,
+    #[builder(default)]
     code: Option<Code>,
+    #[builder(default)]
     channel_id: Option<Id>,
 }
 
@@ -106,6 +109,27 @@ impl ModelQuery<MessageType> for MessageTypeQuery {
 }
 
 impl MessageType {
+    pub async fn count<'e, E: PgExecutor<'e>>(
+        exec: E,
+        query: MessageTypeQuery,
+    ) -> Result<i64, sqlx::Error> {
+        query.count(exec).await
+    }
+
+    pub async fn query<'e, E: PgExecutor<'e>>(
+        exec: E,
+        query: MessageTypeQuery,
+    ) -> Result<Vec<MessageType>, sqlx::Error> {
+        query.many(exec).await
+    }
+
+    pub async fn find<'e, E: PgExecutor<'e>>(
+        exec: E,
+        query: MessageTypeQuery,
+    ) -> Result<Option<MessageType>, sqlx::Error> {
+        query.one(exec).await
+    }
+
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
         sqlx::query_as(
             r#"
@@ -147,43 +171,43 @@ impl MessageType {
             .map(|result| result.rows_affected() > 0)
     }
 
-    pub async fn find_one<'e, E: PgExecutor<'e>>(
-        exec: E,
-        id: Id,
-        channel_id: Option<Id>,
-    ) -> Result<Option<Self>, sqlx::Error> {
-        MessageTypeQuery::by_id_and_maybe_channel(id, channel_id)
-            .one(exec)
-            .await
-    }
+    // pub async fn find_one<'e, E: PgExecutor<'e>>(
+    //     exec: E,
+    //     id: Id,
+    //     channel_id: Option<Id>,
+    // ) -> Result<Option<Self>, sqlx::Error> {
+    //     MessageTypeQuery::by_id_and_maybe_channel(id, channel_id)
+    //         .one(exec)
+    //         .await
+    // }
 
-    pub async fn exists_code<'e, E: PgExecutor<'e>>(
-        exec: E,
-        channel_id: Id,
-        code: Code,
-    ) -> Result<bool, sqlx::Error> {
-        MessageTypeQuery::by_channel_and_code(channel_id, code)
-            .count(exec)
-            .await
-            .map(|count| count > 0)
-    }
+    // pub async fn exists_code<'e, E: PgExecutor<'e>>(
+    //     exec: E,
+    //     channel_id: Id,
+    //     code: Code,
+    // ) -> Result<bool, sqlx::Error> {
+    //     MessageTypeQuery::by_channel_and_code(channel_id, code)
+    //         .count(exec)
+    //         .await
+    //         .map(|count| count > 0)
+    // }
 
-    pub async fn find_by_channel_id_and_message_type_id<'e, E: PgExecutor<'e>>(
-        exec: E,
-        channel_id: Id,
-        message_type_id: Id,
-    ) -> Result<Option<Self>, sqlx::Error> {
-        MessageTypeQuery::by_channel_and_id(channel_id, message_type_id)
-            .one(exec)
-            .await
-    }
+    // pub async fn find_by_channel_id_and_message_type_id<'e, E: PgExecutor<'e>>(
+    //     exec: E,
+    //     channel_id: Id,
+    //     message_type_id: Id,
+    // ) -> Result<Option<Self>, sqlx::Error> {
+    //     MessageTypeQuery::by_channel_and_id(channel_id, message_type_id)
+    //         .one(exec)
+    //         .await
+    // }
 
-    pub async fn find_by_channel<'e, E: PgExecutor<'e>>(
-        exec: E,
-        channel_id: Id,
-    ) -> Result<Vec<Self>, sqlx::Error> {
-        MessageTypeQuery::all_by_channel(channel_id)
-            .many(exec)
-            .await
-    }
+    // pub async fn find_by_channel<'e, E: PgExecutor<'e>>(
+    //     exec: E,
+    //     channel_id: Id,
+    // ) -> Result<Vec<Self>, sqlx::Error> {
+    //     MessageTypeQuery::all_by_channel(channel_id)
+    //         .many(exec)
+    //         .await
+    // }
 }

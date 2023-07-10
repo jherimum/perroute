@@ -7,7 +7,7 @@ use perroute_commons::{
     types::{code::Code, json_schema::JsonSchema},
 };
 use perroute_storage::models::{
-    message_type::{MessageType, MessageTypeBuilder},
+    message_type::{MessageType, MessageTypeBuilder, MessageTypeQueryBuilder},
     schema::SchemaBuilder,
     schema::Version,
 };
@@ -31,7 +31,12 @@ impl CommandHandler for CreateMessageTypeCommandHandler {
         ctx: &mut CommandBusContext<'tx, 'a>,
         cmd: Self::Command,
     ) -> Result<MessageType, CommandBusError> {
-        if MessageType::exists_code(ctx.tx(), *cmd.channel_id(), cmd.code().clone()).await? {
+        let query = MessageTypeQueryBuilder::default()
+            .channel_id(Some(*cmd.channel_id()))
+            .code(Some(cmd.code().clone()))
+            .build()
+            .unwrap();
+        if MessageType::count(ctx.pool(), query).await? > 0 {
             return Err(CreateMessageTypeError::CodeAlreadyExists(cmd.code().clone()).into());
         }
 

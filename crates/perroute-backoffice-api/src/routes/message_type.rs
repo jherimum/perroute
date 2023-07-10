@@ -59,7 +59,7 @@ impl MessageTypeRouter {
                 .await?;
 
         let query = QueryMessageTypesQueryBuilder::default()
-            .channel_id(*channel.id())
+            .channel_id(Some(*channel.id()))
             .build()
             .tap_err(|e| tracing::error!("Failed to build QueryMessageTypesQuery: {e}"))?;
 

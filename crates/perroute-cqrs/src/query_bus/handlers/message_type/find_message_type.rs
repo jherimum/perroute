@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use perroute_storage::models::message_type::MessageType;
+use perroute_storage::models::message_type::{MessageType, MessageTypeQueryBuilder};
 
 use crate::query_bus::{
     bus::{QueryBusContext, QueryHandler},
@@ -18,8 +18,15 @@ impl QueryHandler for FindMessageTypeQueryHandler {
         ctx: &QueryBusContext,
         query: &Self::Query,
     ) -> Result<Self::Output, QueryBusError> {
-        MessageType::find_one(ctx.pool(), *query.message_type_id(), *query.channel_id())
-            .await
-            .map_err(Into::into)
+        MessageType::find(
+            ctx.pool(),
+            MessageTypeQueryBuilder::default()
+                .id(Some(*query.message_type_id()))
+                .channel_id(*query.channel_id())
+                .build()
+                .unwrap(),
+        )
+        .await
+        .map_err(Into::into)
     }
 }

@@ -6,7 +6,7 @@ use async_trait::async_trait;
 use perroute_commons::types::id::Id;
 use perroute_storage::models::{
     channel::{Channel, ChannelsQueryBuilder},
-    message_type::MessageType,
+    message_type::{MessageType, MessageTypeQueryBuilder},
 };
 use tap::TapFallible;
 
@@ -40,10 +40,16 @@ impl CommandHandler for DeleteChannelCommandHandler {
         .await?;
 
         if let Some(channel) = channel {
-            let message_types =
-                MessageType::find_by_channel(ctx.pool(), *command.channel_id()).await?;
+            let message_types = MessageType::count(
+                ctx.pool(),
+                MessageTypeQueryBuilder::default()
+                    .channel_id(Some(*channel.id()))
+                    .build()
+                    .unwrap(),
+            )
+            .await?;
 
-            if message_types.is_empty() {
+            if message_types == 0 {
                 channel
                     .delete(ctx.tx())
                     .await

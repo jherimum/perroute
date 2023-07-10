@@ -4,7 +4,7 @@ use crate::command_bus::{
 };
 use perroute_commons::{new_id, types::json_schema::JsonSchemaError};
 use perroute_storage::models::{
-    message_type::MessageType,
+    message_type::{MessageType, MessageTypeQueryBuilder},
     schema::{Schema, SchemaBuilder},
 };
 
@@ -27,9 +27,15 @@ impl CommandHandler for CreateSchemaCommandHandler {
         ctx: &mut CommandBusContext<'tx, 'a>,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
-        let mt = MessageType::find_one(ctx.tx(), *cmd.message_type_id(), None)
-            .await?
-            .unwrap();
+        let mt = MessageType::find(
+            ctx.tx(),
+            MessageTypeQueryBuilder::default()
+                .id(Some(*cmd.message_type_id()))
+                .build()
+                .unwrap(),
+        )
+        .await?
+        .unwrap();
         let actual_version = Schema::max_version_number(ctx.tx(), mt.id()).await?;
 
         SchemaBuilder::default()
