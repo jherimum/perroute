@@ -10,8 +10,10 @@ pub trait ModelQueryFetch<M> {
 }
 
 #[async_trait::async_trait]
-impl<Q: ModelQuery<M> + Sync, M: Unpin + Sync + Send + for<'a> FromRow<'a, PgRow>>
-    ModelQueryFetch<M> for Q
+impl<Q, M> ModelQueryFetch<M> for Q
+where
+    Q: ModelQuery<M> + Sync,
+    M: Unpin + Sync + Send + for<'a> FromRow<'a, PgRow>,
 {
     async fn count<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<i64, sqlx::Error> {
         self.query_builder(Projection::Count)

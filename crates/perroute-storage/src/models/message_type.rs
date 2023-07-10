@@ -1,14 +1,13 @@
+use crate::{
+    log_query_error,
+    query::{ModelQuery, ModelQueryFetch, Projection},
+};
 use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::types::{code::Code, id::Id};
 use sqlx::{FromRow, PgExecutor, Postgres, QueryBuilder};
 use tap::TapFallible;
-
-use crate::{
-    log_query_error,
-    query::{ModelQuery, ModelQueryFetch, Projection},
-};
 
 #[derive(Debug, FromRow, PartialEq, Eq, Clone, Getters, Setters, Builder)]
 #[builder(setter(into))]
@@ -28,10 +27,43 @@ pub struct MessageType {
     channel_id: Id,
 }
 
+#[derive(Debug, Default)]
 pub struct MessageTypeQuery {
     id: Option<Id>,
     code: Option<Code>,
     channel_id: Option<Id>,
+}
+
+impl MessageTypeQuery {
+    pub fn by_id(id: Id) -> Self {
+        Self {
+            id: Some(id),
+            ..Default::default()
+        }
+    }
+
+    pub fn by_channel_and_code(channel_id: Id, code: Code) -> Self {
+        Self {
+            channel_id: Some(channel_id),
+            code: Some(code),
+            ..Default::default()
+        }
+    }
+
+    pub fn all_by_channel(channel_id: Id) -> Self {
+        Self {
+            channel_id: Some(channel_id),
+            ..Default::default()
+        }
+    }
+
+    pub fn by_channel_and_id(channel_id: Id, id: Id) -> Self {
+        Self {
+            channel_id: Some(channel_id),
+            id: Some(id),
+            ..Default::default()
+        }
+    }
 }
 
 impl ModelQuery<MessageType> for MessageTypeQuery {
@@ -110,15 +142,11 @@ impl MessageType {
     pub async fn find_one<'e, E: PgExecutor<'e>>(
         exec: E,
         id: Id,
-        channel_id: Option<Id>,
+        channel_id: Id,
     ) -> Result<Option<Self>, sqlx::Error> {
-        MessageTypeQuery {
-            id: Some(id),
-            code: None,
-            channel_id,
-        }
-        .one(exec)
-        .await
+        MessageTypeQuery::by_channel_and_id(channel_id, id)
+            .one(exec)
+            .await
     }
 
     pub async fn exists_code<'e, E: PgExecutor<'e>>(
@@ -126,14 +154,10 @@ impl MessageType {
         channel_id: Id,
         code: Code,
     ) -> Result<bool, sqlx::Error> {
-        MessageTypeQuery {
-            channel_id: Some(channel_id),
-            code: Some(code),
-            id: None,
-        }
-        .count(exec)
-        .await
-        .map(|count| count > 0)
+        MessageTypeQuery::by_channel_and_code(channel_id, code)
+            .count(exec)
+            .await
+            .map(|count| count > 0)
     }
 
     pub async fn find_by_channel_id_and_message_type_id<'e, E: PgExecutor<'e>>(
@@ -141,25 +165,17 @@ impl MessageType {
         channel_id: Id,
         message_type_id: Id,
     ) -> Result<Option<Self>, sqlx::Error> {
-        MessageTypeQuery {
-            id: Some(message_type_id),
-            code: None,
-            channel_id: Some(channel_id),
-        }
-        .one(exec)
-        .await
+        MessageTypeQuery::by_channel_and_id(channel_id, message_type_id)
+            .one(exec)
+            .await
     }
 
     pub async fn find_by_channel<'e, E: PgExecutor<'e>>(
         exec: E,
         channel_id: Id,
     ) -> Result<Vec<Self>, sqlx::Error> {
-        MessageTypeQuery {
-            id: None,
-            code: None,
-            channel_id: Some(channel_id),
-        }
-        .many(exec)
-        .await
+        MessageTypeQuery::all_by_channel(channel_id)
+            .many(exec)
+            .await
     }
 }
