@@ -1,5 +1,5 @@
 use crate::{
-    query::{ModelQuery, Projection},
+    query::{ModelQueryBuilder, Projection},
     DatabaseModel,
 };
 use derive_builder::Builder;
@@ -48,8 +48,8 @@ impl SchemasQuery {
     }
 }
 
-impl ModelQuery<Schema> for SchemasQuery {
-    fn query_builder(&self, projection: Projection) -> sqlx::QueryBuilder<'_, sqlx::Postgres> {
+impl ModelQueryBuilder<Schema> for SchemasQuery {
+    fn build(&self, projection: Projection) -> sqlx::QueryBuilder<'_, sqlx::Postgres> {
         let mut builder = projection.query_builder();
 
         builder.push(" FROM schemas WHERE 1=1");

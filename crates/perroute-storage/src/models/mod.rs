@@ -1,7 +1,6 @@
 pub mod channel;
 pub mod command_log;
 pub mod connection;
-pub mod event;
 pub mod message_type;
 pub mod schema;
 pub mod template;

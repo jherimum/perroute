@@ -29,7 +29,10 @@ use perroute_cqrs::{
             update_template::UpdateTemplateCommandHandler,
         },
     },
-    query_bus::bus::QueryBus,
+    query_bus::{
+        bus::QueryBus, handlers::template::find_tempate::FindTemplateQueryHandler,
+        queries::FindTemplateQueryBuilder,
+    },
 };
 use perroute_storage::models::template::Template;
 
@@ -100,6 +103,7 @@ impl TemplateRouter {
             .html(body.html.map(Into::into))
             .text(body.text.map(Into::into))
             .subject(body.subject.map(Into::into))
+            .name(body.name)
             .build()
             .unwrap();
         let template = state
@@ -150,6 +154,12 @@ impl TemplateRouter {
         path: (Id, Id, Id, Id),
         map: impl FnOnce(Template) -> R,
     ) -> Result<R, ApiError> {
-        todo!()
+        let query = FindTemplateQueryBuilder::default().build().unwrap();
+
+        query_bus
+            .execute::<_, FindTemplateQueryHandler, _>(actor, &query)
+            .await?
+            .ok_or_else(|| ApiError::TemplateNotFound(path.3))
+            .map(map)
     }
 }

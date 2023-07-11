@@ -66,6 +66,9 @@ pub enum ApiError {
     #[error("Schema {0} not found")]
     SchemaNotFound(Id),
 
+    #[error("Template {0} not found")]
+    TemplateNotFound(Id),
+
     #[error(transparent)]
     CommandBus(#[from] CommandBusError),
 

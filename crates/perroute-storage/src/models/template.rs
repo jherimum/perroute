@@ -5,7 +5,7 @@ use perroute_commons::types::{id::Id, template::TemplateSnippet};
 use sqlx::{FromRow, PgExecutor, QueryBuilder};
 
 use crate::{
-    query::{ModelQuery, Projection},
+    query::{ModelQueryBuilder, Projection},
     DatabaseModel,
 };
 
@@ -19,8 +19,8 @@ pub struct TemplatesQuery {
     channel_id: Option<Id>,
 }
 
-impl ModelQuery<Template> for TemplatesQuery {
-    fn query_builder(&self, projection: Projection) -> QueryBuilder<'_, sqlx::Postgres> {
+impl ModelQueryBuilder<Template> for TemplatesQuery {
+    fn build(&self, projection: Projection) -> QueryBuilder<'_, sqlx::Postgres> {
         let mut builder = projection.query_builder();
 
         builder.push(" FROM templates ");

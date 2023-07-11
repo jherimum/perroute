@@ -1,6 +1,6 @@
 use crate::{
     log_query_error,
-    query::{ModelQuery, Projection},
+    query::{ModelQueryBuilder, Projection},
     DatabaseModel,
 };
 use derive_builder::Builder;
@@ -38,8 +38,8 @@ impl ChannelsQuery {
     }
 }
 
-impl ModelQuery<Channel> for ChannelsQuery {
-    fn query_builder(&self, projection: Projection) -> sqlx::QueryBuilder<'_, sqlx::Postgres> {
+impl ModelQueryBuilder<Channel> for ChannelsQuery {
+    fn build(&self, projection: Projection) -> sqlx::QueryBuilder<'_, sqlx::Postgres> {
         let mut builder = projection.query_builder();
 
         builder.push(" FROM channels where 1=1");

@@ -1,6 +1,6 @@
 use crate::{
     log_query_error,
-    query::{ModelQuery, Projection},
+    query::{ModelQueryBuilder, Projection},
     DatabaseModel,
 };
 use derive_builder::Builder;
@@ -80,8 +80,8 @@ impl MessageTypeQuery {
     }
 }
 
-impl ModelQuery<MessageType> for MessageTypeQuery {
-    fn query_builder(&self, projection: Projection) -> QueryBuilder<'_, Postgres> {
+impl ModelQueryBuilder<MessageType> for MessageTypeQuery {
+    fn build(&self, projection: Projection) -> QueryBuilder<'_, Postgres> {
         let mut query_builder = projection.query_builder();
 
         query_builder.push(" FROM message_types WHERE 1=1");

@@ -11,7 +11,7 @@ pub struct CreateTemplateRequest {
 
 #[derive(Debug, serde::Deserialize, Clone)]
 pub struct UpdateTemplateRequest {
-    pub description: String,
+    pub name: String,
     pub html: Option<String>,
     pub text: Option<String>,
     pub subject: Option<String>,
