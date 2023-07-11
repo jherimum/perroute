@@ -1,10 +1,12 @@
-use async_trait::async_trait;
-use perroute_storage::models::template::Template;
-
 use crate::query_bus::{
     bus::{QueryBusContext, QueryHandler},
     error::QueryBusError,
     queries::FindTemplateQuery,
+};
+use async_trait::async_trait;
+use perroute_storage::{
+    models::template::{Template, TemplatesQueryBuilder},
+    query::FetchableModel,
 };
 
 pub struct FindTemplateQueryHandler;
@@ -18,6 +20,11 @@ impl QueryHandler for FindTemplateQueryHandler {
         ctx: &QueryBusContext,
         query: &Self::Query,
     ) -> Result<Self::Output, QueryBusError> {
-        todo!()
+        Template::find(
+            ctx.pool(),
+            TemplatesQueryBuilder::default().build().unwrap(),
+        )
+        .await
+        .map_err(Into::into)
     }
 }

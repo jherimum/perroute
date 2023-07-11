@@ -1,9 +1,13 @@
 use std::convert::identity;
 
+use super::schema::SchemaRouter;
 use crate::{
     api::{
-        models::template::{CreateTemplateRequest, UpdateTemplateRequest},
-        response::{ApiResponse, EmptyApiResult},
+        models::template::{CreateTemplateRequest, TemplateResource, UpdateTemplateRequest},
+        response::{
+            ApiResponse, ApiResult, CollectionResourceModel, EmptyApiResult, ResourceModel,
+            SingleResourceModel,
+        },
     },
     app::AppState,
     error::ApiError,
@@ -36,7 +40,8 @@ use perroute_cqrs::{
 };
 use perroute_storage::models::template::Template;
 
-use super::schema::SchemaRouter;
+pub type SingleResult = ApiResult<ResourceModel<TemplateResource>>;
+pub type CollectionResult = ApiResult<ResourceModel<Vec<ResourceModel<TemplateResource>>>>;
 
 pub const TEMPLATES_RESOURCE_NAME: &str = "templates";
 pub const TEMPLATE_RESOURCE_NAME: &str = "template";
@@ -140,12 +145,8 @@ impl TemplateRouter {
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
         path: Path<(Id, Id, Id, Id)>,
-    ) -> EmptyApiResult {
-        let template = Self::retrieve_template(state.query_bus(), &actor, *path.as_ref(), identity)
-            .await
-            .unwrap();
-
-        Ok(ApiResponse::ok_empty())
+    ) -> SingleResult {
+        Self::retrieve_template(state.query_bus(), &actor, *path.as_ref(), ApiResponse::ok).await
     }
 
     pub async fn retrieve_template<R>(
@@ -154,7 +155,13 @@ impl TemplateRouter {
         path: (Id, Id, Id, Id),
         map: impl FnOnce(Template) -> R,
     ) -> Result<R, ApiError> {
-        let query = FindTemplateQueryBuilder::default().build().unwrap();
+        let query = FindTemplateQueryBuilder::default()
+            .template_id(path.3)
+            .schema_id(Some(path.2))
+            .message_type_id(Some(path.1))
+            .channel_id(Some(path.0))
+            .build()
+            .unwrap();
 
         query_bus
             .execute::<_, FindTemplateQueryHandler, _>(actor, &query)

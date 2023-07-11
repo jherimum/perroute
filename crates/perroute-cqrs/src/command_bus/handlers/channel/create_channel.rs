@@ -30,7 +30,7 @@ impl CommandHandler for CreateChannelCommandHandler {
         ctx: &mut CommandBusContext<'tx, 'a>,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
-        if Channel::count(
+        if Channel::exists(
             ctx.tx(),
             ChannelsQueryBuilder::default()
                 .code(Some(cmd.code().clone()))
@@ -43,8 +43,7 @@ impl CommandHandler for CreateChannelCommandHandler {
                 "Failed to checking if channel with code {} exists: {e}",
                 cmd.code()
             )
-        })? > 0
-        {
+        })? {
             return Err(CommandBusError::ExpectedError(
                 "Channel with code already exists",
             ));

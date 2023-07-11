@@ -58,6 +58,17 @@ query!(
     schema_id: Id
 );
 
-query!(QueryTemplatesQuery, QueryType::QueryTemplates);
+query!(
+    QueryTemplatesQuery,
+    QueryType::QueryTemplates,
+    schema_id: Option<Id>
+);
 
-query!(FindTemplateQuery, QueryType::FindTemplate, template_id: Id);
+query!(
+    FindTemplateQuery,
+    QueryType::FindTemplate,
+    template_id: Id,
+    schema_id: Option<Id>,
+    message_type_id: Option<Id>,
+    channel_id: Option<Id>
+);

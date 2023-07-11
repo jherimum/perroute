@@ -10,3 +10,9 @@ impl From<String> for TemplateSnippet {
         TemplateSnippet(value)
     }
 }
+
+impl From<TemplateSnippet> for String {
+    fn from(value: TemplateSnippet) -> Self {
+        value.0
+    }
+}

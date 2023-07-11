@@ -34,12 +34,16 @@ impl CommandHandler for CreateMessageTypeCommandHandler {
         ctx: &mut CommandBusContext<'tx, 'a>,
         cmd: Self::Command,
     ) -> Result<MessageType, CommandBusError> {
-        let query = MessageTypeQueryBuilder::default()
-            .channel_id(Some(*cmd.channel_id()))
-            .code(Some(cmd.code().clone()))
-            .build()
-            .unwrap();
-        if MessageType::count(ctx.pool(), query).await? > 0 {
+        if MessageType::exists(
+            ctx.pool(),
+            MessageTypeQueryBuilder::default()
+                .channel_id(Some(*cmd.channel_id()))
+                .code(Some(cmd.code().clone()))
+                .build()
+                .unwrap(),
+        )
+        .await?
+        {
             return Err(CreateMessageTypeError::CodeAlreadyExists(cmd.code().clone()).into());
         }
 
