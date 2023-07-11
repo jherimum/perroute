@@ -4,19 +4,14 @@ use super::schema::SchemaRouter;
 use crate::{
     api::{
         models::template::{CreateTemplateRequest, TemplateResource, UpdateTemplateRequest},
-        response::{
-            ApiResponse, ApiResult, CollectionResourceModel, EmptyApiResult, ResourceModel,
-            SingleResourceModel,
-        },
+        response::{ApiResponse, ApiResult, EmptyApiResult, ResourceModel},
     },
     app::AppState,
     error::ApiError,
     extractors::actor::ActorExtractor,
+    links::ResourceLink,
 };
-use actix_web::{
-    web::{Data, Json, Path},
-    HttpResponse, Responder,
-};
+use actix_web::web::{Data, Json, Path};
 use perroute_commons::{
     new_id,
     types::{actor::Actor, id::Id},
@@ -34,8 +29,11 @@ use perroute_cqrs::{
         },
     },
     query_bus::{
-        bus::QueryBus, handlers::template::find_tempate::FindTemplateQueryHandler,
-        queries::FindTemplateQueryBuilder,
+        bus::QueryBus,
+        handlers::template::{
+            find_tempate::FindTemplateQueryHandler, query_templates::QueryTemplatesQueryHandler,
+        },
+        queries::{FindTemplateQueryBuilder, QueryTemplatesQueryBuilder},
     },
 };
 use perroute_storage::models::template::Template;
@@ -54,13 +52,23 @@ impl TemplateRouter {
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
         path: Path<(Id, Id, Id)>,
-    ) -> impl Responder {
+    ) -> CollectionResult {
         let schema =
             SchemaRouter::retrieve_schema(state.query_bus(), &actor, *path.as_ref(), identity)
                 .await
                 .unwrap();
 
-        HttpResponse::Ok().finish()
+        let query = QueryTemplatesQueryBuilder::default()
+            .schema_id(Some(*schema.id()))
+            .build()
+            .unwrap();
+
+        state
+            .query_bus()
+            .execute::<_, QueryTemplatesQueryHandler, _>(&actor, &query)
+            .await
+            .map(|templates| ApiResponse::ok((schema, templates)))
+            .map_err(ApiError::from)
     }
 
     #[tracing::instrument]
@@ -69,7 +77,7 @@ impl TemplateRouter {
         ActorExtractor(actor): ActorExtractor,
         path: Path<(Id, Id, Id)>,
         Json(body): Json<CreateTemplateRequest>,
-    ) -> EmptyApiResult {
+    ) -> SingleResult {
         let schema =
             SchemaRouter::retrieve_schema(state.query_bus(), &actor, *path.as_ref(), identity)
                 .await
@@ -77,7 +85,7 @@ impl TemplateRouter {
 
         let cmd = CreateTemplateCommandBuilder::default()
             .template_id(new_id!())
-            .schema_id(body.schema_id)
+            .schema_id(*schema.id())
             .name(body.name)
             .html(body.html.map(Into::into))
             .text(body.text.map(Into::into))
@@ -89,7 +97,10 @@ impl TemplateRouter {
             .execute::<_, CreateTemplateCommandHandler, _>(&actor, &cmd)
             .await?;
 
-        Ok(ApiResponse::ok_empty())
+        Ok(ApiResponse::created(
+            ResourceLink::Template(path.0, path.1, path.2, *template.id()),
+            template,
+        ))
     }
 
     #[tracing::instrument]
@@ -98,7 +109,7 @@ impl TemplateRouter {
         ActorExtractor(actor): ActorExtractor,
         path: Path<(Id, Id, Id, Id)>,
         Json(body): Json<UpdateTemplateRequest>,
-    ) -> EmptyApiResult {
+    ) -> SingleResult {
         let template = Self::retrieve_template(state.query_bus(), &actor, *path.as_ref(), identity)
             .await
             .unwrap();
@@ -111,12 +122,13 @@ impl TemplateRouter {
             .name(body.name)
             .build()
             .unwrap();
-        let template = state
+
+        state
             .command_bus()
             .execute::<_, UpdateTemplateCommandHandler, _>(&actor, &cmd)
-            .await?;
-
-        Ok(ApiResponse::ok_empty())
+            .await
+            .map_err(ApiError::from)
+            .map(ApiResponse::ok)
     }
 
     #[tracing::instrument]
@@ -132,7 +144,7 @@ impl TemplateRouter {
             .template_id(*template.id())
             .build()
             .unwrap();
-        let template = state
+        state
             .command_bus()
             .execute::<_, DeleteTemplateCommandHandler, _>(&actor, &cmd)
             .await?;

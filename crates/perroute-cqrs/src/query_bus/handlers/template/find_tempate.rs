@@ -22,7 +22,13 @@ impl QueryHandler for FindTemplateQueryHandler {
     ) -> Result<Self::Output, QueryBusError> {
         Template::find(
             ctx.pool(),
-            TemplatesQueryBuilder::default().build().unwrap(),
+            TemplatesQueryBuilder::default()
+                .id(Some(*query.template_id()))
+                .schema_id(*query.schema_id())
+                .message_type_id(*query.message_type_id())
+                .channel_id(*query.channel_id())
+                .build()
+                .unwrap(),
         )
         .await
         .map_err(Into::into)
