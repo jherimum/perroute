@@ -3,7 +3,7 @@ use crate::command_bus::{
     handlers::CommandHandler,
 };
 use async_trait::async_trait;
-use perroute_commons::types::id::Id;
+use perroute_commons::types::{actor::Actor, id::Id};
 use perroute_storage::{
     models::{
         channel::{Channel, ChannelsQueryBuilder},
@@ -28,9 +28,10 @@ impl CommandHandler for DeleteChannelCommandHandler {
     type Output = bool;
 
     #[tracing::instrument(skip(self))]
-    async fn handle<'ctx, 'a>(
+    async fn handle<'ctx>(
         &self,
-        ctx: &mut CommandBusContext<'ctx, 'a>,
+        ctx: &mut CommandBusContext<'ctx>,
+        actor: &Actor,
         command: Self::Command,
     ) -> Result<bool, CommandBusError> {
         let channel = Channel::find(

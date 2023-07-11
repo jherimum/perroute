@@ -1,4 +1,5 @@
 use super::{bus::CommandBusContext, commands::Command, error::CommandBusError};
+use perroute_commons::types::actor::Actor;
 use std::fmt::Debug;
 
 pub mod channel;
@@ -11,9 +12,10 @@ pub trait CommandHandler: Send + Sync + Debug {
     type Command: Command;
     type Output: Debug;
 
-    async fn handle<'tx, 'a>(
+    async fn handle<'tx>(
         &self,
-        ctx: &mut CommandBusContext<'tx, 'a>,
+        ctx: &mut CommandBusContext<'tx>,
+        actor: &Actor,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError>;
 }

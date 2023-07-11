@@ -2,6 +2,7 @@ use crate::command_bus::{
     bus::CommandBusContext, commands::PublishSchemaCommand, error::CommandBusError,
     handlers::CommandHandler,
 };
+use perroute_commons::types::actor::Actor;
 use perroute_storage::{
     models::schema::{Schema, SchemasQueryBuilder},
     query::FetchableModel,
@@ -15,9 +16,10 @@ impl CommandHandler for PublishSchemaCommandHandler {
     type Command = PublishSchemaCommand;
     type Output = Schema;
 
-    async fn handle<'tx, 'a>(
+    async fn handle<'tx>(
         &self,
-        ctx: &mut CommandBusContext<'tx, 'a>,
+        ctx: &mut CommandBusContext<'tx>,
+        _: &Actor,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
         Schema::find(

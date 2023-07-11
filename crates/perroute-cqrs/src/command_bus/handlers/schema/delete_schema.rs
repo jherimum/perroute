@@ -1,3 +1,4 @@
+use perroute_commons::types::actor::Actor;
 use perroute_storage::{
     models::schema::{Schema, SchemasQueryBuilder},
     query::FetchableModel,
@@ -16,9 +17,10 @@ impl CommandHandler for DeleteSchemaCommandHandler {
     type Command = DeleteSchemaCommand;
     type Output = bool;
 
-    async fn handle<'tx, 'a>(
+    async fn handle<'tx>(
         &self,
-        ctx: &mut CommandBusContext<'tx, 'a>,
+        ctx: &mut CommandBusContext<'tx>,
+        _: &Actor,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
         Schema::find(

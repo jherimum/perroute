@@ -2,7 +2,7 @@ use crate::command_bus::{
     bus::CommandBusContext, commands::DeleteMessageTypeCommand, error::CommandBusError,
     handlers::CommandHandler,
 };
-use perroute_commons::types::id::Id;
+use perroute_commons::types::{actor::Actor, id::Id};
 use perroute_storage::{
     models::message_type::{MessageType, MessageTypeQueryBuilder},
     query::FetchableModel,
@@ -22,9 +22,10 @@ impl CommandHandler for DeleteMessageTypeCommandHandler {
     type Command = DeleteMessageTypeCommand;
     type Output = bool;
 
-    async fn handle<'tx, 'a>(
+    async fn handle<'tx>(
         &self,
-        ctx: &mut CommandBusContext<'tx, 'a>,
+        ctx: &mut CommandBusContext<'tx>,
+        _: &Actor,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
         MessageType::find(

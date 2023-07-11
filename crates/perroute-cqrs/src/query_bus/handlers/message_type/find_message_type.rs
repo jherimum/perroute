@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use perroute_commons::types::actor::Actor;
 use perroute_storage::{
     models::message_type::{MessageType, MessageTypeQueryBuilder},
     query::FetchableModel,
@@ -19,6 +20,7 @@ impl QueryHandler for FindMessageTypeQueryHandler {
     async fn handle(
         &self,
         ctx: &QueryBusContext,
+        _: &Actor,
         query: &Self::Query,
     ) -> Result<Self::Output, QueryBusError> {
         MessageType::find(

@@ -3,7 +3,7 @@ use crate::command_bus::{
     handlers::CommandHandler,
 };
 use async_trait::async_trait;
-use perroute_commons::types::code::Code;
+use perroute_commons::types::{actor::Actor, code::Code};
 use perroute_storage::{
     models::channel::{Channel, ChannelBuilder, ChannelsQueryBuilder},
     query::FetchableModel,
@@ -25,9 +25,10 @@ impl CommandHandler for CreateChannelCommandHandler {
     type Output = Channel;
 
     #[tracing::instrument(name = "create_channel_command", skip(self))]
-    async fn handle<'tx, 'a>(
+    async fn handle<'tx>(
         &self,
-        ctx: &mut CommandBusContext<'tx, 'a>,
+        ctx: &mut CommandBusContext<'tx>,
+        actor: &Actor,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
         if Channel::exists(

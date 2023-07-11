@@ -4,6 +4,7 @@ use crate::query_bus::{
     queries::FindChannelQuery,
 };
 use async_trait::async_trait;
+use perroute_commons::types::actor::Actor;
 use perroute_storage::{
     models::channel::{Channel, ChannelsQueryBuilder},
     query::FetchableModel,
@@ -20,6 +21,7 @@ impl QueryHandler for FindChannelHanlder {
     async fn handle(
         &self,
         ctx: &QueryBusContext,
+        actor: &Actor,
         query: &Self::Query,
     ) -> Result<Self::Output, QueryBusError> {
         Channel::find(

@@ -3,6 +3,7 @@ use crate::command_bus::{
     handlers::CommandHandler,
 };
 use async_trait::async_trait;
+use perroute_commons::types::actor::Actor;
 use perroute_storage::{
     models::template::{Template, TemplatesQueryBuilder},
     query::FetchableModel,
@@ -20,9 +21,10 @@ impl CommandHandler for UpdateTemplateCommandHandler {
     type Output = Template;
 
     #[tracing::instrument]
-    async fn handle<'tx, 'a>(
+    async fn handle<'tx>(
         &self,
-        ctx: &mut CommandBusContext<'tx, 'a>,
+        ctx: &mut CommandBusContext<'tx>,
+        actor: &Actor,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
         Template::find(

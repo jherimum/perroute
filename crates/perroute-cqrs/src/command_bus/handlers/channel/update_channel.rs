@@ -4,7 +4,7 @@ use crate::command_bus::{
 };
 use async_trait::async_trait;
 use derive_new::new;
-use perroute_commons::types::id::Id;
+use perroute_commons::types::{actor::Actor, id::Id};
 use perroute_storage::{
     models::channel::{Channel, ChannelsQueryBuilder},
     query::FetchableModel,
@@ -26,9 +26,10 @@ impl CommandHandler for UpdateChannelCommandHandler {
     type Output = Channel;
 
     #[tracing::instrument(skip(self))]
-    async fn handle<'ctx, 'a>(
+    async fn handle<'ctx>(
         &self,
-        ctx: &mut CommandBusContext<'ctx, 'a>,
+        ctx: &mut CommandBusContext<'ctx>,
+        actor: &Actor,
         command: Self::Command,
     ) -> Result<Channel, CommandBusError> {
         let channel = Channel::find(

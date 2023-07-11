@@ -1,4 +1,4 @@
-use perroute_commons::types::json_schema::JsonSchema;
+use perroute_commons::types::actor::Actor;
 use perroute_storage::{
     models::schema::{Schema, SchemasQueryBuilder},
     query::FetchableModel,
@@ -17,9 +17,10 @@ impl CommandHandler for UpdateSchemaCommandHandler {
     type Command = UpdateSchemaCommand;
     type Output = Schema;
 
-    async fn handle<'tx, 'a>(
+    async fn handle<'tx>(
         &self,
-        ctx: &mut CommandBusContext<'tx, 'a>,
+        ctx: &mut CommandBusContext<'tx>,
+        _: &Actor,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
         Schema::find(
@@ -31,7 +32,7 @@ impl CommandHandler for UpdateSchemaCommandHandler {
         )
         .await?
         .unwrap()
-        .set_schema(JsonSchema::try_from(cmd.schema().clone()).unwrap())
+        .set_schema(cmd.schema().clone())
         .update(ctx.tx())
         .await
         .map_err(CommandBusError::from)

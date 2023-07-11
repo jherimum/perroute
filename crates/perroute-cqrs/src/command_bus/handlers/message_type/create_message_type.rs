@@ -4,7 +4,7 @@ use crate::command_bus::{
 };
 use perroute_commons::{
     new_id,
-    types::{code::Code, json_schema::JsonSchema},
+    types::{actor::Actor, code::Code, json_schema::JsonSchema},
 };
 use perroute_storage::{
     models::{
@@ -29,9 +29,10 @@ impl CommandHandler for CreateMessageTypeCommandHandler {
     type Command = CreateMessageTypeCommand;
     type Output = MessageType;
 
-    async fn handle<'tx, 'a>(
+    async fn handle<'tx>(
         &self,
-        ctx: &mut CommandBusContext<'tx, 'a>,
+        ctx: &mut CommandBusContext<'tx>,
+        _: &Actor,
         cmd: Self::Command,
     ) -> Result<MessageType, CommandBusError> {
         if MessageType::exists(

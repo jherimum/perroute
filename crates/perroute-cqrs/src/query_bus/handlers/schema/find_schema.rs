@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use perroute_commons::types::actor::Actor;
 use perroute_storage::{
     models::schema::{Schema, SchemasQueryBuilder},
     query::FetchableModel,
@@ -19,6 +20,7 @@ impl QueryHandler for FindSchemaQueryHandler {
     async fn handle(
         &self,
         ctx: &QueryBusContext,
+        _: &Actor,
         query: &Self::Query,
     ) -> Result<Self::Output, QueryBusError> {
         let query = SchemasQueryBuilder::default()

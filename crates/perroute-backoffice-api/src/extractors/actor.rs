@@ -8,7 +8,7 @@ impl FromRequest for ActorExtractor {
     type Future = Ready<Result<Self, Self::Error>>;
     type Error = actix_web::Error;
 
-    fn from_request(req: &actix_web::HttpRequest, _: &mut actix_web::dev::Payload) -> Self::Future {
+    fn from_request(_: &actix_web::HttpRequest, _: &mut actix_web::dev::Payload) -> Self::Future {
         ready(Ok(ActorExtractor(Actor::system())))
     }
 }

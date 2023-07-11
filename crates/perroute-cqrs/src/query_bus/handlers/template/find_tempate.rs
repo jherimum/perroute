@@ -4,6 +4,7 @@ use crate::query_bus::{
     queries::FindTemplateQuery,
 };
 use async_trait::async_trait;
+use perroute_commons::types::actor::Actor;
 use perroute_storage::{
     models::template::{Template, TemplatesQueryBuilder},
     query::FetchableModel,
@@ -18,6 +19,7 @@ impl QueryHandler for FindTemplateQueryHandler {
     async fn handle(
         &self,
         ctx: &QueryBusContext,
+        _: &Actor,
         query: &Self::Query,
     ) -> Result<Self::Output, QueryBusError> {
         Template::find(

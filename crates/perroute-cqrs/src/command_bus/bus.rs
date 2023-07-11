@@ -35,26 +35,18 @@ use std::{
 use tap::{TapFallible, TapOptional};
 
 #[derive(Debug)]
-pub struct CommandBusContext<'tx, 'a> {
+pub struct CommandBusContext<'tx> {
     pool: PgPool,
     tx: Transaction<'tx, Postgres>,
-    actor: &'a Actor,
 }
 
-impl<'tx, 'a> CommandBusContext<'tx, 'a> {
-    pub async fn begin(
-        pool: PgPool,
-        actor: &'a Actor,
-    ) -> Result<CommandBusContext<'tx, 'a>, CommandBusError> {
+impl<'tx> CommandBusContext<'tx> {
+    pub async fn begin(pool: PgPool) -> Result<CommandBusContext<'tx>, CommandBusError> {
         let tx = pool
             .begin()
             .await
             .tap_err(|e| tracing::error!("Failed to begin transaction: {e}"))?;
-        Ok(Self { pool, actor, tx })
-    }
-
-    pub const fn actor(&self) -> &Actor {
-        self.actor
+        Ok(Self { pool, tx })
     }
 
     pub fn tx(&mut self) -> &mut Transaction<'tx, Postgres> {
@@ -154,12 +146,12 @@ impl CommandBus {
             .tap_none(|| tracing::error!("Handler not found for command: {}", cmd.ty()))
             .ok_or_else(|| CommandBusError::HandlerNotFound(cmd.ty()))?;
 
-        let mut ctx = CommandBusContext::begin(self.pool.clone(), actor)
+        let mut ctx = CommandBusContext::begin(self.pool.clone())
             .await
             .tap_err(|e| tracing::error!("Failed to create command bus context: {e}"))?;
 
         let handler_result = handler
-            .handle(&mut ctx, cmd.clone())
+            .handle(&mut ctx, actor, cmd.clone())
             .await
             .tap_err(|e| {
                 tracing::error!("Failed to handle command: {e}"); //TODO: improve logging

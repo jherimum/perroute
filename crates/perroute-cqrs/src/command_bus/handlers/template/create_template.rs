@@ -3,6 +3,7 @@ use crate::command_bus::{
     handlers::CommandHandler,
 };
 use async_trait::async_trait;
+use perroute_commons::types::actor::Actor;
 use perroute_storage::{
     models::{
         schema::{Schema, SchemasQueryBuilder},
@@ -23,9 +24,10 @@ impl CommandHandler for CreateTemplateCommandHandler {
     type Output = Template;
 
     #[tracing::instrument(name = "create_channel_command", skip(self))]
-    async fn handle<'tx, 'a>(
+    async fn handle<'tx>(
         &self,
-        ctx: &mut CommandBusContext<'tx, 'a>,
+        ctx: &mut CommandBusContext<'tx>,
+        actor: &Actor,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
         let schema = Schema::find(
