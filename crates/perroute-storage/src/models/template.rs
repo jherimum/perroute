@@ -14,9 +14,13 @@ impl DatabaseModel for Template {}
 
 #[derive(Debug, Builder)]
 pub struct TemplatesQuery {
+    #[builder(default)]
     id: Option<Id>,
+    #[builder(default)]
     schema_id: Option<Id>,
+    #[builder(default)]
     message_type_id: Option<Id>,
+    #[builder(default)]
     channel_id: Option<Id>,
 }
 
@@ -24,7 +28,7 @@ impl ModelQueryBuilder<Template> for TemplatesQuery {
     fn build(&self, projection: Projection) -> QueryBuilder<'_, sqlx::Postgres> {
         let mut builder = projection.query_builder();
 
-        builder.push(" FROM templates ");
+        builder.push(" FROM templates WHERE 1=1 ");
 
         if let Some(id) = self.id {
             builder.push(" AND id = ");

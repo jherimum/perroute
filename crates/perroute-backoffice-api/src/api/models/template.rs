@@ -7,7 +7,6 @@ use serde::Serialize;
 
 #[derive(Debug, serde::Deserialize, Clone)]
 pub struct CreateTemplateRequest {
-    pub schema_id: Id,
     pub name: String,
     pub html: Option<String>,
     pub text: Option<String>,

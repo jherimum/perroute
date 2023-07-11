@@ -75,7 +75,7 @@ create table templates(
     channel_id      uuid            NOT NULL,
 
     constraint templates_pk primary key (id),
-    constraint templates_schema_fk          foreign key (channel_id)        references schemas(id),
+    constraint templates_schema_fk          foreign key (schema_id)        references schemas(id),
     CONSTRAINT templates_message_type_fk    FOREIGN KEY (message_type_id)   REFERENCES message_types(id),
     CONSTRAINT templates_channel_fk         FOREIGN KEY (channel_id)        REFERENCES channels(id)
 );
