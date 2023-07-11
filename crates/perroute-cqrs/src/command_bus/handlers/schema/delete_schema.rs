@@ -17,6 +17,7 @@ impl CommandHandler for DeleteSchemaCommandHandler {
     type Command = DeleteSchemaCommand;
     type Output = bool;
 
+    #[tracing::instrument(name = "delete_schema_handler", skip(self, ctx))]
     async fn handle<'tx>(
         &self,
         ctx: &mut CommandBusContext<'tx>,

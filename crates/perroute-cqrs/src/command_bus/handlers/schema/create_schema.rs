@@ -28,6 +28,7 @@ impl CommandHandler for CreateSchemaCommandHandler {
     type Command = CreateSchemaCommand;
     type Output = Schema;
 
+    #[tracing::instrument(name = "create_schema_handler", skip(self, ctx))]
     async fn handle<'tx>(
         &self,
         ctx: &mut CommandBusContext<'tx>,

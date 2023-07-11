@@ -16,6 +16,7 @@ impl CommandHandler for PublishSchemaCommandHandler {
     type Command = PublishSchemaCommand;
     type Output = Schema;
 
+    #[tracing::instrument(name = "publish_schema_handler", skip(self, ctx))]
     async fn handle<'tx>(
         &self,
         ctx: &mut CommandBusContext<'tx>,

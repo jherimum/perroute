@@ -43,6 +43,7 @@ impl MessageHandler for CommandHandler {
     type Output = Connection;
     type Error = Error;
 
+    #[tracing::instrument(name = "create_connection_handler", skip(self, ctx))]
     async fn handle(
         &self,
         actor: Actor,

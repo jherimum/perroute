@@ -17,6 +17,8 @@ pub struct FindMessageTypeQueryHandler;
 impl QueryHandler for FindMessageTypeQueryHandler {
     type Query = FindMessageTypeQuery;
     type Output = Option<MessageType>;
+
+    #[tracing::instrument(name = "find_message_type_handler", skip(self, ctx))]
     async fn handle(
         &self,
         ctx: &QueryBusContext,

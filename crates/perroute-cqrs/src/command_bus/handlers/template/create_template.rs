@@ -23,7 +23,7 @@ impl CommandHandler for CreateTemplateCommandHandler {
     type Command = CreateTemplateCommand;
     type Output = Template;
 
-    #[tracing::instrument(name = "create_channel_command", skip(self))]
+    #[tracing::instrument(name = "create_temploate_handler", skip(self, ctx))]
     async fn handle<'tx>(
         &self,
         ctx: &mut CommandBusContext<'tx>,

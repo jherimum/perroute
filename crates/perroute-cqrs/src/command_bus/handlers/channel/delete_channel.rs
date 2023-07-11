@@ -27,7 +27,7 @@ impl CommandHandler for DeleteChannelCommandHandler {
     type Command = DeleteChannelCommand;
     type Output = bool;
 
-    #[tracing::instrument(skip(self))]
+    #[tracing::instrument(name = "delete_channel_handler", skip(self, ctx))]
     async fn handle<'ctx>(
         &self,
         ctx: &mut CommandBusContext<'ctx>,

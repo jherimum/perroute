@@ -22,6 +22,7 @@ impl CommandHandler for UpdateMessageTypeCommandHandler {
     type Command = UpdateMessageTypeCommand;
     type Output = MessageType;
 
+    #[tracing::instrument(name = "update_message_type_handler", skip(self, ctx))]
     async fn handle<'tx>(
         &self,
         ctx: &mut CommandBusContext<'tx>,

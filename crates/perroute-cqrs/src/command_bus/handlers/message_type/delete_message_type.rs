@@ -22,6 +22,7 @@ impl CommandHandler for DeleteMessageTypeCommandHandler {
     type Command = DeleteMessageTypeCommand;
     type Output = bool;
 
+    #[tracing::instrument(name = "delete_message_type_handler", skip(self, ctx))]
     async fn handle<'tx>(
         &self,
         ctx: &mut CommandBusContext<'tx>,

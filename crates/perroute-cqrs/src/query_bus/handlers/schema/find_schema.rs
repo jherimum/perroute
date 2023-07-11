@@ -17,6 +17,8 @@ pub struct FindSchemaQueryHandler;
 impl QueryHandler for FindSchemaQueryHandler {
     type Query = FindSchemaQuery;
     type Output = Option<Schema>;
+
+    #[tracing::instrument(name = "find_schema_handler", skip(self, ctx))]
     async fn handle(
         &self,
         ctx: &QueryBusContext,

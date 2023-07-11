@@ -20,7 +20,7 @@ impl CommandHandler for UpdateTemplateCommandHandler {
     type Command = UpdateTemplateCommand;
     type Output = Template;
 
-    #[tracing::instrument]
+    #[tracing::instrument(name = "update_temploate_handler", skip(self, ctx))]
     async fn handle<'tx>(
         &self,
         ctx: &mut CommandBusContext<'tx>,

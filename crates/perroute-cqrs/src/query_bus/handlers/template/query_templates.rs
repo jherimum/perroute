@@ -17,6 +17,8 @@ pub struct QueryTemplatesQueryHandler;
 impl QueryHandler for QueryTemplatesQueryHandler {
     type Query = QueryTemplatesQuery;
     type Output = Vec<Template>;
+
+    #[tracing::instrument(name = "query_templates_handler", skip(self, ctx))]
     async fn handle(
         &self,
         ctx: &QueryBusContext,

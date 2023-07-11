@@ -20,7 +20,7 @@ impl CommandHandler for DeleteTemplateCommandHandler {
     type Command = DeleteTemplateCommand;
     type Output = bool;
 
-    #[tracing::instrument]
+    #[tracing::instrument(name = "delete_temploate_handler", skip(self, ctx))]
     async fn handle<'tx>(
         &self,
         ctx: &mut CommandBusContext<'tx>,

@@ -16,6 +16,8 @@ pub struct FindTemplateQueryHandler;
 impl QueryHandler for FindTemplateQueryHandler {
     type Query = FindTemplateQuery;
     type Output = Option<Template>;
+
+    #[tracing::instrument(name = "find_template_handler", skip(self, ctx))]
     async fn handle(
         &self,
         ctx: &QueryBusContext,

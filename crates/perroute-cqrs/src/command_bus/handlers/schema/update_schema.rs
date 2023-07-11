@@ -17,6 +17,7 @@ impl CommandHandler for UpdateSchemaCommandHandler {
     type Command = UpdateSchemaCommand;
     type Output = Schema;
 
+    #[tracing::instrument(name = "update_schema_handler", skip(self, ctx))]
     async fn handle<'tx>(
         &self,
         ctx: &mut CommandBusContext<'tx>,

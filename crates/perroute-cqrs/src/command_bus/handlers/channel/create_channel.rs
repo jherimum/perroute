@@ -24,7 +24,7 @@ impl CommandHandler for CreateChannelCommandHandler {
     type Command = CreateChannelCommand;
     type Output = Channel;
 
-    #[tracing::instrument(name = "create_channel_command", skip(self))]
+    #[tracing::instrument(name = "create_channel_handler", skip(self, ctx))]
     async fn handle<'tx>(
         &self,
         ctx: &mut CommandBusContext<'tx>,

@@ -16,6 +16,8 @@ pub struct QueryMessageTypesHandler;
 impl QueryHandler for QueryMessageTypesHandler {
     type Query = QueryMessageTypesQuery;
     type Output = Vec<MessageType>;
+
+    #[tracing::instrument(name = "query_message_types_handler", skip(self, ctx))]
     async fn handle(
         &self,
         ctx: &QueryBusContext,

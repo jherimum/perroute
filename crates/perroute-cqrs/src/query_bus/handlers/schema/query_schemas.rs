@@ -19,6 +19,7 @@ impl QueryHandler for QuerySchemasQueryHandler {
     type Output = Vec<Schema>;
     type Query = QuerySchemasQuery;
 
+    #[tracing::instrument(name = "query_schemas_handler", skip(self, ctx))]
     async fn handle(
         &self,
         ctx: &QueryBusContext,

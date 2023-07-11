@@ -25,7 +25,7 @@ impl CommandHandler for UpdateChannelCommandHandler {
     type Command = UpdateChannelCommand;
     type Output = Channel;
 
-    #[tracing::instrument(skip(self))]
+    #[tracing::instrument(name = "update_channel_handler", skip(self, ctx))]
     async fn handle<'ctx>(
         &self,
         ctx: &mut CommandBusContext<'ctx>,
