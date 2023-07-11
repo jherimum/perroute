@@ -86,10 +86,12 @@ impl From<&ApiError> for RestError {
     fn from(value: &ApiError) -> Self {
         match value {
             ApiError::ChannelNotFound(_) => RestError::NotFound(value.to_string()),
-            ApiError::CommandBus(error) => match error {
-                CommandBusError::ExpectedError(e) => RestError::UnprocessableEntity(e.to_string()),
-                _ => RestError::InternalServer,
-            },
+            ApiError::MessageTypeNotFound(_) => RestError::NotFound(value.to_string()),
+            ApiError::SchemaNotFound(_) => RestError::NotFound(value.to_string()),
+            ApiError::TemplateNotFound(_) => RestError::NotFound(value.to_string()),
+            ApiError::CommandBus(CommandBusError::ExpectedError(message)) => {
+                RestError::UnprocessableEntity(message.to_string())
+            }
             _ => RestError::InternalServer,
         }
     }
