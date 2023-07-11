@@ -33,7 +33,6 @@ impl From<PgPool> for AppState {
         }
     }
 }
-
 pub struct Application {
     server: Server,
 }
@@ -66,5 +65,5 @@ pub async fn server(listener: TcpListener, pool: PgPool) -> Result<Server, std::
             .service(routes().app_data(Data::<AppState>::new(pool.clone().into())))
     })
     .listen(listener)
-    .map(|h| h.run())
+    .map(|http_server| http_server.run())
 }
