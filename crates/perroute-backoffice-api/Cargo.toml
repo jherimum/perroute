@@ -26,4 +26,4 @@ tracing-actix-web = { version="0.7" }
 url = {version = "2", features = ["serde"]}
 strum = { version = "0.24", features = ["derive"] }
 strum_macros = "0.24"
-
+sqlx = { version = "0.6", features = ["postgres", "runtime-tokio-rustls"] }
