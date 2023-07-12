@@ -1,5 +1,3 @@
-use actix_web::{web, Scope};
-
 use self::{
     channel::{ChannelRouter, CHANNELS_RESOURCE_NAME, CHANNEL_RESOURCE_NAME},
     health::HealthRouter,
@@ -10,6 +8,7 @@ use self::{
     },
     template::{TemplateRouter, TEMPLATES_RESOURCE_NAME, TEMPLATE_RESOURCE_NAME},
 };
+use actix_web::{web, Scope};
 
 pub mod channel;
 pub mod health;

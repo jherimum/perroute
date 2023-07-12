@@ -1,8 +1,7 @@
-use std::fmt::{Debug, Display};
-
 use anyhow::Result;
 use perroute_backoffice_api::app::Application;
 use perroute_commons::{configuration::settings::Settings, tracing::init_tracing};
+use std::fmt::{Debug, Display};
 use tap::TapFallible;
 use tokio::task::JoinError;
 
