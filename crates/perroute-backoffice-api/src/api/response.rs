@@ -1,6 +1,6 @@
 use crate::error::ApiError;
 use actix_web::{body::BoxBody, HttpRequest, HttpResponse, Responder};
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
     fmt::{Debug, Display},
