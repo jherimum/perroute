@@ -31,7 +31,7 @@ impl CommandHandler for CreateTemplateCommandHandler {
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
         let schema = Schema::find(
-            ctx.tx(),
+            ctx.pool(),
             SchemasQueryBuilder::default()
                 .id(Some(*cmd.schema_id()))
                 .build()
