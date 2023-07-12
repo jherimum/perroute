@@ -37,16 +37,16 @@ pub struct Application {
     server: Server,
 }
 
-pub fn listener(settings: &ServerSettings) -> Result<TcpListener, std::io::Error> {
-    TcpListener::bind(format!("{}:{}", settings.host, settings.port))
-}
-
 impl Application {
+    fn listener(settings: &ServerSettings) -> Result<TcpListener, std::io::Error> {
+        TcpListener::bind(format!("{}:{}", settings.host, settings.port))
+    }
+
     pub async fn build(settings: &Settings) -> Result<Self, std::io::Error> {
         let pool = ConnectionManager::build_pool(&settings.database)
             .await
             .unwrap();
-        let listener = listener(&settings.server).unwrap();
+        let listener = Self::listener(&settings.server).unwrap();
 
         Ok(Application {
             server: server(listener, pool).await?,
@@ -59,11 +59,13 @@ impl Application {
 }
 
 pub async fn server(listener: TcpListener, pool: PgPool) -> Result<Server, std::io::Error> {
-    HttpServer::new(move || {
+    let server = HttpServer::new(move || {
         App::new()
             .wrap(TracingLogger::default())
             .service(routes().app_data(Data::<AppState>::new(pool.clone().into())))
     })
-    .listen(listener)
-    .map(|http_server| http_server.run())
+    .listen(listener)?
+    .run();
+
+    Ok(server)
 }
