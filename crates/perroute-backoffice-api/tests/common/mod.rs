@@ -18,9 +18,7 @@ impl TestApp {
         app
     }
 
-    pub fn path<I: AsRef<str>>(&self, join: impl IntoIterator<Item = I>) -> Url {
-        join.into_iter().fold(self.url.clone(), |url, path| {
-            url.join(path.as_ref()).unwrap()
-        })
+    pub fn path<J: AsRef<str>>(&self, join: J) -> Url {
+        self.url.join(join.as_ref()).unwrap()
     }
 }

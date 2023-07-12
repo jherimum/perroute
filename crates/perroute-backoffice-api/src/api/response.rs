@@ -1,6 +1,6 @@
 use crate::error::ApiError;
 use actix_web::{body::BoxBody, HttpRequest, HttpResponse, Responder};
-use serde::Serialize;
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::{
     collections::HashMap,
     fmt::{Debug, Display},
@@ -22,7 +22,7 @@ impl ResourceBuilder<()> for EmptyResourceBuilder {
     fn build(&self, _: &HttpRequest) {}
 }
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Serialize, Clone, Deserialize, PartialEq, Eq)]
 pub struct ResourceModel<D: Serialize> {
     pub data: Option<D>,
     pub links: HashMap<String, Url>,

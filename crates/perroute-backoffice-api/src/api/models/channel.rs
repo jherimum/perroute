@@ -6,7 +6,7 @@ use actix_web::HttpRequest;
 use derive_getters::Getters;
 use perroute_commons::types::{code::Code, id::Id};
 use perroute_storage::models::channel::Channel;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, serde::Deserialize, Clone, Getters)]
 pub struct CreateChannelRequest {
@@ -19,7 +19,7 @@ pub struct UpdateChannelRequest {
     pub name: String,
 }
 
-#[derive(Clone, Serialize, Debug)]
+#[derive(Clone, Serialize, Debug, Deserialize, PartialEq, Eq)]
 pub struct ChannelResource {
     id: Id,
     code: Code,
