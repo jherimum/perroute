@@ -22,6 +22,9 @@ pub enum QueryType {
 
     QueryTemplates,
     FindTemplate,
+
+    QueryApiKeys,
+    FindApiKey,
 }
 
 query!(
@@ -72,3 +75,6 @@ query!(
     message_type_id: Option<Id>,
     channel_id: Option<Id>
 );
+
+query!(FindApiKeyQuery, QueryType::FindApiKey, api_key_id: Id);
+query!(QueryApiKeysQuery, QueryType::QueryApiKeys, api_key_id: Id);

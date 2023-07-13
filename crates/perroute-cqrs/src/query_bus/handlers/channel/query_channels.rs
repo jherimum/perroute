@@ -6,7 +6,7 @@ use crate::query_bus::{
 use async_trait::async_trait;
 use perroute_commons::types::actor::Actor;
 use perroute_storage::{
-    models::channel::{Channel, ChannelsQuery},
+    models::channel::{Channel, ChannelsQueryBuilder},
     query::FetchableModel,
 };
 
@@ -24,7 +24,7 @@ impl QueryHandler for QueryChannelsQueryHandler {
         actor: &Actor,
         _: &Self::Query,
     ) -> Result<Self::Output, QueryBusError> {
-        Channel::query(ctx.pool(), ChannelsQuery::all())
+        Channel::query(ctx.pool(), ChannelsQueryBuilder::default().build().unwrap())
             .await
             .map_err(QueryBusError::from)
     }

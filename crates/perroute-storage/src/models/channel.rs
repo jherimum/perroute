@@ -11,31 +11,10 @@ use sqlx::{FromRow, PgExecutor};
 use tap::TapFallible;
 
 #[derive(Debug, Default, Builder)]
+#[builder(default)]
 pub struct ChannelsQuery {
-    #[builder(default)]
     id: Option<Id>,
-    #[builder(default)]
     code: Option<Code>,
-}
-
-impl ChannelsQuery {
-    pub fn all() -> Self {
-        Default::default()
-    }
-
-    pub fn by_id(id: Id) -> Self {
-        Self {
-            id: Some(id),
-            ..Default::default()
-        }
-    }
-
-    pub fn by_code(code: Code) -> Self {
-        Self {
-            code: Some(code),
-            ..Default::default()
-        }
-    }
 }
 
 impl ModelQueryBuilder<Channel> for ChannelsQuery {

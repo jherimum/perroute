@@ -10,10 +10,10 @@ use perroute_storage::{
     query::FetchableModel,
 };
 
-pub struct FindChannelHanlder;
+pub struct FindChannelQueryHandler;
 
 #[async_trait]
-impl QueryHandler for FindChannelHanlder {
+impl QueryHandler for FindChannelQueryHandler {
     type Query = FindChannelQuery;
     type Output = Option<Channel>;
 

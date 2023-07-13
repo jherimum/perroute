@@ -2,6 +2,7 @@ use super::{bus::CommandBusContext, commands::Command, error::CommandBusError};
 use perroute_commons::types::actor::Actor;
 use std::fmt::Debug;
 
+pub mod api_key;
 pub mod channel;
 pub mod message;
 pub mod message_type;

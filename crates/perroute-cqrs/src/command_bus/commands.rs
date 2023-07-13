@@ -58,6 +58,9 @@ pub enum CommandType {
     DeleteTemplate,
 
     CreateMessage,
+
+    CreateApiKey,
+    RevokeApiKey,
 }
 
 impl From<CommandType> for String {
@@ -180,5 +183,12 @@ pub struct CreateMessageCommand {
     schema_version: Version,
     channel_id: Id,
 }
-
 impl_command!(CreateMessageCommand, CommandType::CreateMessage);
+
+#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
+pub struct CreateApiKeyCommand {}
+impl_command!(CreateApiKeyCommand, CommandType::CreateApiKey);
+
+#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
+pub struct RevokeApiKeyCommand {}
+impl_command!(RevokeApiKeyCommand, CommandType::RevokeApiKey);

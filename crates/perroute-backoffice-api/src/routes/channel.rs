@@ -24,7 +24,7 @@ use perroute_cqrs::{
     query_bus::{
         bus::QueryBus,
         handlers::channel::{
-            find_channel::FindChannelHanlder, query_channels::QueryChannelsQueryHandler,
+            find_channel::FindChannelQueryHandler, query_channels::QueryChannelsQueryHandler,
         },
         queries::{FindChannelQueryBuilder, QueryChannelsQueryBuilder},
     },
@@ -149,7 +149,7 @@ impl ChannelRouter {
             .tap_err(|e| tracing::error!("Failed to build FindChannelByCodeQuery: {e}"))?;
 
         query_bus
-            .execute::<_, FindChannelHanlder, _>(actor, &query)
+            .execute::<_, FindChannelQueryHandler, _>(actor, &query)
             .await
             .tap_err(|e| tracing::error!("Failed to retrieve channel: {e}"))?
             .ok_or_else(|| ApiError::ChannelNotFound(id))

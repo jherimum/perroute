@@ -1,8 +1,8 @@
 use crate::{
     api::response::AsUrl,
     routes::{
-        channel::ChannelRouter, message_type::MessageTypeRouter, route::RouteRouter,
-        schema::SchemaRouter, template::TemplateRouter,
+        api_key::ApiKeyRouter, channel::ChannelRouter, message_type::MessageTypeRouter,
+        route::RouteRouter, schema::SchemaRouter, template::TemplateRouter,
     },
 };
 use actix_web::HttpRequest;
@@ -44,6 +44,9 @@ pub enum ResourceLink {
 
     Routes(Id),
     Route(Id, Id),
+
+    ApiKeys,
+    ApiKey(Id),
 }
 
 impl AsUrl for ResourceLink {
@@ -103,6 +106,11 @@ impl AsUrl for ResourceLink {
                 RouteRouter::ROUTE_RESOURCE_NAME,
                 [channel_id.to_string(), route_id.to_string()],
             ),
+
+            ResourceLink::ApiKeys => req.url_for_static(ApiKeyRouter::API_KEY_RESOURCES_NAME),
+            ResourceLink::ApiKey(id) => {
+                req.url_for(ApiKeyRouter::API_KEY_RESOURCE_NAME, [id.to_string()])
+            }
         }
         .tap_err(|e| tracing::error!("Failed to build url: {}", e))
         .expect("msg")
