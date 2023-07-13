@@ -1,6 +1,7 @@
 use self::{
     channel::{ChannelRouter, CHANNELS_RESOURCE_NAME, CHANNEL_RESOURCE_NAME},
     health::HealthRouter,
+    message::MessageRouter,
     message_type::{MessageTypeRouter, MESSAGE_TYPES_RESOURCE_NAME, MESSAGE_TYPE_RESOURCE_NAME},
     route::{RouteRouter, ROUTES_RESOURCE_NAME, ROUTE_RESOURCE_NAME},
     schema::{
@@ -12,6 +13,7 @@ use actix_web::{web, Scope};
 
 pub mod channel;
 pub mod health;
+pub mod message;
 pub mod message_type;
 pub mod route;
 pub mod schema;
@@ -117,7 +119,13 @@ pub fn routes() -> Scope {
                 .service(message_types),
         );
 
+    let messages = web::scope("/messages").service(
+        web::resource("")
+            .name(MessageRouter::MESSAGES_RESOURCE_NAME)
+            .route(web::post().to(MessageRouter::create_message)),
+    );
+
     web::scope("")
         .service(web::resource("health").route(web::get().to(HealthRouter::health)))
-        .service(web::scope("/api").service(web::scope("/v1").service(channels)))
+        .service(web::scope("/api").service(web::scope("/v1").service(channels).service(messages)))
 }

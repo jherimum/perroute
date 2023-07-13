@@ -3,6 +3,7 @@ use perroute_commons::types::actor::Actor;
 use std::fmt::Debug;
 
 pub mod channel;
+pub mod message;
 pub mod message_type;
 pub mod schema;
 pub mod template;

@@ -1,0 +1,137 @@
+use crate::{log_query_error, query::ModelQueryBuilder, DatabaseModel};
+use chrono::NaiveDateTime;
+use derive_builder::Builder;
+use derive_getters::Getters;
+use derive_setters::Setters;
+use perroute_commons::types::{id::Id, payload::Payload};
+use serde::{Deserialize, Serialize};
+use sqlx::{FromRow, PgExecutor};
+use tap::TapFallible;
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, sqlx::Type, Copy)]
+#[sqlx(type_name = "message_status", rename_all = "snake_case")]
+pub enum Status {
+    Pending,
+    Distributed,
+}
+
+#[derive(Debug, Default, Builder)]
+pub struct MessageQuery {
+    #[builder(default)]
+    pub id: Option<Id>,
+    #[builder(default)]
+    pub status: Option<Status>,
+    #[builder(default)]
+    pub schema_id: Option<Id>,
+    #[builder(default)]
+    pub message_type_id: Option<Id>,
+    #[builder(default)]
+    pub channel_id: Option<Id>,
+
+    pub scheduled_from: Option<NaiveDateTime>,
+    pub scheduled_to: Option<NaiveDateTime>,
+}
+
+impl ModelQueryBuilder<Message> for MessageQuery {
+    fn build(
+        &self,
+        projection: crate::query::Projection,
+    ) -> sqlx::QueryBuilder<'_, sqlx::Postgres> {
+        let mut builder = projection.query_builder();
+        builder.push("FROM messages WHERE 1=1");
+
+        if let Some(id) = self.id {
+            builder.push(" AND id = ");
+            builder.push_bind(id);
+        }
+
+        if let Some(status) = self.status {
+            builder.push(" AND status = ");
+            builder.push_bind(status);
+        }
+
+        if let Some(schema_id) = self.schema_id {
+            builder.push(" AND schema_id = ");
+            builder.push_bind(schema_id);
+        }
+
+        if let Some(message_type_id) = self.message_type_id {
+            builder.push(" AND message_type_id = ");
+            builder.push_bind(message_type_id);
+        }
+
+        if let Some(channel_id) = self.channel_id {
+            builder.push(" AND channel_id = ");
+            builder.push_bind(channel_id);
+        }
+
+        if let Some(scheduled_from) = self.scheduled_from {
+            builder.push(" AND scheduled_to >= ");
+            builder.push_bind(scheduled_from);
+        }
+
+        if let Some(scheduled_to) = self.scheduled_to {
+            builder.push(" AND scheduled_to <= ");
+            builder.push_bind(scheduled_to);
+        }
+
+        builder
+    }
+}
+
+impl DatabaseModel for Message {}
+
+#[derive(Debug, FromRow, PartialEq, Eq, Clone, Getters, Setters, Builder)]
+#[builder(setter(into))]
+#[setters(prefix = "set_")]
+#[setters(into)]
+pub struct Message {
+    #[setters(skip)]
+    id: Id,
+    #[setters(skip)]
+    payload: Payload,
+    status: Status,
+    #[setters(skip)]
+    scheduled_to: Option<NaiveDateTime>,
+
+    #[setters(skip)]
+    schema_id: Id,
+    #[setters(skip)]
+    message_type_id: Id,
+    #[setters(skip)]
+    channel_id: Id,
+}
+
+impl Message {
+    pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
+        sqlx::query_as(
+            r#"
+                INSERT INTO messages (id, payload, status, scheduled_to, schema_id, message_type_id, channel_id) 
+                VALUES ($1, $2, $3, $4, $5, $6, $7)"#,
+            ).bind(self.id)
+            .bind(self.payload)
+            .bind(self.status)
+            .bind(self.scheduled_to)
+            .bind(self.schema_id)
+            .bind(self.message_type_id)
+            .bind(self.channel_id)
+        .fetch_one(exec)
+        .await
+        .tap_err(log_query_error!())
+    }
+
+    pub async fn update<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
+        sqlx::query_as(
+            r#"
+                UPDATE messages 
+                SET status = $2
+                WHERE id = $1
+                RETURNING *"#,
+        )
+        .bind(self.id)
+        .bind(self.status)
+        .fetch_one(exec)
+        .await
+        .tap_err(log_query_error!())
+    }
+}

@@ -1,6 +1,10 @@
+use serde::Serialize;
 use serde_json::Value;
+use sqlx::Type;
 use std::ops::Deref;
 
+#[derive(Debug, Clone, PartialEq, Eq, Type, Serialize)]
+#[sqlx(transparent)]
 pub struct Payload(Value);
 
 impl Payload {

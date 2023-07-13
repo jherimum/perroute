@@ -1,9 +1,12 @@
-use chrono::Utc;
+use chrono::{NaiveDateTime, Utc};
 use derive_builder::Builder;
 use derive_getters::Getters;
 use perroute_commons::{
     new_id,
-    types::{actor::Actor, code::Code, id::Id, json_schema::JsonSchema, template::TemplateSnippet},
+    types::{
+        actor::Actor, code::Code, id::Id, json_schema::JsonSchema, payload::Payload,
+        template::TemplateSnippet,
+    },
 };
 use perroute_storage::models::command_log::{CommandLog, CommandLogBuilder};
 use serde::Serialize;
@@ -50,6 +53,8 @@ pub enum CommandType {
     CreateTemplate,
     UpdateTemplate,
     DeleteTemplate,
+
+    CreateMessage,
 }
 
 impl From<CommandType> for String {
@@ -160,3 +165,14 @@ command!(
     CommandType::DeleteTemplate,
     template_id: Id
 );
+
+#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
+pub struct CreateMessageCommand {
+    #[builder(default)]
+    message_id: Id,
+    payload: Payload,
+    scheduled_to: Option<NaiveDateTime>,
+    schema_id: Id,
+}
+
+impl_command!(CreateMessageCommand, CommandType::CreateMessage);
