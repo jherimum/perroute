@@ -8,7 +8,10 @@ use perroute_commons::{
         template::TemplateSnippet,
     },
 };
-use perroute_storage::models::command_log::{CommandLog, CommandLogBuilder};
+use perroute_storage::models::{
+    command_log::{CommandLog, CommandLogBuilder},
+    schema::Version,
+};
 use serde::Serialize;
 use std::fmt::Debug;
 use strum_macros::Display;
@@ -171,8 +174,11 @@ pub struct CreateMessageCommand {
     #[builder(default)]
     message_id: Id,
     payload: Payload,
+    #[builder(default)]
     scheduled_to: Option<NaiveDateTime>,
-    schema_id: Id,
+    message_type_code: Code,
+    schema_version: Version,
+    channel_id: Id,
 }
 
 impl_command!(CreateMessageCommand, CommandType::CreateMessage);

@@ -88,16 +88,22 @@ impl DatabaseModel for Message {}
 pub struct Message {
     #[setters(skip)]
     id: Id,
+
     #[setters(skip)]
     payload: Payload,
+
     status: Status,
+
     #[setters(skip)]
+    #[builder(default)]
     scheduled_to: Option<NaiveDateTime>,
 
     #[setters(skip)]
     schema_id: Id,
+
     #[setters(skip)]
     message_type_id: Id,
+
     #[setters(skip)]
     channel_id: Id,
 }
@@ -107,7 +113,7 @@ impl Message {
         sqlx::query_as(
             r#"
                 INSERT INTO messages (id, payload, status, scheduled_to, schema_id, message_type_id, channel_id) 
-                VALUES ($1, $2, $3, $4, $5, $6, $7)"#,
+                VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *"#,
             ).bind(self.id)
             .bind(self.payload)
             .bind(self.status)

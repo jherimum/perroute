@@ -1,29 +1,33 @@
-use perroute_commons::types::code::Code;
+use crate::api::response::{Links, ResourceBuilder, ResourceModel};
+use perroute_commons::types::{code::Code, id::Id};
 use perroute_storage::models::{message::Message, schema::Version};
 use serde::{Deserialize, Serialize};
 use sqlx::types::chrono::NaiveDateTime;
-
-use crate::api::response::{ResourceBuilder, ResourceModel};
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct CreateMessageRequest {
     pub payload: serde_json::Value,
     pub scheduled_to: Option<NaiveDateTime>,
-    message_type_code: Code,
-    schema_version: Version,
+    pub message_type_code: Code,
+    pub schema_version: Version,
 }
 
 #[derive(Serialize, Debug, Clone)]
-pub struct MessageResource {}
+pub struct MessageResource {
+    id: Id,
+}
 
-impl From<Message> for MessageResource {
-    fn from(value: Message) -> Self {
-        todo!()
+impl From<&Message> for MessageResource {
+    fn from(value: &Message) -> Self {
+        MessageResource { id: *value.id() }
     }
 }
 
 impl ResourceBuilder<ResourceModel<MessageResource>> for Message {
     fn build(&self, req: &actix_web::HttpRequest) -> ResourceModel<MessageResource> {
-        todo!()
+        ResourceModel {
+            data: Some(self.into()),
+            links: Links::default().as_url_map(req),
+        }
     }
 }

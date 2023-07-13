@@ -5,9 +5,9 @@ use crate::{
 use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
-use perroute_commons::types::{id::Id, json_schema::JsonSchema};
+use perroute_commons::types::{code::Code, id::Id, json_schema::JsonSchema};
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, PgExecutor, Type};
+use sqlx::{FromRow, PgExecutor, QueryBuilder, Type};
 
 impl DatabaseModel for Schema {}
 
@@ -18,8 +18,9 @@ pub struct SchemasQuery {
     #[builder(default)]
     message_type_id: Option<Id>,
     #[builder(default)]
+    message_type_code: Option<Code>,
+    #[builder(default)]
     channel_id: Option<Id>,
-
     #[builder(default)]
     version: Option<Version>,
 }
@@ -50,27 +51,42 @@ impl SchemasQuery {
 
 impl ModelQueryBuilder<Schema> for SchemasQuery {
     fn build(&self, projection: Projection) -> sqlx::QueryBuilder<'_, sqlx::Postgres> {
-        let mut builder = projection.query_builder();
+        let mut builder = QueryBuilder::new(match projection {
+            Projection::Row => "SELECT s.*",
+            Projection::Count => "SELECT COUNT(*)",
+            Projection::Id => "SELECT s.id",
+        });
 
-        builder.push(" FROM schemas WHERE 1=1");
+        builder.push(
+            r#" 
+                FROM schemas s 
+                INNER JOIN message_types mt 
+                ON s.message_type_id = mt.id 
+                WHERE 1=1"#,
+        );
+
+        if let Some(message_type_code) = self.message_type_code.clone() {
+            builder.push(" AND mt.code = ");
+            builder.push_bind(message_type_code);
+        }
 
         if let Some(id) = self.id {
-            builder.push(" AND id = ");
+            builder.push(" AND s.id = ");
             builder.push_bind(id);
         }
 
         if let Some(message_type_id) = self.message_type_id {
-            builder.push(" AND message_type_id = ");
+            builder.push(" AND s.message_type_id = ");
             builder.push_bind(message_type_id);
         }
 
         if let Some(channel_id) = self.channel_id {
-            builder.push(" AND channel_id = ");
+            builder.push(" AND s.channel_id = ");
             builder.push_bind(channel_id);
         }
 
         if let Some(version) = self.version {
-            builder.push(" AND version = ");
+            builder.push(" AND s.version = ");
             builder.push_bind(version);
         }
 

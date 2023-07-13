@@ -13,6 +13,12 @@ impl Payload {
     }
 }
 
+impl From<Value> for Payload {
+    fn from(value: Value) -> Self {
+        Self(value)
+    }
+}
+
 impl Deref for Payload {
     type Target = Value;
 

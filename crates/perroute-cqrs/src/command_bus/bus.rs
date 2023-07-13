@@ -7,6 +7,7 @@ use super::{
             delete_channel::DeleteChannelCommandHandler,
             update_channel::UpdateChannelCommandHandler,
         },
+        message::create_message::CreateMessageCommandHandler,
         message_type::{
             create_message_type::CreateMessageTypeCommandHandler,
             delete_message_type::DeleteMessageTypeCommandHandler,
@@ -118,6 +119,7 @@ impl CommandBus {
             .with_handler(CreateTemplateCommandHandler)
             .with_handler(UpdateTemplateCommandHandler)
             .with_handler(DeleteTemplateCommandHandler)
+            .with_handler(CreateMessageCommandHandler)
             .build()
     }
 

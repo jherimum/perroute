@@ -5,7 +5,7 @@ use crate::command_bus::{
 use perroute_commons::types::actor::Actor;
 use perroute_storage::{
     models::{
-        message::{Message, MessageBuilder},
+        message::{Message, MessageBuilder, Status},
         schema::{Schema, SchemasQueryBuilder},
     },
     query::FetchableModel,
@@ -29,17 +29,26 @@ impl CommandHandler for CreateMessageCommandHandler {
         let schema = Schema::find(
             ctx.pool(),
             SchemasQueryBuilder::default()
-                .id(Some(*cmd.schema_id()))
+                .channel_id(Some(*cmd.channel_id()))
+                .message_type_code(Some(cmd.message_type_code().clone()))
+                .version(Some(*cmd.schema_version()))
                 .build()
-                .unwrap(),
+                .expect("SchemasQueryBuilder error"),
         )
         .await
-        .unwrap()
-        .unwrap();
+        .expect("error de sql")
+        .expect("nao encontrado");
 
         schema.schema().validate(cmd.payload()).unwrap();
 
         MessageBuilder::default()
+            .id(*cmd.message_id())
+            .status(Status::Pending)
+            .payload(cmd.payload().clone())
+            .scheduled_to(*cmd.scheduled_to())
+            .schema_id(*schema.id())
+            .message_type_id(*schema.message_type_id())
+            .channel_id(*schema.channel_id())
             .build()
             .unwrap()
             .save(ctx.tx())
