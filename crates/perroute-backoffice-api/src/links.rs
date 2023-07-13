@@ -1,19 +1,15 @@
+use crate::{
+    api::response::AsUrl,
+    routes::{
+        channel::ChannelRouter, message_type::MessageTypeRouter, route::RouteRouter,
+        schema::SchemaRouter, template::TemplateRouter,
+    },
+};
 use actix_web::HttpRequest;
 use perroute_commons::types::id::Id;
 use serde::Serialize;
 use tap::TapFallible;
 use url::Url;
-
-use crate::{
-    api::response::AsUrl,
-    routes::{
-        channel::{CHANNELS_RESOURCE_NAME, CHANNEL_RESOURCE_NAME},
-        message_type::{MESSAGE_TYPES_RESOURCE_NAME, MESSAGE_TYPE_RESOURCE_NAME},
-        route::{ROUTES_RESOURCE_NAME, ROUTE_RESOURCE_NAME},
-        schema::{SCHEMAS_RESOURCE_NAME, SCHEMA_RESOURCE_NAME},
-        template::{TEMPLATES_RESOURCE_NAME, TEMPLATE_RESOURCE_NAME},
-    },
-};
 
 #[derive(Debug, PartialEq, Eq, Hash, Serialize, Clone, Copy, strum_macros::Display)]
 #[strum(serialize_all = "snake_case")]
@@ -53,23 +49,26 @@ pub enum ResourceLink {
 impl AsUrl for ResourceLink {
     fn as_url(&self, req: &HttpRequest) -> Url {
         match self {
-            ResourceLink::Channel(id) => req.url_for(CHANNEL_RESOURCE_NAME, [id.to_string()]),
-            ResourceLink::Channels => req.url_for_static(CHANNELS_RESOURCE_NAME),
-
-            ResourceLink::MessageTypes(channel_id) => {
-                req.url_for(MESSAGE_TYPES_RESOURCE_NAME, [channel_id.to_string()])
+            ResourceLink::Channel(id) => {
+                req.url_for(ChannelRouter::CHANNEL_RESOURCE_NAME, [id.to_string()])
             }
+            ResourceLink::Channels => req.url_for_static(ChannelRouter::CHANNELS_RESOURCE_NAME),
+
+            ResourceLink::MessageTypes(channel_id) => req.url_for(
+                MessageTypeRouter::MESSAGE_TYPES_RESOURCE_NAME,
+                [channel_id.to_string()],
+            ),
             ResourceLink::MessageType(channel_id, message_type_id) => req.url_for(
-                MESSAGE_TYPE_RESOURCE_NAME,
+                MessageTypeRouter::MESSAGE_TYPE_RESOURCE_NAME,
                 [channel_id.to_string(), message_type_id.to_string()],
             ),
 
             ResourceLink::Schemas(channel_id, message_type_id) => req.url_for(
-                SCHEMAS_RESOURCE_NAME,
+                SchemaRouter::SCHEMAS_RESOURCE_NAME,
                 [channel_id.to_string(), message_type_id.to_string()],
             ),
             ResourceLink::Schema(channel_id, message_type_id, schema_id) => req.url_for(
-                SCHEMA_RESOURCE_NAME,
+                SchemaRouter::SCHEMA_RESOURCE_NAME,
                 [
                     channel_id.to_string(),
                     message_type_id.to_string(),
@@ -78,7 +77,7 @@ impl AsUrl for ResourceLink {
             ),
 
             ResourceLink::Templates(channel_id, message_type_id, schema_id) => req.url_for(
-                TEMPLATES_RESOURCE_NAME,
+                TemplateRouter::TEMPLATES_RESOURCE_NAME,
                 [
                     channel_id.to_string(),
                     message_type_id.to_string(),
@@ -88,7 +87,7 @@ impl AsUrl for ResourceLink {
 
             ResourceLink::Template(channel_id, message_type_id, schema_id, template_id) => req
                 .url_for(
-                    TEMPLATE_RESOURCE_NAME,
+                    TemplateRouter::TEMPLATE_RESOURCE_NAME,
                     [
                         channel_id.to_string(),
                         message_type_id.to_string(),
@@ -98,10 +97,10 @@ impl AsUrl for ResourceLink {
                 ),
 
             ResourceLink::Routes(channel_id) => {
-                req.url_for(ROUTES_RESOURCE_NAME, [channel_id.to_string()])
+                req.url_for(RouteRouter::ROUTES_RESOURCE_NAME, [channel_id.to_string()])
             }
             ResourceLink::Route(channel_id, route_id) => req.url_for(
-                ROUTE_RESOURCE_NAME,
+                RouteRouter::ROUTE_RESOURCE_NAME,
                 [channel_id.to_string(), route_id.to_string()],
             ),
         }

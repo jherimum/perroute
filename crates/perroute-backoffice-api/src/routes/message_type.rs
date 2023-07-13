@@ -39,15 +39,15 @@ use perroute_storage::models::message_type::MessageType;
 use std::convert::identity;
 use tap::TapFallible;
 
-pub const MESSAGE_TYPES_RESOURCE_NAME: &str = "message_types";
-pub const MESSAGE_TYPE_RESOURCE_NAME: &str = "message_type";
-
 type CollectionResult = ApiResult<CollectionResourceModel<MessageTypeResource>>;
 type SingleResult = ApiResult<SingleResourceModel<MessageTypeResource>>;
 
 pub struct MessageTypeRouter;
 
 impl MessageTypeRouter {
+    pub const MESSAGE_TYPES_RESOURCE_NAME: &str = "message_types";
+    pub const MESSAGE_TYPE_RESOURCE_NAME: &str = "message_type";
+
     #[tracing::instrument(skip(state))]
     pub async fn query_message_types(
         state: Data<AppState>,

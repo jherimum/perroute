@@ -1,13 +1,7 @@
 use self::{
-    channel::{ChannelRouter, CHANNELS_RESOURCE_NAME, CHANNEL_RESOURCE_NAME},
-    health::HealthRouter,
-    message::MessageRouter,
-    message_type::{MessageTypeRouter, MESSAGE_TYPES_RESOURCE_NAME, MESSAGE_TYPE_RESOURCE_NAME},
-    route::{RouteRouter, ROUTES_RESOURCE_NAME, ROUTE_RESOURCE_NAME},
-    schema::{
-        SchemaRouter, SCHEMAS_RESOURCE_NAME, SCHEMA_CLONE_RESOURCE_NAME, SCHEMA_RESOURCE_NAME,
-    },
-    template::{TemplateRouter, TEMPLATES_RESOURCE_NAME, TEMPLATE_RESOURCE_NAME},
+    channel::ChannelRouter, health::HealthRouter, message::MessageRouter,
+    message_type::MessageTypeRouter, route::RouteRouter, schema::SchemaRouter,
+    template::TemplateRouter,
 };
 use actix_web::{web, Scope};
 
@@ -23,14 +17,14 @@ pub fn routes() -> Scope {
     let templates = web::scope("/templates")
         .service(
             web::resource("")
-                .name(TEMPLATES_RESOURCE_NAME)
+                .name(TemplateRouter::TEMPLATES_RESOURCE_NAME)
                 .route(web::get().to(TemplateRouter::query_templates))
                 .route(web::post().to(TemplateRouter::create_template)),
         )
         .service(
             web::scope("/{template_id}").service(
                 web::resource("")
-                    .name(TEMPLATE_RESOURCE_NAME)
+                    .name(TemplateRouter::TEMPLATE_RESOURCE_NAME)
                     .route(web::get().to(TemplateRouter::find_template))
                     .route(web::put().to(TemplateRouter::update_template))
                     .route(web::delete().to(TemplateRouter::delete_template)),
@@ -40,7 +34,7 @@ pub fn routes() -> Scope {
     let schemas = web::scope("/schemas")
         .service(
             web::resource("")
-                .name(SCHEMAS_RESOURCE_NAME)
+                .name(SchemaRouter::SCHEMAS_RESOURCE_NAME)
                 .route(web::get().to(SchemaRouter::query_schemas))
                 .route(web::post().to(SchemaRouter::create_schema)),
         )
@@ -48,7 +42,7 @@ pub fn routes() -> Scope {
             web::scope("/{schema_id}")
                 .service(
                     web::resource("")
-                        .name(SCHEMA_RESOURCE_NAME)
+                        .name(SchemaRouter::SCHEMA_RESOURCE_NAME)
                         .route(web::get().to(SchemaRouter::find_schema))
                         .route(web::put().to(SchemaRouter::update_schema))
                         .route(web::delete().to(SchemaRouter::delete_schema)),
@@ -56,7 +50,7 @@ pub fn routes() -> Scope {
                 .service(
                     web::scope("/clone").service(
                         web::resource("")
-                            .name(SCHEMA_CLONE_RESOURCE_NAME)
+                            .name(SchemaRouter::SCHEMA_CLONE_RESOURCE_NAME)
                             .route(web::post().to(SchemaRouter::clone)),
                     ),
                 )
@@ -66,7 +60,7 @@ pub fn routes() -> Scope {
     let message_types = web::scope("/message_types")
         .service(
             web::resource("")
-                .name(MESSAGE_TYPES_RESOURCE_NAME)
+                .name(MessageTypeRouter::MESSAGE_TYPES_RESOURCE_NAME)
                 .route(web::get().to(MessageTypeRouter::query_message_types))
                 .route(web::post().to(MessageTypeRouter::create_message_type)),
         )
@@ -74,7 +68,7 @@ pub fn routes() -> Scope {
             web::scope("/{message_type_id}")
                 .service(
                     web::resource("")
-                        .name(MESSAGE_TYPE_RESOURCE_NAME)
+                        .name(MessageTypeRouter::MESSAGE_TYPE_RESOURCE_NAME)
                         .route(web::get().to(MessageTypeRouter::find_message_type))
                         .route(web::put().to(MessageTypeRouter::update_message_type))
                         .route(web::delete().to(MessageTypeRouter::delete_message_type)),
@@ -85,14 +79,14 @@ pub fn routes() -> Scope {
     let routes = web::scope("/routes")
         .service(
             web::resource("")
-                .name(ROUTES_RESOURCE_NAME)
+                .name(RouteRouter::ROUTES_RESOURCE_NAME)
                 .route(web::get().to(RouteRouter::query_routes))
                 .route(web::post().to(RouteRouter::create_route)),
         )
         .service(
             web::scope("/{route_id}").service(
                 web::resource("")
-                    .name(ROUTE_RESOURCE_NAME)
+                    .name(RouteRouter::ROUTE_RESOURCE_NAME)
                     .route(web::get().to(RouteRouter::find_route))
                     .route(web::put().to(RouteRouter::update_route))
                     .route(web::delete().to(RouteRouter::delete_route)),
@@ -102,7 +96,7 @@ pub fn routes() -> Scope {
     let channels = web::scope("/channels")
         .service(
             web::resource("")
-                .name(CHANNELS_RESOURCE_NAME)
+                .name(ChannelRouter::CHANNELS_RESOURCE_NAME)
                 .route(web::get().to(ChannelRouter::query_channels))
                 .route(web::post().to(ChannelRouter::create_channel)),
         )
@@ -110,7 +104,7 @@ pub fn routes() -> Scope {
             web::scope("/{channel_id}")
                 .service(
                     web::resource("")
-                        .name(CHANNEL_RESOURCE_NAME)
+                        .name(ChannelRouter::CHANNEL_RESOURCE_NAME)
                         .route(web::get().to(ChannelRouter::find_channel))
                         .route(web::put().to(ChannelRouter::update_channel))
                         .route(web::delete().to(ChannelRouter::delete_channel)),
@@ -126,6 +120,9 @@ pub fn routes() -> Scope {
     );
 
     web::scope("")
-        .service(web::resource("health").route(web::get().to(HealthRouter::health)))
+        .service(
+            web::resource(HealthRouter::HEALTH_RESOURCE_NAME)
+                .route(web::get().to(HealthRouter::health)),
+        )
         .service(web::scope("/api").service(web::scope("/v1").service(channels).service(messages)))
 }

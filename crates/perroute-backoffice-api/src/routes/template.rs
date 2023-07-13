@@ -41,12 +41,12 @@ use perroute_storage::models::template::Template;
 pub type SingleResult = ApiResult<ResourceModel<TemplateResource>>;
 pub type CollectionResult = ApiResult<ResourceModel<Vec<ResourceModel<TemplateResource>>>>;
 
-pub const TEMPLATES_RESOURCE_NAME: &str = "templates";
-pub const TEMPLATE_RESOURCE_NAME: &str = "template";
-
 pub struct TemplateRouter;
 
 impl TemplateRouter {
+    pub const TEMPLATES_RESOURCE_NAME: &str = "templates";
+    pub const TEMPLATE_RESOURCE_NAME: &str = "template";
+
     #[tracing::instrument]
     pub async fn query_templates(
         state: Data<AppState>,

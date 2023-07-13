@@ -5,12 +5,12 @@ use actix_web::{
 };
 use perroute_commons::types::id::Id;
 
-pub const ROUTES_RESOURCE_NAME: &str = "routes";
-pub const ROUTE_RESOURCE_NAME: &str = "route";
-
 pub struct RouteRouter;
 
 impl RouteRouter {
+    pub const ROUTES_RESOURCE_NAME: &str = "routes";
+    pub const ROUTE_RESOURCE_NAME: &str = "route";
+
     #[tracing::instrument]
     pub async fn query_routes(
         state: Data<AppState>,
