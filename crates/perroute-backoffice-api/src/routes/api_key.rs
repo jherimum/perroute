@@ -12,12 +12,18 @@ use actix_web::{
     web::{Data, Json, Path},
     Responder,
 };
+use perroute_commons::types::actor::Actor;
 use perroute_commons::types::id::Id;
 use perroute_cqrs::command_bus::{
     commands::{CreateApiKeyCommandBuilder, RevokeApiKeyCommandBuilder},
     handlers::api_key::{
         create_api_key::CreateApiKeyCommandHandler, revoke_api_key::RevokeApiKeyCommandHandler,
     },
+};
+use perroute_cqrs::query_bus::handlers::api_key::find_api_key::FindApiKeyQueryHandler;
+use perroute_cqrs::query_bus::handlers::api_key::query_api_keys::QueryApiKeysQueryHandler;
+use perroute_cqrs::query_bus::queries::{
+    FindApiKeyQuery, FindApiKeyQueryBuilder, QueryApiKeysQueryBuilder,
 };
 use perroute_storage::models::api_key::ApiKey;
 
@@ -37,21 +43,28 @@ impl ApiKeyRouter {
         Json(body): Json<CreateApiKeiRequest>,
     ) -> SingleResult {
         let cmd = CreateApiKeyCommandBuilder::default().build().unwrap();
-        let api_key = state
+        state
             .command_bus()
             .execute::<_, CreateApiKeyCommandHandler, _>(&actor, &cmd)
             .await
-            .unwrap();
-
-        Ok(ApiResponse::created(
-            ResourceLink::ApiKey(*api_key.id()),
-            api_key,
-        ))
+            .map(|api_key| ApiResponse::created(ResourceLink::ApiKey(*api_key.id()), api_key))
+            .map_err(ApiError::from)
     }
 
     #[tracing::instrument(skip(state))]
-    pub async fn query_api_keys(state: Data<AppState>) -> impl Responder {
-        ""
+    pub async fn query_api_keys(
+        state: Data<AppState>,
+        ActorExtractor(actor): ActorExtractor,
+    ) -> CollectionResult {
+        state
+            .query_bus()
+            .execute::<_, QueryApiKeysQueryHandler, _>(
+                &actor,
+                &QueryApiKeysQueryBuilder::default().build().unwrap(),
+            )
+            .await
+            .map(ApiResponse::ok)
+            .map_err(ApiError::from)
     }
 
     #[tracing::instrument(skip(state))]
@@ -60,8 +73,11 @@ impl ApiKeyRouter {
         ActorExtractor(actor): ActorExtractor,
         path: Path<Id>,
     ) -> SingleResult {
-        let cmd = RevokeApiKeyCommandBuilder::default().build().unwrap();
-
+        let api_key = Self::retrieve_api_key(&state, &actor, path.into_inner()).await?;
+        let cmd = RevokeApiKeyCommandBuilder::default()
+            .api_key_id(*api_key.id())
+            .build()
+            .unwrap();
         let api_key = state
             .command_bus()
             .execute::<_, RevokeApiKeyCommandHandler, _>(&actor, &cmd)
@@ -72,12 +88,25 @@ impl ApiKeyRouter {
     }
 
     #[tracing::instrument(skip(state))]
-    pub async fn find_api_key(state: Data<AppState>) -> impl Responder {
-        ""
+    pub async fn find_api_key(
+        state: Data<AppState>,
+        ActorExtractor(actor): ActorExtractor,
+        path: Path<Id>,
+    ) -> SingleResult {
+        Self::retrieve_api_key(&state, &actor, path.into_inner())
+            .await
+            .map(ApiResponse::ok)
     }
 
-    async fn retrieve_api_key(state: Data<AppState>) -> Result<ApiKey, ApiError> {
-        // state.query_bus().execute(actor, query)
-        todo!()
+    async fn retrieve_api_key(state: &AppState, actor: &Actor, id: Id) -> Result<ApiKey, ApiError> {
+        let query = FindApiKeyQueryBuilder::default()
+            .api_key_id(id)
+            .build()
+            .unwrap();
+        state
+            .query_bus()
+            .execute::<_, FindApiKeyQueryHandler, _>(actor, &query)
+            .await?
+            .ok_or_else(|| ApiError::ApiKeyNotFound(id))
     }
 }

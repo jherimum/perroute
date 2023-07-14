@@ -60,6 +60,9 @@ pub enum ApiError {
     #[error("Channel {0} not found")]
     ChannelNotFound(Id),
 
+    #[error("ApiKey {0} not found")]
+    ApiKeyNotFound(Id),
+
     #[error("Message type {0} not found")]
     MessageTypeNotFound(Id),
 

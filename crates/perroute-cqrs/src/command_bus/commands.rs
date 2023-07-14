@@ -190,5 +190,7 @@ pub struct CreateApiKeyCommand {}
 impl_command!(CreateApiKeyCommand, CommandType::CreateApiKey);
 
 #[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
-pub struct RevokeApiKeyCommand {}
+pub struct RevokeApiKeyCommand {
+    api_key_id: Id,
+}
 impl_command!(RevokeApiKeyCommand, CommandType::RevokeApiKey);
