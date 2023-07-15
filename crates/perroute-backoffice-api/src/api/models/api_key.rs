@@ -26,6 +26,12 @@ impl From<ApiKey> for ApiKeyResource {
     }
 }
 
+impl ResourceBuilder<ResourceModel<ApiKeyResource>> for (ApiKey, String) {
+    fn build(&self, req: &actix_web::HttpRequest) -> ResourceModel<ApiKeyResource> {
+        todo!()
+    }
+}
+
 impl ResourceBuilder<ResourceModel<ApiKeyResource>> for ApiKey {
     fn build(&self, req: &actix_web::HttpRequest) -> ResourceModel<ApiKeyResource> {
         todo!()

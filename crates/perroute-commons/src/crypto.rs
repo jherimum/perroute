@@ -31,3 +31,11 @@ pub fn verify_password(
         .map(|_| true)
         .map_err(CryptoError::from)
 }
+
+pub struct ApiKeyHasher;
+
+impl ApiKeyHasher {
+    pub fn hash(&self, api_key: &str) -> String {
+        bcrypt::hash(api_key, bcrypt::DEFAULT_COST).unwrap()
+    }
+}

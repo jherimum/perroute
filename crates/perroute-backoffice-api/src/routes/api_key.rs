@@ -47,7 +47,7 @@ impl ApiKeyRouter {
             .command_bus()
             .execute::<_, CreateApiKeyCommandHandler, _>(&actor, &cmd)
             .await
-            .map(|api_key| ApiResponse::created(ResourceLink::ApiKey(*api_key.id()), api_key))
+            .map(|api_key| ApiResponse::created(ResourceLink::ApiKey(*api_key.0.id()), api_key))
             .map_err(ApiError::from)
     }
 

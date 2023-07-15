@@ -29,8 +29,9 @@ mockall = "0.11.4"
 derive-getters = "0.3"
 jsonschema = "0.17"
 actix-web = "4"
+bcrypt = "0.15"
 
 [dev-dependencies]
 temp-env = "0.3"
-rstest = "0.17"
+rstest = "0.18"
 

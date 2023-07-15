@@ -90,7 +90,7 @@ impl QueryBus {
     pub async fn execute<Q, H, O>(&self, actor: &Actor, query: &Q) -> Result<O, QueryBusError>
     where
         H: QueryHandler<Query = Q, Output = O> + 'static + Sync + Send,
-        Q: Query + 'static,
+        Q: Query + 'static + Debug,
         O: Debug,
     {
         let handler = self

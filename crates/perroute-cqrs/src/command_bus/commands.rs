@@ -1,4 +1,4 @@
-use chrono::{NaiveDateTime, Utc};
+use chrono::{Duration, NaiveDateTime, Utc};
 use derive_builder::Builder;
 use derive_getters::Getters;
 use perroute_commons::{
@@ -186,7 +186,12 @@ pub struct CreateMessageCommand {
 impl_command!(CreateMessageCommand, CommandType::CreateMessage);
 
 #[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
-pub struct CreateApiKeyCommand {}
+pub struct CreateApiKeyCommand {
+    api_key_id: Id,
+    name: String,
+    channel_id: Id,
+    expiration_in_hours: Option<u64>,
+}
 impl_command!(CreateApiKeyCommand, CommandType::CreateApiKey);
 
 #[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]

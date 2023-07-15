@@ -5,7 +5,7 @@ use strum_macros::Display;
 
 use crate::query;
 
-pub trait Query: Debug + Serialize + Clone + PartialEq + Eq + Send + Sync {
+pub trait Query {
     fn ty(&self) -> QueryType;
 }
 
