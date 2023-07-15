@@ -1,12 +1,11 @@
-use std::ops::Add;
-
 use crate::command_bus::{
     bus::CommandBusContext, commands::CreateApiKeyCommand, error::CommandBusError,
     handlers::CommandHandler,
 };
-use chrono::{Duration, NaiveDateTime, Utc};
-use perroute_commons::types::actor::Actor;
+use chrono::{Duration, Utc};
+use perroute_commons::{crypto::Key, types::actor::Actor};
 use perroute_storage::models::api_key::{ApiKey, ApiKeyBuilder};
+use std::ops::Add;
 
 #[derive(Debug)]
 pub struct CreateApiKeyCommandHandler;
@@ -28,7 +27,7 @@ impl CommandHandler for CreateApiKeyCommandHandler {
             .map(Duration::hours)
             .map(|d| Utc::now().add(d).naive_utc());
 
-        let value = create_api_key_value();
+        let hash = Key::random().hash();
 
         ApiKeyBuilder::default()
             .id(*cmd.api_key_id())
@@ -36,16 +35,13 @@ impl CommandHandler for CreateApiKeyCommandHandler {
             .expires_at(expires_at)
             .created_at(Utc::now().naive_utc())
             .channel_id(*cmd.channel_id())
+            .prefix(hash.prefix())
+            .hash(hash.hash())
             .build()
             .unwrap()
             .save(ctx.tx())
             .await
             .map_err(CommandBusError::from)
-            .map(|api_key| (api_key, value))
+            .map(|api_key| (api_key, hash.key().clone()))
     }
-}
-
-fn create_api_key_value() -> String {
-    let value = uuid::Uuid::new_v4().to_string();
-    todo!()
 }

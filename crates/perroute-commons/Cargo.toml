@@ -30,6 +30,7 @@ derive-getters = "0.3"
 jsonschema = "0.17"
 actix-web = "4"
 bcrypt = "0.15"
+sha256 = "1.2.0"
 
 [dev-dependencies]
 temp-env = "0.3"

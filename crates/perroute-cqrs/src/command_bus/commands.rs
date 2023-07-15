@@ -187,9 +187,11 @@ impl_command!(CreateMessageCommand, CommandType::CreateMessage);
 
 #[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
 pub struct CreateApiKeyCommand {
+    #[builder(default)]
     api_key_id: Id,
     name: String,
     channel_id: Id,
+    #[builder(default)]
     expiration_in_hours: Option<u64>,
 }
 impl_command!(CreateApiKeyCommand, CommandType::CreateApiKey);

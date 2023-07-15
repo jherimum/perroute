@@ -1,6 +1,7 @@
 use super::{
     error::QueryBusError,
     handlers::{
+        api_key::{find_api_key::FindApiKeyQueryHandler, query_api_keys::QueryApiKeysQueryHandler},
         channel::{
             find_channel::FindChannelQueryHandler, query_channels::QueryChannelsQueryHandler,
         },
@@ -70,6 +71,8 @@ impl QueryBus {
             .with_handler(QuerySchemasQueryHandler)
             .with_handler(FindTemplateQueryHandler)
             .with_handler(QueryTemplatesQueryHandler)
+            .with_handler(FindApiKeyQueryHandler)
+            .with_handler(QueryApiKeysQueryHandler)
             .build()
     }
 

@@ -1,9 +1,8 @@
 use perroute_commons::types::id::Id;
-use serde::Serialize;
 use std::fmt::Debug;
 use strum_macros::Display;
 
-use crate::query;
+use crate::{impl_query, query};
 
 pub trait Query {
     fn ty(&self) -> QueryType;
@@ -76,5 +75,30 @@ query!(
     channel_id: Option<Id>
 );
 
-query!(FindApiKeyQuery, QueryType::FindApiKey, api_key_id: Id);
-query!(QueryApiKeysQuery, QueryType::QueryApiKeys, api_key_id: Id);
+#[derive(
+    Debug, serde::Serialize, Clone, PartialEq, Eq, derive_builder::Builder, derive_getters::Getters,
+)]
+pub struct FindApiKeyQuery {
+    #[builder(default)]
+    api_key_id: Option<Id>,
+    #[builder(default)]
+    hash: Option<String>,
+}
+
+impl_query!(FindApiKeyQuery, QueryType::FindApiKey);
+
+#[derive(
+    Debug, serde::Serialize, Clone, PartialEq, Eq, derive_builder::Builder, derive_getters::Getters,
+)]
+pub struct QueryApiKeysQuery {
+    #[builder(default)]
+    api_key_id: Option<Id>,
+
+    #[builder(default)]
+    channel_id: Option<Id>,
+
+    #[builder(default)]
+    hash: Option<String>,
+}
+
+impl_query!(QueryApiKeysQuery, QueryType::QueryApiKeys);

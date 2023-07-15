@@ -128,12 +128,19 @@ pub fn routes() -> Scope {
                 .route(web::get().to(ApiKeyRouter::query_api_keys)),
         )
         .service(
-            web::scope("/{api_key_id}").service(
-                web::resource("")
-                    .name(ApiKeyRouter::API_KEY_RESOURCE_NAME)
-                    .route(web::get().to(ApiKeyRouter::find_api_key))
-                    .route(web::delete().to(ApiKeyRouter::revoke)),
-            ),
+            web::scope("/{api_key_id}")
+                .service(
+                    web::resource("")
+                        .name(ApiKeyRouter::API_KEY_RESOURCE_NAME)
+                        .route(web::get().to(ApiKeyRouter::find_api_key)),
+                )
+                .service(
+                    web::scope("/revocation").service(
+                        web::resource("")
+                            .name(ApiKeyRouter::API_KEY_REVOCATION_RESOURCE_NAME)
+                            .route(web::post().to(ApiKeyRouter::revoke)),
+                    ),
+                ),
         );
 
     web::scope("")

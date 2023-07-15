@@ -1,6 +1,6 @@
 use crate::{
     api::{
-        models::api_key::{ApiKeyResource, CreateApiKeiRequest},
+        models::api_key::{ApiKeyResource, CreateApiKeyRequest},
         response::{ApiResponse, ApiResult, ResourceModel},
     },
     app::AppState,
@@ -8,10 +8,7 @@ use crate::{
     extractors::actor::ActorExtractor,
     links::ResourceLink,
 };
-use actix_web::{
-    web::{Data, Json, Path},
-    Responder,
-};
+use actix_web::web::{Data, Json, Path};
 use perroute_commons::types::actor::Actor;
 use perroute_commons::types::id::Id;
 use perroute_cqrs::command_bus::{
@@ -22,9 +19,7 @@ use perroute_cqrs::command_bus::{
 };
 use perroute_cqrs::query_bus::handlers::api_key::find_api_key::FindApiKeyQueryHandler;
 use perroute_cqrs::query_bus::handlers::api_key::query_api_keys::QueryApiKeysQueryHandler;
-use perroute_cqrs::query_bus::queries::{
-    FindApiKeyQuery, FindApiKeyQueryBuilder, QueryApiKeysQueryBuilder,
-};
+use perroute_cqrs::query_bus::queries::{FindApiKeyQueryBuilder, QueryApiKeysQueryBuilder};
 use perroute_storage::models::api_key::ApiKey;
 
 pub type SingleResult = ApiResult<ResourceModel<ApiKeyResource>>;
@@ -35,14 +30,20 @@ pub struct ApiKeyRouter;
 impl ApiKeyRouter {
     pub const API_KEY_RESOURCES_NAME: &'static str = "api_keys";
     pub const API_KEY_RESOURCE_NAME: &'static str = "api_key";
+    pub const API_KEY_REVOCATION_RESOURCE_NAME: &'static str = "api_key_revocation";
 
     #[tracing::instrument(skip(state))]
     pub async fn create_api_key(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
-        Json(body): Json<CreateApiKeiRequest>,
+        Json(body): Json<CreateApiKeyRequest>,
     ) -> SingleResult {
-        let cmd = CreateApiKeyCommandBuilder::default().build().unwrap();
+        let cmd = CreateApiKeyCommandBuilder::default()
+            .channel_id(body.channel_id)
+            .name(body.name)
+            .expiration_in_hours(body.expiration_in_hours)
+            .build()
+            .unwrap();
         state
             .command_bus()
             .execute::<_, CreateApiKeyCommandHandler, _>(&actor, &cmd)
@@ -100,7 +101,7 @@ impl ApiKeyRouter {
 
     async fn retrieve_api_key(state: &AppState, actor: &Actor, id: Id) -> Result<ApiKey, ApiError> {
         let query = FindApiKeyQueryBuilder::default()
-            .api_key_id(id)
+            .api_key_id(Some(id))
             .build()
             .unwrap();
         state
