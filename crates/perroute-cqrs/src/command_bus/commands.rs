@@ -1,4 +1,4 @@
-use chrono::{Duration, NaiveDateTime, Utc};
+use chrono::{NaiveDateTime, Utc};
 use derive_builder::Builder;
 use derive_getters::Getters;
 use perroute_commons::{
@@ -8,10 +8,7 @@ use perroute_commons::{
         template::TemplateSnippet,
     },
 };
-use perroute_storage::models::{
-    command_log::{CommandLog, CommandLogBuilder},
-    schema::Version,
-};
+use perroute_storage::models::command_log::{CommandLog, CommandLogBuilder};
 use serde::Serialize;
 use std::fmt::Debug;
 use strum_macros::Display;
@@ -58,9 +55,6 @@ pub enum CommandType {
     DeleteTemplate,
 
     CreateMessage,
-
-    CreateApiKey,
-    RevokeApiKey,
 }
 
 impl From<CommandType> for String {
@@ -179,25 +173,6 @@ pub struct CreateMessageCommand {
     payload: Payload,
     #[builder(default)]
     scheduled_to: Option<NaiveDateTime>,
-    message_type_code: Code,
-    schema_version: Version,
-    channel_id: Id,
+    schema_id: Id,
 }
 impl_command!(CreateMessageCommand, CommandType::CreateMessage);
-
-#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
-pub struct CreateApiKeyCommand {
-    #[builder(default)]
-    api_key_id: Id,
-    name: String,
-    channel_id: Id,
-    #[builder(default)]
-    expiration_in_hours: Option<u64>,
-}
-impl_command!(CreateApiKeyCommand, CommandType::CreateApiKey);
-
-#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
-pub struct RevokeApiKeyCommand {
-    api_key_id: Id,
-}
-impl_command!(RevokeApiKeyCommand, CommandType::RevokeApiKey);

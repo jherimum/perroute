@@ -2,9 +2,6 @@ use super::{
     commands::Command,
     error::CommandBusError,
     handlers::{
-        api_key::{
-            create_api_key::CreateApiKeyCommandHandler, revoke_api_key::RevokeApiKeyCommandHandler,
-        },
         channel::{
             create_channel::CreateChannelCommandHandler,
             delete_channel::DeleteChannelCommandHandler,
@@ -123,8 +120,6 @@ impl CommandBus {
             .with_handler(UpdateTemplateCommandHandler)
             .with_handler(DeleteTemplateCommandHandler)
             .with_handler(CreateMessageCommandHandler)
-            .with_handler(CreateApiKeyCommandHandler)
-            .with_handler(RevokeApiKeyCommandHandler)
             .build()
     }
 

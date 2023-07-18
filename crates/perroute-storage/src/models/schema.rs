@@ -23,30 +23,8 @@ pub struct SchemasQuery {
     channel_id: Option<Id>,
     #[builder(default)]
     version: Option<Version>,
-}
-
-impl SchemasQuery {
-    pub fn by_id(id: Id) -> Self {
-        Self {
-            id: Some(id),
-            ..Default::default()
-        }
-    }
-
-    pub fn by_message_type_and_id(id: Id, message_type_id: Id) -> Self {
-        Self {
-            id: Some(id),
-            message_type_id: Some(message_type_id),
-            ..Default::default()
-        }
-    }
-
-    pub fn by_message_type(message_type_id: Id) -> Self {
-        Self {
-            message_type_id: Some(message_type_id),
-            ..Default::default()
-        }
-    }
+    #[builder(default)]
+    channel_code: Option<Code>,
 }
 
 impl ModelQueryBuilder<Schema> for SchemasQuery {
@@ -62,8 +40,15 @@ impl ModelQueryBuilder<Schema> for SchemasQuery {
                 FROM schemas s 
                 INNER JOIN message_types mt 
                 ON s.message_type_id = mt.id 
-                WHERE 1=1"#,
+                INNER JOIN channels c
+                ON s.channel_id = c.id
+                WHERE 1=1 "#,
         );
+
+        if let Some(channel_code) = self.channel_code.clone() {
+            builder.push(" AND c.code = ");
+            builder.push_bind(channel_code);
+        }
 
         if let Some(message_type_code) = self.message_type_code.clone() {
             builder.push(" AND mt.code = ");

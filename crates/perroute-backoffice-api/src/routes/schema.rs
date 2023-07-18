@@ -169,7 +169,7 @@ impl SchemaRouter {
         map: impl FnOnce(Schema) -> R,
     ) -> Result<R, ApiError> {
         let query = FindSchemaQueryBuilder::default()
-            .schema_id(path.2)
+            .schema_id(Some(path.2))
             .message_type_id(Some(path.1))
             .channel_id(Some(path.0))
             .build()

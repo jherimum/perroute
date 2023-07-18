@@ -29,9 +29,7 @@ impl CommandHandler for CreateMessageCommandHandler {
         let schema = Schema::find(
             ctx.pool(),
             SchemasQueryBuilder::default()
-                .channel_id(Some(*cmd.channel_id()))
-                .message_type_code(Some(cmd.message_type_code().clone()))
-                .version(Some(*cmd.schema_version()))
+                .id(Some(*cmd.schema_id()))
                 .build()
                 .expect("SchemasQueryBuilder error"),
         )

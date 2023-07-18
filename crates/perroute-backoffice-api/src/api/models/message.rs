@@ -8,6 +8,7 @@ use sqlx::types::chrono::NaiveDateTime;
 pub struct CreateMessageRequest {
     pub payload: serde_json::Value,
     pub scheduled_to: Option<NaiveDateTime>,
+    pub channel_code: Code,
     pub message_type_code: Code,
     pub schema_version: Version,
 }

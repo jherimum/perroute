@@ -1,4 +1,5 @@
-use perroute_commons::types::id::Id;
+use perroute_commons::types::{code::Code, id::Id};
+use perroute_storage::models::schema::Version;
 use std::fmt::Debug;
 use strum_macros::Display;
 
@@ -57,7 +58,10 @@ query!(
     QueryType::FindSchema,
     channel_id: Option<Id>,
     message_type_id: Option<Id>,
-    schema_id: Id
+    message_type_code: Option<Code>,
+    version: Option<Version>,
+    schema_id: Option<Id>,
+    channel_code: Option<Code>
 );
 
 query!(
@@ -82,7 +86,7 @@ pub struct FindApiKeyQuery {
     #[builder(default)]
     api_key_id: Option<Id>,
     #[builder(default)]
-    hash: Option<String>,
+    key: Option<String>,
 }
 
 impl_query!(FindApiKeyQuery, QueryType::FindApiKey);
@@ -98,7 +102,7 @@ pub struct QueryApiKeysQuery {
     channel_id: Option<Id>,
 
     #[builder(default)]
-    hash: Option<String>,
+    key: Option<String>,
 }
 
 impl_query!(QueryApiKeysQuery, QueryType::QueryApiKeys);

@@ -1,14 +1,13 @@
-use async_trait::async_trait;
-use perroute_commons::types::actor::Actor;
-use perroute_storage::{
-    models::schema::{Schema, SchemasQuery},
-    query::FetchableModel,
-};
-
 use crate::query_bus::{
     bus::{QueryBusContext, QueryHandler},
     error::QueryBusError,
     queries::QuerySchemasQuery,
+};
+use async_trait::async_trait;
+use perroute_commons::types::actor::Actor;
+use perroute_storage::{
+    models::schema::{Schema, SchemasQueryBuilder},
+    query::FetchableModel,
 };
 
 #[derive(Debug)]
@@ -28,7 +27,10 @@ impl QueryHandler for QuerySchemasQueryHandler {
     ) -> Result<Self::Output, QueryBusError> {
         Schema::query(
             ctx.pool(),
-            SchemasQuery::by_message_type(*query.message_type_id()),
+            SchemasQueryBuilder::default()
+                .message_type_id(Some(*query.message_type_id()))
+                .build()
+                .unwrap(),
         )
         .await
         .map_err(Into::into)

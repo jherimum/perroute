@@ -75,8 +75,8 @@ impl Key {
     pub fn hash(self) -> HashResult {
         HashResult {
             prefix: self.prefix.clone(),
-            key: format!("{}{}", self.prefix, self.suffix),
-            hash: sha256::digest(format!("{}{}", self.prefix, self.suffix)),
+            key: format!("{}.{}", self.prefix, self.suffix),
+            hash: sha256::digest(format!("{}.{}", self.prefix, self.suffix)),
         }
     }
 }

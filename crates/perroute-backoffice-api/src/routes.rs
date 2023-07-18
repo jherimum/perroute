@@ -1,11 +1,10 @@
 use self::{
-    api_key::ApiKeyRouter, channel::ChannelRouter, health::HealthRouter, message::MessageRouter,
+    channel::ChannelRouter, health::HealthRouter, message::MessageRouter,
     message_type::MessageTypeRouter, route::RouteRouter, schema::SchemaRouter,
     template::TemplateRouter,
 };
 use actix_web::{web, Scope};
 
-pub mod api_key;
 pub mod channel;
 pub mod health;
 pub mod message;
@@ -120,40 +119,10 @@ pub fn routes() -> Scope {
             .route(web::post().to(MessageRouter::create_message)),
     );
 
-    let api_keys = web::scope("/api_keys")
-        .service(
-            web::resource("")
-                .name(ApiKeyRouter::API_KEY_RESOURCES_NAME)
-                .route(web::post().to(ApiKeyRouter::create_api_key))
-                .route(web::get().to(ApiKeyRouter::query_api_keys)),
-        )
-        .service(
-            web::scope("/{api_key_id}")
-                .service(
-                    web::resource("")
-                        .name(ApiKeyRouter::API_KEY_RESOURCE_NAME)
-                        .route(web::get().to(ApiKeyRouter::find_api_key)),
-                )
-                .service(
-                    web::scope("/revocation").service(
-                        web::resource("")
-                            .name(ApiKeyRouter::API_KEY_REVOCATION_RESOURCE_NAME)
-                            .route(web::post().to(ApiKeyRouter::revoke)),
-                    ),
-                ),
-        );
-
     web::scope("")
         .service(
             web::resource(HealthRouter::HEALTH_RESOURCE_NAME)
                 .route(web::get().to(HealthRouter::health)),
         )
-        .service(
-            web::scope("/api").service(
-                web::scope("/v1")
-                    .service(channels)
-                    .service(messages)
-                    .service(api_keys),
-            ),
-        )
+        .service(web::scope("/api").service(web::scope("/v1").service(channels).service(messages)))
 }

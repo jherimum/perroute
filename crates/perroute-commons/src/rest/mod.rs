@@ -14,6 +14,8 @@ impl ResponseError for RestError {
             Self::NotFound(_) => StatusCode::NOT_FOUND,
             Self::InternalServer => StatusCode::INTERNAL_SERVER_ERROR,
             Self::UnprocessableEntity(_) => StatusCode::UNPROCESSABLE_ENTITY,
+            Self::Unauthorized => StatusCode::UNAUTHORIZED,
+            Self::Forbidden => StatusCode::FORBIDDEN,
         }
     }
     fn error_response(&self) -> HttpResponse<actix_web::body::BoxBody> {
@@ -21,12 +23,6 @@ impl ResponseError for RestError {
         HttpResponse::build(self.status_code()).json(response)
     }
 }
-
-// impl From<anyhow::Error> for RestError {
-//     fn from(_: anyhow::Error) -> Self {
-//         Self::InternalServer
-//     }
-// }
 
 #[derive(Debug, thiserror::Error, Clone)]
 pub enum RestError {
@@ -38,6 +34,12 @@ pub enum RestError {
 
     #[error("Unprocessable Entity")]
     UnprocessableEntity(String),
+
+    #[error("Unauthorized")]
+    Unauthorized,
+
+    #[error("Forbidden")]
+    Forbidden,
 }
 
 impl From<RestError> for ErrorResponse {
@@ -51,6 +53,8 @@ impl From<RestError> for ErrorResponse {
             RestError::UnprocessableEntity(detail) => {
                 Self::new(StatusCode::UNPROCESSABLE_ENTITY, message, Some(detail))
             }
+            RestError::Unauthorized => Self::new(StatusCode::UNAUTHORIZED, message, None),
+            RestError::Forbidden => Self::new(StatusCode::FORBIDDEN, message, None),
         }
     }
 }
