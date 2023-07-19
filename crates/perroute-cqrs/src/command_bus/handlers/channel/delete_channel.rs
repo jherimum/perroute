@@ -58,7 +58,7 @@ impl CommandHandler for DeleteChannelCommandHandler {
                     .delete(ctx.tx())
                     .await
                     .tap_err(|e| {
-                        tracing::error!("Failed to delete channel {}: {e}", command.channel_id())
+                        tracing::error!("Failed to delete channel {}: {e}", command.channel_id());
                     })
                     .map_err(CommandBusError::from)
             } else {

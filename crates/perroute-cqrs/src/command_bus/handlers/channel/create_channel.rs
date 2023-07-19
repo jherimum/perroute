@@ -43,7 +43,7 @@ impl CommandHandler for CreateChannelCommandHandler {
             tracing::error!(
                 "Failed to checking if channel with code {} exists: {e}",
                 cmd.code()
-            )
+            );
         })? {
             return Err(CommandBusError::ExpectedError(
                 "Channel with code already exists",

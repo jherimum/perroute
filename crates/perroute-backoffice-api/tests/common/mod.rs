@@ -12,7 +12,7 @@ impl TestApp {
     pub async fn start(pool: PgPool) -> TestApp {
         let listener = TcpListener::bind("127.0.0.1:0").unwrap();
         let url = Url::parse(&format!("http://{}", listener.local_addr().unwrap())).unwrap();
-        let server = server(listener, pool).await.unwrap();
+        let server = server(listener, pool).unwrap();
         let app = TestApp { url };
         tokio::spawn(server);
         app

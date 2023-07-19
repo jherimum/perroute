@@ -2017,6 +2017,7 @@ dependencies = [
  "derive-getters",
  "dotenv",
  "futures",
+ "http",
  "perroute-commons",
  "perroute-connectors",
  "perroute-cqrs",

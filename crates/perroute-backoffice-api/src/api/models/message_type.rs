@@ -29,10 +29,10 @@ pub struct MessageTypeResource {
 
 impl From<MessageType> for MessageTypeResource {
     fn from(value: MessageType) -> Self {
-        MessageTypeResource {
-            id: value.id().to_owned(),
-            code: value.code().to_owned(),
-            description: value.description().to_owned(),
+        Self {
+            id: *value.id(),
+            code: value.code().clone(),
+            description: value.description().clone(),
             enabled: *value.enabled(),
         }
     }

@@ -18,7 +18,7 @@ pub struct AppState {
 impl AppState {
     pub async fn from_settings(settings: &Settings) -> Result<Self> {
         let pool = ConnectionManager::build_pool(&settings.database).await?;
-        Ok(AppState {
+        Ok(Self {
             command_bus: CommandBus::complete(pool.clone()),
             query_bus: QueryBus::complete(pool),
         })
@@ -27,7 +27,7 @@ impl AppState {
 
 impl From<PgPool> for AppState {
     fn from(value: PgPool) -> Self {
-        AppState {
+        Self {
             command_bus: CommandBus::complete(value.clone()),
             query_bus: QueryBus::complete(value),
         }
@@ -48,8 +48,8 @@ impl Application {
             .unwrap();
         let listener = Self::listener(&settings.server).unwrap();
 
-        Ok(Application {
-            server: server(listener, pool).await?,
+        Ok(Self {
+            server: server(listener, pool)?,
         })
     }
 
@@ -58,7 +58,7 @@ impl Application {
     }
 }
 
-pub async fn server(listener: TcpListener, pool: PgPool) -> Result<Server, std::io::Error> {
+pub fn server(listener: TcpListener, pool: PgPool) -> Result<Server, std::io::Error> {
     let server = HttpServer::new(move || {
         App::new()
             .wrap(TracingLogger::default())

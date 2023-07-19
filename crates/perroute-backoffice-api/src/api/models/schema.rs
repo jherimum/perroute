@@ -29,10 +29,10 @@ pub struct SchemaResource {
 
 impl From<Schema> for SchemaResource {
     fn from(value: Schema) -> Self {
-        SchemaResource {
-            schema: value.schema().to_owned(),
-            version: value.version().to_owned(),
-            published: value.published().to_owned(),
+        Self {
+            schema: value.schema().clone(),
+            version: *value.version(),
+            published: *value.published(),
         }
     }
 }

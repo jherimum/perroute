@@ -165,7 +165,7 @@ impl TemplateRouter {
         query_bus: &QueryBus,
         actor: &Actor,
         path: (Id, Id, Id, Id),
-        map: impl FnOnce(Template) -> R,
+        map: impl FnOnce(Template) -> R + Send + Sync,
     ) -> Result<R, ApiError> {
         let query = FindTemplateQueryBuilder::default()
             .template_id(path.3)

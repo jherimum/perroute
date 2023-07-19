@@ -86,7 +86,7 @@ impl MessageTypeRouter {
         let cmd = CreateMessageTypeCommandBuilder::default()
             .channel_id(*channel.id())
             .code(body.code().clone())
-            .description(body.description().to_owned())
+            .description(body.description().clone())
             .build()
             .tap_err(|e| tracing::error!("Failed to build CreateMessageTypeCommand:{e}"))?;
 
@@ -116,7 +116,7 @@ impl MessageTypeRouter {
 
         let cmd = UpdateMessageTypeCommandBuilder::default()
             .message_type_id(*message_type.id())
-            .description(body.description().to_owned())
+            .description(body.description().clone())
             .enabled(*body.enabled())
             .build()
             .tap_err(|e| tracing::error!("Failed to build UpdateMessageTypeCommand: {e}"))?;
@@ -166,7 +166,7 @@ impl MessageTypeRouter {
         query_bus: &QueryBus,
         actor: &Actor,
         path: (Id, Id),
-        map: impl FnOnce(MessageType) -> R,
+        map: impl FnOnce(MessageType) -> R + Send + Sync,
     ) -> Result<R, ApiError> {
         let query = FindMessageTypeQueryBuilder::default()
             .channel_id(Some(path.0))

@@ -23,19 +23,19 @@ impl ResourceBuilder<()> for EmptyResourceBuilder {
 }
 
 #[derive(Debug, Serialize, Clone, Deserialize, PartialEq, Eq)]
-pub struct ResourceModel<D: Serialize> {
+pub struct ResourceModel<D> {
     pub data: Option<D>,
     pub links: HashMap<String, Url>,
 }
 
 #[derive(Debug, Serialize, Clone)]
-pub struct SingleResourceModel<D: Serialize> {
+pub struct SingleResourceModel<D> {
     pub data: Option<D>,
     pub links: HashMap<String, Url>,
 }
 
 #[derive(Debug, Serialize, Clone)]
-pub struct CollectionResourceModel<D: Serialize> {
+pub struct CollectionResourceModel<D> {
     pub data: Vec<SingleResourceModel<D>>,
     pub links: HashMap<String, Url>,
 }
@@ -67,15 +67,15 @@ impl<D: Serialize> Responder for ApiResponse<D> {
 
     fn respond_to(self, req: &HttpRequest) -> actix_web::HttpResponse<Self::Body> {
         match self {
-            ApiResponse::Ok(Some(resource)) => HttpResponse::Ok().json(resource.build(req)),
-            ApiResponse::Ok(None) => HttpResponse::Ok().finish(),
-            ApiResponse::Created(link, Some(resource)) => HttpResponse::Created()
+            Self::Ok(Some(resource)) => HttpResponse::Ok().json(resource.build(req)),
+            Self::Ok(None) => HttpResponse::Ok().finish(),
+            Self::Created(link, Some(resource)) => HttpResponse::Created()
                 .append_header((
                     actix_web::http::header::LOCATION.as_str().to_string(),
                     link.as_url(req).to_string(),
                 ))
                 .json(resource.build(req)),
-            ApiResponse::Created(link, None) => HttpResponse::Created()
+            Self::Created(link, None) => HttpResponse::Created()
                 .append_header((
                     actix_web::http::header::LOCATION.as_str().to_string(),
                     link.as_url(req).to_string(),

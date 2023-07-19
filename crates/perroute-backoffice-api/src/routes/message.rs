@@ -6,10 +6,7 @@ use crate::{
     app::AppState,
     extractors::actor::ActorExtractor,
 };
-use actix_web::{
-    web::{Data, Json},
-    HttpRequest,
-};
+use actix_web::web::{Data, Json};
 use perroute_cqrs::{
     command_bus::{
         commands::CreateMessageCommandBuilder,
@@ -32,7 +29,6 @@ impl MessageRouter {
         ActorExtractor(actor): ActorExtractor,
         state: Data<AppState>,
         Json(body): Json<CreateMessageRequest>,
-        req: HttpRequest,
     ) -> SingleResult {
         let schema_query = FindSchemaQueryBuilder::default()
             .channel_code(Some(body.channel_code.clone()))

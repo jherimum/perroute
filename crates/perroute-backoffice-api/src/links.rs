@@ -49,25 +49,25 @@ pub enum ResourceLink {
 impl AsUrl for ResourceLink {
     fn as_url(&self, req: &HttpRequest) -> Url {
         match self {
-            ResourceLink::Channel(id) => {
+            Self::Channel(id) => {
                 req.url_for(ChannelRouter::CHANNEL_RESOURCE_NAME, [id.to_string()])
             }
-            ResourceLink::Channels => req.url_for_static(ChannelRouter::CHANNELS_RESOURCE_NAME),
+            Self::Channels => req.url_for_static(ChannelRouter::CHANNELS_RESOURCE_NAME),
 
-            ResourceLink::MessageTypes(channel_id) => req.url_for(
+            Self::MessageTypes(channel_id) => req.url_for(
                 MessageTypeRouter::MESSAGE_TYPES_RESOURCE_NAME,
                 [channel_id.to_string()],
             ),
-            ResourceLink::MessageType(channel_id, message_type_id) => req.url_for(
+            Self::MessageType(channel_id, message_type_id) => req.url_for(
                 MessageTypeRouter::MESSAGE_TYPE_RESOURCE_NAME,
                 [channel_id.to_string(), message_type_id.to_string()],
             ),
 
-            ResourceLink::Schemas(channel_id, message_type_id) => req.url_for(
+            Self::Schemas(channel_id, message_type_id) => req.url_for(
                 SchemaRouter::SCHEMAS_RESOURCE_NAME,
                 [channel_id.to_string(), message_type_id.to_string()],
             ),
-            ResourceLink::Schema(channel_id, message_type_id, schema_id) => req.url_for(
+            Self::Schema(channel_id, message_type_id, schema_id) => req.url_for(
                 SchemaRouter::SCHEMA_RESOURCE_NAME,
                 [
                     channel_id.to_string(),
@@ -76,7 +76,7 @@ impl AsUrl for ResourceLink {
                 ],
             ),
 
-            ResourceLink::Templates(channel_id, message_type_id, schema_id) => req.url_for(
+            Self::Templates(channel_id, message_type_id, schema_id) => req.url_for(
                 TemplateRouter::TEMPLATES_RESOURCE_NAME,
                 [
                     channel_id.to_string(),
@@ -85,21 +85,20 @@ impl AsUrl for ResourceLink {
                 ],
             ),
 
-            ResourceLink::Template(channel_id, message_type_id, schema_id, template_id) => req
-                .url_for(
-                    TemplateRouter::TEMPLATE_RESOURCE_NAME,
-                    [
-                        channel_id.to_string(),
-                        message_type_id.to_string(),
-                        schema_id.to_string(),
-                        template_id.to_string(),
-                    ],
-                ),
+            Self::Template(channel_id, message_type_id, schema_id, template_id) => req.url_for(
+                TemplateRouter::TEMPLATE_RESOURCE_NAME,
+                [
+                    channel_id.to_string(),
+                    message_type_id.to_string(),
+                    schema_id.to_string(),
+                    template_id.to_string(),
+                ],
+            ),
 
-            ResourceLink::Routes(channel_id) => {
+            Self::Routes(channel_id) => {
                 req.url_for(RouteRouter::ROUTES_RESOURCE_NAME, [channel_id.to_string()])
             }
-            ResourceLink::Route(channel_id, route_id) => req.url_for(
+            Self::Route(channel_id, route_id) => req.url_for(
                 RouteRouter::ROUTE_RESOURCE_NAME,
                 [channel_id.to_string(), route_id.to_string()],
             ),

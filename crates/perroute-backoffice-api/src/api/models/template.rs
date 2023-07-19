@@ -32,7 +32,7 @@ pub struct TemplateResource {
 
 impl From<Template> for TemplateResource {
     fn from(template: Template) -> Self {
-        TemplateResource {
+        Self {
             id: *template.id(),
             name: template.name().to_owned(),
             html: template.html().clone().map(Into::into),

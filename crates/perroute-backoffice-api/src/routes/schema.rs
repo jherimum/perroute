@@ -166,7 +166,7 @@ impl SchemaRouter {
         query_bus: &QueryBus,
         actor: &Actor,
         path: (Id, Id, Id),
-        map: impl FnOnce(Schema) -> R,
+        map: impl FnOnce(Schema) -> R + Send + Sync,
     ) -> Result<R, ApiError> {
         let query = FindSchemaQueryBuilder::default()
             .schema_id(Some(path.2))

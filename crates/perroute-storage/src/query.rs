@@ -62,9 +62,9 @@ pub enum Projection {
 impl Projection {
     pub fn query_builder<'qb>(&self) -> QueryBuilder<'qb, Postgres> {
         QueryBuilder::new(match self {
-            Projection::Row => "SELECT *",
-            Projection::Count => "SELECT COUNT(*)",
-            Projection::Id => "SELECT id",
+            Self::Row => "SELECT *",
+            Self::Count => "SELECT COUNT(*)",
+            Self::Id => "SELECT id",
         })
     }
 }

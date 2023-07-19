@@ -43,11 +43,11 @@ impl CommandHandler for UpdateChannelCommandHandler {
 
         if let Some(channel) = channel {
             channel
-                .set_name(command.name().to_owned())
+                .set_name(command.name().clone())
                 .update(ctx.tx())
                 .await
                 .tap_err(|e| {
-                    tracing::error!("Error while updating channel {}: {e}", command.channel_id())
+                    tracing::error!("Error while updating channel {}: {e}", command.channel_id());
                 })
                 .map_err(CommandBusError::from)
         } else {

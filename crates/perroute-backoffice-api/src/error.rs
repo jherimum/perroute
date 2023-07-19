@@ -88,14 +88,14 @@ pub enum ApiError {
 impl From<&ApiError> for RestError {
     fn from(value: &ApiError) -> Self {
         match value {
-            ApiError::ChannelNotFound(_) => RestError::NotFound(value.to_string()),
-            ApiError::MessageTypeNotFound(_) => RestError::NotFound(value.to_string()),
-            ApiError::SchemaNotFound(_) => RestError::NotFound(value.to_string()),
-            ApiError::TemplateNotFound(_) => RestError::NotFound(value.to_string()),
+            ApiError::ChannelNotFound(_)
+            | ApiError::MessageTypeNotFound(_)
+            | ApiError::SchemaNotFound(_)
+            | ApiError::TemplateNotFound(_) => Self::NotFound(value.to_string()),
             ApiError::CommandBus(CommandBusError::ExpectedError(message)) => {
-                RestError::UnprocessableEntity(message.to_string())
+                Self::UnprocessableEntity(message.to_string())
             }
-            _ => RestError::InternalServer,
+            _ => Self::InternalServer,
         }
     }
 }

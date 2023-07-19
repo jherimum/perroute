@@ -7,7 +7,7 @@ pub struct TemplateSnippet(String);
 
 impl From<String> for TemplateSnippet {
     fn from(value: String) -> Self {
-        TemplateSnippet(value)
+        Self(value)
     }
 }
 

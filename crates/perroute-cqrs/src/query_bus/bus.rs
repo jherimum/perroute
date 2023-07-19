@@ -80,8 +80,8 @@ impl QueryBus {
     fn get<Q, H, O>(&self) -> Option<&H>
     where
         H: QueryHandler<Query = Q, Output = O> + 'static + Sync + Send,
-        Q: Query + 'static,
-        O: Debug,
+        Q: Query + 'static + Send + Sync,
+        O: Debug + Send + Sync,
     {
         let handler = self.map.get(&TypeId::of::<Q>());
         handler.and_then(|h| h.downcast_ref::<H>())
@@ -90,8 +90,8 @@ impl QueryBus {
     pub async fn execute<Q, H, O>(&self, actor: &Actor, query: &Q) -> Result<O, QueryBusError>
     where
         H: QueryHandler<Query = Q, Output = O> + 'static + Sync + Send,
-        Q: Query + 'static + Debug,
-        O: Debug,
+        Q: Query + 'static + Debug + Send + Sync,
+        O: Debug + Send + Sync,
     {
         let handler = self
             .get::<Q, H, O>()

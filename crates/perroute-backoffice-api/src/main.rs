@@ -23,7 +23,7 @@ async fn main() -> Result<()> {
 fn report_exit(task_name: &str, outcome: Result<Result<(), impl Debug + Display>, JoinError>) {
     match outcome {
         Ok(Ok(())) => {
-            tracing::info!("{} has exited", task_name)
+            tracing::info!("{} has exited", task_name);
         }
         Ok(Err(e)) => {
             tracing::error!(
@@ -31,7 +31,7 @@ fn report_exit(task_name: &str, outcome: Result<Result<(), impl Debug + Display>
                 error.message = %e,
                 "{} failed",
                 task_name
-            )
+            );
         }
         Err(e) => {
             tracing::error!(
@@ -39,7 +39,7 @@ fn report_exit(task_name: &str, outcome: Result<Result<(), impl Debug + Display>
                 error.message = %e,
                 "{}' task failed to complete",
                 task_name
-            )
+            );
         }
-    }
+    };
 }

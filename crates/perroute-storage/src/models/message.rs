@@ -16,18 +16,13 @@ pub enum Status {
 }
 
 #[derive(Debug, Default, Builder)]
+#[builder(default)]
 pub struct MessageQuery {
-    #[builder(default)]
     pub id: Option<Id>,
-    #[builder(default)]
     pub status: Option<Status>,
-    #[builder(default)]
     pub schema_id: Option<Id>,
-    #[builder(default)]
     pub message_type_id: Option<Id>,
-    #[builder(default)]
     pub channel_id: Option<Id>,
-
     pub scheduled_from: Option<NaiveDateTime>,
     pub scheduled_to: Option<NaiveDateTime>,
 }

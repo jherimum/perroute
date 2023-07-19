@@ -20,7 +20,7 @@ pub struct MessageResource {
 
 impl From<&Message> for MessageResource {
     fn from(value: &Message) -> Self {
-        MessageResource { id: *value.id() }
+        Self { id: *value.id() }
     }
 }
 

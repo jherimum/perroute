@@ -141,7 +141,7 @@ impl ChannelRouter {
         query_bus: &QueryBus,
         actor: &Actor,
         id: Id,
-        map: impl FnOnce(Channel) -> R,
+        map: impl FnOnce(Channel) -> R + Send + Sync,
     ) -> Result<R, ApiError> {
         let query = FindChannelQueryBuilder::default()
             .channel_id(Some(id))

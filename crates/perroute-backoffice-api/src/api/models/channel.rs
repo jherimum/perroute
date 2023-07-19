@@ -28,10 +28,10 @@ pub struct ChannelResource {
 
 impl From<Channel> for ChannelResource {
     fn from(value: Channel) -> Self {
-        ChannelResource {
+        Self {
             id: value.id().to_owned(),
-            code: value.code().to_owned(),
-            name: value.name().to_owned(),
+            code: value.code().clone(),
+            name: value.name().clone(),
         }
     }
 }

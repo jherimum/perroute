@@ -124,14 +124,14 @@ impl CommandBus {
     }
 
     pub fn builder() -> CommandBusBuilder {
-        Default::default()
+        CommandBusBuilder::default()
     }
 
     fn get<C, H, O>(&self) -> Option<&H>
     where
         C: Command + 'static,
         H: CommandHandler<Command = C, Output = O> + 'static + Sync + Send,
-        O: Debug,
+        O: Debug + Send + Sync,
     {
         let handler = self.handlers.get(&TypeId::of::<C>());
         handler.and_then(|h| h.downcast_ref::<H>())
@@ -141,7 +141,7 @@ impl CommandBus {
     where
         C: Command + 'static,
         H: CommandHandler<Command = C, Output = O> + 'static + Sync + Send,
-        O: Debug,
+        O: Debug + Send + Sync,
     {
         let handler = self
             .get::<C, H, O>()

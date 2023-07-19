@@ -8,6 +8,6 @@ impl FromRequest for ActorExtractor {
     type Error = RestError;
 
     fn from_request(_: &actix_web::HttpRequest, _: &mut actix_web::dev::Payload) -> Self::Future {
-        ready(Ok(ActorExtractor(Actor::system())))
+        ready(Ok(Self(Actor::system())))
     }
 }
