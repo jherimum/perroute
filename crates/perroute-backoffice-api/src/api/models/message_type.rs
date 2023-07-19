@@ -4,11 +4,12 @@ use crate::{
 };
 use derive_getters::Getters;
 use perroute_commons::types::{code::Code, id::Id};
-use perroute_storage::models::{channel::Channel, message_type::MessageType};
+use perroute_storage::models::message_type::MessageType;
 use serde::Serialize;
 
 #[derive(Debug, serde::Deserialize, Clone, Getters)]
 pub struct CreateMessageTypeRequest {
+    channel_id: Id,
     code: Code,
     description: String,
 }
@@ -43,18 +44,9 @@ impl ResourceBuilder<SingleResourceModel<MessageTypeResource>> for MessageType {
         SingleResourceModel {
             data: Some(self.clone().into()),
             links: Links::default()
-                .add(
-                    Linkrelation::Self_,
-                    ResourceLink::MessageType(*self.channel_id(), *self.id()),
-                )
-                .add(
-                    Linkrelation::MessageTypes,
-                    ResourceLink::MessageTypes(*self.channel_id()),
-                )
-                .add(
-                    Linkrelation::Schemas,
-                    ResourceLink::Schemas(*self.channel_id(), *self.id()),
-                )
+                .add(Linkrelation::Self_, ResourceLink::MessageType(*self.id()))
+                .add(Linkrelation::MessageTypes, ResourceLink::MessageTypes)
+                .add(Linkrelation::Schemas, ResourceLink::Schemas(*self.id()))
                 .add(
                     Linkrelation::Channel,
                     ResourceLink::Channel(*self.channel_id()),
@@ -64,16 +56,12 @@ impl ResourceBuilder<SingleResourceModel<MessageTypeResource>> for MessageType {
     }
 }
 
-impl ResourceBuilder<CollectionResourceModel<MessageTypeResource>> for (Channel, Vec<MessageType>) {
+impl ResourceBuilder<CollectionResourceModel<MessageTypeResource>> for Vec<MessageType> {
     fn build(&self, req: &actix_web::HttpRequest) -> CollectionResourceModel<MessageTypeResource> {
         CollectionResourceModel {
-            data: self.1.iter().map(|c| c.build(req)).collect(),
+            data: self.iter().map(|c| c.build(req)).collect(),
             links: Links::default()
-                .add(
-                    Linkrelation::Self_,
-                    ResourceLink::MessageTypes(*self.0.id()),
-                )
-                .add(Linkrelation::Channel, ResourceLink::Channel(*self.0.id()))
+                .add(Linkrelation::Self_, ResourceLink::MessageTypes)
                 .as_url_map(req),
         }
     }

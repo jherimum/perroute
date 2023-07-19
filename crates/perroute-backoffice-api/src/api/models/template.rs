@@ -1,12 +1,12 @@
 use crate::api::response::Links;
 use crate::api::response::{ResourceBuilder, ResourceModel};
 use perroute_commons::types::id::Id;
-use perroute_storage::models::schema::Schema;
 use perroute_storage::models::template::Template;
 use serde::Serialize;
 
 #[derive(Debug, serde::Deserialize, Clone)]
 pub struct CreateTemplateRequest {
+    pub schema_id: Id,
     pub name: String,
     pub html: Option<String>,
     pub text: Option<String>,
@@ -51,15 +51,13 @@ impl ResourceBuilder<ResourceModel<TemplateResource>> for Template {
     }
 }
 
-impl ResourceBuilder<ResourceModel<Vec<ResourceModel<TemplateResource>>>>
-    for (Schema, Vec<Template>)
-{
+impl ResourceBuilder<ResourceModel<Vec<ResourceModel<TemplateResource>>>> for Vec<Template> {
     fn build(
         &self,
         req: &actix_web::HttpRequest,
     ) -> ResourceModel<Vec<ResourceModel<TemplateResource>>> {
         ResourceModel {
-            data: Some(self.1.iter().map(|c| c.build(req)).collect()),
+            data: Some(self.iter().map(|c| c.build(req)).collect()),
             links: Links::default().as_url_map(req),
         }
     }

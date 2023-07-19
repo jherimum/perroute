@@ -33,17 +33,17 @@ pub enum ResourceLink {
     Channel(Id),
     Channels,
 
-    MessageTypes(Id),
-    MessageType(Id, Id),
+    MessageTypes,
+    MessageType(Id),
 
-    Schemas(Id, Id),
-    Schema(Id, Id, Id),
+    Schemas(Id),
+    Schema(Id, Id),
 
-    Templates(Id, Id, Id),
-    Template(Id, Id, Id, Id),
+    Templates,
+    Template(Id),
 
-    Routes(Id),
-    Route(Id, Id),
+    Routes,
+    Route(Id),
 }
 
 impl AsUrl for ResourceLink {
@@ -54,54 +54,34 @@ impl AsUrl for ResourceLink {
             }
             Self::Channels => req.url_for_static(ChannelRouter::CHANNELS_RESOURCE_NAME),
 
-            Self::MessageTypes(channel_id) => req.url_for(
-                MessageTypeRouter::MESSAGE_TYPES_RESOURCE_NAME,
-                [channel_id.to_string()],
-            ),
-            Self::MessageType(channel_id, message_type_id) => req.url_for(
-                MessageTypeRouter::MESSAGE_TYPE_RESOURCE_NAME,
-                [channel_id.to_string(), message_type_id.to_string()],
-            ),
-
-            Self::Schemas(channel_id, message_type_id) => req.url_for(
-                SchemaRouter::SCHEMAS_RESOURCE_NAME,
-                [channel_id.to_string(), message_type_id.to_string()],
-            ),
-            Self::Schema(channel_id, message_type_id, schema_id) => req.url_for(
-                SchemaRouter::SCHEMA_RESOURCE_NAME,
-                [
-                    channel_id.to_string(),
-                    message_type_id.to_string(),
-                    schema_id.to_string(),
-                ],
-            ),
-
-            Self::Templates(channel_id, message_type_id, schema_id) => req.url_for(
-                TemplateRouter::TEMPLATES_RESOURCE_NAME,
-                [
-                    channel_id.to_string(),
-                    message_type_id.to_string(),
-                    schema_id.to_string(),
-                ],
-            ),
-
-            Self::Template(channel_id, message_type_id, schema_id, template_id) => req.url_for(
-                TemplateRouter::TEMPLATE_RESOURCE_NAME,
-                [
-                    channel_id.to_string(),
-                    message_type_id.to_string(),
-                    schema_id.to_string(),
-                    template_id.to_string(),
-                ],
-            ),
-
-            Self::Routes(channel_id) => {
-                req.url_for(RouteRouter::ROUTES_RESOURCE_NAME, [channel_id.to_string()])
+            Self::MessageTypes => {
+                req.url_for_static(MessageTypeRouter::MESSAGE_TYPES_RESOURCE_NAME)
             }
-            Self::Route(channel_id, route_id) => req.url_for(
-                RouteRouter::ROUTE_RESOURCE_NAME,
-                [channel_id.to_string(), route_id.to_string()],
+            Self::MessageType(message_type_id) => req.url_for(
+                MessageTypeRouter::MESSAGE_TYPE_RESOURCE_NAME,
+                [message_type_id.to_string()],
             ),
+
+            Self::Schemas(message_type_id) => req.url_for(
+                SchemaRouter::SCHEMAS_RESOURCE_NAME,
+                [message_type_id.to_string()],
+            ),
+            Self::Schema(message_type_id, schema_id) => req.url_for(
+                SchemaRouter::SCHEMA_RESOURCE_NAME,
+                [message_type_id.to_string(), schema_id.to_string()],
+            ),
+
+            Self::Templates => req.url_for_static(TemplateRouter::TEMPLATES_RESOURCE_NAME),
+
+            Self::Template(template_id) => req.url_for(
+                TemplateRouter::TEMPLATE_RESOURCE_NAME,
+                [template_id.to_string()],
+            ),
+
+            Self::Routes => req.url_for_static(RouteRouter::ROUTES_RESOURCE_NAME),
+            Self::Route(route_id) => {
+                req.url_for(RouteRouter::ROUTE_RESOURCE_NAME, [route_id.to_string()])
+            }
         }
         .tap_err(|e| tracing::error!("Failed to build url: {}", e))
         .expect("msg")

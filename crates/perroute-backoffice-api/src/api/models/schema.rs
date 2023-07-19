@@ -44,11 +44,11 @@ impl ResourceBuilder<SingleResourceModel<SchemaResource>> for Schema {
             links: Links::default()
                 .add(
                     Linkrelation::Self_,
-                    ResourceLink::Schema(*self.channel_id(), *self.message_type_id(), *self.id()),
+                    ResourceLink::Schema(*self.message_type_id(), *self.id()),
                 )
                 .add(
                     Linkrelation::Schemas,
-                    ResourceLink::Schemas(*self.channel_id(), *self.message_type_id()),
+                    ResourceLink::Schemas(*self.message_type_id()),
                 )
                 .as_url_map(req),
         }
@@ -60,10 +60,7 @@ impl ResourceBuilder<CollectionResourceModel<SchemaResource>> for (MessageType, 
         CollectionResourceModel {
             data: self.1.iter().map(|s| s.build(req)).collect(),
             links: Links::default()
-                .add(
-                    Linkrelation::Self_,
-                    ResourceLink::Schemas(*self.0.channel_id(), *self.0.id()),
-                )
+                .add(Linkrelation::Self_, ResourceLink::Schemas(*self.0.id()))
                 .as_url_map(req),
         }
     }

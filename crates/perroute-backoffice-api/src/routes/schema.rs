@@ -48,7 +48,7 @@ impl SchemaRouter {
     pub async fn query_schemas(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
-        path: Path<(Id, Id)>,
+        path: Path<Id>,
     ) -> CollectionResult {
         let message_type = MessageTypeRouter::retrieve_message_type(
             state.query_bus(),
@@ -75,7 +75,7 @@ impl SchemaRouter {
     pub async fn create_schema(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
-        path: Path<(Id, Id)>,
+        path: Path<Id>,
         Json(body): Json<CreateSchemaRequest>,
     ) -> SingleResult {
         let message_type = MessageTypeRouter::retrieve_message_type(
@@ -103,7 +103,7 @@ impl SchemaRouter {
             .await
             .map(|schema| {
                 ApiResponse::created(
-                    ResourceLink::Schema(*schema.channel_id(), *message_type.id(), *schema.id()),
+                    ResourceLink::Schema(*message_type.id(), *schema.id()),
                     schema,
                 )
             })?)
@@ -111,7 +111,7 @@ impl SchemaRouter {
 
     #[tracing::instrument(skip(state))]
     pub async fn update_schema(
-        path: Path<(Id, Id, Id)>,
+        path: Path<(Id, Id)>,
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
         Json(body): Json<UpdateSchemaRequest>,
@@ -136,7 +136,7 @@ impl SchemaRouter {
     pub async fn delete_schema(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
-        path: Path<(Id, Id, Id)>,
+        path: Path<(Id, Id)>,
     ) -> EmptyApiResult {
         let schema =
             Self::retrieve_schema(state.query_bus(), &actor, *path.as_ref(), identity).await?;
@@ -157,7 +157,7 @@ impl SchemaRouter {
     pub async fn find_schema(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
-        path: Path<(Id, Id, Id)>,
+        path: Path<(Id, Id)>,
     ) -> SingleResult {
         Self::retrieve_schema(state.query_bus(), &actor, *path.as_ref(), ApiResponse::ok).await
     }
@@ -165,13 +165,12 @@ impl SchemaRouter {
     pub async fn retrieve_schema<R>(
         query_bus: &QueryBus,
         actor: &Actor,
-        path: (Id, Id, Id),
+        path: (Id, Id),
         map: impl FnOnce(Schema) -> R + Send + Sync,
     ) -> Result<R, ApiError> {
         let query = FindSchemaQueryBuilder::default()
-            .schema_id(Some(path.2))
-            .message_type_id(Some(path.1))
-            .channel_id(Some(path.0))
+            .message_type_id(Some(path.0))
+            .schema_id(Some(path.1))
             .build()
             .unwrap();
 

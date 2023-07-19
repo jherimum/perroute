@@ -1,6 +1,3 @@
-use std::convert::identity;
-
-use super::schema::SchemaRouter;
 use crate::{
     api::{
         models::template::{CreateTemplateRequest, TemplateResource, UpdateTemplateRequest},
@@ -37,6 +34,7 @@ use perroute_cqrs::{
     },
 };
 use perroute_storage::models::template::Template;
+use std::convert::identity;
 
 pub type SingleResult = ApiResult<ResourceModel<TemplateResource>>;
 pub type CollectionResult = ApiResult<ResourceModel<Vec<ResourceModel<TemplateResource>>>>;
@@ -51,23 +49,14 @@ impl TemplateRouter {
     pub async fn query_templates(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
-        path: Path<(Id, Id, Id)>,
     ) -> CollectionResult {
-        let schema =
-            SchemaRouter::retrieve_schema(state.query_bus(), &actor, *path.as_ref(), identity)
-                .await
-                .unwrap();
-
-        let query = QueryTemplatesQueryBuilder::default()
-            .schema_id(Some(*schema.id()))
-            .build()
-            .unwrap();
+        let query = QueryTemplatesQueryBuilder::default().build().unwrap();
 
         state
             .query_bus()
             .execute::<_, QueryTemplatesQueryHandler, _>(&actor, &query)
             .await
-            .map(|templates| ApiResponse::ok((schema, templates)))
+            .map(|templates| ApiResponse::ok(templates))
             .map_err(ApiError::from)
     }
 
@@ -75,17 +64,11 @@ impl TemplateRouter {
     pub async fn create_template(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
-        path: Path<(Id, Id, Id)>,
         Json(body): Json<CreateTemplateRequest>,
     ) -> SingleResult {
-        let schema =
-            SchemaRouter::retrieve_schema(state.query_bus(), &actor, *path.as_ref(), identity)
-                .await
-                .unwrap();
-
         let cmd = CreateTemplateCommandBuilder::default()
             .template_id(new_id!())
-            .schema_id(*schema.id())
+            .schema_id(body.schema_id)
             .name(body.name)
             .html(body.html.map(Into::into))
             .text(body.text.map(Into::into))
@@ -98,7 +81,7 @@ impl TemplateRouter {
             .await?;
 
         Ok(ApiResponse::created(
-            ResourceLink::Template(path.0, path.1, path.2, *template.id()),
+            ResourceLink::Template(*template.id()),
             template,
         ))
     }

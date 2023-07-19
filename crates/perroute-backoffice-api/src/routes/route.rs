@@ -15,7 +15,6 @@ impl RouteRouter {
     pub async fn query_routes(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
-        routes: Path<Id>,
     ) -> impl Responder {
         HttpResponse::Ok().finish()
     }
@@ -24,7 +23,6 @@ impl RouteRouter {
     pub async fn create_route(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
-        routes: Path<Id>,
     ) -> impl Responder {
         HttpResponse::Ok().finish()
     }
@@ -33,7 +31,7 @@ impl RouteRouter {
     pub async fn update_route(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
-        route: Path<(Id, Id)>,
+        route: Path<Id>,
     ) -> impl Responder {
         HttpResponse::Ok().finish()
     }
@@ -42,7 +40,7 @@ impl RouteRouter {
     pub async fn delete_route(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
-        route: Path<(Id, Id)>,
+        route: Path<Id>,
     ) -> impl Responder {
         HttpResponse::Ok().finish()
     }
@@ -51,7 +49,7 @@ impl RouteRouter {
     pub async fn find_route(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
-        route: Path<(Id, Id)>,
+        route: Path<Id>,
     ) -> impl Responder {
         HttpResponse::Ok().finish()
     }

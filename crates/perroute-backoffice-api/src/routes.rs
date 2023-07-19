@@ -53,8 +53,7 @@ pub fn routes() -> Scope {
                             .name(SchemaRouter::SCHEMA_CLONE_RESOURCE_NAME)
                             .route(web::post().to(SchemaRouter::clone)),
                     ),
-                )
-                .service(templates),
+                ),
         );
 
     let message_types = web::scope("/message_types")
@@ -101,16 +100,13 @@ pub fn routes() -> Scope {
                 .route(web::post().to(ChannelRouter::create_channel)),
         )
         .service(
-            web::scope("/{channel_id}")
-                .service(
-                    web::resource("")
-                        .name(ChannelRouter::CHANNEL_RESOURCE_NAME)
-                        .route(web::get().to(ChannelRouter::find_channel))
-                        .route(web::put().to(ChannelRouter::update_channel))
-                        .route(web::delete().to(ChannelRouter::delete_channel)),
-                )
-                .service(routes)
-                .service(message_types),
+            web::scope("/{channel_id}").service(
+                web::resource("")
+                    .name(ChannelRouter::CHANNEL_RESOURCE_NAME)
+                    .route(web::get().to(ChannelRouter::find_channel))
+                    .route(web::put().to(ChannelRouter::update_channel))
+                    .route(web::delete().to(ChannelRouter::delete_channel)),
+            ),
         );
 
     let messages = web::scope("/messages").service(
@@ -124,5 +120,14 @@ pub fn routes() -> Scope {
             web::resource(HealthRouter::HEALTH_RESOURCE_NAME)
                 .route(web::get().to(HealthRouter::health)),
         )
-        .service(web::scope("/api").service(web::scope("/v1").service(channels).service(messages)))
+        .service(
+            web::scope("/api").service(
+                web::scope("/v1")
+                    .service(channels)
+                    .service(message_types)
+                    .service(messages)
+                    .service(templates)
+                    .service(routes),
+            ),
+        )
 }

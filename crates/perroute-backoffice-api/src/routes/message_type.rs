@@ -1,4 +1,3 @@
-use super::channel::ChannelRouter;
 use crate::{
     api::{
         models::message_type::{
@@ -52,14 +51,8 @@ impl MessageTypeRouter {
     pub async fn query_message_types(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
-        path: Path<Id>,
     ) -> CollectionResult {
-        let channel =
-            ChannelRouter::retrieve_channel(state.query_bus(), &actor, *path.as_ref(), identity)
-                .await?;
-
         let query = QueryMessageTypesQueryBuilder::default()
-            .channel_id(Some(*channel.id()))
             .build()
             .tap_err(|e| tracing::error!("Failed to build QueryMessageTypesQuery: {e}"))?;
 
@@ -69,7 +62,7 @@ impl MessageTypeRouter {
             .await
             .tap_err(|e| tracing::error!("Failed to query message types: {e}"))?;
 
-        Ok(ApiResponse::ok((channel, message_types)))
+        Ok(ApiResponse::ok(message_types))
     }
 
     #[tracing::instrument(skip(state))]
@@ -77,15 +70,10 @@ impl MessageTypeRouter {
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
         Json(body): Json<CreateMessageTypeRequest>,
-        path: Path<Id>,
     ) -> SingleResult {
-        let channel =
-            ChannelRouter::retrieve_channel(state.query_bus(), &actor, *path.as_ref(), identity)
-                .await?;
-
         let cmd = CreateMessageTypeCommandBuilder::default()
-            .channel_id(*channel.id())
             .code(body.code().clone())
+            .channel_id(*body.channel_id())
             .description(body.description().clone())
             .build()
             .tap_err(|e| tracing::error!("Failed to build CreateMessageTypeCommand:{e}"))?;
@@ -96,10 +84,7 @@ impl MessageTypeRouter {
             .await
             .tap_err(|e| tracing::error!("Failed to create message type: {e}"))
             .map(|message_type| {
-                ApiResponse::created(
-                    ResourceLink::MessageType(*message_type.channel_id(), *message_type.id()),
-                    message_type,
-                )
+                ApiResponse::created(ResourceLink::MessageType(*message_type.id()), message_type)
             })?)
     }
 
@@ -107,7 +92,7 @@ impl MessageTypeRouter {
     pub async fn update_message_type(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
-        path: Path<(Id, Id)>,
+        path: Path<Id>,
         Json(body): Json<UpdateMessageTypeRequest>,
     ) -> SingleResult {
         let message_type =
@@ -133,7 +118,7 @@ impl MessageTypeRouter {
     pub async fn delete_message_type(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
-        path: Path<(Id, Id)>,
+        path: Path<Id>,
     ) -> EmptyApiResult {
         let message_type =
             Self::retrieve_message_type(state.query_bus(), &actor, *path.as_ref(), identity)
@@ -156,7 +141,7 @@ impl MessageTypeRouter {
     pub async fn find_message_type(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
-        path: Path<(Id, Id)>,
+        path: Path<Id>,
     ) -> SingleResult {
         Self::retrieve_message_type(state.query_bus(), &actor, *path.as_ref(), ApiResponse::ok)
             .await
@@ -165,12 +150,11 @@ impl MessageTypeRouter {
     pub async fn retrieve_message_type<R>(
         query_bus: &QueryBus,
         actor: &Actor,
-        path: (Id, Id),
+        path: Id,
         map: impl FnOnce(MessageType) -> R + Send + Sync,
     ) -> Result<R, ApiError> {
         let query = FindMessageTypeQueryBuilder::default()
-            .channel_id(Some(path.0))
-            .message_type_id(path.1)
+            .message_type_id(path)
             .build()
             .tap_err(|e| tracing::error!("Failed to build FindMessageTypeQuery: {e}"))?;
 
@@ -178,7 +162,7 @@ impl MessageTypeRouter {
             .execute::<_, FindMessageTypeQueryHandler, _>(actor, &query)
             .await
             .tap_err(|e| tracing::error!("Faled to retrieve message type:{e}"))?
-            .ok_or_else(|| ApiError::MessageTypeNotFound(path.0))
+            .ok_or_else(|| ApiError::MessageTypeNotFound(path))
             .map(map)
     }
 }

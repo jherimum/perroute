@@ -43,11 +43,6 @@ impl ResourceBuilder<ResourceModel<ChannelResource>> for Channel {
             links: Links::default()
                 .add(Linkrelation::Self_, ResourceLink::Channel(*self.id()))
                 .add(Linkrelation::Channels, ResourceLink::Channels)
-                .add(
-                    Linkrelation::MessageTypes,
-                    ResourceLink::MessageTypes(*self.id()),
-                )
-                .add(Linkrelation::Routes, ResourceLink::Routes(*self.id()))
                 .as_url_map(req),
         }
     }

@@ -1,5 +1,8 @@
+use derive_builder::Builder;
+use derive_getters::Getters;
 use perroute_commons::types::{code::Code, id::Id};
 use perroute_storage::models::schema::Version;
+use serde::Serialize;
 use std::fmt::Debug;
 use strum_macros::Display;
 
@@ -41,11 +44,13 @@ query!(
     channel_id: Option<Id>
 );
 
-query!(
-    QueryMessageTypesQuery,
-    QueryType::QueryMessageTypes,
-    channel_id: Option<Id>
-);
+#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
+pub struct QueryMessageTypesQuery {
+    #[builder(default)]
+    channel_id: Option<Id>,
+}
+
+impl_query!(QueryMessageTypesQuery, QueryType::QueryMessageTypes);
 
 query!(
     QuerySchemasQuery,
@@ -79,9 +84,7 @@ query!(
     channel_id: Option<Id>
 );
 
-#[derive(
-    Debug, serde::Serialize, Clone, PartialEq, Eq, derive_builder::Builder, derive_getters::Getters,
-)]
+#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
 pub struct FindApiKeyQuery {
     #[builder(default)]
     api_key_id: Option<Id>,
