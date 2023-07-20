@@ -1,11 +1,14 @@
+use std::collections::HashSet;
+
 use crate::{log_query_error, query::ModelQueryBuilder, DatabaseModel};
 use chrono::NaiveDateTime;
 use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
-use perroute_commons::types::{id::Id, payload::Payload};
+use perroute_commons::types::{id::Id, payload::Payload, recipient::Recipient};
+use perroute_connectors::DispatcherType;
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, PgExecutor};
+use sqlx::{types::Json, FromRow, PgExecutor};
 use tap::TapFallible;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, sqlx::Type, Copy)]
@@ -101,14 +104,25 @@ pub struct Message {
 
     #[setters(skip)]
     channel_id: Id,
+
+    #[setters(skip)]
+    recipient: Json<Recipient>,
+
+    #[setters(skip)]
+    #[builder(default)]
+    include_dispatcher_types: Json<HashSet<DispatcherType>>,
+
+    #[setters(skip)]
+    #[builder(default)]
+    exclude_dispatcher_types: Json<HashSet<DispatcherType>>,
 }
 
 impl Message {
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
         sqlx::query_as(
             r#"
-                INSERT INTO messages (id, payload, status, scheduled_to, schema_id, message_type_id, channel_id) 
-                VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *"#,
+                INSERT INTO messages (id, payload, status, scheduled_to, schema_id, message_type_id, channel_id, recipient, include_dispatcher_types, exclude_dispatcher_types) 
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *"#,
             ).bind(self.id)
             .bind(self.payload)
             .bind(self.status)
@@ -116,6 +130,9 @@ impl Message {
             .bind(self.schema_id)
             .bind(self.message_type_id)
             .bind(self.channel_id)
+            .bind(self.recipient)
+            .bind(self.include_dispatcher_types)
+            .bind(self.exclude_dispatcher_types)
         .fetch_one(exec)
         .await
         .tap_err(log_query_error!())

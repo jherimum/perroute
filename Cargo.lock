@@ -2115,6 +2115,7 @@ dependencies = [
  "derive_builder",
  "derive_setters",
  "perroute-commons",
+ "perroute-connectors",
  "secrecy",
  "serde",
  "serde_json",

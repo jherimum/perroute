@@ -36,6 +36,7 @@ impl MessageRouter {
             .version(Some(body.schema_version))
             .message_type_id(None)
             .schema_id(None)
+            .channel_id(None)
             .build()
             .unwrap();
 
@@ -49,6 +50,7 @@ impl MessageRouter {
         let cmd = CreateMessageCommandBuilder::default()
             .payload(body.payload.into())
             .schema_id(*schema.id())
+            .recipient(body.recipient)
             .build()
             .unwrap();
         let message = state

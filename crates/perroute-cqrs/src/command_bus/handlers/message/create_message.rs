@@ -10,6 +10,7 @@ use perroute_storage::{
     },
     query::FetchableModel,
 };
+use sqlx::types::Json;
 
 #[derive(Debug)]
 pub struct CreateMessageCommandHandler;
@@ -47,6 +48,9 @@ impl CommandHandler for CreateMessageCommandHandler {
             .schema_id(*schema.id())
             .message_type_id(*schema.message_type_id())
             .channel_id(*schema.channel_id())
+            .include_dispatcher_types(Json(cmd.include_dispatcher_types().clone()))
+            .exclude_dispatcher_types(Json(cmd.exclude_dispatcher_types().clone()))
+            .recipient(Json(cmd.recipient().clone()))
             .build()
             .unwrap()
             .save(ctx.tx())

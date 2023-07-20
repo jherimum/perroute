@@ -3,6 +3,9 @@ CREATE TYPE message_status AS ENUM ('pending', 'distributed');
 create table messages(
     id uuid not null,
     payload jsonb not null,
+    recipient jsonb not null,
+    exclude_dispatcher_types jsonb not null,
+    include_dispatcher_types jsonb not null,
     status message_status not null,
     scheduled_to timestamp null,
     schema_id uuid not null,

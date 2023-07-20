@@ -5,12 +5,13 @@ use perroute_commons::{
     new_id,
     types::{
         actor::Actor, code::Code, id::Id, json_schema::JsonSchema, payload::Payload,
-        template::TemplateSnippet,
+        recipient::Recipient, template::TemplateSnippet,
     },
 };
+use perroute_connectors::DispatcherType;
 use perroute_storage::models::command_log::{CommandLog, CommandLogBuilder};
 use serde::Serialize;
-use std::fmt::Debug;
+use std::{collections::HashSet, fmt::Debug};
 use strum_macros::Display;
 
 use crate::{command, impl_command};
@@ -170,9 +171,20 @@ command!(
 pub struct CreateMessageCommand {
     #[builder(default)]
     message_id: Id,
+
     payload: Payload,
+
     #[builder(default)]
     scheduled_to: Option<NaiveDateTime>,
+
     schema_id: Id,
+
+    recipient: Recipient,
+
+    #[builder(default)]
+    include_dispatcher_types: HashSet<DispatcherType>,
+
+    #[builder(default)]
+    exclude_dispatcher_types: HashSet<DispatcherType>,
 }
 impl_command!(CreateMessageCommand, CommandType::CreateMessage);

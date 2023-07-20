@@ -37,12 +37,14 @@ query!(
 );
 query!(QueryChannelsQuery, QueryType::QueryChannels);
 
-query!(
-    FindMessageTypeQuery,
-    QueryType::FindMessageTypeQuery,
+#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
+pub struct FindMessageTypeQuery {
     message_type_id: Id,
-    channel_id: Option<Id>
-);
+    #[builder(default)]
+    channel_id: Option<Id>,
+}
+
+impl_query!(FindMessageTypeQuery, QueryType::FindMessageTypeQuery);
 
 #[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
 pub struct QueryMessageTypesQuery {
