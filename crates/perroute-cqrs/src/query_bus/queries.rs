@@ -60,16 +60,23 @@ query!(
     message_type_id: Id
 );
 
-query!(
-    FindSchemaQuery,
-    QueryType::FindSchema,
+#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
+pub struct FindSchemaQuery {
+    #[builder(default)]
     channel_id: Option<Id>,
+    #[builder(default)]
     message_type_id: Option<Id>,
+    #[builder(default)]
     message_type_code: Option<Code>,
+    #[builder(default)]
     version: Option<Version>,
+    #[builder(default)]
     schema_id: Option<Id>,
-    channel_code: Option<Code>
-);
+    #[builder(default)]
+    channel_code: Option<Code>,
+}
+
+impl_query!(FindSchemaQuery, QueryType::FindSchema);
 
 query!(
     QueryTemplatesQuery,
@@ -96,16 +103,12 @@ pub struct FindApiKeyQuery {
 
 impl_query!(FindApiKeyQuery, QueryType::FindApiKey);
 
-#[derive(
-    Debug, serde::Serialize, Clone, PartialEq, Eq, derive_builder::Builder, derive_getters::Getters,
-)]
+#[derive(Debug, serde::Serialize, Clone, PartialEq, Eq, Builder, derive_getters::Getters)]
 pub struct QueryApiKeysQuery {
     #[builder(default)]
     api_key_id: Option<Id>,
-
     #[builder(default)]
     channel_id: Option<Id>,
-
     #[builder(default)]
     key: Option<String>,
 }

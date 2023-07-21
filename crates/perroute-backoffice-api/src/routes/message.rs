@@ -34,9 +34,6 @@ impl MessageRouter {
             .channel_code(Some(body.channel_code.clone()))
             .message_type_code(Some(body.message_type_code))
             .version(Some(body.schema_version))
-            .message_type_id(None)
-            .schema_id(None)
-            .channel_id(None)
             .build()
             .unwrap();
 
