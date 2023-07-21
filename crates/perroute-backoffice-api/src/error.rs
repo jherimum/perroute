@@ -3,57 +3,11 @@ use perroute_commons::{
     rest::RestError,
     types::{id::Id, json_schema::JsonSchemaError},
 };
-use perroute_cqrs::{
-    command_bus::{
-        commands::{
-            CreateChannelCommandBuilderError, CreateMessageTypeCommandBuilderError,
-            DeleteChannelCommandBuilderError, DeleteMessageTypeCommandBuilderError,
-            UpdateChannelCommandBuilderError, UpdateMessageTypeCommandBuilderError,
-        },
-        error::CommandBusError,
-    },
-    query_bus::{
-        error::QueryBusError,
-        queries::{
-            FindChannelQueryBuilderError, FindMessageTypeQueryBuilderError,
-            QueryChannelsQueryBuilderError, QueryMessageTypesQueryBuilderError,
-        },
-    },
-};
+use perroute_cqrs::{command_bus::error::CommandBusError, query_bus::error::QueryBusError};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum ApiError {
-    #[error(transparent)]
-    FindMessageTypeQueryBuilder(#[from] FindMessageTypeQueryBuilderError),
-
-    #[error(transparent)]
-    DeleteMessageTypeCommandBuilder(#[from] DeleteMessageTypeCommandBuilderError),
-
-    #[error(transparent)]
-    UpdateMessageTypeCommandBuilder(#[from] UpdateMessageTypeCommandBuilderError),
-
-    #[error(transparent)]
-    CreateMessageTypeCommandBuilder(#[from] CreateMessageTypeCommandBuilderError),
-
-    #[error(transparent)]
-    QueryMessageTypesQueryBuilder(#[from] QueryMessageTypesQueryBuilderError),
-
-    #[error(transparent)]
-    FindChannelQueryBuilder(#[from] FindChannelQueryBuilderError),
-
-    #[error(transparent)]
-    DeleteChannelCommandBuilder(#[from] DeleteChannelCommandBuilderError),
-
-    #[error(transparent)]
-    UpdateChannelCommandBuilder(#[from] UpdateChannelCommandBuilderError),
-
-    #[error(transparent)]
-    QueryChannelsQueryBuilder(#[from] QueryChannelsQueryBuilderError),
-
-    #[error(transparent)]
-    CreateChannelCommandBuilder(#[from] CreateChannelCommandBuilderError),
-
     #[error(transparent)]
     JsonChema(#[from] JsonSchemaError),
 

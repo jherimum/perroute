@@ -2,7 +2,7 @@ use crate::command_bus::{
     bus::CommandBusContext, commands::CreateMessageCommand, error::CommandBusError,
     handlers::CommandHandler,
 };
-use perroute_commons::types::actor::Actor;
+use perroute_commons::types::{actor::Actor, id::Id};
 use perroute_storage::{
     models::{
         message::{Message, MessageBuilder, Status},
@@ -10,7 +10,7 @@ use perroute_storage::{
     },
     query::FetchableModel,
 };
-use sqlx::types::Json;
+use sqlx::{types::Json, PgPool};
 
 #[derive(Debug)]
 pub struct CreateMessageCommandHandler;
@@ -27,16 +27,7 @@ impl CommandHandler for CreateMessageCommandHandler {
         actor: &Actor,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
-        let schema = Schema::find(
-            ctx.pool(),
-            SchemasQueryBuilder::default()
-                .id(Some(*cmd.schema_id()))
-                .build()
-                .expect("SchemasQueryBuilder error"),
-        )
-        .await
-        .expect("error de sql")
-        .expect("nao encontrado");
+        let schema = retrieve_schema(ctx.pool(), cmd.schema_id()).await?;
 
         schema.schema().validate(cmd.payload()).unwrap();
 
@@ -57,4 +48,17 @@ impl CommandHandler for CreateMessageCommandHandler {
             .await
             .map_err(CommandBusError::from)
     }
+}
+
+async fn retrieve_schema(pool: &PgPool, id: &Id) -> Result<Schema, CommandBusError> {
+    Ok(Schema::find(
+        pool,
+        SchemasQueryBuilder::default()
+            .id(Some(*id))
+            .build()
+            .expect("SchemasQueryBuilder error"),
+    )
+    .await
+    .expect("error de sql")
+    .expect("nao encontrado"))
 }

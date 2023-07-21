@@ -26,7 +26,7 @@ use super::{
     },
 };
 use perroute_commons::types::actor::Actor;
-use sqlx::{PgPool, Postgres, Transaction};
+use sqlx::{Acquire, PgConnection, PgPool, Postgres, Transaction};
 use std::{
     any::{Any, TypeId},
     collections::HashMap,
@@ -56,6 +56,10 @@ impl<'tx> CommandBusContext<'tx> {
 
     pub const fn pool(&self) -> &PgPool {
         &self.pool
+    }
+
+    pub async fn conn(&mut self) -> &mut PgConnection {
+        self.tx.acquire().await.unwrap()
     }
 
     async fn commit(self) -> Result<(), CommandBusError> {

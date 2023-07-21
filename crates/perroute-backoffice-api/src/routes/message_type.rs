@@ -54,7 +54,8 @@ impl MessageTypeRouter {
     ) -> CollectionResult {
         let query = QueryMessageTypesQueryBuilder::default()
             .build()
-            .tap_err(|e| tracing::error!("Failed to build QueryMessageTypesQuery: {e}"))?;
+            .tap_err(|e| tracing::error!("Failed to build QueryMessageTypesQuery: {e}"))
+            .map_err(anyhow::Error::from)?;
 
         let message_types = state
             .query_bus()
@@ -76,7 +77,8 @@ impl MessageTypeRouter {
             .channel_id(*body.channel_id())
             .description(body.description().clone())
             .build()
-            .tap_err(|e| tracing::error!("Failed to build CreateMessageTypeCommand:{e}"))?;
+            .tap_err(|e| tracing::error!("Failed to build CreateMessageTypeCommand:{e}"))
+            .map_err(anyhow::Error::from)?;
 
         Ok(state
             .command_bus()
@@ -104,7 +106,8 @@ impl MessageTypeRouter {
             .description(body.description().clone())
             .enabled(*body.enabled())
             .build()
-            .tap_err(|e| tracing::error!("Failed to build UpdateMessageTypeCommand: {e}"))?;
+            .tap_err(|e| tracing::error!("Failed to build UpdateMessageTypeCommand: {e}"))
+            .map_err(anyhow::Error::from)?;
 
         Ok(state
             .command_bus()
@@ -127,7 +130,8 @@ impl MessageTypeRouter {
         let cmd = DeleteMessageTypeCommandBuilder::default()
             .message_type_id(*message_type.id())
             .build()
-            .tap_err(|e| tracing::error!("Failed to build DeleteMessageTypeCommand: {e}"))?;
+            .tap_err(|e| tracing::error!("Failed to build DeleteMessageTypeCommand: {e}"))
+            .map_err(anyhow::Error::from)?;
 
         Ok(state
             .command_bus()
@@ -156,7 +160,8 @@ impl MessageTypeRouter {
         let query = FindMessageTypeQueryBuilder::default()
             .message_type_id(path)
             .build()
-            .tap_err(|e| tracing::error!("Failed to build FindMessageTypeQuery: {e}"))?;
+            .tap_err(|e| tracing::error!("Failed to build FindMessageTypeQuery: {e}"))
+            .map_err(anyhow::Error::from)?;
 
         query_bus
             .execute::<_, FindMessageTypeQueryHandler, _>(actor, &query)

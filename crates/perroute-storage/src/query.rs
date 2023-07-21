@@ -6,6 +6,7 @@ pub trait FetchableModel<Q: ModelQueryBuilder<M>, M> {
     async fn count<'e, E: PgExecutor<'e>>(exec: E, query: Q) -> Result<i64, sqlx::Error>;
     async fn query<'e, E: PgExecutor<'e>>(exec: E, query: Q) -> Result<Vec<M>, sqlx::Error>;
     async fn find<'e, E: PgExecutor<'e>>(exec: E, query: Q) -> Result<Option<M>, sqlx::Error>;
+    async fn find_one<'e, E: PgExecutor<'e>>(exec: E, query: Q) -> Result<M, sqlx::Error>;
     async fn exists<'e, E: PgExecutor<'e>>(exec: E, query: Q) -> Result<bool, sqlx::Error>;
 }
 
@@ -35,6 +36,14 @@ where
             .build(Projection::Row)
             .build_query_as::<M>()
             .fetch_optional(exec)
+            .await
+    }
+
+    async fn find_one<'e, E: PgExecutor<'e>>(exec: E, query: Q) -> Result<M, sqlx::Error> {
+        query
+            .build(Projection::Row)
+            .build_query_as::<M>()
+            .fetch_one(exec)
             .await
     }
 

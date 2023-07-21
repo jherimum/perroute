@@ -11,7 +11,11 @@ use crate::{
     links::ResourceLink,
 };
 use actix_web::web::{Data, Json, Path};
-use perroute_commons::types::{actor::Actor, id::Id};
+use anyhow::Context;
+use perroute_commons::{
+    rest::RestError,
+    types::{actor::Actor, id::Id},
+};
 use perroute_cqrs::{
     command_bus::{
         commands::{
@@ -54,7 +58,8 @@ impl ChannelRouter {
             .code(body.code().clone())
             .name(body.name().clone())
             .build()
-            .tap_err(|e| tracing::error!("Failed to build CreateChannelCommand: {e}"))?;
+            .tap_err(|e| tracing::error!("Failed to build CreateChannelCommand: {e}"))
+            .map_err(anyhow::Error::from)?;
 
         Ok(state
             .command_bus()
@@ -83,7 +88,8 @@ impl ChannelRouter {
     ) -> CollectionResult {
         let query = QueryChannelsQueryBuilder::default()
             .build()
-            .tap_err(|e| tracing::error!("Failed to build QueryChannelsQuery: {e}"))?;
+            .tap_err(|e| tracing::error!("Failed to build QueryChannelsQuery: {e}"))
+            .map_err(anyhow::Error::from)?;
         state
             .query_bus()
             .execute::<_, QueryChannelsQueryHandler, _>(&actor, &query)
@@ -107,7 +113,8 @@ impl ChannelRouter {
             .channel_id(*channel.id())
             .name(body.name)
             .build()
-            .tap_err(|e| tracing::error!("Failed to build UpdateChannelCommand: {e}"))?;
+            .tap_err(|e| tracing::error!("Failed to build UpdateChannelCommand: {e}"))
+            .map_err(anyhow::Error::from)?;
 
         Ok(state
             .command_bus()
@@ -129,7 +136,8 @@ impl ChannelRouter {
         let cmd = DeleteChannelCommandBuilder::default()
             .channel_id(*channel.id())
             .build()
-            .tap_err(|e| tracing::error!("Failed to build DeleteChannelCommand: {e}"))?;
+            .tap_err(|e| tracing::error!("Failed to build DeleteChannelCommand: {e}"))
+            .map_err(anyhow::Error::from)?;
 
         Ok(state
             .command_bus()
@@ -148,7 +156,8 @@ impl ChannelRouter {
         let query = FindChannelQueryBuilder::default()
             .channel_id(Some(id))
             .build()
-            .tap_err(|e| tracing::error!("Failed to build FindChannelByCodeQuery: {e}"))?;
+            .tap_err(|e| tracing::error!("Failed to build FindChannelByCodeQuery: {e}"))
+            .map_err(anyhow::Error::from)?;
 
         query_bus
             .execute::<_, FindChannelQueryHandler, _>(actor, &query)
