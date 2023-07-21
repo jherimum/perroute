@@ -1,5 +1,7 @@
+use crate::api::response::CollectionResourceModel;
 use crate::api::response::Links;
-use crate::api::response::{ResourceBuilder, ResourceModel};
+use crate::api::response::ResourceBuilder;
+use crate::api::response::SingleResourceModel;
 use perroute_commons::types::id::Id;
 use perroute_storage::models::template::Template;
 use serde::Serialize;
@@ -42,22 +44,19 @@ impl From<Template> for TemplateResource {
     }
 }
 
-impl ResourceBuilder<ResourceModel<TemplateResource>> for Template {
-    fn build(&self, req: &actix_web::HttpRequest) -> ResourceModel<TemplateResource> {
-        ResourceModel {
+impl ResourceBuilder<SingleResourceModel<TemplateResource>> for Template {
+    fn build(&self, req: &actix_web::HttpRequest) -> SingleResourceModel<TemplateResource> {
+        SingleResourceModel {
             data: Some(TemplateResource::from(self.clone())),
             links: Links::default().as_url_map(req),
         }
     }
 }
 
-impl ResourceBuilder<ResourceModel<Vec<ResourceModel<TemplateResource>>>> for Vec<Template> {
-    fn build(
-        &self,
-        req: &actix_web::HttpRequest,
-    ) -> ResourceModel<Vec<ResourceModel<TemplateResource>>> {
-        ResourceModel {
-            data: Some(self.iter().map(|c| c.build(req)).collect()),
+impl ResourceBuilder<CollectionResourceModel<TemplateResource>> for Vec<Template> {
+    fn build(&self, req: &actix_web::HttpRequest) -> CollectionResourceModel<TemplateResource> {
+        CollectionResourceModel {
+            data: self.iter().map(|c| c.build(req)).collect(),
             links: Links::default().as_url_map(req),
         }
     }

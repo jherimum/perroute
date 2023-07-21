@@ -1,7 +1,9 @@
 use crate::{
     api::{
         models::template::{CreateTemplateRequest, TemplateResource, UpdateTemplateRequest},
-        response::{ApiResponse, ApiResult, EmptyApiResult, ResourceModel},
+        response::{
+            ApiResponse, ApiResult, CollectionResourceModel, EmptyApiResult, SingleResourceModel,
+        },
     },
     app::AppState,
     error::ApiError,
@@ -36,8 +38,8 @@ use perroute_cqrs::{
 use perroute_storage::models::template::Template;
 use std::convert::identity;
 
-pub type SingleResult = ApiResult<ResourceModel<TemplateResource>>;
-pub type CollectionResult = ApiResult<ResourceModel<Vec<ResourceModel<TemplateResource>>>>;
+pub type SingleResult = ApiResult<SingleResourceModel<TemplateResource>>;
+pub type CollectionResult = ApiResult<CollectionResourceModel<TemplateResource>>;
 
 pub struct TemplateRouter;
 

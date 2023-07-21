@@ -1,6 +1,9 @@
 mod common;
 use crate::common::TestApp;
-use perroute_backoffice_api::api::{models::channel::ChannelResource, response::ResourceModel};
+use perroute_backoffice_api::api::{
+    models::channel::ChannelResource,
+    response::{CollectionResourceModel, SingleResourceModel},
+};
 use perroute_commons::{code, types::id::Id};
 use perroute_storage::models::channel::ChannelBuilder;
 use reqwest::Client;
@@ -17,11 +20,10 @@ fn test_channels_empty(pool: PgPool) {
 
     assert!(response.status() == 200);
     assert!(response
-        .json::<ResourceModel<Vec<ResourceModel<ChannelResource>>>>()
+        .json::<CollectionResourceModel<ChannelResource>>()
         .await
         .unwrap()
         .data
-        .unwrap()
         .is_empty());
 
     let channel = ChannelBuilder::default()
@@ -38,15 +40,14 @@ fn test_channels_empty(pool: PgPool) {
     assert!(response.status() == 200);
 
     let data = response
-        .json::<ResourceModel<Vec<ResourceModel<ChannelResource>>>>()
+        .json::<CollectionResourceModel<ChannelResource>>()
         .await
         .unwrap()
-        .data
-        .unwrap();
+        .data;
 
     assert!(data.len() == 1);
 
-    let model: ResourceModel<ChannelResource> = ResourceModel {
+    let model: SingleResourceModel<ChannelResource> = SingleResourceModel {
         data: Some(ChannelResource::from(channel)),
         links: Default::default(),
     };

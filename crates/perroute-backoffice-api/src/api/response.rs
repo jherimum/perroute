@@ -23,18 +23,13 @@ impl ResourceBuilder<()> for EmptyResourceBuilder {
 }
 
 #[derive(Debug, Serialize, Clone, Deserialize, PartialEq, Eq)]
-pub struct ResourceModel<D> {
-    pub data: Option<D>,
-    pub links: HashMap<String, Url>,
-}
-
-#[derive(Debug, Serialize, Clone)]
 pub struct SingleResourceModel<D> {
+    #[serde(flatten)]
     pub data: Option<D>,
     pub links: HashMap<String, Url>,
 }
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Serialize, Clone, Deserialize, PartialEq, Eq)]
 pub struct CollectionResourceModel<D> {
     pub data: Vec<SingleResourceModel<D>>,
     pub links: HashMap<String, Url>,

@@ -1,4 +1,4 @@
-use crate::api::response::{Links, ResourceBuilder, ResourceModel};
+use crate::api::response::{Links, ResourceBuilder, SingleResourceModel};
 use perroute_commons::types::{code::Code, id::Id, payload::Payload, recipient::Recipient};
 use perroute_connectors::DispatcherType;
 use perroute_storage::models::{
@@ -48,9 +48,9 @@ impl From<&Message> for MessageResource {
     }
 }
 
-impl ResourceBuilder<ResourceModel<MessageResource>> for Message {
-    fn build(&self, req: &actix_web::HttpRequest) -> ResourceModel<MessageResource> {
-        ResourceModel {
+impl ResourceBuilder<SingleResourceModel<MessageResource>> for Message {
+    fn build(&self, req: &actix_web::HttpRequest) -> SingleResourceModel<MessageResource> {
+        SingleResourceModel {
             data: Some(self.into()),
             links: Links::default().as_url_map(req),
         }

@@ -1,7 +1,7 @@
 use crate::{
     api::{
         models::message::{CreateMessageRequest, MessageResource},
-        response::{ApiResponse, ApiResult, ResourceModel},
+        response::{ApiResponse, ApiResult, SingleResourceModel},
     },
     app::AppState,
     extractors::actor::ActorExtractor,
@@ -17,7 +17,7 @@ use perroute_cqrs::{
     },
 };
 
-pub type SingleResult = ApiResult<ResourceModel<MessageResource>>;
+pub type SingleResult = ApiResult<SingleResourceModel<MessageResource>>;
 
 pub struct MessageRouter {}
 

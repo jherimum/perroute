@@ -1,7 +1,9 @@
 use crate::{
     api::{
         models::channel::{ChannelResource, CreateChannelRequest, UpdateChannelRequest},
-        response::{ApiResponse, ApiResult, EmptyApiResult, ResourceModel},
+        response::{
+            ApiResponse, ApiResult, CollectionResourceModel, EmptyApiResult, SingleResourceModel,
+        },
     },
     app::AppState,
     error::ApiError,
@@ -33,8 +35,8 @@ use perroute_storage::models::channel::Channel;
 use std::convert::identity;
 use tap::TapFallible;
 
-pub type SingleResult = ApiResult<ResourceModel<ChannelResource>>;
-pub type CollectionResult = ApiResult<ResourceModel<Vec<ResourceModel<ChannelResource>>>>;
+pub type SingleResult = ApiResult<SingleResourceModel<ChannelResource>>;
+pub type CollectionResult = ApiResult<CollectionResourceModel<ChannelResource>>;
 
 pub struct ChannelRouter;
 
