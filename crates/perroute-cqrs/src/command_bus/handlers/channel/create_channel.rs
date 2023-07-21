@@ -8,6 +8,7 @@ use perroute_storage::{
     models::channel::{Channel, ChannelBuilder, ChannelsQueryBuilder},
     query::FetchableModel,
 };
+use sqlx::PgPool;
 use tap::TapFallible;
 
 #[derive(Debug)]
@@ -31,20 +32,7 @@ impl CommandHandler for CreateChannelCommandHandler {
         actor: &Actor,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
-        if Channel::exists(
-            ctx.tx(),
-            ChannelsQueryBuilder::default()
-                .code(Some(cmd.code().clone()))
-                .build()
-                .unwrap(),
-        )
-        .await
-        .tap_err(|e| {
-            tracing::error!(
-                "Failed to checking if channel with code {} exists: {e}",
-                cmd.code()
-            );
-        })? {
+        if exists_with_code(ctx.pool(), cmd.code()).await? {
             return Err(CommandBusError::ExpectedError(
                 "Channel with code already exists",
             ));
@@ -64,4 +52,21 @@ impl CommandHandler for CreateChannelCommandHandler {
             .tap_err(|e| tracing::error!("Failed to save channel: {e}"))
             .map_err(CommandBusError::from)
     }
+}
+
+async fn exists_with_code<'tx>(poll: &PgPool, code: &Code) -> Result<bool, sqlx::Error> {
+    Channel::exists(
+        poll,
+        ChannelsQueryBuilder::default()
+            .code(Some(code.clone()))
+            .build()
+            .unwrap(),
+    )
+    .await
+    .tap_err(|e| {
+        tracing::error!(
+            "Failed to checking if channel with code {} exists: {e}",
+            code
+        );
+    })
 }
