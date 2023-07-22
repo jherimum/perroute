@@ -46,7 +46,7 @@ impl CommandHandler for CreateChannelCommandHandler {
             .tap_err(|e| {
                 tracing::error!("Failed to build channel: {e}");
             })
-            .map_err(|_| CommandBusError::UnexpectedError("Failed to build channel"))?
+            .map_err(anyhow::Error::from)?
             .save(ctx.tx())
             .await
             .tap_err(|e| tracing::error!("Failed to save channel: {e}"))

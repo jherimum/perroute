@@ -2,7 +2,9 @@ pub mod channel;
 pub mod command_log;
 pub mod connection;
 pub mod message;
+pub mod message_dispatch;
 pub mod message_type;
+pub mod route;
 pub mod schema;
 pub mod template;
 

@@ -1,6 +1,7 @@
+use super::schema::{Schema, SchemasQueryBuilder, Version};
 use crate::{
     log_query_error,
-    query::{ModelQueryBuilder, Projection},
+    query::{FetchableModel, ModelQueryBuilder, Projection},
     DatabaseModel,
 };
 use derive_builder::Builder;
@@ -40,46 +41,6 @@ pub struct MessageTypeQuery {
     channel_id: Option<Id>,
 }
 
-impl MessageTypeQuery {
-    pub fn by_id(id: Id) -> Self {
-        Self {
-            id: Some(id),
-            ..Default::default()
-        }
-    }
-
-    pub fn by_channel_and_code(channel_id: Id, code: Code) -> Self {
-        Self {
-            channel_id: Some(channel_id),
-            code: Some(code),
-            ..Default::default()
-        }
-    }
-
-    pub fn all_by_channel(channel_id: Id) -> Self {
-        Self {
-            channel_id: Some(channel_id),
-            ..Default::default()
-        }
-    }
-
-    pub fn by_channel_and_id(channel_id: Id, id: Id) -> Self {
-        Self {
-            channel_id: Some(channel_id),
-            id: Some(id),
-            ..Default::default()
-        }
-    }
-
-    pub fn by_id_and_maybe_channel(id: Id, channel_id: Option<Id>) -> Self {
-        Self {
-            channel_id,
-            id: Some(id),
-            ..Default::default()
-        }
-    }
-}
-
 impl ModelQueryBuilder<MessageType> for MessageTypeQuery {
     fn build(&self, projection: Projection) -> QueryBuilder<'_, Postgres> {
         let mut query_builder = projection.query_builder();
@@ -106,6 +67,22 @@ impl ModelQueryBuilder<MessageType> for MessageTypeQuery {
 }
 
 impl MessageType {
+    pub async fn schema_by_version<'e, E: PgExecutor<'e>>(
+        &self,
+        exec: E,
+        version: Version,
+    ) -> Result<Option<Schema>, sqlx::Error> {
+        Schema::find(
+            exec,
+            SchemasQueryBuilder::default()
+                .version(Some(version))
+                .message_type_id(Some(self.id))
+                .build()
+                .unwrap(),
+        )
+        .await
+    }
+
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
         sqlx::query_as(
             r#"

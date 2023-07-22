@@ -39,20 +39,16 @@ impl CommandHandler for UpdateChannelCommandHandler {
                 .build()
                 .unwrap(),
         )
-        .await?;
+        .await?
+        .unwrap();
 
-        if let Some(channel) = channel {
-            channel
-                .set_name(command.name().clone())
-                .update(ctx.tx())
-                .await
-                .tap_err(|e| {
-                    tracing::error!("Error while updating channel {}: {e}", command.channel_id());
-                })
-                .map_err(CommandBusError::from)
-        } else {
-            tracing::error!("Channel {} not found", command.channel_id());
-            Err(CommandBusError::UnexpectedError("Channel do not exists"))
-        }
+        channel
+            .set_name(command.name().clone())
+            .update(ctx.tx())
+            .await
+            .tap_err(|e| {
+                tracing::error!("Error while updating channel {}: {e}", command.channel_id());
+            })
+            .map_err(CommandBusError::from)
     }
 }

@@ -5,6 +5,7 @@ use super::{
             create_channel::CreateChannelError, delete_channel::DeleteChannelError,
             update_channel::UpdateChannelError,
         },
+        message::create_message::CreateMessageCommandError,
         message_type::{
             create_message_type::CreateMessageTypeError,
             delete_message_type::DeleteMessageTypeError,
@@ -22,8 +23,8 @@ pub enum CommandBusError {
     #[error("Command handler not found for command {0}")]
     HandlerNotFound(CommandType),
 
-    #[error("{0}")]
-    UnexpectedError(&'static str),
+    #[error(transparent)]
+    UnexpectedError(#[from] anyhow::Error),
 
     #[error(transparent)]
     DatabaseError(#[from] sqlx::Error),
@@ -48,4 +49,7 @@ pub enum CommandBusError {
 
     #[error(transparent)]
     CreateSchema(#[from] CreateSchemaError),
+
+    #[error(transparent)]
+    CreateMessage(#[from] CreateMessageCommandError),
 }

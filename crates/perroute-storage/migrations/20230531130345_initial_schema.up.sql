@@ -34,6 +34,7 @@ CREATE TABLE channels (
 	id 		uuid 	NOT NULL,
 	code 	varchar	NOT NULL,
 	name 	varchar NULL,
+    enabled: boolean NOT NULL,
 	CONSTRAINT channels_pk 		PRIMARY KEY (id),
 	CONSTRAINT channels_code	UNIQUE (code)
 );
@@ -56,6 +57,7 @@ create table schemas(
     published       boolean NOT NULL,    
     message_type_id uuid    NOT NULL,
     channel_id      uuid    NOT NULL,
+    enabled         boolean NOT NULL,
 
     CONSTRAINT schemas_pk                   PRIMARY KEY (id),
     CONSTRAINT schemas_message_type_fk      FOREIGN KEY (message_type_id)   REFERENCES message_types(id),

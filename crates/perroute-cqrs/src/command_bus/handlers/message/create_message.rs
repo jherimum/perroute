@@ -2,15 +2,40 @@ use crate::command_bus::{
     bus::CommandBusContext, commands::CreateMessageCommand, error::CommandBusError,
     handlers::CommandHandler,
 };
-use perroute_commons::types::{actor::Actor, id::Id};
+use perroute_commons::types::{actor::Actor, code::Code};
 use perroute_storage::{
     models::{
+        channel::{Channel, ChannelsQueryBuilder},
         message::{Message, MessageBuilder, Status},
-        schema::{Schema, SchemasQueryBuilder},
+        schema::Version,
     },
     query::FetchableModel,
 };
 use sqlx::{types::Json, PgPool};
+use thiserror::Error;
+
+#[derive(Error, Debug)]
+pub enum CreateMessageCommandError {
+    #[error("channel not found: {0}")]
+    ChannelNotFound(Code),
+    #[error("Message type not found: {0}")]
+    MessageTypeNotFound(Code),
+
+    #[error("Schema not found: {0}")]
+    SchemaNotFound(Version),
+
+    #[error("Channel {0} is disabled")]
+    ChannelDisabled(Code),
+
+    #[error("Message type {0} is disabled")]
+    MessageTypeDisabled(Code),
+
+    #[error("Schema {0} is disabled")]
+    SchemaDisabled(Version),
+
+    #[error("Schema {0} is not published")]
+    SchemaBotPublished(Version),
+}
 
 #[derive(Debug)]
 pub struct CreateMessageCommandHandler;
@@ -20,14 +45,44 @@ impl CommandHandler for CreateMessageCommandHandler {
     type Command = CreateMessageCommand;
     type Output = Message;
 
-    #[tracing::instrument(name = "create_channel_handler", skip(self, ctx))]
+    #[tracing::instrument(name = "create_message_handler", skip(self, ctx))]
     async fn handle<'tx>(
         &self,
         ctx: &mut CommandBusContext<'tx>,
         actor: &Actor,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
-        let schema = retrieve_schema(ctx.pool(), cmd.schema_id()).await?;
+        let channel = retrieve_channel(ctx.pool(), cmd.channel_code()).await?;
+        if !channel.enabled() {
+            return Err(CreateMessageCommandError::ChannelDisabled(channel.code().clone()).into());
+        }
+
+        let message_type = channel
+            .message_type_by_code(ctx.pool(), cmd.message_type_code().clone())
+            .await?
+            .ok_or_else(|| {
+                CreateMessageCommandError::MessageTypeNotFound(cmd.message_type_code().clone())
+            })?;
+
+        if !message_type.enabled() {
+            return Err(CreateMessageCommandError::MessageTypeDisabled(
+                message_type.code().clone(),
+            )
+            .into());
+        }
+
+        let schema = message_type
+            .schema_by_version(ctx.pool(), *cmd.schema_version())
+            .await?
+            .ok_or_else(|| CreateMessageCommandError::SchemaNotFound(*cmd.schema_version()))?;
+
+        if !schema.enabled() {
+            return Err(CreateMessageCommandError::SchemaDisabled(*cmd.schema_version()).into());
+        }
+
+        if !schema.published() {
+            return Err(CreateMessageCommandError::SchemaDisabled(*cmd.schema_version()).into());
+        }
 
         schema.schema().validate(cmd.payload()).unwrap();
 
@@ -50,15 +105,14 @@ impl CommandHandler for CreateMessageCommandHandler {
     }
 }
 
-async fn retrieve_schema(pool: &PgPool, id: &Id) -> Result<Schema, CommandBusError> {
-    Ok(Schema::find(
+async fn retrieve_channel(pool: &PgPool, code: &Code) -> Result<Channel, CommandBusError> {
+    Channel::find(
         pool,
-        SchemasQueryBuilder::default()
-            .id(Some(*id))
+        ChannelsQueryBuilder::default()
+            .code(Some(code.clone()))
             .build()
-            .expect("SchemasQueryBuilder error"),
+            .unwrap(),
     )
-    .await
-    .expect("error de sql")
-    .expect("nao encontrado"))
+    .await?
+    .ok_or(CreateMessageCommandError::ChannelNotFound(code.clone()).into())
 }

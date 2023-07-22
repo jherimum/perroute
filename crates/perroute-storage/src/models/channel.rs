@@ -1,6 +1,6 @@
 use crate::{
     log_query_error,
-    query::{ModelQueryBuilder, Projection},
+    query::{FetchableModel, ModelQueryBuilder, Projection},
     DatabaseModel,
 };
 use derive_builder::Builder;
@@ -9,6 +9,8 @@ use derive_setters::Setters;
 use perroute_commons::types::{code::Code, id::Id};
 use sqlx::{FromRow, PgExecutor};
 use tap::TapFallible;
+
+use super::message_type::{MessageType, MessageTypeQueryBuilder};
 
 #[derive(Debug, Default, Builder)]
 #[builder(default)]
@@ -49,25 +51,46 @@ pub struct Channel {
     #[setters(skip)]
     code: Code,
     name: String,
+    enabled: bool,
 }
 
 impl Channel {
+    pub async fn message_type_by_code<'e, E: PgExecutor<'e>>(
+        &self,
+        exec: E,
+        code: Code,
+    ) -> Result<Option<MessageType>, sqlx::Error> {
+        MessageType::find(
+            exec,
+            MessageTypeQueryBuilder::default()
+                .code(Some(code))
+                .channel_id(Some(self.id))
+                .build()
+                .unwrap(),
+        )
+        .await
+    }
+
     #[tracing::instrument(name = "channel.save", skip(exec))]
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
-        sqlx::query_as("INSERT INTO channels (id, code, name) VALUES($1, $2, $3) RETURNING *")
-            .bind(self.id)
-            .bind(self.code)
-            .bind(self.name)
-            .fetch_one(exec)
-            .await
-            .tap_err(log_query_error!())
+        sqlx::query_as(
+            "INSERT INTO channels (id, code, name, enabled) VALUES($1, $2, $3, $4) RETURNING *",
+        )
+        .bind(self.id)
+        .bind(self.code)
+        .bind(self.name)
+        .bind(self.enabled)
+        .fetch_one(exec)
+        .await
+        .tap_err(log_query_error!())
     }
 
     #[tracing::instrument(name = "channel.update", skip(exec))]
     pub async fn update<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
-        sqlx::query_as("UPDATE channels SET name= $1 WHERE id= $2 RETURNING *")
-            .bind(self.name)
+        sqlx::query_as("UPDATE channels SET name= $2, enabled =$3 WHERE id= $1 RETURNING *")
             .bind(self.id)
+            .bind(self.name)
+            .bind(self.enabled)
             .fetch_one(exec)
             .await
             .tap_err(log_query_error!())

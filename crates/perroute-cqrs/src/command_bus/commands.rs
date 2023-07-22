@@ -9,7 +9,10 @@ use perroute_commons::{
     },
 };
 use perroute_connectors::DispatcherType;
-use perroute_storage::models::command_log::{CommandLog, CommandLogBuilder};
+use perroute_storage::models::{
+    command_log::{CommandLog, CommandLogBuilder},
+    schema::Version,
+};
 use serde::Serialize;
 use std::{collections::HashSet, fmt::Debug};
 use strum_macros::Display;
@@ -56,6 +59,7 @@ pub enum CommandType {
     DeleteTemplate,
 
     CreateMessage,
+    DistributeMessage,
 }
 
 impl From<CommandType> for String {
@@ -173,13 +177,14 @@ pub struct CreateMessageCommand {
     message_id: Id,
 
     payload: Payload,
+    recipient: Recipient,
 
     #[builder(default)]
     scheduled_to: Option<NaiveDateTime>,
 
-    schema_id: Id,
-
-    recipient: Recipient,
+    channel_code: Code,
+    message_type_code: Code,
+    schema_version: Version,
 
     #[builder(default)]
     include_dispatcher_types: HashSet<DispatcherType>,
@@ -188,3 +193,10 @@ pub struct CreateMessageCommand {
     exclude_dispatcher_types: HashSet<DispatcherType>,
 }
 impl_command!(CreateMessageCommand, CommandType::CreateMessage);
+
+#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
+pub struct DistributeMessageCommand {
+    message_id: Id,
+}
+
+impl_command!(DistributeMessageCommand, CommandType::DistributeMessage);

@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use crate::{
     query::{ModelQueryBuilder, Projection},
     DatabaseModel,
@@ -114,6 +116,12 @@ impl From<&Version> for i32 {
     }
 }
 
+impl Display for Version {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
 #[derive(Debug, FromRow, PartialEq, Eq, Clone, Getters, Setters, Builder)]
 #[builder(setter(into))]
 #[setters(prefix = "set_")]
@@ -129,14 +137,16 @@ pub struct Schema {
     message_type_id: Id,
     #[setters(skip)]
     channel_id: Id,
+
+    enabled: bool,
 }
 
 impl Schema {
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
         sqlx::query_as(
             r#"
-                INSERT INTO schemas (id, schema, version, published, message_type_id, channel_id) 
-                VALUES($1, $2, $3, $4, $5, $6) RETURNING *
+                INSERT INTO schemas (id, schema, version, published, message_type_id, channel_id, enabled) 
+                VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING *
             "#,
         )
         .bind(self.id)
@@ -145,6 +155,7 @@ impl Schema {
         .bind(self.published)
         .bind(self.message_type_id)
         .bind(self.channel_id)
+        .bind(self.enabled)
         .fetch_one(exec)
         .await
     }
@@ -154,14 +165,16 @@ impl Schema {
             r#"
             UPDATE schemas 
             SET 
-                schema= $1, 
-                published= $2
-            WHERE id= $3 RETURNING *
+                schema= $2, 
+                published= $3,
+                enabled = $4
+            WHERE id= $1 RETURNING *
             "#,
         )
+        .bind(self.id)
         .bind(self.schema)
         .bind(self.published)
-        .bind(self.id)
+        .bind(self.enabled)
         .fetch_one(exec)
         .await
     }
