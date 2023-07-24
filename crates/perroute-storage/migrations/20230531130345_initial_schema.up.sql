@@ -34,7 +34,7 @@ CREATE TABLE channels (
 	id 		uuid 	NOT NULL,
 	code 	varchar	NOT NULL,
 	name 	varchar NULL,
-    enabled: boolean NOT NULL,
+    enabled boolean NOT NULL,
 	CONSTRAINT channels_pk 		PRIMARY KEY (id),
 	CONSTRAINT channels_code	UNIQUE (code)
 );
@@ -100,13 +100,13 @@ create table routes(
     id                      uuid            not null,
     name                    varchar         not null,
     connection_id           uuid            not null,
-    temnplate_id            uuid                null,
+    template_id            uuid                null,
     dispatch_type           dispatch_type   not null,
     dispatcher_properties   jsonb           not null,
 
     channel_id              uuid            not null,
     message_type_id         uuid            not null,
-    shcema_id               uuid            not null,
+    schema_id               uuid            not null,
     
     constraint routes_pk primary key (id),
     constraint routes_connection_fk foreign key (connection_id) references connections(id),
