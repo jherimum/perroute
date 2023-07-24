@@ -1,13 +1,14 @@
-use crate::{query::ModelQueryBuilder, DatabaseModel};
+use std::collections::HashMap;
+
+use crate::{
+    query::{ModelQueryBuilder, Projection},
+    DatabaseModel,
+};
 use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
-use perroute_commons::types::id::Id;
-use perroute_connectors::DispatcherType;
-use sqlx::{types::Json, FromRow};
-use std::collections::HashMap;
-
-impl DatabaseModel for Route {}
+use perroute_commons::types::{dispatch_type::DispatcherType, id::Id};
+use sqlx::{types::Json, FromRow, Postgres, QueryBuilder};
 
 #[derive(Debug, Default, Builder)]
 #[builder(default)]
@@ -17,13 +18,11 @@ pub struct RouteQuery {
     message_type_id: Option<Id>,
     shema_id: Option<Id>,
     connection_id: Option<Id>,
+    enabled: Option<bool>,
 }
 
 impl ModelQueryBuilder<Route> for RouteQuery {
-    fn build(
-        &self,
-        projection: crate::query::Projection,
-    ) -> sqlx::QueryBuilder<'_, sqlx::Postgres> {
+    fn build(&self, projection: Projection) -> QueryBuilder<'_, Postgres> {
         let mut builder = projection.query_builder();
         builder.push(" FROM routes WHERE 1=1");
 
@@ -52,9 +51,16 @@ impl ModelQueryBuilder<Route> for RouteQuery {
             builder.push_bind(connection_id);
         }
 
+        if let Some(enabled) = &self.enabled {
+            builder.push(" and enabled = ");
+            builder.push_bind(enabled);
+        }
+
         builder
     }
 }
+
+impl DatabaseModel for Route {}
 
 #[derive(Debug, FromRow, PartialEq, Eq, Clone, Getters, Setters, Builder)]
 #[builder(setter(into))]

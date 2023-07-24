@@ -1,9 +1,11 @@
-use std::any;
-
 use async_trait::async_trait;
-use perroute_commons::types::actor::Actor;
+use perroute_commons::types::{actor::Actor, id::Id};
 use perroute_storage::{
-    models::message::{Message, MessageQueryBuilder},
+    models::{
+        message::{Message, MessageQueryBuilder},
+        message_dispatch::{MessageDispatchBuilder, MessageDispatchStatus},
+        route::{Route, RouteQueryBuilder},
+    },
     query::FetchableModel,
 };
 use tap::TapFallible;
@@ -36,7 +38,29 @@ impl CommandHandler for DistributeMessageCommandHandler {
                 .tap_err(|e| tracing::error!("Failed to build MessageQueryBuilder: {e}"))
                 .map_err(anyhow::Error::from)?,
         )
-        .await?;
+        .await?
+        .unwrap();
+
+        for route in Route::query(
+            ctx.pool(),
+            RouteQueryBuilder::default()
+                .shema_id(Some(*message.schema_id()))
+                .enabled(Some(true))
+                .build()
+                .unwrap(),
+        )
+        .await?
+        {
+            let m = MessageDispatchBuilder::default()
+                .id(Id::new())
+                .message_id(*message.id())
+                .route_id(*route.id())
+                .status(MessageDispatchStatus::Pending)
+                .build()
+                .unwrap()
+                .save(ctx.tx())
+                .await?;
+        }
 
         todo!()
     }

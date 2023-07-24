@@ -1,5 +1,6 @@
 pub mod actor;
 pub mod code;
+pub mod dispatch_type;
 pub mod email;
 pub mod id;
 pub mod json_schema;

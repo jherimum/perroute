@@ -1,3 +1,4 @@
+use super::message_type::{MessageType, MessageTypeQueryBuilder};
 use crate::{
     log_query_error,
     query::{FetchableModel, ModelQueryBuilder, Projection},
@@ -9,8 +10,6 @@ use derive_setters::Setters;
 use perroute_commons::types::{code::Code, id::Id};
 use sqlx::{FromRow, PgExecutor};
 use tap::TapFallible;
-
-use super::message_type::{MessageType, MessageTypeQueryBuilder};
 
 #[derive(Debug, Default, Builder)]
 #[builder(default)]

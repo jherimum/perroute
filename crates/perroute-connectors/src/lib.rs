@@ -1,13 +1,7 @@
+use perroute_commons::types::dispatch_type::DispatcherType;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, fmt::Debug, sync::Arc};
 mod connector;
-
-#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Serialize, Hash)]
-pub enum DispatcherType {
-    SMS,
-    EMAIL,
-    PUSH,
-}
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Serialize)]
 pub enum ConfigurationPropertyType {

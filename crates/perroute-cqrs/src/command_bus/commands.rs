@@ -4,11 +4,10 @@ use derive_getters::Getters;
 use perroute_commons::{
     new_id,
     types::{
-        actor::Actor, code::Code, id::Id, json_schema::JsonSchema, payload::Payload,
-        recipient::Recipient, template::TemplateSnippet,
+        actor::Actor, code::Code, dispatch_type::DispatcherType, id::Id, json_schema::JsonSchema,
+        payload::Payload, recipient::Recipient, template::TemplateSnippet,
     },
 };
-use perroute_connectors::DispatcherType;
 use perroute_storage::models::{
     command_log::{CommandLog, CommandLogBuilder},
     schema::Version,
