@@ -13,19 +13,16 @@ macro_rules! command {
 #[macro_export]
 macro_rules! into_event {
     ($command: ty) => {
-        impl $crate::command_bus::events::IntoEvent for $command {
-            fn into_event(&self) -> Option<$crate::command_bus::events::Event> {
+        impl perroute_events::IntoEvent for $command {
+            fn into_event(&self) -> Option<perroute_events::Event> {
                 None
             }
         }
     };
     ($command: ty, $event_type: expr, $id: expr) => {
-        impl $crate::command_bus::events::IntoEvent for $command {
-            fn into_event(&self) -> Option<$crate::command_bus::events::Event> {
-                Some($crate::command_bus::events::Event::new(
-                    $id(self),
-                    $event_type,
-                ))
+        impl perroute_events::IntoEvent for $command {
+            fn into_event(&self) -> Option<perroute_events::Event> {
+                Some(perroute_events::Event::new($id(self), $event_type))
             }
         }
     };

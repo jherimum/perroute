@@ -2,6 +2,7 @@ use async_trait::async_trait;
 use derive_builder::Builder;
 use derive_getters::Getters;
 use perroute_commons::types::{actor::Actor, id::Id};
+use perroute_events::EventType;
 use perroute_storage::{
     models::{
         message::{Message, MessageQueryBuilder},
@@ -15,7 +16,7 @@ use tap::TapFallible;
 
 use crate::{
     command_bus::{
-        bus::CommandBusContext, commands::CommandType, error::CommandBusError, events::EventType,
+        bus::CommandBusContext, commands::CommandType, error::CommandBusError,
         handlers::CommandHandler,
     },
     impl_command, into_event,

@@ -5,6 +5,8 @@ use derive_setters::Setters;
 use perroute_commons::types::id::Id;
 use sqlx::{FromRow, PgExecutor};
 
+use crate::query;
+
 #[derive(Debug, FromRow, PartialEq, Eq, Clone, Getters, Setters, Builder)]
 #[builder(setter(into))]
 #[setters(prefix = "set_")]
@@ -20,6 +22,10 @@ pub struct DbEvent {
 }
 
 impl DbEvent {
+    pub async fn all<'e, E: PgExecutor<'e>>(exec: E) -> Result<Vec<DbEvent>, sqlx::Error> {
+        sqlx::query_as("select * from events").fetch_all(exec).await
+    }
+
     pub async fn save<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<DbEvent, sqlx::Error> {
         sqlx::query_as(
             r#"
