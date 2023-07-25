@@ -26,6 +26,7 @@ use super::{
     },
 };
 use perroute_commons::types::actor::Actor;
+use perroute_storage::models::db_event::DbEvent;
 use sqlx::{Acquire, PgConnection, PgPool, Postgres, Transaction};
 use std::{
     any::{Any, TypeId},
@@ -170,6 +171,13 @@ impl CommandBus {
             .save(ctx.tx())
             .await
             .tap_err(|e| tracing::error!("Failed to save command log: {e}"))?;
+
+        if handler_result.is_ok() {
+            if let Some(event) = cmd.into_event() {
+                let db_event: DbEvent = event.try_into().map_err(anyhow::Error::from)?;
+                db_event.save(ctx.tx()).await?;
+            }
+        }
 
         ctx.commit()
             .await

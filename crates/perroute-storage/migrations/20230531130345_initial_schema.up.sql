@@ -151,3 +151,14 @@ create table message_dispatches(
     constraint message_dispatches_route_fk foreign key (route_id) references routes(id),
     constraint message_dispatches_message_fk foreign key (message_id) references messages(id)
 );
+
+
+create table events(   
+    id              uuid                    not null,
+    entity_id       uuid                    not null,
+    event_type      varchar                 not null,    
+    created_at      timestamp               not null,
+    scheduled_to    timestamp               not null,
+    consumed_at     timestamp               null,
+    constraint events_pk primary key (id)
+);

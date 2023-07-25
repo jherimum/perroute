@@ -13,15 +13,15 @@ macro_rules! command {
 #[macro_export]
 macro_rules! into_event {
     ($command: ty) => {
-        impl Into<Option<$crate::command_bus::events::Event>> for $command {
-            fn into(self) -> Option<$crate::command_bus::events::Event> {
+        impl $crate::command_bus::events::IntoEvent for $command {
+            fn into_event(&self) -> Option<$crate::command_bus::events::Event> {
                 None
             }
         }
     };
     ($command: ty, $event_type: expr, $id: expr) => {
-        impl Into<Option<$crate::command_bus::events::Event>> for $command {
-            fn into(self) -> Option<$crate::command_bus::events::Event> {
+        impl $crate::command_bus::events::IntoEvent for $command {
+            fn into_event(&self) -> Option<$crate::command_bus::events::Event> {
                 Some($crate::command_bus::events::Event::new(
                     $id(self),
                     $event_type,

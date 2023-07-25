@@ -1,6 +1,6 @@
 use crate::{
     command_bus::{
-        bus::CommandBusContext, commands::CommandType, error::CommandBusError,
+        bus::CommandBusContext, commands::CommandType, error::CommandBusError, events::EventType,
         handlers::CommandHandler,
     },
     impl_command, into_event,
@@ -25,7 +25,11 @@ pub struct CreateChannelCommand {
     name: String,
 }
 impl_command!(CreateChannelCommand, CommandType::CreateChannel);
-into_event!(CreateChannelCommand);
+into_event!(
+    CreateChannelCommand,
+    EventType::ChannelCreated,
+    |cmd: &CreateChannelCommand| { cmd.channel_id }
+);
 
 #[derive(Debug)]
 pub struct CreateChannelCommandHandler;
@@ -58,6 +62,7 @@ impl CommandHandler for CreateChannelCommandHandler {
             .id(*cmd.channel_id())
             .code(cmd.code().clone())
             .name(cmd.name().clone())
+            .enabled(true)
             .build()
             .tap_err(|e| {
                 tracing::error!("Failed to build channel: {e}");

@@ -52,7 +52,7 @@ impl_command!(CreateMessageCommand, CommandType::CreateMessage);
 into_event!(
     CreateMessageCommand,
     EventType::MessageCreated,
-    |cmd: CreateMessageCommand| { *cmd.message_id() }
+    |cmd: &CreateMessageCommand| { cmd.message_id }
 );
 
 #[derive(Error, Debug)]

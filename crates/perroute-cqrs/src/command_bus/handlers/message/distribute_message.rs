@@ -28,7 +28,7 @@ pub struct DistributeMessageCommand {
 into_event!(
     DistributeMessageCommand,
     EventType::MessageCreated,
-    |cmd: DistributeMessageCommand| { cmd.message_id }
+    |cmd: &DistributeMessageCommand| { cmd.message_id }
 );
 
 impl_command!(DistributeMessageCommand, CommandType::DistributeMessage);

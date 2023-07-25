@@ -1,4 +1,4 @@
-use super::events::Event;
+use super::events::IntoEvent;
 use chrono::Utc;
 use perroute_commons::{new_id, types::actor::Actor};
 use perroute_storage::models::command_log::{CommandLog, CommandLogBuilder};
@@ -6,9 +6,7 @@ use serde::Serialize;
 use std::fmt::Debug;
 use strum_macros::Display;
 
-pub trait Command:
-    Debug + Serialize + Clone + PartialEq + Eq + Send + Sync + Into<Option<Event>>
-{
+pub trait Command: Debug + Serialize + Clone + PartialEq + Eq + Send + Sync + IntoEvent {
     fn ty(&self) -> CommandType;
 
     fn to_log<E>(&self, actor: &Actor, error: Option<&E>) -> CommandLog
@@ -19,7 +17,7 @@ pub trait Command:
             .id(new_id!())
             .actor_type(*actor.ty())
             .actor_id(*actor.id())
-            .command_type(self.ty())
+            .command_type(self.ty().to_string())
             .payload(serde_json::to_value(self).unwrap())
             .created_at(Utc::now().naive_utc())
             .error(error.map(|e| format!("{e}")))
@@ -49,10 +47,4 @@ pub enum CommandType {
 
     CreateMessage,
     DistributeMessage,
-}
-
-impl From<CommandType> for String {
-    fn from(value: CommandType) -> Self {
-        value.to_string()
-    }
 }
