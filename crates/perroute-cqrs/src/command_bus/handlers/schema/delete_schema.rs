@@ -1,13 +1,24 @@
-use perroute_commons::types::actor::Actor;
+use perroute_commons::types::{actor::Actor, id::Id};
 use perroute_storage::{
     models::schema::{Schema, SchemasQueryBuilder},
     query::FetchableModel,
 };
 
-use crate::command_bus::{
-    bus::CommandBusContext, commands::DeleteSchemaCommand, error::CommandBusError,
-    handlers::CommandHandler,
+use crate::{
+    command,
+    command_bus::{
+        bus::CommandBusContext, commands::CommandType, error::CommandBusError,
+        handlers::CommandHandler,
+    },
+    into_event,
 };
+
+command!(
+    DeleteSchemaCommand,
+    CommandType::DeleteSchema,
+    schema_id: Id
+);
+into_event!(DeleteSchemaCommand);
 
 #[derive(Debug)]
 pub struct DeleteSchemaCommandHandler;

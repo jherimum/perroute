@@ -11,9 +11,30 @@ macro_rules! command {
 }
 
 #[macro_export]
+macro_rules! into_event {
+    ($command: ty) => {
+        impl Into<Option<$crate::command_bus::events::Event>> for $command {
+            fn into(self) -> Option<$crate::command_bus::events::Event> {
+                None
+            }
+        }
+    };
+    ($command: ty, $event_type: expr, $id: expr) => {
+        impl Into<Option<$crate::command_bus::events::Event>> for $command {
+            fn into(self) -> Option<$crate::command_bus::events::Event> {
+                Some($crate::command_bus::events::Event::new(
+                    $id(self),
+                    $event_type,
+                ))
+            }
+        }
+    };
+}
+
+#[macro_export]
 macro_rules! impl_command {
     ($cmd: ty, $ty: expr) => {
-        impl Command for $cmd {
+        impl $crate::command_bus::commands::Command for $cmd {
             fn ty(&self) -> CommandType {
                 $ty
             }
@@ -43,7 +64,7 @@ macro_rules! query {
 #[macro_export]
 macro_rules! impl_query {
     ($cmd: ty, $ty: expr) => {
-        impl Query for $cmd {
+        impl $crate::query_bus::queries::Query for $cmd {
             fn ty(&self) -> QueryType {
                 $ty
             }

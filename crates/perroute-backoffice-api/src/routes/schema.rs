@@ -15,17 +15,20 @@ use perroute_commons::new_id;
 use perroute_commons::types::actor::Actor;
 use perroute_commons::types::id::Id;
 use perroute_commons::types::json_schema::JsonSchema;
-use perroute_cqrs::command_bus::commands::{
-    CreateSchemaCommandBuilder, DeleteSchemaCommandBuilder, UpdateSchemaCommandBuilder,
-};
+use perroute_cqrs::command_bus::handlers::schema::create_schema::CreateSchemaCommandBuilder;
+use perroute_cqrs::command_bus::handlers::schema::delete_schema::DeleteSchemaCommandBuilder;
+use perroute_cqrs::command_bus::handlers::schema::update_schema::UpdateSchemaCommandBuilder;
 use perroute_cqrs::command_bus::handlers::schema::{
     create_schema::CreateSchemaCommandHandler, delete_schema::DeleteSchemaCommandHandler,
     update_schema::UpdateSchemaCommandHandler,
 };
 use perroute_cqrs::query_bus::bus::QueryBus;
-use perroute_cqrs::query_bus::handlers::schema::find_schema::FindSchemaQueryHandler;
-use perroute_cqrs::query_bus::handlers::schema::query_schemas::QuerySchemasQueryHandler;
-use perroute_cqrs::query_bus::queries::{FindSchemaQueryBuilder, QuerySchemasQueryBuilder};
+use perroute_cqrs::query_bus::handlers::schema::find_schema::{
+    FindSchemaQueryBuilder, FindSchemaQueryHandler,
+};
+use perroute_cqrs::query_bus::handlers::schema::query_schemas::{
+    QuerySchemasQueryBuilder, QuerySchemasQueryHandler,
+};
 use perroute_storage::models::schema::Schema;
 use std::convert::identity;
 use tap::TapFallible;

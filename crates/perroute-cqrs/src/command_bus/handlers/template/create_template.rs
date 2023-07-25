@@ -1,9 +1,13 @@
-use crate::command_bus::{
-    bus::CommandBusContext, commands::CreateTemplateCommand, error::CommandBusError,
-    handlers::CommandHandler,
+use crate::{
+    command,
+    command_bus::{
+        bus::CommandBusContext, commands::CommandType, error::CommandBusError,
+        handlers::CommandHandler,
+    },
+    into_event,
 };
 use async_trait::async_trait;
-use perroute_commons::types::actor::Actor;
+use perroute_commons::types::{actor::Actor, id::Id, template::TemplateSnippet};
 use perroute_storage::{
     models::{
         schema::{Schema, SchemasQueryBuilder},
@@ -11,6 +15,18 @@ use perroute_storage::{
     },
     query::FetchableModel,
 };
+
+command!(
+    CreateTemplateCommand,
+    CommandType::CreateTemplate,
+    template_id: Id,
+    schema_id: Id,
+    name: String,
+    html: Option<TemplateSnippet>,
+    text: Option<TemplateSnippet>,
+    subject: Option<TemplateSnippet>
+);
+into_event!(CreateTemplateCommand);
 
 #[derive(Debug)]
 pub struct CreateTemplateCommandHandler;

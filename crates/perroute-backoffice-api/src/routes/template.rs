@@ -16,23 +16,17 @@ use perroute_commons::{
     types::{actor::Actor, id::Id},
 };
 use perroute_cqrs::{
-    command_bus::{
-        commands::{
-            CreateTemplateCommandBuilder, DeleteTemplateCommandBuilder,
-            UpdateTemplateCommandBuilder,
-        },
-        handlers::template::{
-            create_template::CreateTemplateCommandHandler,
-            delete_template::DeleteTemplateCommandHandler,
-            update_template::UpdateTemplateCommandHandler,
-        },
+    command_bus::handlers::template::{
+        create_template::{CreateTemplateCommandBuilder, CreateTemplateCommandHandler},
+        delete_template::{DeleteTemplateCommandBuilder, DeleteTemplateCommandHandler},
+        update_template::{UpdateTemplateCommandBuilder, UpdateTemplateCommandHandler},
     },
     query_bus::{
         bus::QueryBus,
         handlers::template::{
-            find_tempate::FindTemplateQueryHandler, query_templates::QueryTemplatesQueryHandler,
+            find_tempate::{FindTemplateQueryBuilder, FindTemplateQueryHandler},
+            query_templates::{QueryTemplatesQueryBuilder, QueryTemplatesQueryHandler},
         },
-        queries::{FindTemplateQueryBuilder, QueryTemplatesQueryBuilder},
     },
 };
 use perroute_storage::models::template::Template;

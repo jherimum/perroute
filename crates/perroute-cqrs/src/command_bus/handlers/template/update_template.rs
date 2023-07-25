@@ -1,13 +1,28 @@
-use crate::command_bus::{
-    bus::CommandBusContext, commands::UpdateTemplateCommand, error::CommandBusError,
-    handlers::CommandHandler,
+use crate::{
+    command,
+    command_bus::{
+        bus::CommandBusContext, commands::CommandType, error::CommandBusError,
+        handlers::CommandHandler,
+    },
+    into_event,
 };
 use async_trait::async_trait;
-use perroute_commons::types::actor::Actor;
+use perroute_commons::types::{actor::Actor, id::Id, template::TemplateSnippet};
 use perroute_storage::{
     models::template::{Template, TemplatesQueryBuilder},
     query::FetchableModel,
 };
+
+command!(
+    UpdateTemplateCommand,
+    CommandType::UpdateTemplate,
+    template_id: Id,
+    name: String,
+    html: Option<TemplateSnippet>,
+    text: Option<TemplateSnippet>,
+    subject: Option<TemplateSnippet>
+);
+into_event!(UpdateTemplateCommand);
 
 #[derive(Debug)]
 pub struct UpdateTemplateCommandHandler;

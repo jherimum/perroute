@@ -1,15 +1,30 @@
 use async_trait::async_trait;
-use perroute_commons::types::actor::Actor;
+use derive_builder::Builder;
+use derive_getters::Getters;
+use perroute_commons::types::{actor::Actor, id::Id};
 use perroute_storage::{
     models::message_type::{MessageType, MessageTypeQueryBuilder},
     query::FetchableModel,
 };
+use serde::Serialize;
 
-use crate::query_bus::{
-    bus::{QueryBusContext, QueryHandler},
-    error::QueryBusError,
-    queries::FindMessageTypeQuery,
+use crate::{
+    impl_query,
+    query_bus::{
+        bus::{QueryBusContext, QueryHandler},
+        error::QueryBusError,
+        queries::QueryType,
+    },
 };
+
+#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
+pub struct FindMessageTypeQuery {
+    message_type_id: Id,
+    #[builder(default)]
+    channel_id: Option<Id>,
+}
+
+impl_query!(FindMessageTypeQuery, QueryType::FindMessageTypeQuery);
 
 pub struct FindMessageTypeQueryHandler;
 

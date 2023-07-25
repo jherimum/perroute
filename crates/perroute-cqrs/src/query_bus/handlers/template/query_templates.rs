@@ -1,15 +1,24 @@
 use async_trait::async_trait;
-use perroute_commons::types::actor::Actor;
+use perroute_commons::types::{actor::Actor, id::Id};
 use perroute_storage::{
     models::template::{Template, TemplatesQueryBuilder},
     query::FetchableModel,
 };
 
-use crate::query_bus::{
-    bus::{QueryBusContext, QueryHandler},
-    error::QueryBusError,
-    queries::QueryTemplatesQuery,
+use crate::{
+    query,
+    query_bus::{
+        bus::{QueryBusContext, QueryHandler},
+        error::QueryBusError,
+        queries::QueryType,
+    },
 };
+
+query!(
+    QueryTemplatesQuery,
+    QueryType::QueryTemplates,
+    schema_id: Option<Id>
+);
 
 pub struct QueryTemplatesQueryHandler;
 

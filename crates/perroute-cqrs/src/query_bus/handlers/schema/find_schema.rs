@@ -1,14 +1,38 @@
-use crate::query_bus::{
-    bus::{QueryBusContext, QueryHandler},
-    error::QueryBusError,
-    queries::FindSchemaQuery,
+use crate::{
+    impl_query,
+    query_bus::{
+        bus::{QueryBusContext, QueryHandler},
+        error::QueryBusError,
+        queries::QueryType,
+    },
 };
 use async_trait::async_trait;
-use perroute_commons::types::actor::Actor;
+use derive_builder::Builder;
+use derive_getters::Getters;
+use perroute_commons::types::{actor::Actor, code::Code, id::Id};
 use perroute_storage::{
-    models::schema::{Schema, SchemasQueryBuilder},
+    models::schema::{Schema, SchemasQueryBuilder, Version},
     query::FetchableModel,
 };
+use serde::Serialize;
+
+#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
+pub struct FindSchemaQuery {
+    #[builder(default)]
+    channel_id: Option<Id>,
+    #[builder(default)]
+    message_type_id: Option<Id>,
+    #[builder(default)]
+    message_type_code: Option<Code>,
+    #[builder(default)]
+    version: Option<Version>,
+    #[builder(default)]
+    schema_id: Option<Id>,
+    #[builder(default)]
+    channel_code: Option<Code>,
+}
+
+impl_query!(FindSchemaQuery, QueryType::FindSchema);
 
 pub struct FindSchemaQueryHandler;
 

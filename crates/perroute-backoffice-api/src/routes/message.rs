@@ -9,9 +9,8 @@ use crate::{
 };
 use actix_web::web::{Data, Json};
 use perroute_commons::types::actor::Actor;
-use perroute_cqrs::command_bus::{
-    commands::CreateMessageCommandBuilder,
-    handlers::message::create_message::CreateMessageCommandHandler,
+use perroute_cqrs::command_bus::handlers::message::create_message::{
+    CreateMessageCommandBuilder, CreateMessageCommandHandler,
 };
 use perroute_storage::models::message::Message;
 

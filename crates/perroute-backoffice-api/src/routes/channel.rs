@@ -11,28 +11,19 @@ use crate::{
     links::ResourceLink,
 };
 use actix_web::web::{Data, Json, Path};
-use anyhow::Context;
-use perroute_commons::{
-    rest::RestError,
-    types::{actor::Actor, id::Id},
-};
+use perroute_commons::types::{actor::Actor, id::Id};
 use perroute_cqrs::{
-    command_bus::{
-        commands::{
-            CreateChannelCommandBuilder, DeleteChannelCommandBuilder, UpdateChannelCommandBuilder,
-        },
-        handlers::channel::{
-            create_channel::CreateChannelCommandHandler,
-            delete_channel::DeleteChannelCommandHandler,
-            update_channel::UpdateChannelCommandHandler,
-        },
+    command_bus::handlers::channel::{
+        create_channel::{CreateChannelCommandBuilder, CreateChannelCommandHandler},
+        delete_channel::{DeleteChannelCommandBuilder, DeleteChannelCommandHandler},
+        update_channel::{UpdateChannelCommandBuilder, UpdateChannelCommandHandler},
     },
     query_bus::{
         bus::QueryBus,
         handlers::channel::{
-            find_channel::FindChannelQueryHandler, query_channels::QueryChannelsQueryHandler,
+            find_channel::{FindChannelQueryBuilder, FindChannelQueryHandler},
+            query_channels::{QueryChannelsQueryBuilder, QueryChannelsQueryHandler},
         },
-        queries::{FindChannelQueryBuilder, QueryChannelsQueryBuilder},
     },
 };
 use perroute_storage::models::channel::Channel;

@@ -14,25 +14,28 @@ use crate::{
 };
 use actix_web::web::{Data, Json, Path};
 use perroute_commons::types::{actor::Actor, id::Id};
-use perroute_cqrs::query_bus::handlers::message_type::find_message_type::FindMessageTypeQueryHandler;
-use perroute_cqrs::query_bus::handlers::message_type::query_message_types::QueryMessageTypesHandler;
 use perroute_cqrs::{
     command_bus::handlers::message_type::create_message_type::CreateMessageTypeCommandHandler,
-    query_bus::queries::QueryMessageTypesQueryBuilder,
+    query_bus::handlers::message_type::query_message_types::QueryMessageTypesQueryBuilder,
 };
 use perroute_cqrs::{
-    command_bus::{
-        commands::UpdateMessageTypeCommandBuilder,
-        handlers::message_type::update_message_type::UpdateMessageTypeCommandHandler,
-    },
-    query_bus::queries::FindMessageTypeQueryBuilder,
-};
-use perroute_cqrs::{
-    command_bus::{
-        commands::{CreateMessageTypeCommandBuilder, DeleteMessageTypeCommandBuilder},
-        handlers::message_type::delete_message_type::DeleteMessageTypeCommandHandler,
-    },
+    command_bus::handlers::message_type::delete_message_type::DeleteMessageTypeCommandHandler,
     query_bus::bus::QueryBus,
+};
+use perroute_cqrs::{
+    command_bus::handlers::message_type::update_message_type::UpdateMessageTypeCommandBuilder,
+    query_bus::handlers::message_type::query_message_types::QueryMessageTypesHandler,
+};
+use perroute_cqrs::{
+    command_bus::handlers::message_type::update_message_type::UpdateMessageTypeCommandHandler,
+    query_bus::handlers::message_type::find_message_type::FindMessageTypeQueryBuilder,
+};
+use perroute_cqrs::{
+    command_bus::handlers::message_type::{
+        create_message_type::CreateMessageTypeCommandBuilder,
+        delete_message_type::DeleteMessageTypeCommandBuilder,
+    },
+    query_bus::handlers::message_type::find_message_type::FindMessageTypeQueryHandler,
 };
 use perroute_storage::models::message_type::MessageType;
 use std::convert::identity;

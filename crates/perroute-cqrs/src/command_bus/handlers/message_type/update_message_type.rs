@@ -1,12 +1,25 @@
-use crate::command_bus::{
-    bus::CommandBusContext, commands::UpdateMessageTypeCommand, error::CommandBusError,
-    handlers::CommandHandler,
+use crate::{
+    command,
+    command_bus::{
+        bus::CommandBusContext, commands::CommandType, error::CommandBusError,
+        handlers::CommandHandler,
+    },
+    into_event,
 };
 use perroute_commons::types::{actor::Actor, id::Id};
 use perroute_storage::{
     models::message_type::{MessageType, MessageTypeQueryBuilder},
     query::FetchableModel,
 };
+
+command!(
+    UpdateMessageTypeCommand,
+    CommandType::UpdateMessageType,
+    message_type_id: Id,
+    description: String,
+    enabled: bool
+);
+into_event!(UpdateMessageTypeCommand);
 
 #[derive(Debug, thiserror::Error)]
 pub enum UpdateMessageTypeError {

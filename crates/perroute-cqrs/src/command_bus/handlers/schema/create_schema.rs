@@ -1,10 +1,18 @@
-use crate::command_bus::{
-    bus::CommandBusContext, commands::CreateSchemaCommand, error::CommandBusError,
-    handlers::CommandHandler,
+use crate::{
+    command,
+    command_bus::{
+        bus::CommandBusContext, commands::CommandType, error::CommandBusError,
+        handlers::CommandHandler,
+    },
+    into_event,
 };
 use perroute_commons::{
     new_id,
-    types::{actor::Actor, json_schema::JsonSchemaError},
+    types::{
+        actor::Actor,
+        id::Id,
+        json_schema::{JsonSchema, JsonSchemaError},
+    },
 };
 use perroute_storage::{
     models::{
@@ -13,6 +21,15 @@ use perroute_storage::{
     },
     query::FetchableModel,
 };
+
+command!(
+    CreateSchemaCommand,
+    CommandType::CreateSchema,
+    schema_id: Id,
+    message_type_id: Id,
+    schema: JsonSchema
+);
+into_event!(CreateSchemaCommand);
 
 #[derive(Debug, thiserror::Error)]
 pub enum CreateSchemaError {

@@ -1,15 +1,23 @@
-use crate::query_bus::{
-    bus::{QueryBusContext, QueryHandler},
-    error::QueryBusError,
-    queries::FindChannelQuery,
+use crate::{
+    query,
+    query_bus::{
+        bus::{QueryBusContext, QueryHandler},
+        error::QueryBusError,
+        queries::QueryType,
+    },
 };
 use async_trait::async_trait;
-use perroute_commons::types::actor::Actor;
+use perroute_commons::types::{actor::Actor, id::Id};
 use perroute_storage::{
     models::channel::{Channel, ChannelsQueryBuilder},
     query::FetchableModel,
 };
 
+query!(
+    FindChannelQuery,
+    QueryType::FindChannel,
+    channel_id: Option<Id>
+);
 pub struct FindChannelQueryHandler;
 
 #[async_trait]

@@ -1,14 +1,23 @@
-use crate::query_bus::{
-    bus::{QueryBusContext, QueryHandler},
-    error::QueryBusError,
-    queries::QuerySchemasQuery,
+use crate::{
+    query,
+    query_bus::{
+        bus::{QueryBusContext, QueryHandler},
+        error::QueryBusError,
+        queries::QueryType,
+    },
 };
 use async_trait::async_trait;
-use perroute_commons::types::actor::Actor;
+use perroute_commons::types::{actor::Actor, id::Id};
 use perroute_storage::{
     models::schema::{Schema, SchemasQueryBuilder},
     query::FetchableModel,
 };
+
+query!(
+    QuerySchemasQuery,
+    QueryType::QuerySchemas,
+    message_type_id: Id
+);
 
 #[derive(Debug)]
 pub struct QuerySchemasQueryHandler;

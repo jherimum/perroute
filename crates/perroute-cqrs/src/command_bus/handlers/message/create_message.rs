@@ -1,8 +1,19 @@
-use crate::command_bus::{
-    bus::CommandBusContext, commands::CreateMessageCommand, error::CommandBusError,
-    handlers::CommandHandler,
+use std::collections::HashSet;
+
+use crate::{
+    command_bus::{
+        bus::CommandBusContext, commands::CommandType, error::CommandBusError, events::EventType,
+        handlers::CommandHandler,
+    },
+    impl_command, into_event,
 };
-use perroute_commons::types::{actor::Actor, code::Code};
+use chrono::NaiveDateTime;
+use derive_builder::Builder;
+use derive_getters::Getters;
+use perroute_commons::types::{
+    actor::Actor, code::Code, dispatch_type::DispatcherType, id::Id, payload::Payload,
+    recipient::Recipient,
+};
 use perroute_storage::{
     models::{
         channel::{Channel, ChannelsQueryBuilder},
@@ -11,8 +22,38 @@ use perroute_storage::{
     },
     query::FetchableModel,
 };
+use serde::Serialize;
 use sqlx::{types::Json, PgPool};
 use thiserror::Error;
+
+#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
+pub struct CreateMessageCommand {
+    #[builder(default)]
+    message_id: Id,
+
+    payload: Payload,
+    recipient: Recipient,
+
+    #[builder(default)]
+    scheduled_to: Option<NaiveDateTime>,
+
+    channel_code: Code,
+    message_type_code: Code,
+    schema_version: Version,
+
+    #[builder(default)]
+    include_dispatcher_types: HashSet<DispatcherType>,
+
+    #[builder(default)]
+    exclude_dispatcher_types: HashSet<DispatcherType>,
+}
+
+impl_command!(CreateMessageCommand, CommandType::CreateMessage);
+into_event!(
+    CreateMessageCommand,
+    EventType::MessageCreated,
+    |cmd: CreateMessageCommand| { *cmd.message_id() }
+);
 
 #[derive(Error, Debug)]
 pub enum CreateMessageCommandError {

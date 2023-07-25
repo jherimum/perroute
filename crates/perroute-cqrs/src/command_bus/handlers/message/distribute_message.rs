@@ -1,4 +1,6 @@
 use async_trait::async_trait;
+use derive_builder::Builder;
+use derive_getters::Getters;
 use perroute_commons::types::{actor::Actor, id::Id};
 use perroute_storage::{
     models::{
@@ -8,12 +10,28 @@ use perroute_storage::{
     },
     query::FetchableModel,
 };
+use serde::Serialize;
 use tap::TapFallible;
 
-use crate::command_bus::{
-    bus::CommandBusContext, commands::DistributeMessageCommand, error::CommandBusError,
-    handlers::CommandHandler,
+use crate::{
+    command_bus::{
+        bus::CommandBusContext, commands::CommandType, error::CommandBusError, events::EventType,
+        handlers::CommandHandler,
+    },
+    impl_command, into_event,
 };
+
+#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
+pub struct DistributeMessageCommand {
+    message_id: Id,
+}
+into_event!(
+    DistributeMessageCommand,
+    EventType::MessageCreated,
+    |cmd: DistributeMessageCommand| { cmd.message_id }
+);
+
+impl_command!(DistributeMessageCommand, CommandType::DistributeMessage);
 
 #[derive(Debug)]
 pub struct DistributeMessageCommandHandler;

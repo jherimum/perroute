@@ -1,13 +1,24 @@
-use crate::command_bus::{
-    bus::CommandBusContext, commands::DeleteTemplateCommand, error::CommandBusError,
-    handlers::CommandHandler,
+use crate::{
+    command,
+    command_bus::{
+        bus::CommandBusContext, commands::CommandType, error::CommandBusError,
+        handlers::CommandHandler,
+    },
+    into_event,
 };
 use async_trait::async_trait;
-use perroute_commons::types::actor::Actor;
+use perroute_commons::types::{actor::Actor, id::Id};
 use perroute_storage::{
     models::template::{Template, TemplatesQueryBuilder},
     query::FetchableModel,
 };
+
+command!(
+    DeleteTemplateCommand,
+    CommandType::DeleteTemplate,
+    template_id: Id
+);
+into_event!(DeleteTemplateCommand);
 
 #[derive(Debug)]
 pub struct DeleteTemplateCommandHandler;

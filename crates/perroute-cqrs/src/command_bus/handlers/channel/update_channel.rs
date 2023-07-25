@@ -1,6 +1,10 @@
-use crate::command_bus::{
-    bus::CommandBusContext, commands::UpdateChannelCommand, error::CommandBusError,
-    handlers::CommandHandler,
+use crate::{
+    command,
+    command_bus::{
+        bus::CommandBusContext, commands::CommandType, error::CommandBusError,
+        handlers::CommandHandler,
+    },
+    into_event,
 };
 use async_trait::async_trait;
 use derive_new::new;
@@ -10,6 +14,14 @@ use perroute_storage::{
     query::FetchableModel,
 };
 use tap::TapFallible;
+
+command!(
+    UpdateChannelCommand,
+    CommandType::UpdateChannel,
+    channel_id: Id,
+    name: String
+);
+into_event!(UpdateChannelCommand);
 
 #[derive(Debug, new)]
 pub struct UpdateChannelCommandHandler;

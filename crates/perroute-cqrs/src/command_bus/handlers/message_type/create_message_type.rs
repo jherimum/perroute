@@ -1,10 +1,15 @@
-use crate::command_bus::{
-    bus::CommandBusContext, commands::CreateMessageTypeCommand, error::CommandBusError,
-    handlers::CommandHandler,
+use crate::{
+    command_bus::{
+        bus::CommandBusContext, commands::CommandType, error::CommandBusError,
+        handlers::CommandHandler,
+    },
+    impl_command, into_event,
 };
+use derive_builder::Builder;
+use derive_getters::Getters;
 use perroute_commons::{
     new_id,
-    types::{actor::Actor, code::Code, json_schema::JsonSchema},
+    types::{actor::Actor, code::Code, id::Id, json_schema::JsonSchema},
 };
 use perroute_storage::{
     models::{
@@ -14,6 +19,19 @@ use perroute_storage::{
     },
     query::FetchableModel,
 };
+use serde::Serialize;
+
+#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
+pub struct CreateMessageTypeCommand {
+    #[builder(default)]
+    message_type_id: Id,
+    code: Code,
+    description: String,
+    channel_id: Id,
+}
+
+impl_command!(CreateMessageTypeCommand, CommandType::CreateMessageType);
+into_event!(CreateMessageTypeCommand);
 
 #[derive(Debug, thiserror::Error)]
 pub enum CreateMessageTypeError {

@@ -1,24 +1,14 @@
-use chrono::{NaiveDateTime, Utc};
-use derive_builder::Builder;
-use derive_getters::Getters;
-use perroute_commons::{
-    new_id,
-    types::{
-        actor::Actor, code::Code, dispatch_type::DispatcherType, id::Id, json_schema::JsonSchema,
-        payload::Payload, recipient::Recipient, template::TemplateSnippet,
-    },
-};
-use perroute_storage::models::{
-    command_log::{CommandLog, CommandLogBuilder},
-    schema::Version,
-};
+use super::events::Event;
+use chrono::Utc;
+use perroute_commons::{new_id, types::actor::Actor};
+use perroute_storage::models::command_log::{CommandLog, CommandLogBuilder};
 use serde::Serialize;
-use std::{collections::HashSet, fmt::Debug};
+use std::fmt::Debug;
 use strum_macros::Display;
 
-use crate::{command, impl_command};
-
-pub trait Command: Debug + Serialize + Clone + PartialEq + Eq + Send + Sync {
+pub trait Command:
+    Debug + Serialize + Clone + PartialEq + Eq + Send + Sync + Into<Option<Event>>
+{
     fn ty(&self) -> CommandType;
 
     fn to_log<E>(&self, actor: &Actor, error: Option<&E>) -> CommandLog
@@ -66,136 +56,3 @@ impl From<CommandType> for String {
         value.to_string()
     }
 }
-
-#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
-pub struct CreateChannelCommand {
-    #[builder(default)]
-    channel_id: Id,
-    code: Code,
-    name: String,
-}
-
-impl_command!(CreateChannelCommand, CommandType::CreateChannel);
-
-command!(
-    DeleteChannelCommand,
-    CommandType::DeleteChannel,
-    channel_id: Id
-);
-command!(
-    UpdateChannelCommand,
-    CommandType::UpdateChannel,
-    channel_id: Id,
-    name: String
-);
-
-#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
-pub struct CreateMessageTypeCommand {
-    #[builder(default)]
-    message_type_id: Id,
-    code: Code,
-    description: String,
-    channel_id: Id,
-}
-
-impl_command!(CreateMessageTypeCommand, CommandType::CreateMessageType);
-
-command!(
-    UpdateMessageTypeCommand,
-    CommandType::UpdateMessageType,
-    message_type_id: Id,
-    description: String,
-    enabled: bool
-);
-
-command!(
-    DeleteMessageTypeCommand,
-    CommandType::DeleteMessageType,
-    message_type_id: Id
-);
-
-command!(
-    CreateSchemaCommand,
-    CommandType::CreateSchema,
-    schema_id: Id,
-    message_type_id: Id,
-    schema: JsonSchema
-);
-
-command!(
-    UpdateSchemaCommand,
-    CommandType::UpdateSchema,
-    schema_id: Id,
-    schema: JsonSchema
-);
-
-command!(
-    DeleteSchemaCommand,
-    CommandType::DeleteSchema,
-    schema_id: Id
-);
-
-command!(
-    PublishSchemaCommand,
-    CommandType::PublishSchema,
-    schema_id: Id
-);
-
-//templates
-
-command!(
-    CreateTemplateCommand,
-    CommandType::CreateTemplate,
-    template_id: Id,
-    schema_id: Id,
-    name: String,
-    html: Option<TemplateSnippet>,
-    text: Option<TemplateSnippet>,
-    subject: Option<TemplateSnippet>
-);
-
-command!(
-    UpdateTemplateCommand,
-    CommandType::UpdateTemplate,
-    template_id: Id,
-    name: String,
-    html: Option<TemplateSnippet>,
-    text: Option<TemplateSnippet>,
-    subject: Option<TemplateSnippet>
-);
-
-command!(
-    DeleteTemplateCommand,
-    CommandType::DeleteTemplate,
-    template_id: Id
-);
-
-#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
-pub struct CreateMessageCommand {
-    #[builder(default)]
-    message_id: Id,
-
-    payload: Payload,
-    recipient: Recipient,
-
-    #[builder(default)]
-    scheduled_to: Option<NaiveDateTime>,
-
-    channel_code: Code,
-    message_type_code: Code,
-    schema_version: Version,
-
-    #[builder(default)]
-    include_dispatcher_types: HashSet<DispatcherType>,
-
-    #[builder(default)]
-    exclude_dispatcher_types: HashSet<DispatcherType>,
-}
-impl_command!(CreateMessageCommand, CommandType::CreateMessage);
-
-#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
-pub struct DistributeMessageCommand {
-    message_id: Id,
-}
-
-impl_command!(DistributeMessageCommand, CommandType::DistributeMessage);

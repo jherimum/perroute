@@ -1,12 +1,23 @@
-use crate::command_bus::{
-    bus::CommandBusContext, commands::DeleteMessageTypeCommand, error::CommandBusError,
-    handlers::CommandHandler,
+use crate::{
+    command,
+    command_bus::{
+        bus::CommandBusContext, commands::CommandType, error::CommandBusError,
+        handlers::CommandHandler,
+    },
+    into_event,
 };
 use perroute_commons::types::{actor::Actor, id::Id};
 use perroute_storage::{
     models::message_type::{MessageType, MessageTypeQueryBuilder},
     query::FetchableModel,
 };
+
+command!(
+    DeleteMessageTypeCommand,
+    CommandType::DeleteMessageType,
+    message_type_id: Id
+);
+into_event!(DeleteMessageTypeCommand);
 
 #[derive(thiserror::Error, Debug, Clone)]
 pub enum DeleteMessageTypeError {

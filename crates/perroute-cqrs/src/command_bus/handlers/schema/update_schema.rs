@@ -1,13 +1,25 @@
-use perroute_commons::types::actor::Actor;
+use perroute_commons::types::{actor::Actor, id::Id, json_schema::JsonSchema};
 use perroute_storage::{
     models::schema::{Schema, SchemasQueryBuilder},
     query::FetchableModel,
 };
 
-use crate::command_bus::{
-    bus::CommandBusContext, commands::UpdateSchemaCommand, error::CommandBusError,
-    handlers::CommandHandler,
+use crate::{
+    command,
+    command_bus::{
+        bus::CommandBusContext, commands::CommandType, error::CommandBusError,
+        handlers::CommandHandler,
+    },
+    into_event,
 };
+
+command!(
+    UpdateSchemaCommand,
+    CommandType::UpdateSchema,
+    schema_id: Id,
+    schema: JsonSchema
+);
+into_event!(UpdateSchemaCommand);
 
 #[derive(Debug)]
 pub struct UpdateSchemaCommandHandler;

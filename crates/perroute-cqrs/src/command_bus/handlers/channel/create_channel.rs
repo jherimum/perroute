@@ -1,15 +1,31 @@
-use crate::command_bus::{
-    bus::CommandBusContext, commands::CreateChannelCommand, error::CommandBusError,
-    handlers::CommandHandler,
+use crate::{
+    command_bus::{
+        bus::CommandBusContext, commands::CommandType, error::CommandBusError,
+        handlers::CommandHandler,
+    },
+    impl_command, into_event,
 };
 use async_trait::async_trait;
-use perroute_commons::types::{actor::Actor, code::Code};
+use derive_builder::Builder;
+use derive_getters::Getters;
+use perroute_commons::types::{actor::Actor, code::Code, id::Id};
 use perroute_storage::{
     models::channel::{Channel, ChannelBuilder, ChannelsQueryBuilder},
     query::FetchableModel,
 };
+use serde::Serialize;
 use sqlx::PgPool;
 use tap::TapFallible;
+
+#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
+pub struct CreateChannelCommand {
+    #[builder(default)]
+    channel_id: Id,
+    code: Code,
+    name: String,
+}
+impl_command!(CreateChannelCommand, CommandType::CreateChannel);
+into_event!(CreateChannelCommand);
 
 #[derive(Debug)]
 pub struct CreateChannelCommandHandler;

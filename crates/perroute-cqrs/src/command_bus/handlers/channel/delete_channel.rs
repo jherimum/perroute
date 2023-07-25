@@ -1,6 +1,10 @@
-use crate::command_bus::{
-    bus::CommandBusContext, commands::DeleteChannelCommand, error::CommandBusError,
-    handlers::CommandHandler,
+use crate::{
+    command,
+    command_bus::{
+        bus::CommandBusContext, commands::CommandType, error::CommandBusError,
+        handlers::CommandHandler,
+    },
+    into_event,
 };
 use async_trait::async_trait;
 use perroute_commons::types::{actor::Actor, id::Id};
@@ -12,6 +16,13 @@ use perroute_storage::{
     query::FetchableModel,
 };
 use tap::TapFallible;
+
+command!(
+    DeleteChannelCommand,
+    CommandType::DeleteChannel,
+    channel_id: Id
+);
+into_event!(DeleteChannelCommand);
 
 #[derive(Debug)]
 pub struct DeleteChannelCommandHandler;

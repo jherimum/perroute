@@ -1,12 +1,23 @@
-use crate::command_bus::{
-    bus::CommandBusContext, commands::PublishSchemaCommand, error::CommandBusError,
-    handlers::CommandHandler,
+use crate::{
+    command,
+    command_bus::{
+        bus::CommandBusContext, commands::CommandType, error::CommandBusError,
+        handlers::CommandHandler,
+    },
+    into_event,
 };
-use perroute_commons::types::actor::Actor;
+use perroute_commons::types::{actor::Actor, id::Id};
 use perroute_storage::{
     models::schema::{Schema, SchemasQueryBuilder},
     query::FetchableModel,
 };
+
+command!(
+    PublishSchemaCommand,
+    CommandType::PublishSchema,
+    schema_id: Id
+);
+into_event!(PublishSchemaCommand);
 
 #[derive(Debug)]
 pub struct PublishSchemaCommandHandler;
