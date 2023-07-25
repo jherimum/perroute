@@ -9,7 +9,7 @@ install_crate = "cargo-watch"
 cwd = "./crates/perroute-backoffice-api"
 command = "cargo"
 args = ["watch", "-x", "clippy", "-x", "run | bunyan"]
-dependencies = ["postgres"]
+dependencies = ["postgres", "rabbitmq"]
 
 [tasks.dev-events]
 install_crate = "cargo-watch"
@@ -61,12 +61,25 @@ args = [
     "--detach",
 ]
 
+[tasks.rabbitmq]
+command = "docker"
+args = [
+    "compose",
+    "-f",
+    "./deploy/docker-compose.rabbitmq.yml",
+    "up",
+    "--build",
+    "--detach",
+]
+
 [tasks.docker]
 command = "docker"
 args = [
     "compose",
     "-f",
     "./deploy/docker-compose.postgres.yml",
+    "-f",
+    "./deploy/docker-compose.rabbitmq.yml",
     "-f",
     "./deploy/docker-compose.perroute-backoffice-api.yml",
     "up",
@@ -80,6 +93,8 @@ args = [
     "-f",
     "./deploy/docker-compose.postgres.yml",
     "-f",
+    "./deploy/docker-compose.rabbitmq.yml",
+    "-f",
     "./deploy/docker-compose.perroute-backoffice-api.yml",
     "build",
 ]
@@ -90,6 +105,8 @@ args = [
     "compose",
     "-f",
     "./deploy/docker-compose.postgres.yml",
+    "-f",
+    "./deploy/docker-compose.rabbitmq.yml",
     "-f",
     "./deploy/docker-compose.perroute-backoffice-api.yml",
     "start",
@@ -102,6 +119,8 @@ args = [
     "-f",
     "./deploy/docker-compose.postgres.yml",
     "-f",
+    "./deploy/docker-compose.rabbitmq.yml",
+    "-f",
     "./deploy/docker-compose.perroute-backoffice-api.yml",
     "stop",
 ]
@@ -112,6 +131,8 @@ args = [
     "compose",
     "-f",
     "./deploy/docker-compose.postgres.yml",
+    "-f",
+    "./deploy/docker-compose.rabbitmq.yml",
     "-f",
     "./deploy/docker-compose.perroute-backoffice-api.yml",
     "rm",

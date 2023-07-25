@@ -14,5 +14,5 @@ services:
       - ../.env
       - ../.env.docker
     depends_on:
-      perroute_message_postgres:
-        condition: service_healthy
+      - perroute-rabbitmq
+      - perroute_message_postgres
