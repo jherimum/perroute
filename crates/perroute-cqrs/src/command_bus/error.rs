@@ -5,7 +5,10 @@ use super::{
             create_channel::CreateChannelError, delete_channel::DeleteChannelError,
             update_channel::UpdateChannelError,
         },
-        message::create_message::CreateMessageCommandError,
+        message::{
+            create_message::CreateMessageCommandError,
+            distribute_message::DistributeMessageCommandHandlerError,
+        },
         message_type::{
             create_message_type::CreateMessageTypeError,
             delete_message_type::DeleteMessageTypeError,
@@ -52,4 +55,7 @@ pub enum CommandBusError {
 
     #[error(transparent)]
     CreateMessage(#[from] CreateMessageCommandError),
+
+    #[error(transparent)]
+    DistributeMessage(#[from] DistributeMessageCommandHandlerError),
 }
