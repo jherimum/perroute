@@ -40,10 +40,22 @@ pub struct DbEvent {
 }
 
 impl DbEvent {
-    pub async fn all<'e, E: PgExecutor<'e>>(exec: E) -> Result<Vec<DbEvent>, sqlx::Error> {
-        sqlx::query_as("select * from events where consumed_at is null")
-            .fetch_all(exec)
-            .await
+    pub async fn fetch_unconsumed<'e, E: PgExecutor<'e>>(
+        exec: E,
+        limit: i64,
+    ) -> Result<Vec<DbEvent>, sqlx::Error> {
+        sqlx::query_as(
+            r#"
+                    select * 
+                    from events 
+                    where consumed_at is null
+                    order by scheduled_to asc
+                    limit $1
+                "#,
+        )
+        .bind(limit)
+        .fetch_all(exec)
+        .await
     }
 
     pub async fn save<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<DbEvent, sqlx::Error> {

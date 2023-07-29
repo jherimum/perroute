@@ -59,7 +59,7 @@ async fn create_producer<'c>(conn: &'c RecoverableConnection) -> Producer<'c> {
 }
 
 async fn event_pooling<'c>(pool: &PgPool, producer: &Producer<'c>) -> Result<(), anyhow::Error> {
-    let events = DbEvent::all(pool)
+    let events = DbEvent::fetch_unconsumed(pool, 10)
         .await
         .tap_err(|e| tracing::error!("Failed to poll events form database: {e}"))?;
 
