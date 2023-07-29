@@ -15,6 +15,7 @@ const BASE_CONFIG_FILENAME: &str = "base.yaml";
 pub struct Settings {
     pub server: ServerSettings,
     pub database: DatabaseSettings,
+    pub rabbitmq: Option<RabbitMqSettings>,
 }
 
 #[derive(Deserialize, Clone, Debug)]
@@ -54,6 +55,11 @@ pub struct PollSettings {
     pub max_lifetime: u64,
     pub idle_timeout: u64,
     pub acquire_timeout: u64,
+}
+
+#[derive(Deserialize, Clone, Debug)]
+pub struct RabbitMqSettings {
+    pub uri: String,
 }
 
 impl Settings {

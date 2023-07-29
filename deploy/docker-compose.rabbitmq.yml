@@ -4,6 +4,8 @@ services:
   perroute-rabbitmq:    
     image: rabbitmq:management
     container_name: perroute-rabbitmq
+    env_file:
+      - ../.env.docker
     ports:
       - 5672:5672
       - 15672:15672

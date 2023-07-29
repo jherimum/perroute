@@ -1,51 +1,91 @@
-use aws_config::SdkConfig;
-use aws_sdk_sns::Client;
-use perroute_commons::configuration::settings::Settings;
-use perroute_events::Event;
+use anyhow::Result;
+use chrono::Utc;
+use perroute_commons::{configuration::settings::Settings, tracing::init_tracing};
+use perroute_messaging::{
+    connection::{Config, RecoverableConnection},
+    events::Event,
+    producer::Producer,
+};
 use perroute_storage::{connection_manager::ConnectionManager, models::db_event::DbEvent};
 use sqlx::PgPool;
-use tokio_cron_scheduler::{Job, JobScheduler, JobSchedulerError};
+use std::time::Duration;
+use tap::TapFallible;
+
+const POOLING_START_DELAY: u64 = 10;
+
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<(), anyhow::Error> {
     dotenv::dotenv().ok();
-    let config = aws().await;
-    let client = aws_sdk_sns::Client::new(&config);
-    let settings = Settings::load().unwrap();
+    init_tracing();
+    let settings = Settings::load().tap_err(|e| tracing::error!("Failed to load settings: {e}"))?;
     let pool = ConnectionManager::build_pool(&settings.database)
         .await
-        .unwrap();
-
-    let sched = JobScheduler::new().await.unwrap();
-    sched
-        .add(event_pooling(pool, client).await.unwrap())
-        .await
-        .unwrap();
-
-    sched.start().await.unwrap();
-    tokio::time::sleep(core::time::Duration::from_secs(10)).await;
-}
-
-async fn event_pooling(pool: PgPool, aws: Client) -> Result<Job, JobSchedulerError> {
-    Job::new_async("1/1 * * * * *", move |_, _| {
-        let pool = pool.clone();
-        let aws = aws.clone();
-        Box::pin(async move {
-            for db_event in DbEvent::all(&pool).await.unwrap() {
-                let event: Event = db_event.try_into().unwrap();
-                let json = serde_json::to_string(&event).unwrap();
-                let x = aws.create_topic().name("events").send().await.unwrap();
-                aws.publish()
-                    .topic_arn("arn:aws:sns:us-east-1:720506629679:events")
-                    .message(json)
-                    .send()
-                    .await
-                    .unwrap();
-                println!("{:?}", event);
-            }
-        })
+        .tap_err(|e| tracing::error!("Failed to build pool: {e}"))?;
+    let conn = RecoverableConnection::connect(Config {
+        uri: settings.rabbitmq.unwrap().uri,
     })
+    .await;
+
+    tracing::info!("Pooling will start in {}", POOLING_START_DELAY);
+    tokio::time::sleep(Duration::from_secs(POOLING_START_DELAY)).await;
+
+    let pooling = tokio::spawn(async move {
+        tracing::info!("Starting pooling events");
+        let producer = create_producer(&conn).await;
+        loop {
+            let _ = event_pooling(&pool, &producer)
+                .await
+                .tap_err(|e| tracing::error!("Failed to pool events: {e}"));
+            tokio::time::sleep(Duration::from_secs(10)).await;
+        }
+    });
+
+    Ok(pooling
+        .await
+        .tap_err(|e| tracing::error!("Failed to join pooling: {e}"))?)
 }
 
-async fn aws() -> SdkConfig {
-    aws_config::from_env().region("us-east-1").load().await
+#[async_recursion::async_recursion]
+async fn create_producer<'c>(conn: &'c RecoverableConnection) -> Producer<'c> {
+    let producer = Producer::new(conn, "perroute.events", true)
+        .await
+        .tap_err(|e| tracing::error!("Failed to create producer: {e}"));
+
+    if producer.is_err() {
+        return create_producer(conn).await;
+    }
+
+    producer.unwrap()
+}
+
+async fn event_pooling<'c>(pool: &PgPool, producer: &Producer<'c>) -> Result<(), anyhow::Error> {
+    let events = DbEvent::all(pool)
+        .await
+        .tap_err(|e| tracing::error!("Failed to poll events form database: {e}"))?;
+
+    tracing::debug!("Polled {} events from database", events.len());
+
+    for db_event in events {
+        let event_id = *db_event.id();
+        let event: Event = Event::from(&db_event);
+
+        let sent_result = producer
+            .send(&event, Some(event.ty().to_string().as_str()))
+            .await
+            .tap_ok(|_| tracing::debug!("Event [{}] sent", event_id))
+            .tap_err(|e| tracing::error!("Failed to send event [{}]: {}", event_id, e));
+
+        if sent_result.is_ok() {
+            let _ = db_event
+                .set_consumed_at(Utc::now().naive_utc())
+                .update(pool)
+                .await
+                .tap_err(|e| {
+                    tracing::error!("Failed to set event [{}] as consumed: {}", event_id, e)
+                })
+                .tap_ok(|_| tracing::info!("Event [{}] consumed", event_id));
+        }
+    }
+
+    Ok(())
 }

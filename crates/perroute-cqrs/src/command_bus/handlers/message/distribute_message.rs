@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use derive_builder::Builder;
 use derive_getters::Getters;
 use perroute_commons::types::{actor::Actor, id::Id};
-use perroute_events::EventType;
+use perroute_messaging::events::EventType;
 use perroute_storage::{
     models::{
         message::{Message, MessageQueryBuilder, Status},

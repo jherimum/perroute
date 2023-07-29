@@ -174,7 +174,7 @@ impl CommandBus {
 
         if handler_result.is_ok() {
             if let Some(event) = cmd.into_event() {
-                let db_event: DbEvent = event.try_into().map_err(anyhow::Error::from)?;
+                let db_event: DbEvent = (&event).into();
                 db_event.save(ctx.tx()).await?;
             }
         }

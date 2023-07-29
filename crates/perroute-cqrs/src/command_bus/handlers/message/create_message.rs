@@ -14,7 +14,7 @@ use perroute_commons::types::{
     actor::Actor, code::Code, dispatch_type::DispatcherType, id::Id, payload::Payload,
     recipient::Recipient,
 };
-use perroute_events::EventType;
+use perroute_messaging::events::EventType;
 use perroute_storage::{
     models::{
         channel::{Channel, ChannelsQueryBuilder},

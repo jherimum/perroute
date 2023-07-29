@@ -9,7 +9,7 @@ edition = "2021"
 perroute-storage = { path = "../../crates/perroute-storage" }
 perroute-connectors = { path = "../../crates/perroute-connectors" }
 perroute-commons = { path = "../../crates/perroute-commons" }
-perroute-events = { path = "../../crates/perroute-events" }
+perroute-messaging = { path = "../../crates/perroute-messaging" }
 anyhow = "1"
 async-trait = "0.1"
 once_cell = "1"

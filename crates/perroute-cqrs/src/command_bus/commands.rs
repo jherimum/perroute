@@ -1,6 +1,6 @@
 use chrono::Utc;
 use perroute_commons::{new_id, types::actor::Actor};
-use perroute_events::IntoEvent;
+use perroute_messaging::events::IntoEvent;
 use perroute_storage::models::command_log::{CommandLog, CommandLogBuilder};
 use serde::Serialize;
 use std::fmt::Debug;

@@ -15,3 +15,5 @@ database:
     acquire_timeout: 2
   migration:
     enabled: false
+rabbitmq:
+  uri: "amqp://admin:admin@localhost:5672"

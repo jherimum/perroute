@@ -2,13 +2,15 @@
 members = [
     # runnable applications    
     "crates/perroute-backoffice-api",
+    "crates/perroute-events",
 
     # dependent library crates
     "crates/perroute-cqrs",
     "crates/perroute-storage",
     "crates/perroute-connectors",
     "crates/perroute-commons",
-    "crates/perroute-events",
+    "crates/perroute-messaging",
+
 ]
 
 [profile.release]

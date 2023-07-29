@@ -1,11 +1,29 @@
-use chrono::NaiveDateTime;
+use chrono::{NaiveDateTime, Utc};
 use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::types::id::Id;
+use perroute_messaging::events::{Event, EventType};
 use sqlx::{FromRow, PgExecutor};
 
-use crate::query;
+impl From<&DbEvent> for Event {
+    fn from(value: &DbEvent) -> Self {
+        Self::new(value.entity_id, value.event_type.clone())
+    }
+}
+
+impl From<&Event> for DbEvent {
+    fn from(value: &Event) -> Self {
+        DbEventBuilder::default()
+            .id(Id::new())
+            .entity_id(*value.entity_id())
+            .event_type(value.ty().clone())
+            .created_at(Utc::now().naive_utc())
+            .scheduled_to(Utc::now().naive_utc())
+            .build()
+            .unwrap()
+    }
+}
 
 #[derive(Debug, FromRow, PartialEq, Eq, Clone, Getters, Setters, Builder)]
 #[builder(setter(into))]
@@ -14,7 +32,7 @@ use crate::query;
 pub struct DbEvent {
     id: Id,
     entity_id: Id,
-    event_type: String,
+    event_type: EventType,
     created_at: NaiveDateTime,
     scheduled_to: NaiveDateTime,
     #[builder(default)]
@@ -23,7 +41,9 @@ pub struct DbEvent {
 
 impl DbEvent {
     pub async fn all<'e, E: PgExecutor<'e>>(exec: E) -> Result<Vec<DbEvent>, sqlx::Error> {
-        sqlx::query_as("select * from events").fetch_all(exec).await
+        sqlx::query_as("select * from events where consumed_at is null")
+            .fetch_all(exec)
+            .await
     }
 
     pub async fn save<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<DbEvent, sqlx::Error> {
@@ -39,6 +59,21 @@ impl DbEvent {
         .bind(self.event_type.clone())
         .bind(self.created_at)
         .bind(self.scheduled_to)
+        .fetch_one(exec)
+        .await
+    }
+
+    pub async fn update<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<DbEvent, sqlx::Error> {
+        sqlx::query_as(
+            r#"
+            UPDATE events
+            SET consumed_at = $1
+            WHERE id = $2
+            RETURNING *
+            "#,
+        )
+        .bind(self.consumed_at)
+        .bind(self.id)
         .fetch_one(exec)
         .await
     }
