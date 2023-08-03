@@ -45,7 +45,7 @@ impl Type<Postgres> for EventType {
     }
 }
 
-#[derive(Debug, Getters, Serialize, Deserialize)]
+#[derive(Debug, Getters, Serialize, Deserialize, Clone)]
 pub struct Event {
     entity_id: Id,
     ty: EventType,

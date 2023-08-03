@@ -7,8 +7,8 @@ use crate::{
 use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
-use perroute_commons::types::{code::Code, id::Id};
-use sqlx::{FromRow, PgExecutor, Postgres, QueryBuilder};
+use perroute_commons::types::{code::Code, id::Id, vars::Vars};
+use sqlx::{types::Json, FromRow, PgExecutor, Postgres, QueryBuilder};
 use tap::TapFallible;
 
 impl DatabaseModel for MessageType {}
@@ -29,6 +29,10 @@ pub struct MessageType {
 
     #[setters(skip)]
     channel_id: Id,
+
+    #[setters(skip)]
+    #[getter(skip)]
+    vars: Json<Vars>,
 }
 
 #[derive(Debug, Default, Builder)]
@@ -67,6 +71,14 @@ impl ModelQueryBuilder<MessageType> for MessageTypeQuery {
 }
 
 impl MessageType {
+    pub fn vars(&self) -> &Vars {
+        &self.vars
+    }
+
+    pub fn set_vars(mut self, vars: Vars) -> Self {
+        self.vars = Json(vars);
+        self
+    }
     pub async fn schema_by_version<'e, E: PgExecutor<'e>>(
         &self,
         exec: E,
@@ -86,8 +98,8 @@ impl MessageType {
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
         sqlx::query_as(
             r#"
-                    INSERT INTO message_types (id, code, description, enabled, channel_id) 
-                    VALUES($1, $2, $3, $4, $5) RETURNING *
+                    INSERT INTO message_types (id, code, description, enabled, channel_id, vars) 
+                    VALUES($1, $2, $3, $4, $5, $6) RETURNING *
                 "#,
         )
         .bind(self.id)
@@ -95,6 +107,7 @@ impl MessageType {
         .bind(self.description)
         .bind(self.enabled)
         .bind(self.channel_id)
+        .bind(self.vars)
         .fetch_one(exec)
         .await
         .tap_err(log_query_error!())
@@ -104,12 +117,14 @@ impl MessageType {
         sqlx::query_as(
             r#"
                     UPDATE message_types 
-                    SET description= $1, enabled= $2 WHERE id= $3 RETURNING *
+                    SET description= $1, enabled= $2, vars= $4
+                    WHERE id= $4 RETURNING *
                 "#,
         )
         .bind(self.description)
         .bind(self.enabled)
         .bind(self.id)
+        .bind(self.vars)
         .fetch_one(exec)
         .await
         .tap_err(log_query_error!())

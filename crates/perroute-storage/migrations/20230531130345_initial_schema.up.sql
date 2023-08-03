@@ -1,19 +1,3 @@
-CREATE TABLE passwords (
-	id 		uuid NOT NULL,
-	user_id uuid NOT NULL,
-	hash varchar NOT NULL,
-	CONSTRAINT passwords_pk	PRIMARY KEY(id)
-);
-
-CREATE TABLE users (
-	id 			uuid 	NOT NULL,
-	email 		varchar	NOT NULL,
-	password_id uuid 	NOT NULL,
-	CONSTRAINT users_pk 			PRIMARY KEY (id),
-	CONSTRAINT users_email 			UNIQUE (email),
-	CONSTRAINT users_password_fk	FOREIGN KEY (password_id) REFERENCES passwords(id)
-);
-
 
 CREATE TYPE actor_type AS ENUM ('user', 'system', 'service');
 
@@ -35,6 +19,7 @@ CREATE TABLE channels (
 	code 	varchar	NOT NULL,
 	name 	varchar NULL,
     enabled boolean NOT NULL,
+    vars    jsonb   NOT NULL,
 	CONSTRAINT channels_pk 		PRIMARY KEY (id),
 	CONSTRAINT channels_code	UNIQUE (code)
 );
@@ -45,6 +30,7 @@ create table message_types(
     description varchar(500)    not null,
     enabled     boolean         not null,
     channel_id  uuid            not null,    
+    vars    jsonb   NOT NULL,
     CONSTRAINT message_types_pk PRIMARY KEY (id),
     CONSTRAINT message_types_code UNIQUE (code),
     CONSTRAINT message_types_channel_fk FOREIGN KEY (channel_id) REFERENCES channels(id)
@@ -57,6 +43,7 @@ create table schemas(
     published       boolean NOT NULL,    
     message_type_id uuid    NOT NULL,
     channel_id      uuid    NOT NULL,
+    vars    jsonb   NOT NULL,
     enabled         boolean NOT NULL,
 
     CONSTRAINT schemas_pk                   PRIMARY KEY (id),
@@ -75,6 +62,7 @@ create table templates(
     schema_id       uuid            not null,
     message_type_id uuid            NOT NULL,
     channel_id      uuid            NOT NULL,
+    vars            jsonb   NOT NULL,
 
     constraint templates_pk primary key (id),
     constraint templates_schema_fk          foreign key (schema_id)        references schemas(id),

@@ -6,9 +6,11 @@ use crate::{
 use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
-use perroute_commons::types::{id::Id, template::TemplateSnippet};
-use sqlx::{FromRow, PgExecutor, QueryBuilder};
+use perroute_commons::types::{id::Id, template::TemplateSnippet, vars::Vars};
+use sqlx::{types::Json, FromRow, PgExecutor, QueryBuilder};
 use tap::TapFallible;
+
+use super::{channel::Channel, message_type::MessageType, schema::Schema};
 
 impl DatabaseModel for Template {}
 
@@ -71,13 +73,41 @@ pub struct Template {
     message_type_id: Id,
     #[setters(skip)]
     channel_id: Id,
+
+    #[setters(skip)]
+    #[getter(skip)]
+    vars: Json<Vars>,
 }
 
 impl Template {
+    pub fn vars(&self) -> &Vars {
+        &self.vars
+    }
+
+    pub fn set_vars(mut self, vars: Vars) -> Self {
+        self.vars = Json(vars);
+        self
+    }
+
+    pub async fn message_type<'e, E: PgExecutor<'e>>(
+        &self,
+        exec: E,
+    ) -> Result<MessageType, sqlx::Error> {
+        todo!()
+    }
+
+    pub async fn schema<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Schema, sqlx::Error> {
+        todo!()
+    }
+
+    pub async fn channel<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Channel, sqlx::Error> {
+        todo!()
+    }
+
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
         sqlx::query_as(r#"
-        INSERT INTO templates (id, name, subject, text, html, schema_id, message_type_id, channel_id) 
-        VALUES($1, $2, $3, $4, $5, $6, $7, $8)
+        INSERT INTO templates (id, name, subject, text, html, schema_id, message_type_id, channel_id, vars) 
+        VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING *"#
     )
     .bind(self.id)
@@ -88,6 +118,7 @@ impl Template {
     .bind(self.schema_id)
     .bind(self.message_type_id)
     .bind(self.channel_id)
+    .bind(self.vars)
     .fetch_one(exec)
     .await
     .tap_err(log_query_error!())
@@ -97,8 +128,8 @@ impl Template {
         sqlx::query_as(
             r#"
             UPDATE templates 
-            SET name=$1, subject=$2, text=$3, html=$4 
-            WHERE id=$5 
+            SET name=$1, subject=$2, text=$3, html=$4, vars=$5
+            WHERE id=$6 
             RETURNING *"#,
         )
         .bind(self.name)
@@ -106,6 +137,7 @@ impl Template {
         .bind(self.text)
         .bind(self.html)
         .bind(self.id)
+        .bind(self.vars)
         .fetch_one(exec)
         .await
         .tap_err(log_query_error!())

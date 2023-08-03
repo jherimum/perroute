@@ -104,7 +104,7 @@ async fn fetch_routes(pool: &PgPool, message: &Message) -> Result<Vec<Route>, Co
     Route::query(
         pool,
         RouteQueryBuilder::default()
-            .shema_id(Some(*message.schema_id()))
+            .schema_id(Some(*message.schema_id()))
             .enabled(Some(true))
             .build()
             .unwrap(),

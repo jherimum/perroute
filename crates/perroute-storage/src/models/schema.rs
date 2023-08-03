@@ -7,9 +7,11 @@ use crate::{
 use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
-use perroute_commons::types::{code::Code, id::Id, json_schema::JsonSchema};
+use perroute_commons::types::{code::Code, id::Id, json_schema::JsonSchema, vars::Vars};
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, PgExecutor, QueryBuilder, Type};
+use sqlx::{types::Json, FromRow, PgExecutor, QueryBuilder, Type};
+
+use super::{channel::Channel, message_type::MessageType};
 
 impl DatabaseModel for Schema {}
 
@@ -139,14 +141,38 @@ pub struct Schema {
     channel_id: Id,
 
     enabled: bool,
+
+    #[setters(skip)]
+    #[getter(skip)]
+    vars: Json<Vars>,
 }
 
 impl Schema {
+    pub fn vars(&self) -> &Vars {
+        &self.vars
+    }
+
+    pub fn set_vars(mut self, vars: Vars) -> Self {
+        self.vars = Json(vars);
+        self
+    }
+
+    pub async fn message_type<'e, E: PgExecutor<'e>>(
+        &self,
+        exec: E,
+    ) -> Result<MessageType, sqlx::Error> {
+        todo!()
+    }
+
+    pub async fn channel<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Channel, sqlx::Error> {
+        todo!()
+    }
+
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
         sqlx::query_as(
             r#"
                 INSERT INTO schemas (id, schema, version, published, message_type_id, channel_id, enabled) 
-                VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING *
+                VALUES($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *
             "#,
         )
         .bind(self.id)
@@ -156,6 +182,7 @@ impl Schema {
         .bind(self.message_type_id)
         .bind(self.channel_id)
         .bind(self.enabled)
+        .bind(self.vars)
         .fetch_one(exec)
         .await
     }
@@ -167,7 +194,9 @@ impl Schema {
             SET 
                 schema= $2, 
                 published= $3,
-                enabled = $4
+                enabled = $4,
+                vars =$5
+
             WHERE id= $1 RETURNING *
             "#,
         )
@@ -175,6 +204,7 @@ impl Schema {
         .bind(self.schema)
         .bind(self.published)
         .bind(self.enabled)
+        .bind(self.vars)
         .fetch_one(exec)
         .await
     }

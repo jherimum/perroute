@@ -12,6 +12,8 @@ use serde::{Deserialize, Serialize};
 use sqlx::{types::Json, FromRow, PgExecutor};
 use tap::TapFallible;
 
+use super::{channel::Channel, message_type::MessageType, schema::Schema};
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, sqlx::Type, Copy)]
 #[sqlx(type_name = "message_status", rename_all = "snake_case")]
 pub enum Status {
@@ -119,6 +121,21 @@ pub struct Message {
 }
 
 impl Message {
+    pub async fn message_type<'e, E: PgExecutor<'e>>(
+        &self,
+        exec: E,
+    ) -> Result<MessageType, sqlx::Error> {
+        todo!()
+    }
+
+    pub async fn channel<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Channel, sqlx::Error> {
+        todo!()
+    }
+
+    pub async fn schema<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Schema, sqlx::Error> {
+        todo!()
+    }
+
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
         sqlx::query_as(
             r#"

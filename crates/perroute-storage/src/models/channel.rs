@@ -7,8 +7,8 @@ use crate::{
 use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
-use perroute_commons::types::{code::Code, id::Id};
-use sqlx::{FromRow, PgExecutor};
+use perroute_commons::types::{code::Code, id::Id, vars::Vars};
+use sqlx::{types::Json, FromRow, PgExecutor};
 use tap::TapFallible;
 
 #[derive(Debug, Default, Builder)]
@@ -51,9 +51,22 @@ pub struct Channel {
     code: Code,
     name: String,
     enabled: bool,
+
+    #[setters(skip)]
+    #[getter(skip)]
+    vars: Json<Vars>,
 }
 
 impl Channel {
+    pub fn vars(&self) -> &Vars {
+        &self.vars
+    }
+
+    pub fn set_vars(mut self, vars: Vars) -> Self {
+        self.vars = Json(vars);
+        self
+    }
+
     pub async fn message_type_by_code<'e, E: PgExecutor<'e>>(
         &self,
         exec: E,
@@ -73,12 +86,13 @@ impl Channel {
     #[tracing::instrument(name = "channel.save", skip(exec))]
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
         sqlx::query_as(
-            "INSERT INTO channels (id, code, name, enabled) VALUES($1, $2, $3, $4) RETURNING *",
+            "INSERT INTO channels (id, code, name, enabled) VALUES($1, $2, $3, $4, $5) RETURNING *",
         )
         .bind(self.id)
         .bind(self.code)
         .bind(self.name)
         .bind(self.enabled)
+        .bind(self.vars)
         .fetch_one(exec)
         .await
         .tap_err(log_query_error!())
@@ -86,13 +100,16 @@ impl Channel {
 
     #[tracing::instrument(name = "channel.update", skip(exec))]
     pub async fn update<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
-        sqlx::query_as("UPDATE channels SET name= $2, enabled =$3 WHERE id= $1 RETURNING *")
-            .bind(self.id)
-            .bind(self.name)
-            .bind(self.enabled)
-            .fetch_one(exec)
-            .await
-            .tap_err(log_query_error!())
+        sqlx::query_as(
+            "UPDATE channels SET name= $2, enabled =$3, vars=$4 WHERE id= $1 RETURNING *",
+        )
+        .bind(self.id)
+        .bind(self.name)
+        .bind(self.enabled)
+        .bind(self.vars)
+        .fetch_one(exec)
+        .await
+        .tap_err(log_query_error!())
     }
 
     #[tracing::instrument(name = "channel.delete", skip(exec))]

@@ -6,3 +6,20 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+perroute-storage = { path = "../../crates/perroute-storage" }
+perroute-messaging = { path = "../../crates/perroute-messaging" }
+perroute-commons = { path = "../../crates/perroute-commons" }
+perroute-connectors = { path = "../../crates/perroute-connectors" }
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+dotenv = "0.15"
+tracing = "0.1"
+tap = "1"
+anyhow = "1"
+sqlx = { version = "0.6", features = [
+    "postgres",
+    "runtime-tokio-rustls",
+    "chrono",
+    "uuid",
+] }
+lapin = "2"
+serde_json = "1"

@@ -4,11 +4,15 @@ use crate::{
     query::{ModelQueryBuilder, Projection},
     DatabaseModel,
 };
+
+use crate::models::connection::Connection;
 use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::types::{dispatch_type::DispatcherType, id::Id};
-use sqlx::{types::Json, FromRow, Postgres, QueryBuilder};
+use sqlx::{types::Json, FromRow, PgExecutor, Postgres, QueryBuilder};
+
+use super::{channel::Channel, message_type::MessageType, template::Template};
 
 #[derive(Debug, Default, Builder)]
 #[builder(default)]
@@ -16,7 +20,7 @@ pub struct RouteQuery {
     id: Option<Id>,
     channel_id: Option<Id>,
     message_type_id: Option<Id>,
-    shema_id: Option<Id>,
+    schema_id: Option<Id>,
     connection_id: Option<Id>,
     enabled: Option<bool>,
 }
@@ -41,9 +45,9 @@ impl ModelQueryBuilder<Route> for RouteQuery {
             builder.push_bind(message_type_id);
         }
 
-        if let Some(shema_id) = &self.shema_id {
-            builder.push(" and shema_id = ");
-            builder.push_bind(shema_id);
+        if let Some(schema_id) = &self.schema_id {
+            builder.push(" and schema_id = ");
+            builder.push_bind(schema_id);
         }
 
         if let Some(connection_id) = &self.connection_id {
@@ -69,11 +73,17 @@ impl DatabaseModel for Route {}
 pub struct Route {
     #[setters(skip)]
     id: Id,
+
     name: String,
+    #[setters(skip)]
     connection_id: Id,
-    template_id: Id,
+
+    template_id: Option<Id>,
+
     dispatch_type: DispatcherType,
+
     dispatcher_properties: Json<HashMap<String, String>>,
+
     enabled: bool,
 
     #[setters(skip)]
@@ -84,4 +94,31 @@ pub struct Route {
 
     #[setters(skip)]
     schema_id: Id,
+}
+
+impl Route {
+    pub async fn message_type<'e, E: PgExecutor<'e>>(
+        &self,
+        exec: E,
+    ) -> Result<MessageType, sqlx::Error> {
+        todo!()
+    }
+
+    pub async fn connection<'e, E: PgExecutor<'e>>(
+        &self,
+        exec: E,
+    ) -> Result<Connection, sqlx::Error> {
+        todo!()
+    }
+
+    pub async fn template<'e, E: PgExecutor<'e>>(
+        &self,
+        exec: E,
+    ) -> Result<Option<Template>, sqlx::Error> {
+        todo!()
+    }
+
+    pub async fn channel<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Channel, sqlx::Error> {
+        todo!()
+    }
 }

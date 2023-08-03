@@ -1,11 +1,18 @@
-use crate::{query::ModelQueryBuilder, DatabaseModel};
+use crate::{
+    query::{FetchableModel, ModelQueryBuilder},
+    DatabaseModel,
+};
 use derive_builder::Builder;
 use derive_getters::Getters;
-use derive_setters::Setters;
 use perroute_commons::types::id::Id;
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Json, FromRow, PgExecutor, QueryBuilder, Type};
 use std::collections::HashMap;
+
+use super::{
+    message::{Message, MessageQueryBuilder},
+    route::{Route, RouteQueryBuilder},
+};
 
 impl DatabaseModel for MessageDispatch {}
 
@@ -58,27 +65,59 @@ pub enum MessageDispatchStatus {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Type)]
 pub struct MessageDispatchResult {
-    connection_properties: Json<HashMap<String, String>>,
-    dispatcher_properties: Json<HashMap<String, String>>,
-    response: Json<HashMap<String, String>>,
+    pub connection_properties: Json<HashMap<String, String>>,
+    pub dispatcher_properties: Json<HashMap<String, String>>,
+    pub response: Json<HashMap<String, String>>,
 }
 
-#[derive(Debug, FromRow, PartialEq, Eq, Clone, Getters, Setters, Builder)]
+#[derive(Debug, FromRow, PartialEq, Eq, Clone, Getters, Builder)]
 #[builder(setter(into))]
-#[setters(prefix = "set_")]
-#[setters(into)]
 pub struct MessageDispatch {
-    #[setters(skip)]
     id: Id,
-    #[setters(skip)]
     message_id: Id,
-    #[setters(skip)]
     route_id: Id,
     status: MessageDispatchStatus,
     result: Option<MessageDispatchResult>,
 }
 
 impl MessageDispatch {
+    pub fn commit(mut self, success: bool, result: impl Into<MessageDispatchResult>) -> Self {
+        self.status = {
+            if success {
+                MessageDispatchStatus::Success
+            } else {
+                MessageDispatchStatus::Failed
+            }
+        };
+        self.result = Some(result.into());
+        self
+    }
+
+    pub async fn route<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Route, sqlx::Error> {
+        Route::find_one(
+            exec,
+            RouteQueryBuilder::default()
+                .id(Some(self.route_id))
+                .build()
+                .unwrap(),
+        )
+        .await
+    }
+
+    pub async fn message<'e, E: PgExecutor<'e>>(
+        &self,
+        executor: E,
+    ) -> Result<Message, sqlx::Error> {
+        Message::find_one(
+            executor,
+            MessageQueryBuilder::default()
+                .id(Some(self.message_id))
+                .build()
+                .unwrap(),
+        )
+        .await
+    }
+
     pub async fn save<'e, E: PgExecutor<'e>>(&self, executor: E) -> Result<Self, sqlx::Error> {
         sqlx::query_as(
             r#"

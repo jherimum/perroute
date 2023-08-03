@@ -1,35 +1,23 @@
-use serde_json::Value;
-use sqlx::{Executor, FromRow};
-use std::todo;
+use derive_getters::Getters;
+use perroute_commons::types::id::Id;
+use sqlx::{types::Json, Executor, FromRow};
+use std::{collections::HashMap, todo};
 
-#[derive(Debug, FromRow)]
+#[derive(Debug, FromRow, Getters)]
 pub struct Connection {
-    pub id: uuid::Uuid,
-    pub code: String,
-    pub plugin_id: String,
-    pub description: String,
-    pub properties: Value,
+    id: uuid::Uuid,
+    code: String,
+    plugin_id: String,
+    description: String,
+    properties: Json<HashMap<String, String>>,
 }
 
 #[derive(Debug)]
-pub struct ConnectionsQuery;
+pub struct ConnectionsQuery {
+    id: Option<Id>,
+}
 
 impl Connection {
-    pub fn new(
-        code: impl Into<String>,
-        plugin_id: String,
-        description: impl Into<String>,
-        properties: &Value,
-    ) -> Self {
-        Self {
-            id: uuid::Uuid::new_v4(),
-            code: code.into(),
-            plugin_id,
-            description: description.into(),
-            properties: properties.clone(),
-        }
-    }
-
     pub async fn query<'e, E: Executor<'e>>(
         _exec: E,
         _query: ConnectionsQuery,

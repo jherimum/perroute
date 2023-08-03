@@ -3,6 +3,7 @@ use chrono::Utc;
 use perroute_commons::{configuration::settings::Settings, tracing::init_tracing};
 use perroute_messaging::{
     connection::{Config, RecoverableConnection},
+    consumer::Consumer,
     events::Event,
     producer::Producer,
 };
@@ -11,7 +12,7 @@ use sqlx::PgPool;
 use std::time::Duration;
 use tap::TapFallible;
 
-const POOLING_START_DELAY: u64 = 10;
+const POOLING_START_DELAY: u64 = 2;
 
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
@@ -23,22 +24,38 @@ async fn main() -> Result<(), anyhow::Error> {
         .tap_err(|e| tracing::error!("Failed to build pool: {e}"))?;
     let conn = RecoverableConnection::connect(Config {
         uri: settings.rabbitmq.unwrap().uri,
+        time_out: Duration::from_secs(20),
+        retry_delay: Duration::from_secs(1),
     })
-    .await;
+    .await?;
 
     tracing::info!("Pooling will start in {}", POOLING_START_DELAY);
     tokio::time::sleep(Duration::from_secs(POOLING_START_DELAY)).await;
 
+    let pooling_conn = conn.clone();
+
     let pooling = tokio::spawn(async move {
         tracing::info!("Starting pooling events");
-        let producer = create_producer(&conn).await;
+        let producer = create_producer(&pooling_conn).await;
         loop {
             let _ = event_pooling(&pool, &producer)
                 .await
                 .tap_err(|e| tracing::error!("Failed to pool events: {e}"));
-            tokio::time::sleep(Duration::from_secs(10)).await;
+            tokio::time::sleep(Duration::from_secs(3)).await;
         }
     });
+
+    Consumer {
+        connection: &conn,
+        tag: "read",
+        queue: "read_events",
+        exchange: "perroute.events",
+        routing_key: "ChannelCreated",
+        threads: 4,
+        function: |e| tracing::info!("Event consumed: {e:?}"),
+    }
+    .start()
+    .await;
 
     Ok(pooling
         .await
@@ -47,7 +64,7 @@ async fn main() -> Result<(), anyhow::Error> {
 
 #[async_recursion::async_recursion]
 async fn create_producer<'c>(conn: &'c RecoverableConnection) -> Producer<'c> {
-    let producer = Producer::new(conn, "perroute.events", true)
+    let producer = Producer::new(&conn, "perroute.events", true)
         .await
         .tap_err(|e| tracing::error!("Failed to create producer: {e}"));
 
@@ -77,7 +94,7 @@ async fn event_pooling<'c>(pool: &PgPool, producer: &Producer<'c>) -> Result<(),
 
         if sent_result.is_ok() {
             let _ = db_event
-                .set_consumed_at(Utc::now().naive_utc())
+                //.set_consumed_at(Utc::now().naive_utc())
                 .update(pool)
                 .await
                 .tap_err(|e| {

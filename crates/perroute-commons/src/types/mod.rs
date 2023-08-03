@@ -7,3 +7,4 @@ pub mod json_schema;
 pub mod payload;
 pub mod recipient;
 pub mod template;
+pub mod vars;

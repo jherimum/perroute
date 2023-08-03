@@ -1,5 +1,5 @@
 use crate::connection::RecoverableConnection;
-use lapin::{options::ConfirmSelectOptions, publisher_confirm::Confirmation, Channel};
+use lapin::{options::ConfirmSelectOptions, Channel};
 use serde::Serialize;
 use std::{fmt::Debug, sync::Arc};
 use tap::TapFallible;
@@ -45,17 +45,17 @@ impl<'c> Producer<'c> {
         conn: &RecoverableConnection,
         confirm_select: bool,
     ) -> Result<Channel, lapin::Error> {
-        let channel = conn
-            .create_channel()
-            .await
-            .tap_err(|e| tracing::error!("Failed to create channel: {e}"))?;
+        let channel = conn.create_recoverable_channel().await;
+
         if confirm_select {
             channel
+                .get()
+                .await
                 .confirm_select(ConfirmSelectOptions::default())
                 .await
                 .tap_err(|e| tracing::error!("Failed to confirm select: {e}"))?
         }
-        Ok(channel)
+        Ok(channel.get().await)
     }
 
     async fn recreate_channel(&self) -> Result<(), lapin::Error> {
@@ -71,7 +71,7 @@ impl<'c> Producer<'c> {
         channel: &Channel,
         message: &M,
         routing_key: Option<&str>,
-    ) -> Result<Confirmation, ProducerError> {
+    ) -> Result<(), ProducerError> {
         let json = serde_json::to_string(&message)
             .tap_err(|e| tracing::error!("Failed to serialize message: {e}"))?;
         match channel
@@ -84,12 +84,14 @@ impl<'c> Producer<'c> {
             )
             .await
         {
-            Ok(r) => {
-                let x = r.await.map_err(ProducerError::from)?;
-                if self.confirm_select && !x.is_ack() {
+            Ok(publisher_confirmation) => {
+                channel.wait_for_confirms().await?;
+
+                let confirmation = publisher_confirmation.await.map_err(ProducerError::from)?;
+                if self.confirm_select && !confirmation.is_ack() {
                     return Err(ProducerError::NotAcked);
                 }
-                Ok(x)
+                Ok(())
             }
             Err(e) => {
                 tracing::error!("Failed to publish message: {e}");
