@@ -4,10 +4,10 @@ use crate::{
 };
 use derive_builder::Builder;
 use derive_getters::Getters;
-use perroute_commons::types::id::Id;
+use perroute_commons::types::{id::Id, properties::Properties};
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use sqlx::{types::Json, FromRow, PgExecutor, QueryBuilder, Type};
-use std::collections::HashMap;
 
 use super::{
     message::{Message, MessageQueryBuilder},
@@ -65,9 +65,10 @@ pub enum MessageDispatchStatus {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Type)]
 pub struct MessageDispatchResult {
-    pub connection_properties: Json<HashMap<String, String>>,
-    pub dispatcher_properties: Json<HashMap<String, String>>,
-    pub response: Json<HashMap<String, String>>,
+    pub reference: Option<String>,
+    pub connection_properties: Json<Properties>,
+    pub dispatcher_properties: Json<Properties>,
+    pub response_data: Option<Json<Value>>,
 }
 
 #[derive(Debug, FromRow, PartialEq, Eq, Clone, Getters, Builder)]

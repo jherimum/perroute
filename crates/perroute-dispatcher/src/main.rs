@@ -24,7 +24,7 @@ use perroute_storage::{
     query::FetchableModel,
 };
 use sqlx::PgPool;
-use std::time::Duration;
+use std::{ops::Deref, time::Duration};
 use tap::TapFallible;
 
 #[tokio::main]
@@ -81,15 +81,15 @@ async fn dispatch<'tr>(
 
     let req = DispatchRequest {
         id: message_dispatch_id,
-        connection_properties: connection.properties().as_ref(),
-        dispatch_properties: route.dispatcher_properties().as_ref(),
+        connection_properties: connection.properties(),
+        dispatch_properties: route.dispatcher_properties(),
         template,
         recipient: message.recipient().as_ref(),
         payload: message.payload(),
         vars: &vars,
     };
 
-    dispatcher.dispatch(req);
+    let result = dispatcher.dispatch(&req);
 
     Ok(())
 

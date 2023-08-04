@@ -1,15 +1,12 @@
-use std::collections::HashMap;
-
+use crate::models::connection::Connection;
 use crate::{
     query::{ModelQueryBuilder, Projection},
     DatabaseModel,
 };
-
-use crate::models::connection::Connection;
 use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
-use perroute_commons::types::{dispatch_type::DispatcherType, id::Id};
+use perroute_commons::types::{dispatch_type::DispatcherType, id::Id, properties::Properties};
 use sqlx::{types::Json, FromRow, PgExecutor, Postgres, QueryBuilder};
 
 use super::{channel::Channel, message_type::MessageType, template::Template};
@@ -82,7 +79,7 @@ pub struct Route {
 
     dispatch_type: DispatcherType,
 
-    dispatcher_properties: Json<HashMap<String, String>>,
+    dispatcher_properties: Json<Properties>,
 
     enabled: bool,
 

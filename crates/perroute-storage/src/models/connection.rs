@@ -1,15 +1,21 @@
+use derive_builder::Builder;
 use derive_getters::Getters;
-use perroute_commons::types::id::Id;
+use derive_setters::Setters;
+use perroute_commons::types::{id::Id, properties::Properties};
 use sqlx::{types::Json, Executor, FromRow};
-use std::{collections::HashMap, todo};
+use std::todo;
 
-#[derive(Debug, FromRow, Getters)]
+#[derive(Debug, FromRow, Getters, Setters, Builder)]
+#[builder(setter(into))]
+#[setters(prefix = "set_")]
+#[setters(into)]
 pub struct Connection {
     id: uuid::Uuid,
     code: String,
     plugin_id: String,
     description: String,
-    properties: Json<HashMap<String, String>>,
+
+    properties: Json<Properties>,
 }
 
 #[derive(Debug)]

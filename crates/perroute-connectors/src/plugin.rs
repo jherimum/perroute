@@ -1,18 +1,21 @@
+use derive_getters::Getters;
 use perroute_commons::types::{
     dispatch_type::DispatcherType,
     id::Id,
     payload::Payload,
+    properties::Properties,
     recipient::Recipient,
     template::{TemplateData, TemplateError},
     vars::Vars,
 };
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, error::Error, fmt::Debug, sync::Arc};
+use serde_json::Value;
+use std::{any::Any, collections::HashMap, error::Error, fmt::Debug, sync::Arc};
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Serialize)]
 pub enum ConfigurationPropertyType {
     String,
-    Integer,
+    Number,
 }
 
 #[derive(Serialize, Debug, PartialEq, Eq, Clone)]
@@ -28,16 +31,16 @@ pub struct ConfigurationProperty {
 }
 
 #[derive(Debug, Default)]
-pub struct Configuration {
+pub struct ConfigurationProperties {
     pub properties: Vec<ConfigurationProperty>,
 }
 
 pub trait ConnectorPlugin: Sync + Send + Debug {
     fn id(&self) -> &str;
-    fn configuration(&self) -> &Configuration;
-    fn dispatchers(&self) -> &HashMap<DispatcherType, Arc<dyn DispatcherPlugin>>;
+    fn configuration(&self) -> &ConfigurationProperties;
+    fn dispatchers(&self) -> HashMap<DispatcherType, Arc<dyn DispatcherPlugin>>;
     fn dispatcher(&self, ty: DispatcherType) -> Option<Arc<dyn DispatcherPlugin>> {
-        self.dispatchers().get(&ty).cloned()
+        self.dispatchers().get(&ty).map(Arc::clone)
     }
 }
 
@@ -47,10 +50,11 @@ pub trait DispatchTemplate {
     fn render_html(&self, data: &TemplateData) -> Result<Option<String>, TemplateError>;
 }
 
+#[derive(Getters)]
 pub struct DispatchRequest<'t, 'p, 'v, 'r, 'cp, 'dp> {
     pub id: Id,
-    pub connection_properties: &'cp HashMap<String, String>,
-    pub dispatch_properties: &'dp HashMap<String, String>,
+    pub connection_properties: &'cp Properties,
+    pub dispatch_properties: &'dp Properties,
     pub template: Option<&'t dyn DispatchTemplate>,
     pub recipient: &'r Recipient,
     pub payload: &'p Payload,
@@ -67,15 +71,29 @@ impl<'t, 'p, 'v, 'r, 'cp, 'dp> From<&DispatchRequest<'t, 'p, 'v, 'r, 'cp, 'dp>> 
     }
 }
 
-pub struct DispatchResult {}
+pub struct DispatchResponse {
+    pub reference: Option<String>,
+    pub data: Option<ResponseData>,
+}
+
+pub struct ResponseData {}
 
 pub trait DispatcherPlugin: Sync + Send + Debug {
-    fn type_(&self) -> DispatcherType;
-    fn configuration(&self) -> &Configuration;
-    fn dispatch(&self, req: DispatchRequest) -> Result<DispatchResult, DispatchError>;
+    fn dispatch_type(&self) -> DispatcherType;
+    fn configuration(&self) -> &ConfigurationProperties;
+    fn dispatch(&self, req: &DispatchRequest) -> Result<DispatchResponse, DispatchError>;
 }
 
 pub enum DispatchError {
     Recoverable(Box<dyn Error>),
     Unrecoverable(Box<dyn Error>),
+}
+
+impl DispatchError {
+    pub fn unrecoverable<E: Error + 'static>(e: E) -> Self {
+        Self::Unrecoverable(Box::new(e))
+    }
+    pub fn recoverable<E: Error + 'static>(e: E) -> Self {
+        Self::Recoverable(Box::new(e))
+    }
 }

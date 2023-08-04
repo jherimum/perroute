@@ -4,7 +4,7 @@ use sqlx::FromRow;
 
 #[derive(Debug, FromRow, PartialEq, Eq, Clone, Getters, Deserialize, Serialize)]
 pub struct Recipient {
-    pub name: String,
-    pub email: String,
-    pub phone_number: String,
+    pub name: Option<String>,
+    pub email: Option<String>,
+    pub phone_number: Option<String>,
 }
