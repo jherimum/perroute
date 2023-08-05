@@ -99,3 +99,9 @@ impl DispatchError {
         Self::Recoverable(Box::new(e))
     }
 }
+
+impl From<TemplateError> for DispatchError {
+    fn from(value: TemplateError) -> Self {
+        Self::Unrecoverable(Box::new(value))
+    }
+}

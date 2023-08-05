@@ -17,6 +17,18 @@ use perroute_commons::types::{
 use serde::{Deserialize, Serialize};
 use std::{ops::Deref, str::FromStr, time::Duration};
 
+#[derive(Debug, thiserror::Error)]
+pub enum EmailDispatcherError {
+    #[error("email not supplied")]
+    EmailNotSupplied,
+}
+
+impl From<EmailDispatcherError> for DispatchError {
+    fn from(e: EmailDispatcherError) -> Self {
+        DispatchError::Unrecoverable(Box::new(e))
+    }
+}
+
 #[derive(Debug, Deserialize, Builder, Serialize)]
 pub struct EmailDispatcherProperties {
     from: Mailbox,
@@ -33,9 +45,6 @@ pub struct EmailDispatcherProperties {
 pub struct EmailDispatcher {
     configuration: ConfigurationProperties,
 }
-
-#[derive(Serialize)]
-pub struct Response {}
 
 impl DispatcherPlugin for EmailDispatcher {
     fn dispatch_type(&self) -> DispatcherType {
@@ -78,21 +87,19 @@ impl TryFrom<&DispatchRequest<'_, '_, '_, '_, '_, '_>> for Message {
             .template()
             .and_then(|e| Some(e.render_subject(&req.into())))
             .unwrap_or(Ok(None))
-            .map_err(|e| DispatchError::Unrecoverable(Box::new(e)))?;
+            .map_err(DispatchError::from)?;
 
         let html = req
             .template()
             .and_then(|e| Some(e.render_html(&req.into())))
             .unwrap_or(Ok(None))
-            .map_err(|e| DispatchError::Unrecoverable(Box::new(e)))?
-            .map(|html| SinglePart::html(html));
+            .map_err(DispatchError::from)?;
 
         let text = req
             .template()
             .and_then(|e| Some(e.render_text(&req.into())))
             .unwrap_or(Ok(None))
-            .map_err(|e| DispatchError::Unrecoverable(Box::new(e)))?
-            .map(|html| SinglePart::html(html));
+            .map_err(DispatchError::from)?;
 
         let mut message = Message::builder()
             .to(RecipientMailbox(req.recipient()).try_into()?)
@@ -112,16 +119,17 @@ impl TryFrom<&DispatchRequest<'_, '_, '_, '_, '_, '_>> for Message {
             message = message.reply_to(m.clone());
         }
 
-        match (html, text) {
-            (None, None) => message
-                .singlepart(SinglePart::builder().body(MaybeString::String(String::default()))),
-            (None, Some(plain)) => message.singlepart(plain),
-            (Some(html), None) => message.singlepart(html),
+        Ok(match (html, text) {
+            (None, None) => {
+                message.singlepart(SinglePart::plain(MaybeString::String(String::default())))
+            }
+            (None, Some(plain)) => message.singlepart(SinglePart::plain(plain)),
+            (Some(html), None) => message.singlepart(SinglePart::html(html)),
             (Some(html), Some(plain)) => {
-                message.multipart(MultiPart::alternative().singlepart(html).singlepart(plain))
+                message.multipart(MultiPart::alternative_plain_html(plain, html))
             }
         }
-        .map_err(DispatchError::unrecoverable)
+        .map_err(DispatchError::unrecoverable)?)
     }
 }
 
@@ -139,18 +147,14 @@ impl<'r> TryInto<Mailbox> for RecipientMailbox<'r> {
     type Error = DispatchError;
 
     fn try_into(self) -> Result<Mailbox, Self::Error> {
-        let email = self
+        Ok(self
             .email()
             .as_ref()
             .map(|email| Address::from_str(&email))
             .transpose()
-            .map_err(|e| DispatchError::Unrecoverable(Box::new(e)))?
-            .unwrap(); //TODO: error hahndler
-
-        Ok(Mailbox {
-            name: self.name().clone(),
-            email,
-        })
+            .map_err(DispatchError::unrecoverable)?
+            .map(|addr| Mailbox::new(self.name().clone(), addr))
+            .ok_or(EmailDispatcherError::EmailNotSupplied)?)
     }
 }
 
@@ -186,7 +190,7 @@ mod tests {
             .port(587)
             .host("smtp-relay.brevo.com".to_owned())
             .username("eugenio.perrottaneto@gmail.com".to_owned())
-            .password("xsmtpsib-3361a853fc44e605522f628393be7d82a0074fba4e7aa9f93c53bbadfbfaa41e-VO8M5nd2f6jGsLU1".to_owned())
+            .password("xsmtpsib-3361a853fc44e605522f628393be7d82a0074fba4e7aa9f93c53bbadfbfaa41e-GQgfZYFv54N2BUS3".to_owned())
             .timeout(Some(1000))
             .build().unwrap();
 
@@ -220,9 +224,11 @@ impl DispatchTemplate for Temp {
         Ok(Some("assunto".to_owned()))
     }
     fn render_text(&self, data: &TemplateData) -> Result<Option<String>, TemplateError> {
+        //Ok(Some("TEXT".to_owned()))
         Ok(None)
     }
     fn render_html(&self, data: &TemplateData) -> Result<Option<String>, TemplateError> {
-        Ok(Some("<h1>Eugenio</h1>".to_owned()))
+        //Ok(Some("<h1>Eugenio</h1>".to_owned()))
+        Ok(None)
     }
 }
