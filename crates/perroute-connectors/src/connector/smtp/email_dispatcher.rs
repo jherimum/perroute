@@ -25,7 +25,7 @@ pub enum EmailDispatcherError {
 
 impl From<EmailDispatcherError> for DispatchError {
     fn from(e: EmailDispatcherError) -> Self {
-        DispatchError::Unrecoverable(Box::new(e))
+        Self::Unrecoverable(Box::new(e))
     }
 }
 
@@ -101,11 +101,11 @@ impl TryFrom<&DispatchRequest<'_, '_, '_, '_, '_, '_>> for Message {
             .unwrap_or(Ok(None))
             .map_err(DispatchError::from)?;
 
-        let mut message = Message::builder()
+        let mut message = Self::builder()
             .to(RecipientMailbox(req.recipient()).try_into()?)
             .from(disp_properties.from)
             .date_now()
-            .subject(subject.unwrap_or(String::default()));
+            .subject(subject.unwrap_or_default());
 
         for m in disp_properties.bcc {
             message = message.bcc(m.clone());

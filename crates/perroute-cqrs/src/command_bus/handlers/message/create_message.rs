@@ -156,5 +156,5 @@ async fn retrieve_channel(pool: &PgPool, code: &Code) -> Result<Channel, Command
             .unwrap(),
     )
     .await?
-    .ok_or(CreateMessageCommandError::ChannelNotFound(code.clone()).into())
+    .ok_or_else(|| CreateMessageCommandError::ChannelNotFound(code.clone()).into())
 }

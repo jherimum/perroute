@@ -5,7 +5,7 @@ use std::collections::HashMap;
 pub struct Vars(HashMap<String, String>);
 
 impl Vars {
-    pub fn merge(&self, other: &Vars) -> Vars {
+    pub fn merge(&self, other: &Self) -> Self {
         let mut result = self.0.clone();
 
         for (key, value) in other.0.iter() {

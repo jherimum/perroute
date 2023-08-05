@@ -63,7 +63,7 @@ pub struct DispatchRequest<'t, 'p, 'v, 'r, 'cp, 'dp> {
 
 impl<'t, 'p, 'v, 'r, 'cp, 'dp> From<&DispatchRequest<'t, 'p, 'v, 'r, 'cp, 'dp>> for TemplateData {
     fn from(value: &DispatchRequest) -> Self {
-        TemplateData {
+        Self {
             payload: value.payload.clone(),
             recipient: value.recipient.clone(),
             vars: value.vars.clone(),

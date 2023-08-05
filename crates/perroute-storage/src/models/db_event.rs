@@ -43,7 +43,7 @@ impl DbEvent {
     pub async fn fetch_unconsumed<'e, E: PgExecutor<'e>>(
         exec: E,
         limit: i64,
-    ) -> Result<Vec<DbEvent>, sqlx::Error> {
+    ) -> Result<Vec<Self>, sqlx::Error> {
         sqlx::query_as(
             r#"
                     select * 
@@ -58,7 +58,7 @@ impl DbEvent {
         .await
     }
 
-    pub async fn save<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<DbEvent, sqlx::Error> {
+    pub async fn save<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Self, sqlx::Error> {
         sqlx::query_as(
             r#"
             INSERT INTO events (id, entity_id, event_type, created_at, scheduled_to)

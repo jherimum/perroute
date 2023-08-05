@@ -66,7 +66,7 @@ impl<'c> Producer<'c> {
         Ok(())
     }
 
-    async fn send_message<M: Serialize + Debug>(
+    async fn send_message<M: Serialize + Debug + Send>(
         &self,
         channel: &Channel,
         message: &M,
@@ -100,7 +100,7 @@ impl<'c> Producer<'c> {
         }
     }
 
-    pub async fn send<M: Serialize + Debug>(
+    pub async fn send<M: Serialize + Debug + Send>(
         &self,
         message: &M,
         routing_key: Option<&str>,
