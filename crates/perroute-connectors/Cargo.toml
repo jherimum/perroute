@@ -6,8 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-
-
+derive_builder = "0.12"
 perroute-commons = { path = "../../crates/perroute-commons" }
 serde = { version = "1", features = ["derive"] }
 sqlx = "0.6"
@@ -16,3 +15,4 @@ serde_json = "1"
 validator = "0.16"
 email = "0.0.21"
 derive-getters = "0.3.0"
+thiserror = "1"

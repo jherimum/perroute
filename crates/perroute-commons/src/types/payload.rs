@@ -3,7 +3,7 @@ use serde_json::Value;
 use sqlx::Type;
 use std::ops::Deref;
 
-#[derive(Debug, Clone, PartialEq, Eq, Type, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Type, Serialize, Default)]
 #[sqlx(transparent)]
 pub struct Payload(Value);
 

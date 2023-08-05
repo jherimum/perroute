@@ -10,7 +10,7 @@ use perroute_commons::types::{
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::{any::Any, collections::HashMap, error::Error, fmt::Debug, sync::Arc};
+use std::{collections::HashMap, error::Error, fmt::Debug, sync::Arc};
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Serialize)]
 pub enum ConfigurationPropertyType {
@@ -71,9 +71,10 @@ impl<'t, 'p, 'v, 'r, 'cp, 'dp> From<&DispatchRequest<'t, 'p, 'v, 'r, 'cp, 'dp>> 
     }
 }
 
+#[derive(Debug)]
 pub struct DispatchResponse {
     pub reference: Option<String>,
-    pub data: Option<ResponseData>,
+    pub data: Option<Value>,
 }
 
 pub struct ResponseData {}
@@ -84,6 +85,7 @@ pub trait DispatcherPlugin: Sync + Send + Debug {
     fn dispatch(&self, req: &DispatchRequest) -> Result<DispatchResponse, DispatchError>;
 }
 
+#[derive(Debug)]
 pub enum DispatchError {
     Recoverable(Box<dyn Error>),
     Unrecoverable(Box<dyn Error>),

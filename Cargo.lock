@@ -2584,12 +2584,14 @@ name = "perroute-connectors"
 version = "0.1.0"
 dependencies = [
  "derive-getters",
+ "derive_builder",
  "email",
  "lettre",
  "perroute-commons",
  "serde",
  "serde_json",
  "sqlx",
+ "thiserror",
  "validator",
 ]
 

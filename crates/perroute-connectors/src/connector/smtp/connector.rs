@@ -1,16 +1,17 @@
 use crate::plugin::{ConfigurationProperties, ConnectorPlugin, DispatcherPlugin};
+use derive_builder::Builder;
 use derive_getters::Getters;
 use perroute_commons::types::dispatch_type::DispatcherType;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, sync::Arc};
 
 use super::email_dispatcher::EmailDispatcher;
 
-#[derive(Debug, Deserialize, Getters)]
-pub struct Properties {
+#[derive(Debug, Deserialize, Getters, Builder, Serialize)]
+pub struct SmtpConnectorProperties {
     username: String,
     password: String,
-    server: String,
+    host: String,
     port: u16,
     timeout: Option<u64>,
 }
