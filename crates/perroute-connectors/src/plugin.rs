@@ -1,4 +1,5 @@
 use derive_getters::Getters;
+use erased_serde::serialize_trait_object;
 use perroute_commons::types::{
     dispatch_type::DispatcherType,
     id::Id,
@@ -71,13 +72,14 @@ impl<'t, 'p, 'v, 'r, 'cp, 'dp> From<&DispatchRequest<'t, 'p, 'v, 'r, 'cp, 'dp>> 
     }
 }
 
-#[derive(Debug)]
+#[derive(Serialize, Debug)]
 pub struct DispatchResponse {
     pub reference: Option<String>,
-    pub data: Option<Value>,
+    pub data: Option<Box<dyn ResponseData>>,
 }
 
-pub struct ResponseData {}
+pub trait ResponseData: Debug + erased_serde::Serialize {}
+serialize_trait_object!(ResponseData);
 
 pub trait DispatcherPlugin: Sync + Send + Debug {
     fn dispatch_type(&self) -> DispatcherType;

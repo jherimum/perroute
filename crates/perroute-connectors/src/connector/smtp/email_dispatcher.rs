@@ -1,12 +1,12 @@
 use super::connector::SmtpConnectorProperties;
 use crate::plugin::{
     ConfigurationProperties, DispatchError, DispatchRequest, DispatchResponse, DispatchTemplate,
-    DispatcherPlugin,
+    DispatcherPlugin, ResponseData,
 };
 use derive_builder::Builder;
 use lettre::{
     message::{Mailbox, MaybeString, MultiPart, SinglePart},
-    transport::smtp::authentication::Credentials,
+    transport::smtp::{authentication::Credentials, response::Response},
     Address, Message, SmtpTransport, Transport,
 };
 use perroute_commons::types::{
@@ -69,10 +69,14 @@ impl DispatcherPlugin for EmailDispatcher {
 
         Ok(DispatchResponse {
             reference: None,
-            data: Some(serde_json::to_value(response).unwrap()),
+            data: Some(Box::new(EmailResponse(response))),
         })
     }
 }
+
+#[derive(Serialize, Debug)]
+pub struct EmailResponse(Response);
+impl ResponseData for EmailResponse {}
 
 impl TryFrom<&DispatchRequest<'_, '_, '_, '_, '_, '_>> for Message {
     type Error = DispatchError;
