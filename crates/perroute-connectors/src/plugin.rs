@@ -10,7 +10,6 @@ use perroute_commons::types::{
     vars::Vars,
 };
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use std::{collections::HashMap, error::Error, fmt::Debug, sync::Arc};
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Serialize)]
@@ -74,8 +73,14 @@ impl<'t, 'p, 'v, 'r, 'cp, 'dp> From<&DispatchRequest<'t, 'p, 'v, 'r, 'cp, 'dp>> 
 
 #[derive(Serialize, Debug)]
 pub struct DispatchResponse {
-    pub reference: Option<String>,
-    pub data: Option<Box<dyn ResponseData>>,
+    reference: Option<String>,
+    data: Option<Box<dyn ResponseData>>,
+}
+
+impl DispatchResponse {
+    pub fn new(reference: Option<String>, data: Option<Box<dyn ResponseData>>) -> Self {
+        Self { reference, data }
+    }
 }
 
 pub trait ResponseData: Debug + erased_serde::Serialize {}

@@ -63,14 +63,10 @@ impl DispatcherPlugin for EmailDispatcher {
 
         let transport = SmtpTransport::try_from(&conn_properties)?;
 
-        let response = transport
+        transport
             .send(&Message::try_from(req)?)
-            .map_err(|e| DispatchError::Unrecoverable(Box::new(e)))?;
-
-        Ok(DispatchResponse {
-            reference: None,
-            data: Some(Box::new(EmailResponse(response))),
-        })
+            .map_err(|e| DispatchError::Unrecoverable(Box::new(e)))
+            .map(|response| DispatchResponse::new(None, Some(Box::new(EmailResponse(response)))))
     }
 }
 
