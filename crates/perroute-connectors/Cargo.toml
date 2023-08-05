@@ -12,7 +12,5 @@ serde = { version = "1", features = ["derive"] }
 sqlx = "0.6"
 lettre = { version = "0.10", features = ["serde", "serde_json"] }
 serde_json = "1"
-validator = "0.16"
-email = "0.0.21"
 derive-getters = "0.3.0"
 thiserror = "1"

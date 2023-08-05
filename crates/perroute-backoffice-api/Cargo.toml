@@ -5,30 +5,34 @@ edition = "2021"
 
 
 [dependencies]
-perroute-cqrs = {path = "../../crates/perroute-cqrs"}
-perroute-storage = {path = "../../crates/perroute-storage"}
-perroute-connectors = {path = "../../crates/perroute-connectors"}
-perroute-commons = {path = "../../crates/perroute-commons"}
+perroute-cqrs = { path = "../../crates/perroute-cqrs" }
+perroute-storage = { path = "../../crates/perroute-storage" }
+perroute-commons = { path = "../../crates/perroute-commons" }
 
 
 actix-web = "4"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 dotenv = "0.15"
-anyhow="1"
-tap="1"
+anyhow = "1"
+tap = "1"
 tracing = "0.1"
 uuid = { version = "1", features = ["fast-rng", "v4", "serde"] }
 thiserror = "1"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 derive-getters = "0.3"
-tracing-actix-web = { version="0.7" }
-url = {version = "2", features = ["serde"]}
+tracing-actix-web = { version = "0.7" }
+url = { version = "2", features = ["serde"] }
 strum = { version = "0.25", features = ["derive"] }
 strum_macros = "0.25"
 sqlx = { version = "0.6", features = ["postgres", "runtime-tokio-rustls"] }
-futures= "0.3"
-http= "0.2"
+futures = "0.3"
+http = "0.2"
 
 [dev-dependencies]
-reqwest = { version = "0.11.18", features = ["json", "native-tls", "gzip", "multipart"] }
+reqwest = { version = "0.11.18", features = [
+    "json",
+    "native-tls",
+    "gzip",
+    "multipart",
+] }

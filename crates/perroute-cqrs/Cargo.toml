@@ -7,7 +7,6 @@ edition = "2021"
 
 [dependencies]
 perroute-storage = { path = "../../crates/perroute-storage" }
-perroute-connectors = { path = "../../crates/perroute-connectors" }
 perroute-commons = { path = "../../crates/perroute-commons" }
 perroute-messaging = { path = "../../crates/perroute-messaging" }
 anyhow = "1"
