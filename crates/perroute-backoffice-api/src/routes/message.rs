@@ -50,7 +50,7 @@ async fn create_message(
         .unwrap();
     state
         .command_bus()
-        .execute::<_, CreateMessageCommandHandler, _>(&actor, &cmd)
+        .execute::<_, CreateMessageCommandHandler, _>(actor, &cmd)
         .await
         .map_err(ApiError::from)
 }

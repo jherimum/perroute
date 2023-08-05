@@ -30,7 +30,7 @@ where
         let channel = self.connection.create_recoverable_channel().await;
         channel
             .queue_declare(
-                &self.queue,
+                self.queue,
                 QueueDeclareOptions {
                     durable: true,
                     ..Default::default()
@@ -42,9 +42,9 @@ where
 
         channel
             .queue_bind(
-                &self.queue,
-                &self.exchange,
-                &self.routing_key,
+                self.queue,
+                self.exchange,
+                self.routing_key,
                 QueueBindOptions::default(),
                 FieldTable::default(),
             )

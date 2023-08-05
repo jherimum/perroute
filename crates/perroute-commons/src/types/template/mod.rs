@@ -11,10 +11,10 @@ pub mod template_handlebars;
 pub struct TemplateSnippet(String);
 
 impl TemplateSnippet {
-    pub fn render(
+    pub fn render<D: Serialize, T: TemplateRender<D>>(
         &self,
-        template_render: &dyn TemplateRender,
-        data: &TemplateData,
+        template_render: &T,
+        data: &D,
     ) -> Result<String, TemplateError> {
         template_render.render(self.as_ref(), data)
     }
@@ -26,9 +26,9 @@ impl From<String> for TemplateSnippet {
     }
 }
 
-impl Into<String> for TemplateSnippet {
-    fn into(self) -> String {
-        self.0
+impl From<TemplateSnippet> for String {
+    fn from(value: TemplateSnippet) -> Self {
+        value.0
     }
 }
 
@@ -44,8 +44,8 @@ pub enum TemplateError {
     RenderError(String),
 }
 
-pub trait TemplateRender: Debug {
-    fn render(&self, template: &str, data: &TemplateData) -> Result<String, TemplateError>;
+pub trait TemplateRender<D: Serialize>: Debug {
+    fn render(&self, template: &str, data: &D) -> Result<String, TemplateError>;
 }
 
 #[derive(Debug, Serialize)]

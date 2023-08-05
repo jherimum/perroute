@@ -31,7 +31,7 @@ impl<'c> Producer<'c> {
     ) -> Result<Producer<'c>, ProducerError> {
         Ok(Self {
             channel: Arc::new(RwLock::new(
-                Self::create_channel(&conn, confirm_select)
+                Self::create_channel(conn, confirm_select)
                     .await
                     .tap_err(|e| tracing::error!("Failed to create channel: {e}"))?,
             )),
@@ -60,7 +60,7 @@ impl<'c> Producer<'c> {
 
     async fn recreate_channel(&self) -> Result<(), lapin::Error> {
         let mut channel = self.channel.write().await;
-        *channel = Self::create_channel(&self.connection, self.confirm_select)
+        *channel = Self::create_channel(self.connection, self.confirm_select)
             .await
             .tap_err(|e| tracing::error!("Failed to recreate channel: {e}"))?;
         Ok(())
@@ -117,7 +117,7 @@ impl<'c> Producer<'c> {
         tracing::warn!("Channel is not connected, recreating it...");
         self.recreate_channel().await?;
         let channel = &self.channel.read().await;
-        self.send_message(&channel, message, routing_key)
+        self.send_message(channel, message, routing_key)
             .await
             .tap_err(|e| tracing::error!("Failed to send message: {e}"))?;
         Ok(())

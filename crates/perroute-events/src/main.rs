@@ -1,5 +1,4 @@
 use anyhow::Result;
-use chrono::Utc;
 use perroute_commons::{configuration::settings::Settings, tracing::init_tracing};
 use perroute_messaging::{
     connection::{Config, RecoverableConnection},
@@ -64,7 +63,7 @@ async fn main() -> Result<(), anyhow::Error> {
 
 #[async_recursion::async_recursion]
 async fn create_producer<'c>(conn: &'c RecoverableConnection) -> Producer<'c> {
-    let producer = Producer::new(&conn, "perroute.events", true)
+    let producer = Producer::new(conn, "perroute.events", true)
         .await
         .tap_err(|e| tracing::error!("Failed to create producer: {e}"));
 

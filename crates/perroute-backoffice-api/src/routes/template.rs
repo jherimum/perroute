@@ -52,7 +52,7 @@ impl TemplateRouter {
             .query_bus()
             .execute::<_, QueryTemplatesQueryHandler, _>(&actor, &query)
             .await
-            .map(|templates| ApiResponse::ok(templates))
+            .map(ApiResponse::ok)
             .map_err(ApiError::from)
     }
 

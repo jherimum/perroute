@@ -119,7 +119,7 @@ impl TryFrom<&DispatchRequest<'_, '_, '_, '_, '_, '_>> for Message {
             message = message.reply_to(m.clone());
         }
 
-        Ok(match (html, text) {
+        match (html, text) {
             (None, None) => {
                 message.singlepart(SinglePart::plain(MaybeString::String(String::default())))
             }
@@ -129,7 +129,7 @@ impl TryFrom<&DispatchRequest<'_, '_, '_, '_, '_, '_>> for Message {
                 message.multipart(MultiPart::alternative_plain_html(plain, html))
             }
         }
-        .map_err(DispatchError::unrecoverable)?)
+        .map_err(DispatchError::unrecoverable)
     }
 }
 
@@ -150,7 +150,7 @@ impl<'r> TryInto<Mailbox> for RecipientMailbox<'r> {
         Ok(self
             .email()
             .as_ref()
-            .map(|email| Address::from_str(&email))
+            .map(|email| Address::from_str(email))
             .transpose()
             .map_err(DispatchError::unrecoverable)?
             .map(|addr| Mailbox::new(self.name().clone(), addr))
@@ -163,10 +163,10 @@ impl TryFrom<&SmtpConnectorProperties> for SmtpTransport {
     fn try_from(value: &SmtpConnectorProperties) -> Result<Self, Self::Error> {
         let credentials =
             Credentials::new(value.username().to_owned(), value.password().to_owned());
-        Ok(SmtpTransport::starttls_relay(&value.host())
+        Ok(SmtpTransport::starttls_relay(value.host())
             .map_err(DispatchError::unrecoverable)?
             .credentials(credentials)
-            .timeout(value.timeout().map(|to| Duration::from_millis(to)))
+            .timeout(value.timeout().map(Duration::from_millis))
             .port(*value.port())
             .build())
     }
@@ -220,14 +220,14 @@ mod tests {
 pub struct Temp;
 
 impl DispatchTemplate for Temp {
-    fn render_subject(&self, data: &TemplateData) -> Result<Option<String>, TemplateError> {
+    fn render_subject(&self, _: &TemplateData) -> Result<Option<String>, TemplateError> {
         Ok(Some("assunto".to_owned()))
     }
-    fn render_text(&self, data: &TemplateData) -> Result<Option<String>, TemplateError> {
+    fn render_text(&self, _: &TemplateData) -> Result<Option<String>, TemplateError> {
         //Ok(Some("TEXT".to_owned()))
         Ok(None)
     }
-    fn render_html(&self, data: &TemplateData) -> Result<Option<String>, TemplateError> {
+    fn render_html(&self, _: &TemplateData) -> Result<Option<String>, TemplateError> {
         //Ok(Some("<h1>Eugenio</h1>".to_owned()))
         Ok(None)
     }

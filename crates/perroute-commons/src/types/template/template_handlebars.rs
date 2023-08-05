@@ -1,4 +1,6 @@
-use super::{TemplateData, TemplateError, TemplateRender};
+use serde::Serialize;
+
+use super::{TemplateError, TemplateRender};
 
 #[derive(Debug)]
 pub struct HandlebarsTemplateRender<'r> {
@@ -13,8 +15,14 @@ impl<'r> HandlebarsTemplateRender<'r> {
     }
 }
 
-impl<'r> TemplateRender for HandlebarsTemplateRender<'r> {
-    fn render(&self, template: &str, data: &TemplateData) -> Result<String, TemplateError> {
+impl<'r> Default for HandlebarsTemplateRender<'r> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl<'r, D: Serialize> TemplateRender<D> for HandlebarsTemplateRender<'r> {
+    fn render(&self, template: &str, data: &D) -> Result<String, TemplateError> {
         self.handlebars
             .render_template(template, data)
             .map_err(|e| TemplateError::RenderError(e.to_string()))

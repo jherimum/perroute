@@ -36,7 +36,7 @@ impl RecoverableConnection {
     pub async fn connect(config: Config) -> Result<Self, ConnectionError> {
         Ok(Self {
             connection: Arc::new(RwLock::new(Self::connection(&config).await?)),
-            config: config,
+            config,
         })
     }
 
@@ -115,10 +115,8 @@ impl RecoverableChannel {
         {
             let channel = self.channel.read().await;
 
-            if channel.is_some() {
-                if channel.as_ref().unwrap().status().connected() {
-                    return channel.clone().unwrap();
-                }
+            if channel.is_some() && channel.as_ref().unwrap().status().connected() {
+                return channel.clone().unwrap();
             }
         }
 
@@ -148,7 +146,7 @@ impl RecoverableChannel {
     ) -> Result<(), lapin::Error> {
         self.get()
             .await
-            .queue_bind(&queue, &exchange, &routing_key, options, arguments)
+            .queue_bind(queue, exchange, routing_key, options, arguments)
             .await
     }
 }

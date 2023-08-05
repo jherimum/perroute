@@ -37,7 +37,7 @@ impl Default for SmtpConnector {
 
 impl ConnectorPlugin for SmtpConnector {
     fn id(&self) -> &str {
-        &self.id
+        self.id
     }
 
     fn configuration(&self) -> &ConfigurationProperties {

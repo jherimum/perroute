@@ -4,8 +4,6 @@ use perroute_commons::{
     tracing::init_tracing,
     types::{
         id::Id,
-        payload::Payload,
-        recipient::Recipient,
         template::{TemplateData, TemplateError, TemplateRender},
         vars::Vars,
     },
@@ -24,7 +22,7 @@ use perroute_storage::{
     query::FetchableModel,
 };
 use sqlx::PgPool;
-use std::{ops::Deref, time::Duration};
+use std::time::Duration;
 use tap::TapFallible;
 
 #[tokio::main]
@@ -49,7 +47,7 @@ async fn dispatch<'tr>(
     pool: &PgPool,
     plugins: Plugins,
     message_dispatch_id: Id,
-    template_render: &'tr dyn TemplateRender,
+    template_render: &'tr dyn TemplateRender<TemplateData>,
 ) -> Result<(), anyhow::Error> {
     let message_dispatch = fetch_message_dispatch(pool, message_dispatch_id).await?;
     if *message_dispatch.status() != MessageDispatchStatus::Pending {
@@ -99,11 +97,11 @@ async fn dispatch<'tr>(
 #[derive(Debug)]
 pub struct DefaultDispatchTemplate<'tr> {
     template: Template,
-    render: &'tr dyn TemplateRender,
+    render: &'tr dyn TemplateRender<TemplateData>,
 }
 
 impl<'tr> DefaultDispatchTemplate<'tr> {
-    pub fn new(template: Template, render: &'tr dyn TemplateRender) -> Self {
+    pub fn new(template: Template, render: &'tr dyn TemplateRender<TemplateData>) -> Self {
         Self { template, render }
     }
 }
@@ -131,14 +129,6 @@ impl<'tr> DispatchTemplate for DefaultDispatchTemplate<'tr> {
             .as_ref()
             .map(|s| self.render.render(s.as_ref(), data))
             .transpose()
-    }
-}
-
-fn template_data(payload: &Payload, recipient: &Recipient, vars: &Vars) -> TemplateData {
-    TemplateData {
-        payload: payload.clone(),
-        recipient: recipient.clone(),
-        vars: vars.clone(),
     }
 }
 
