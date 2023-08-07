@@ -1,4 +1,4 @@
-use crate::plugin::{ConfigurationProperties, ConnectorPlugin, DispatcherPlugin};
+use crate::api::{ConfigurationProperties, ConnectorPlugin, DispatcherPlugin};
 use derive_builder::Builder;
 use derive_getters::Getters;
 use perroute_commons::types::dispatch_type::DispatcherType;

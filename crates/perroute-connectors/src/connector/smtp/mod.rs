@@ -1,5 +1,5 @@
 use self::connector::SmtpConnector;
-use crate::plugin::ConnectorPlugin;
+use crate::api::ConnectorPlugin;
 
 mod connector;
 mod email_dispatcher;

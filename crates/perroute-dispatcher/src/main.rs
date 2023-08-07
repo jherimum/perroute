@@ -9,7 +9,7 @@ use perroute_commons::{
     },
 };
 use perroute_connectors::{
-    plugin::{DispatchRequest, DispatchTemplate},
+    api::{DispatchRequest, DispatchTemplate},
     Plugins,
 };
 use perroute_messaging::connection::{Config, RecoverableConnection};

@@ -1,8 +1,8 @@
-use plugin::ConnectorPlugin;
+use api::ConnectorPlugin;
 use std::{collections::HashMap, fmt::Debug, sync::Arc};
 
+pub mod api;
 mod connector;
-pub mod plugin;
 
 #[derive(Clone, Debug)]
 pub struct Plugins {

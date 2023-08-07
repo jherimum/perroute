@@ -1,5 +1,5 @@
 use super::connector::SmtpConnectorProperties;
-use crate::plugin::{
+use crate::api::{
     ConfigurationProperties, DispatchError, DispatchRequest, DispatchResponse, DispatchTemplate,
     DispatcherPlugin, ResponseData,
 };
