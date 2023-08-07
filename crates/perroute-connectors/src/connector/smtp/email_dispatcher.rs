@@ -177,8 +177,8 @@ mod tests {
 
     use super::*;
     use crate::{
+        api::{DispatchRequest, DispatcherPlugin},
         connector::smtp::connector::SmtpConnectorPropertiesBuilder,
-        plugin::{DispatchRequest, DispatcherPlugin},
     };
     use lettre::message::Mailbox;
     use perroute_commons::types::{id::Id, payload::Payload, properties::Properties, vars::Vars};
