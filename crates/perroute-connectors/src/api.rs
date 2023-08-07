@@ -10,7 +10,15 @@ use perroute_commons::types::{
     vars::Vars,
 };
 use serde::{Deserialize, Serialize};
+use sqlx::Type;
 use std::{collections::HashMap, error::Error, fmt::Debug, sync::Arc};
+
+#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Serialize, Type)]
+pub enum TemplateSupport {
+    Mandatory,
+    Optional,
+    None,
+}
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Serialize)]
 pub enum ConfigurationPropertyType {
@@ -87,6 +95,7 @@ pub trait ResponseData: Debug + erased_serde::Serialize {}
 serialize_trait_object!(ResponseData);
 
 pub trait DispatcherPlugin: Sync + Send + Debug {
+    fn template_support(&self) -> TemplateSupport;
     fn dispatch_type(&self) -> DispatcherType;
     fn configuration(&self) -> &ConfigurationProperties;
     fn dispatch(&self, req: &DispatchRequest) -> Result<DispatchResponse, DispatchError>;

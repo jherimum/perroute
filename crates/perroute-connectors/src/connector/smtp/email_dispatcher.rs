@@ -1,7 +1,7 @@
 use super::connector::SmtpConnectorProperties;
 use crate::api::{
     ConfigurationProperties, DispatchError, DispatchRequest, DispatchResponse, DispatchTemplate,
-    DispatcherPlugin, ResponseData,
+    DispatcherPlugin, ResponseData, TemplateSupport,
 };
 use derive_builder::Builder;
 use lettre::{
@@ -41,14 +41,30 @@ pub struct EmailDispatcherProperties {
     reply_to: Vec<Mailbox>,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct EmailDispatcher {
     configuration: ConfigurationProperties,
+    dispatch_type: DispatcherType,
+    template_support: TemplateSupport,
+}
+
+impl Default for EmailDispatcher {
+    fn default() -> Self {
+        Self {
+            configuration: ConfigurationProperties::default(),
+            dispatch_type: DispatcherType::Email,
+            template_support: TemplateSupport::Mandatory,
+        }
+    }
 }
 
 impl DispatcherPlugin for EmailDispatcher {
+    fn template_support(&self) -> TemplateSupport {
+        self.template_support
+    }
+
     fn dispatch_type(&self) -> DispatcherType {
-        DispatcherType::Email
+        self.dispatch_type
     }
 
     fn configuration(&self) -> &ConfigurationProperties {
