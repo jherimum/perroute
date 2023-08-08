@@ -14,6 +14,7 @@ pub struct SmtpConnectorProperties {
     host: String,
     port: u16,
     timeout: Option<u64>,
+    starttls: bool,
 }
 
 #[derive(Debug)]

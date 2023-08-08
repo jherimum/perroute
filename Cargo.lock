@@ -2378,6 +2378,7 @@ dependencies = [
  "handlebars",
  "jsonschema",
  "lazy_static",
+ "lettre",
  "regex",
  "rstest",
  "secrecy",
@@ -2408,7 +2409,9 @@ dependencies = [
  "serde",
  "serde_json",
  "sqlx",
+ "tap",
  "thiserror",
+ "tracing",
 ]
 
 [[package]]

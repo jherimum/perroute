@@ -7,7 +7,7 @@ use derive_builder::Builder;
 use lettre::{
     message::{Mailbox, MaybeString, MultiPart, SinglePart},
     transport::smtp::{authentication::Credentials, response::Response},
-    Address, Message, SmtpTransport, Transport,
+    Message, SmtpTransport, Transport,
 };
 use perroute_commons::types::{
     dispatch_type::DispatchType,
@@ -15,7 +15,8 @@ use perroute_commons::types::{
     template::{TemplateData, TemplateError},
 };
 use serde::{Deserialize, Serialize};
-use std::{ops::Deref, str::FromStr, time::Duration};
+use std::{ops::Deref, time::Duration};
+use tap::TapFallible;
 
 #[derive(Debug, thiserror::Error)]
 pub enum EmailDispatcherError {
@@ -166,10 +167,7 @@ impl<'r> TryInto<Mailbox> for RecipientMailbox<'r> {
         Ok(self
             .email()
             .as_ref()
-            .map(|email| Address::from_str(email))
-            .transpose()
-            .map_err(DispatchError::unrecoverable)?
-            .map(|addr| Mailbox::new(self.name().clone(), addr))
+            .map(|addr| Mailbox::new(self.name().clone(), addr.deref().clone()))
             .ok_or(EmailDispatcherError::EmailNotSupplied)?)
     }
 }
@@ -177,14 +175,20 @@ impl<'r> TryInto<Mailbox> for RecipientMailbox<'r> {
 impl TryFrom<&SmtpConnectorProperties> for SmtpTransport {
     type Error = DispatchError;
     fn try_from(value: &SmtpConnectorProperties) -> Result<Self, Self::Error> {
-        let credentials =
-            Credentials::new(value.username().to_owned(), value.password().to_owned());
-        Ok(SmtpTransport::starttls_relay(value.host())
-            .map_err(DispatchError::unrecoverable)?
-            .credentials(credentials)
-            .timeout(value.timeout().map(Duration::from_millis))
-            .port(*value.port())
-            .build())
+        Ok(if *value.starttls() {
+            SmtpTransport::starttls_relay(value.host())
+        } else {
+            SmtpTransport::relay(value.host())
+        }
+        .map_err(DispatchError::unrecoverable)
+        .tap_err(|e| tracing::error!("Failed to build SmtpTransport: {e}"))?
+        .credentials(Credentials::new(
+            value.username().to_owned(),
+            value.password().to_owned(),
+        ))
+        .timeout(value.timeout().map(Duration::from_millis))
+        .port(*value.port())
+        .build())
     }
 }
 
@@ -197,7 +201,9 @@ mod tests {
         connector::smtp::connector::SmtpConnectorPropertiesBuilder,
     };
     use lettre::message::Mailbox;
-    use perroute_commons::types::{id::Id, payload::Payload, properties::Properties, vars::Vars};
+    use perroute_commons::types::{
+        id::Id, payload::Payload, properties::Properties, recipient::Email, vars::Vars,
+    };
     use std::str::FromStr;
 
     #[test]
@@ -222,7 +228,7 @@ mod tests {
             template: Some(&Temp as &dyn DispatchTemplate),
             recipient: &perroute_commons::types::recipient::Recipient {
                 name: Some("eugenio".to_owned()),
-                email: Some("eugenio.perrottaneto@gmail.com".to_owned()),
+                email: Some(Email::from_str("eugenio.perrottaneto@gmail.com").unwrap()),
                 phone_number: None,
             },
             payload: &Payload::default(),

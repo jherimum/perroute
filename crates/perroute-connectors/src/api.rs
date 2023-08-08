@@ -11,7 +11,12 @@ use perroute_commons::types::{
 };
 use serde::{Deserialize, Serialize};
 use sqlx::Type;
-use std::{collections::HashMap, error::Error, fmt::Debug, sync::Arc};
+use std::{
+    collections::HashMap,
+    error::Error,
+    fmt::{Debug, Display},
+    sync::Arc,
+};
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Serialize, Type)]
 pub enum TemplateSupport {
@@ -101,9 +106,11 @@ pub trait DispatcherPlugin: Sync + Send + Debug {
     fn dispatch(&self, req: &DispatchRequest) -> Result<DispatchResponse, DispatchError>;
 }
 
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum DispatchError {
+    #[error(transparent)]
     Recoverable(Box<dyn Error>),
+    #[error(transparent)]
     Unrecoverable(Box<dyn Error>),
 }
 
