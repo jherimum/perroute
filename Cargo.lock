@@ -2489,7 +2489,6 @@ dependencies = [
  "derive-getters",
  "futures",
  "lapin",
- "parking_lot 0.12.1",
  "perroute-commons",
  "rand",
  "serde",
