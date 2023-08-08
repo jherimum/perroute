@@ -1,18 +1,9 @@
 
 CREATE TYPE actor_type AS ENUM ('user', 'system', 'service');
+CREATE TYPE dispatch_type AS ENUM ('email', 'sms', 'push');
+CREATE TYPE message_status AS ENUM ('pending', 'distributed');
+CREATE TYPE message_dispatch_status AS ENUM ('pending', 'queued' ,'success', 'failed');
 
-CREATE TABLE command_logs(
-	id 				uuid 		NOT NULL,
-	command_type	varchar 	NOT NULL,
-	actor_type 		actor_type	NOT NULL,
-	actor_id 		uuid 		NULL,
-	payload 		jsonb 		NOT NULL,
-	error 			varchar 	NULL,
-	created_at 		timestamp 	NOT NULL DEFAULT NOW(),
-
-	CONSTRAINT command_logs_pk	PRIMARY KEY (id)
-
-);
 
 CREATE TABLE channels (
 	id 		uuid 	NOT NULL,
@@ -29,11 +20,9 @@ create table message_types(
     code        varchar(50)     not null,    
     description varchar(500)    not null,
     enabled     boolean         not null,
-    channel_id  uuid            not null,    
     vars    jsonb   NOT NULL,
     CONSTRAINT message_types_pk PRIMARY KEY (id),
-    CONSTRAINT message_types_code UNIQUE (code),
-    CONSTRAINT message_types_channel_fk FOREIGN KEY (channel_id) REFERENCES channels(id)
+    CONSTRAINT message_types_code UNIQUE (code)
 );
 
 create table schemas(
@@ -42,13 +31,11 @@ create table schemas(
     version         integer NOT NULL,
     published       boolean NOT NULL,    
     message_type_id uuid    NOT NULL,
-    channel_id      uuid    NOT NULL,
     vars    jsonb   NOT NULL,
     enabled         boolean NOT NULL,
 
     CONSTRAINT schemas_pk                   PRIMARY KEY (id),
     CONSTRAINT schemas_message_type_fk      FOREIGN KEY (message_type_id)   REFERENCES message_types(id),
-    CONSTRAINT schemas_channel_fk           FOREIGN KEY (channel_id)        REFERENCES channels(id),
     CONSTRAINT schemas_message_type_number  UNIQUE      (message_type_id, version)
     
 );
@@ -62,7 +49,8 @@ create table templates(
     schema_id       uuid            not null,
     message_type_id uuid            NOT NULL,
     channel_id      uuid            NOT NULL,
-    vars            jsonb   NOT NULL,
+    vars            jsonb           NOT NULL,
+    dispatch_type   dispatch_type   not null,
 
     constraint templates_pk primary key (id),
     constraint templates_schema_fk          foreign key (schema_id)        references schemas(id),
@@ -72,7 +60,6 @@ create table templates(
 
 
 
-CREATE TYPE dispatch_type AS ENUM ('email', 'sms', 'push');
 
 create table connections(
     id          uuid    not null,
@@ -80,7 +67,6 @@ create table connections(
     plugin_id   varchar not null,
     properties  jsonb   not null,
     enabled     boolean not null,
-
     constraint connections_pk primary key (id)
 );
 
@@ -88,7 +74,7 @@ create table routes(
     id                      uuid            not null,
     name                    varchar         not null,
     connection_id           uuid            not null,
-    template_id            uuid                null,
+    template_id             uuid                null,
     dispatch_type           dispatch_type   not null,
     dispatcher_properties   jsonb           not null,
 
@@ -105,7 +91,7 @@ create table routes(
 );
 
 
-CREATE TYPE message_status AS ENUM ('pending', 'distributed');
+
 
 create table messages(
     id uuid not null,
@@ -124,9 +110,6 @@ create table messages(
     constraint messages_message_type_fk FOREIGN KEY (message_type_id) REFERENCES message_types(id),
     constraint messages_channel_fk FOREIGN KEY (channel_id) REFERENCES channels(id)
 );
-
-
-CREATE TYPE message_dispatch_status AS ENUM ('pending', 'queued' ,'success', 'failed');
 
 create table message_dispatches(
     id              uuid                    not null,
@@ -149,4 +132,17 @@ create table events(
     scheduled_to    timestamp               not null,
     consumed_at     timestamp               null,
     constraint events_pk primary key (id)
+);
+
+CREATE TABLE command_logs(
+	id 				uuid 		NOT NULL,
+	command_type	varchar 	NOT NULL,
+	actor_type 		actor_type	NOT NULL,
+	actor_id 		uuid 		NULL,
+	payload 		jsonb 		NOT NULL,
+	error 			varchar 	NULL,
+	created_at 		timestamp 	NOT NULL DEFAULT NOW(),
+
+	CONSTRAINT command_logs_pk	PRIMARY KEY (id)
+
 );
