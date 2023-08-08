@@ -1,7 +1,7 @@
 use super::connector::SmtpConnectorProperties;
 use crate::api::{
     ConfigurationProperties, DispatchError, DispatchRequest, DispatchResponse, DispatchTemplate,
-    DispatcherPlugin, ResponseData, TemplateSupport,
+    DispatchType, DispatcherPlugin, ResponseData, TemplateSupport,
 };
 use derive_builder::Builder;
 use lettre::{
@@ -10,7 +10,6 @@ use lettre::{
     Message, SmtpTransport, Transport,
 };
 use perroute_commons::types::{
-    dispatch_type::DispatchType,
     recipient::Recipient,
     template::{TemplateData, TemplateError},
 };

@@ -1,7 +1,6 @@
 use crate::api::response::{Links, ResourceBuilder, SingleResourceModel};
-use perroute_commons::types::{
-    code::Code, dispatch_type::DispatchType, id::Id, payload::Payload, recipient::Recipient,
-};
+use perroute_commons::types::{code::Code, id::Id, payload::Payload, recipient::Recipient};
+use perroute_connectors::api::DispatchType;
 use perroute_storage::models::{
     message::{Message, Status},
     schema::Version,

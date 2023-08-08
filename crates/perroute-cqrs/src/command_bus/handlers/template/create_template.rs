@@ -7,9 +7,8 @@ use crate::{
     into_event,
 };
 use async_trait::async_trait;
-use perroute_commons::types::{
-    actor::Actor, dispatch_type::DispatchType, id::Id, template::TemplateSnippet,
-};
+use perroute_commons::types::{actor::Actor, id::Id, template::TemplateSnippet};
+use perroute_connectors::api::DispatchType;
 use perroute_storage::{
     models::{
         schema::{Schema, SchemasQueryBuilder},

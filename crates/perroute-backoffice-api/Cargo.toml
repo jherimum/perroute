@@ -8,6 +8,7 @@ edition = "2021"
 perroute-cqrs = { path = "../../crates/perroute-cqrs" }
 perroute-storage = { path = "../../crates/perroute-storage" }
 perroute-commons = { path = "../../crates/perroute-commons" }
+perroute-connectors = { path = "../../crates/perroute-connectors" }
 
 
 actix-web = { workspace = true }

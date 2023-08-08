@@ -2,6 +2,7 @@ use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::types::{id::Id, properties::Properties};
+use perroute_connectors::api::ConnectorPluginId;
 use sqlx::{types::Json, Executor, FromRow};
 use std::todo;
 
@@ -12,7 +13,7 @@ use std::todo;
 pub struct Connection {
     id: uuid::Uuid,
     code: String,
-    plugin_id: String,
+    plugin_id: ConnectorPluginId,
     description: String,
 
     properties: Json<Properties>,

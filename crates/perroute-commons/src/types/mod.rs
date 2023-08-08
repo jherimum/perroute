@@ -1,6 +1,5 @@
 pub mod actor;
 pub mod code;
-pub mod dispatch_type;
 pub mod id;
 pub mod json_schema;
 pub mod payload;

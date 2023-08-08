@@ -1,7 +1,6 @@
 use derive_getters::Getters;
 use erased_serde::serialize_trait_object;
 use perroute_commons::types::{
-    dispatch_type::DispatchType,
     id::Id,
     payload::Payload,
     properties::Properties,
@@ -11,24 +10,26 @@ use perroute_commons::types::{
 };
 use serde::{Deserialize, Serialize};
 use sqlx::Type;
-use std::{
-    collections::HashMap,
-    error::Error,
-    fmt::{Debug, Display},
-    sync::Arc,
-};
+use std::{collections::HashMap, error::Error, fmt::Debug, sync::Arc};
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Type, Copy, Hash)]
+#[sqlx(type_name = "dispatch_type", rename_all = "snake_case")]
+pub enum DispatchType {
+    Sms,
+    Email,
+    Push,
+}
+
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, Deserialize, Serialize, Type)]
+pub enum ConnectorPluginId {
+    Smtp,
+}
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Serialize, Type)]
 pub enum TemplateSupport {
     Mandatory,
     Optional,
     None,
-}
-
-#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Serialize)]
-pub enum ConfigurationPropertyType {
-    String,
-    Number,
 }
 
 #[derive(Serialize, Debug, PartialEq, Eq, Clone)]
@@ -39,8 +40,6 @@ pub struct ConfigurationProperty {
     pub name: String,
     pub required: bool,
     pub description: String,
-    pub possible_values: Vec<OptionValue>,
-    pub type_: ConfigurationPropertyType,
 }
 
 #[derive(Debug, Default)]
@@ -49,7 +48,7 @@ pub struct ConfigurationProperties {
 }
 
 pub trait ConnectorPlugin: Sync + Send + Debug {
-    fn id(&self) -> &str;
+    fn id(&self) -> ConnectorPluginId;
     fn configuration(&self) -> &ConfigurationProperties;
     fn dispatchers(&self) -> HashMap<DispatchType, Arc<dyn DispatcherPlugin>>;
     fn dispatcher(&self, ty: DispatchType) -> Option<Arc<dyn DispatcherPlugin>> {

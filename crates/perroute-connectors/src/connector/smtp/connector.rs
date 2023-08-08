@@ -1,11 +1,11 @@
-use crate::api::{ConfigurationProperties, ConnectorPlugin, DispatcherPlugin};
+use super::email_dispatcher::EmailDispatcher;
+use crate::api::{
+    ConfigurationProperties, ConnectorPlugin, ConnectorPluginId, DispatchType, DispatcherPlugin,
+};
 use derive_builder::Builder;
 use derive_getters::Getters;
-use perroute_commons::types::dispatch_type::DispatchType;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, sync::Arc};
-
-use super::email_dispatcher::EmailDispatcher;
 
 #[derive(Debug, Deserialize, Getters, Builder, Serialize)]
 pub struct SmtpConnectorProperties {
@@ -19,7 +19,7 @@ pub struct SmtpConnectorProperties {
 
 #[derive(Debug)]
 pub struct SmtpConnector {
-    id: &'static str,
+    id: ConnectorPluginId,
     configuration: ConfigurationProperties,
     plugins: HashMap<DispatchType, Arc<dyn DispatcherPlugin>>,
 }
@@ -29,7 +29,7 @@ impl Default for SmtpConnector {
         let mut plugins: HashMap<DispatchType, Arc<dyn DispatcherPlugin>> = HashMap::new();
         plugins.insert(DispatchType::Email, Arc::new(EmailDispatcher::default()));
         Self {
-            id: "smtp",
+            id: ConnectorPluginId::Smtp,
             configuration: ConfigurationProperties::default(),
             plugins,
         }
@@ -37,7 +37,7 @@ impl Default for SmtpConnector {
 }
 
 impl ConnectorPlugin for SmtpConnector {
-    fn id(&self) -> &str {
+    fn id(&self) -> ConnectorPluginId {
         self.id
     }
 
