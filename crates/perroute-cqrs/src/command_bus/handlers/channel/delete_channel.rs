@@ -9,13 +9,9 @@ use crate::{
 use async_trait::async_trait;
 use perroute_commons::types::{actor::Actor, id::Id};
 use perroute_storage::{
-    models::{
-        channel::{Channel, ChannelsQueryBuilder},
-        message_type::{MessageType, MessageTypeQueryBuilder},
-    },
+    models::channel::{Channel, ChannelsQueryBuilder},
     query::FetchableModel,
 };
-use tap::TapFallible;
 
 command!(
     DeleteChannelCommand,
