@@ -10,7 +10,7 @@ use lettre::{
     Address, Message, SmtpTransport, Transport,
 };
 use perroute_commons::types::{
-    dispatch_type::DispatcherType,
+    dispatch_type::DispatchType,
     recipient::Recipient,
     template::{TemplateData, TemplateError},
 };
@@ -44,7 +44,7 @@ pub struct EmailDispatcherProperties {
 #[derive(Debug)]
 pub struct EmailDispatcher {
     configuration: ConfigurationProperties,
-    dispatch_type: DispatcherType,
+    dispatch_type: DispatchType,
     template_support: TemplateSupport,
 }
 
@@ -52,7 +52,7 @@ impl Default for EmailDispatcher {
     fn default() -> Self {
         Self {
             configuration: ConfigurationProperties::default(),
-            dispatch_type: DispatcherType::Email,
+            dispatch_type: DispatchType::Email,
             template_support: TemplateSupport::Mandatory,
         }
     }
@@ -63,7 +63,7 @@ impl DispatcherPlugin for EmailDispatcher {
         self.template_support
     }
 
-    fn dispatch_type(&self) -> DispatcherType {
+    fn dispatch_type(&self) -> DispatchType {
         self.dispatch_type
     }
 

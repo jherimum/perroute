@@ -1,6 +1,6 @@
 use crate::api::response::{Links, ResourceBuilder, SingleResourceModel};
 use perroute_commons::types::{
-    code::Code, dispatch_type::DispatcherType, id::Id, payload::Payload, recipient::Recipient,
+    code::Code, dispatch_type::DispatchType, id::Id, payload::Payload, recipient::Recipient,
 };
 use perroute_storage::models::{
     message::{Message, Status},
@@ -19,9 +19,9 @@ pub struct CreateMessageRequest {
     pub message_type_code: Code,
     pub schema_version: Version,
     #[serde(default)]
-    pub include_dispatcher_types: HashSet<DispatcherType>,
+    pub include_dispatcher_types: HashSet<DispatchType>,
     #[serde(default)]
-    pub exclude_dispatcher_types: HashSet<DispatcherType>,
+    pub exclude_dispatcher_types: HashSet<DispatchType>,
 
     pub recipient: Recipient,
 }
@@ -32,8 +32,8 @@ pub struct MessageResource {
     recipient: Recipient,
     status: Status,
     payload: Payload,
-    pub include_dispatcher_types: HashSet<DispatcherType>,
-    pub exclude_dispatcher_types: HashSet<DispatcherType>,
+    pub include_dispatcher_types: HashSet<DispatchType>,
+    pub exclude_dispatcher_types: HashSet<DispatchType>,
 }
 
 impl From<&Message> for MessageResource {

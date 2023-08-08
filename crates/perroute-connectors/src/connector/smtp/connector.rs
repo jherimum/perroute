@@ -1,7 +1,7 @@
 use crate::api::{ConfigurationProperties, ConnectorPlugin, DispatcherPlugin};
 use derive_builder::Builder;
 use derive_getters::Getters;
-use perroute_commons::types::dispatch_type::DispatcherType;
+use perroute_commons::types::dispatch_type::DispatchType;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, sync::Arc};
 
@@ -20,13 +20,13 @@ pub struct SmtpConnectorProperties {
 pub struct SmtpConnector {
     id: &'static str,
     configuration: ConfigurationProperties,
-    plugins: HashMap<DispatcherType, Arc<dyn DispatcherPlugin>>,
+    plugins: HashMap<DispatchType, Arc<dyn DispatcherPlugin>>,
 }
 
 impl Default for SmtpConnector {
     fn default() -> Self {
-        let mut plugins: HashMap<DispatcherType, Arc<dyn DispatcherPlugin>> = HashMap::new();
-        plugins.insert(DispatcherType::Email, Arc::new(EmailDispatcher::default()));
+        let mut plugins: HashMap<DispatchType, Arc<dyn DispatcherPlugin>> = HashMap::new();
+        plugins.insert(DispatchType::Email, Arc::new(EmailDispatcher::default()));
         Self {
             id: "smtp",
             configuration: ConfigurationProperties::default(),
@@ -44,7 +44,7 @@ impl ConnectorPlugin for SmtpConnector {
         &self.configuration
     }
 
-    fn dispatchers(&self) -> HashMap<DispatcherType, Arc<dyn DispatcherPlugin>> {
+    fn dispatchers(&self) -> HashMap<DispatchType, Arc<dyn DispatcherPlugin>> {
         self.plugins
             .clone()
             .into_iter()

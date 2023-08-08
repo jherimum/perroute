@@ -6,7 +6,9 @@ use crate::{
 use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
-use perroute_commons::types::{id::Id, template::TemplateSnippet, vars::Vars};
+use perroute_commons::types::{
+    dispatch_type::DispatchType, id::Id, template::TemplateSnippet, vars::Vars,
+};
 use sqlx::{types::Json, FromRow, PgExecutor, QueryBuilder};
 use tap::TapFallible;
 
@@ -73,6 +75,9 @@ pub struct Template {
     message_type_id: Id,
     #[setters(skip)]
     channel_id: Id,
+
+    #[setters(skip)]
+    dispatch_type: DispatchType,
 
     #[setters(skip)]
     #[getter(skip)]

@@ -20,8 +20,6 @@ use crate::{
 #[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
 pub struct FindMessageTypeQuery {
     message_type_id: Id,
-    #[builder(default)]
-    channel_id: Option<Id>,
 }
 
 impl_query!(FindMessageTypeQuery, QueryType::FindMessageTypeQuery);
@@ -44,7 +42,6 @@ impl QueryHandler for FindMessageTypeQueryHandler {
             ctx.pool(),
             MessageTypeQueryBuilder::default()
                 .id(Some(*query.message_type_id()))
-                .channel_id(*query.channel_id())
                 .build()
                 .unwrap(),
         )

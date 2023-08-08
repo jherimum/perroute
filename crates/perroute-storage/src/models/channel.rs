@@ -72,15 +72,16 @@ impl Channel {
         exec: E,
         code: Code,
     ) -> Result<Option<MessageType>, sqlx::Error> {
-        MessageType::find(
-            exec,
-            MessageTypeQueryBuilder::default()
-                .code(Some(code))
-                .channel_id(Some(self.id))
-                .build()
-                .unwrap(),
-        )
-        .await
+        // MessageType::find(
+        //     exec,
+        //     MessageTypeQueryBuilder::default()
+        //         .code(Some(code))
+        //         .channel_id(Some(self.id))
+        //         .build()
+        //         .unwrap(),
+        // )
+        // .await
+        todo!()
     }
 
     #[tracing::instrument(name = "channel.save", skip(exec))]

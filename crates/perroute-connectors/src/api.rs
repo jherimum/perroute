@@ -1,7 +1,7 @@
 use derive_getters::Getters;
 use erased_serde::serialize_trait_object;
 use perroute_commons::types::{
-    dispatch_type::DispatcherType,
+    dispatch_type::DispatchType,
     id::Id,
     payload::Payload,
     properties::Properties,
@@ -46,8 +46,8 @@ pub struct ConfigurationProperties {
 pub trait ConnectorPlugin: Sync + Send + Debug {
     fn id(&self) -> &str;
     fn configuration(&self) -> &ConfigurationProperties;
-    fn dispatchers(&self) -> HashMap<DispatcherType, Arc<dyn DispatcherPlugin>>;
-    fn dispatcher(&self, ty: DispatcherType) -> Option<Arc<dyn DispatcherPlugin>> {
+    fn dispatchers(&self) -> HashMap<DispatchType, Arc<dyn DispatcherPlugin>>;
+    fn dispatcher(&self, ty: DispatchType) -> Option<Arc<dyn DispatcherPlugin>> {
         self.dispatchers().get(&ty).map(Arc::clone)
     }
 }
@@ -96,7 +96,7 @@ serialize_trait_object!(ResponseData);
 
 pub trait DispatcherPlugin: Sync + Send + Debug {
     fn template_support(&self) -> TemplateSupport;
-    fn dispatch_type(&self) -> DispatcherType;
+    fn dispatch_type(&self) -> DispatchType;
     fn configuration(&self) -> &ConfigurationProperties;
     fn dispatch(&self, req: &DispatchRequest) -> Result<DispatchResponse, DispatchError>;
 }

@@ -132,13 +132,14 @@ pub struct Schema {
     #[setters(skip)]
     id: Id,
     schema: JsonSchema,
+
     #[setters(skip)]
     version: Version,
+
     published: bool,
+
     #[setters(skip)]
     message_type_id: Id,
-    #[setters(skip)]
-    channel_id: Id,
 
     enabled: bool,
 
@@ -171,8 +172,8 @@ impl Schema {
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
         sqlx::query_as(
             r#"
-                INSERT INTO schemas (id, schema, version, published, message_type_id, channel_id, enabled) 
-                VALUES($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *
+                INSERT INTO schemas (id, schema, version, published, message_type_id, enabled, vars) 
+                VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING *
             "#,
         )
         .bind(self.id)
@@ -180,7 +181,6 @@ impl Schema {
         .bind(self.version)
         .bind(self.published)
         .bind(self.message_type_id)
-        .bind(self.channel_id)
         .bind(self.enabled)
         .bind(self.vars)
         .fetch_one(exec)

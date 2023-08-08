@@ -47,10 +47,6 @@ impl ResourceBuilder<SingleResourceModel<MessageTypeResource>> for MessageType {
                 .add(Linkrelation::Self_, ResourceLink::MessageType(*self.id()))
                 .add(Linkrelation::MessageTypes, ResourceLink::MessageTypes)
                 .add(Linkrelation::Schemas, ResourceLink::Schemas(*self.id()))
-                .add(
-                    Linkrelation::Channel,
-                    ResourceLink::Channel(*self.channel_id()),
-                )
                 .as_url_map(req),
         }
     }

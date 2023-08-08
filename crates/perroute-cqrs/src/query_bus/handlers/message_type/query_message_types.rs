@@ -17,10 +17,7 @@ use perroute_storage::{
 use serde::Serialize;
 
 #[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
-pub struct QueryMessageTypesQuery {
-    #[builder(default)]
-    channel_id: Option<Id>,
-}
+pub struct QueryMessageTypesQuery {}
 
 impl_query!(QueryMessageTypesQuery, QueryType::QueryMessageTypes);
 
@@ -40,10 +37,7 @@ impl QueryHandler for QueryMessageTypesHandler {
     ) -> Result<Self::Output, QueryBusError> {
         MessageType::query(
             ctx.pool(),
-            MessageTypeQueryBuilder::default()
-                .channel_id(*query.channel_id())
-                .build()
-                .unwrap(),
+            MessageTypeQueryBuilder::default().build().unwrap(),
         )
         .await
         .map_err(Into::into)

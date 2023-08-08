@@ -77,7 +77,6 @@ impl MessageTypeRouter {
     ) -> SingleResult {
         let cmd = CreateMessageTypeCommandBuilder::default()
             .code(body.code().clone())
-            .channel_id(*body.channel_id())
             .description(body.description().clone())
             .build()
             .tap_err(|e| tracing::error!("Failed to build CreateMessageTypeCommand:{e}"))

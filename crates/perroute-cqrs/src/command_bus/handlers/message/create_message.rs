@@ -11,7 +11,7 @@ use chrono::NaiveDateTime;
 use derive_builder::Builder;
 use derive_getters::Getters;
 use perroute_commons::types::{
-    actor::Actor, code::Code, dispatch_type::DispatcherType, id::Id, payload::Payload,
+    actor::Actor, code::Code, dispatch_type::DispatchType, id::Id, payload::Payload,
     recipient::Recipient,
 };
 use perroute_messaging::events::EventType;
@@ -43,10 +43,10 @@ pub struct CreateMessageCommand {
     schema_version: Version,
 
     #[builder(default)]
-    include_dispatcher_types: HashSet<DispatcherType>,
+    include_dispatcher_types: HashSet<DispatchType>,
 
     #[builder(default)]
-    exclude_dispatcher_types: HashSet<DispatcherType>,
+    exclude_dispatcher_types: HashSet<DispatchType>,
 }
 
 impl_command!(CreateMessageCommand, CommandType::CreateMessage);
@@ -135,7 +135,7 @@ impl CommandHandler for CreateMessageCommandHandler {
             .scheduled_to(*cmd.scheduled_to())
             .schema_id(*schema.id())
             .message_type_id(*schema.message_type_id())
-            .channel_id(*schema.channel_id())
+            .channel_id(*channel.id())
             .include_dispatcher_types(Json(cmd.include_dispatcher_types().clone()))
             .exclude_dispatcher_types(Json(cmd.exclude_dispatcher_types().clone()))
             .recipient(Json(cmd.recipient().clone()))

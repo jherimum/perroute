@@ -6,7 +6,7 @@ use crate::{
 use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
-use perroute_commons::types::{dispatch_type::DispatcherType, id::Id, properties::Properties};
+use perroute_commons::types::{dispatch_type::DispatchType, id::Id, properties::Properties};
 use sqlx::{types::Json, FromRow, PgExecutor, Postgres, QueryBuilder};
 
 use super::{channel::Channel, message_type::MessageType, template::Template};
@@ -77,7 +77,7 @@ pub struct Route {
 
     template_id: Option<Id>,
 
-    dispatch_type: DispatcherType,
+    dispatch_type: DispatchType,
 
     dispatcher_properties: Json<Properties>,
 

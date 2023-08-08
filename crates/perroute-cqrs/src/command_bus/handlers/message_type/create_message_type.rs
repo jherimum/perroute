@@ -27,7 +27,6 @@ pub struct CreateMessageTypeCommand {
     message_type_id: Id,
     code: Code,
     description: String,
-    channel_id: Id,
 }
 
 impl_command!(CreateMessageTypeCommand, CommandType::CreateMessageType);
@@ -57,7 +56,6 @@ impl CommandHandler for CreateMessageTypeCommandHandler {
         if MessageType::exists(
             ctx.pool(),
             MessageTypeQueryBuilder::default()
-                .channel_id(Some(*cmd.channel_id()))
                 .code(Some(cmd.code().clone()))
                 .build()
                 .unwrap(),
@@ -72,7 +70,6 @@ impl CommandHandler for CreateMessageTypeCommandHandler {
             .code(cmd.code().clone())
             .description(cmd.description().clone())
             .enabled(false)
-            .channel_id(*cmd.channel_id())
             .build()
             .unwrap()
             .save(ctx.tx())
@@ -83,7 +80,6 @@ impl CommandHandler for CreateMessageTypeCommandHandler {
             .schema(JsonSchema::default())
             .version(Version::default())
             .message_type_id(*cmd.message_type_id())
-            .channel_id(*message_type.channel_id())
             .published(false)
             .build()
             .unwrap()

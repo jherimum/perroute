@@ -28,9 +28,6 @@ pub struct MessageType {
     enabled: bool,
 
     #[setters(skip)]
-    channel_id: Id,
-
-    #[setters(skip)]
     #[getter(skip)]
     vars: Json<Vars>,
 }
@@ -41,8 +38,6 @@ pub struct MessageTypeQuery {
     id: Option<Id>,
     #[builder(default)]
     code: Option<Code>,
-    #[builder(default)]
-    channel_id: Option<Id>,
 }
 
 impl ModelQueryBuilder<MessageType> for MessageTypeQuery {
@@ -54,11 +49,6 @@ impl ModelQueryBuilder<MessageType> for MessageTypeQuery {
         if let Some(code) = &self.code {
             query_builder.push(" and code = ");
             query_builder.push_bind(code);
-        }
-
-        if let Some(channel_id) = &self.channel_id {
-            query_builder.push(" and channel_id = ");
-            query_builder.push_bind(channel_id);
         }
 
         if let Some(id) = &self.id {
@@ -98,15 +88,14 @@ impl MessageType {
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
         sqlx::query_as(
             r#"
-                    INSERT INTO message_types (id, code, description, enabled, channel_id, vars) 
-                    VALUES($1, $2, $3, $4, $5, $6) RETURNING *
+                    INSERT INTO message_types (id, code, description, enabled, vars) 
+                    VALUES($1, $2, $3, $4, $5) RETURNING *
                 "#,
         )
         .bind(self.id)
         .bind(self.code)
         .bind(self.description)
         .bind(self.enabled)
-        .bind(self.channel_id)
         .bind(self.vars)
         .fetch_one(exec)
         .await

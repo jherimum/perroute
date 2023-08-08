@@ -3,7 +3,7 @@ use sqlx::Type;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Type, Copy, Hash)]
 #[sqlx(type_name = "dispatch_type", rename_all = "snake_case")]
-pub enum DispatcherType {
+pub enum DispatchType {
     Sms,
     Email,
     Push,
