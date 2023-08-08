@@ -5,7 +5,7 @@ use crate::api::{
 use derive_builder::Builder;
 use derive_getters::Getters;
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, sync::Arc};
+use std::collections::HashMap;
 
 #[derive(Debug, Deserialize, Getters, Builder, Serialize)]
 pub struct SmtpConnectorProperties {
@@ -21,13 +21,13 @@ pub struct SmtpConnectorProperties {
 pub struct SmtpConnector {
     id: ConnectorPluginId,
     configuration: ConfigurationProperties,
-    plugins: HashMap<DispatchType, Arc<dyn DispatcherPlugin>>,
+    plugins: HashMap<DispatchType, Box<dyn DispatcherPlugin>>,
 }
 
 impl Default for SmtpConnector {
     fn default() -> Self {
-        let mut plugins: HashMap<DispatchType, Arc<dyn DispatcherPlugin>> = HashMap::new();
-        plugins.insert(DispatchType::Email, Arc::new(EmailDispatcher::default()));
+        let mut plugins: HashMap<DispatchType, Box<dyn DispatcherPlugin>> = HashMap::new();
+        plugins.insert(DispatchType::Email, Box::new(EmailDispatcher::default()));
         Self {
             id: ConnectorPluginId::Smtp,
             configuration: ConfigurationProperties::default(),
@@ -45,11 +45,7 @@ impl ConnectorPlugin for SmtpConnector {
         &self.configuration
     }
 
-    fn dispatchers(&self) -> HashMap<DispatchType, Arc<dyn DispatcherPlugin>> {
-        self.plugins
-            .clone()
-            .into_iter()
-            .map(|(k, v)| (k, v.clone()))
-            .collect()
+    fn dispatchers(&self) -> &HashMap<DispatchType, Box<dyn DispatcherPlugin>> {
+        &self.plugins
     }
 }

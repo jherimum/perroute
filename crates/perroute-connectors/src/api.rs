@@ -10,7 +10,7 @@ use perroute_commons::types::{
 };
 use serde::{Deserialize, Serialize};
 use sqlx::Type;
-use std::{collections::HashMap, error::Error, fmt::Debug, sync::Arc};
+use std::{collections::HashMap, error::Error, fmt::Debug};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Type, Copy, Hash)]
 #[sqlx(type_name = "dispatch_type", rename_all = "snake_case")]
@@ -50,9 +50,9 @@ pub struct ConfigurationProperties {
 pub trait ConnectorPlugin: Sync + Send + Debug {
     fn id(&self) -> ConnectorPluginId;
     fn configuration(&self) -> &ConfigurationProperties;
-    fn dispatchers(&self) -> HashMap<DispatchType, Arc<dyn DispatcherPlugin>>;
-    fn dispatcher(&self, ty: DispatchType) -> Option<Arc<dyn DispatcherPlugin>> {
-        self.dispatchers().get(&ty).map(Arc::clone)
+    fn dispatchers(&self) -> &HashMap<DispatchType, Box<dyn DispatcherPlugin>>;
+    fn dispatcher(&self, ty: DispatchType) -> Option<&Box<dyn DispatcherPlugin>> {
+        self.dispatchers().get(&ty)
     }
 }
 
