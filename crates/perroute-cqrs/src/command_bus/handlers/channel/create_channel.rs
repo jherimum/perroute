@@ -8,14 +8,14 @@ use crate::{
 use async_trait::async_trait;
 use derive_builder::Builder;
 use derive_getters::Getters;
-use perroute_commons::types::{actor::Actor, code::Code, id::Id};
+use perroute_commons::types::{actor::Actor, code::Code, id::Id, vars::Vars};
 use perroute_messaging::events::EventType;
 use perroute_storage::{
     models::channel::{Channel, ChannelBuilder, ChannelsQueryBuilder},
     query::FetchableModel,
 };
 use serde::Serialize;
-use sqlx::PgPool;
+use sqlx::{types::Json, PgPool};
 use tap::TapFallible;
 
 #[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
@@ -24,6 +24,8 @@ pub struct CreateChannelCommand {
     channel_id: Id,
     code: Code,
     name: String,
+    vars: Vars,
+    enabled: bool,
 }
 impl_command!(CreateChannelCommand, CommandType::CreateChannel);
 into_event!(
@@ -60,9 +62,10 @@ impl CommandHandler for CreateChannelCommandHandler {
         }
 
         ChannelBuilder::default()
-            .id(*cmd.channel_id())
-            .code(cmd.code().clone())
-            .name(cmd.name().clone())
+            .id(cmd.channel_id)
+            .code(cmd.code)
+            .name(cmd.name)
+            .vars(Json(cmd.vars))
             .enabled(true)
             .build()
             .tap_err(|e| {

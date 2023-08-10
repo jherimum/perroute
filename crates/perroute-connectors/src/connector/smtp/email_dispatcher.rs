@@ -1,7 +1,8 @@
 use super::connector::SmtpConnectorProperties;
 use crate::api::{
-    ConfigurationProperties, DispatchError, DispatchRequest, DispatchResponse, DispatchTemplate,
-    DispatchType, DispatcherPlugin, ResponseData, TemplateSupport,
+    ConfigurationProperties, ConfigurationPropertyBuilder, DispatchError, DispatchRequest,
+    DispatchResponse, DispatchTemplate, DispatchType, DispatcherPlugin, ResponseData,
+    TemplateSupport,
 };
 use derive_builder::Builder;
 use lettre::{
@@ -29,6 +30,36 @@ impl From<EmailDispatcherError> for DispatchError {
     }
 }
 
+fn properties() -> ConfigurationProperties {
+    [
+        ConfigurationPropertyBuilder::default()
+            .name("from")
+            .required(true)
+            .description("from Mailbox")
+            .build()
+            .unwrap(),
+        ConfigurationPropertyBuilder::default()
+            .name("cc")
+            .required(false)
+            .description("cc Mailbox list")
+            .build()
+            .unwrap(),
+        ConfigurationPropertyBuilder::default()
+            .name("bcc")
+            .required(false)
+            .description("bcc Mailbox list")
+            .build()
+            .unwrap(),
+        ConfigurationPropertyBuilder::default()
+            .name("reply_to")
+            .required(false)
+            .description("reply_to Mailbox list")
+            .build()
+            .unwrap(),
+    ]
+    .into()
+}
+
 #[derive(Debug, Deserialize, Builder, Serialize)]
 pub struct EmailDispatcherProperties {
     from: Mailbox,
@@ -51,7 +82,7 @@ pub struct EmailDispatcher {
 impl Default for EmailDispatcher {
     fn default() -> Self {
         Self {
-            configuration: ConfigurationProperties::default(),
+            configuration: properties(),
             dispatch_type: DispatchType::Email,
             template_support: TemplateSupport::Mandatory,
         }

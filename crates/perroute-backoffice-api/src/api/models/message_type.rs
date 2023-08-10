@@ -1,31 +1,36 @@
+use std::ops::Deref;
+
 use crate::{
     api::response::{CollectionResourceModel, Links, ResourceBuilder, SingleResourceModel},
     links::{Linkrelation, ResourceLink},
 };
 use derive_getters::Getters;
-use perroute_commons::types::{code::Code, id::Id};
+use perroute_commons::types::{code::Code, id::Id, vars::Vars};
 use perroute_storage::models::message_type::MessageType;
 use serde::Serialize;
 
 #[derive(Debug, serde::Deserialize, Clone, Getters)]
 pub struct CreateMessageTypeRequest {
-    channel_id: Id,
     code: Code,
-    description: String,
+    name: String,
+    enabled: bool,
+    vars: Vars,
 }
 
 #[derive(Debug, serde::Deserialize, Clone, Getters)]
 pub struct UpdateMessageTypeRequest {
-    description: String,
+    name: String,
     enabled: bool,
+    vars: Vars,
 }
 
 #[derive(Clone, Serialize, Debug)]
 pub struct MessageTypeResource {
     id: Id,
     code: Code,
-    description: String,
+    name: String,
     enabled: bool,
+    vars: Vars,
 }
 
 impl From<MessageType> for MessageTypeResource {
@@ -33,8 +38,9 @@ impl From<MessageType> for MessageTypeResource {
         Self {
             id: *value.id(),
             code: value.code().clone(),
-            description: value.description().clone(),
+            name: value.name().clone(),
             enabled: *value.enabled(),
+            vars: value.vars().deref().clone(),
         }
     }
 }

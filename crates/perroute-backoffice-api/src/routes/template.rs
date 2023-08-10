@@ -64,7 +64,6 @@ impl TemplateRouter {
     ) -> SingleResult {
         let cmd = CreateTemplateCommandBuilder::default()
             .template_id(new_id!())
-            .schema_id(body.schema_id)
             .name(body.name)
             .html(body.html.map(Into::into))
             .text(body.text.map(Into::into))
@@ -148,7 +147,6 @@ impl TemplateRouter {
     ) -> Result<R, ApiError> {
         let query = FindTemplateQueryBuilder::default()
             .template_id(path.3)
-            .schema_id(Some(path.2))
             .message_type_id(Some(path.1))
             .channel_id(Some(path.0))
             .build()

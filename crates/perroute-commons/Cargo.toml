@@ -37,7 +37,7 @@ derive-getters = { workspace = true }
 jsonschema = { workspace = true }
 actix-web = { workspace = true }
 handlebars = { workspace = true }
-lettre = { workspace = true }
+lettre = { workspace = true, features = ["serde"] }
 
 [dev-dependencies]
 temp-env = "0.3"

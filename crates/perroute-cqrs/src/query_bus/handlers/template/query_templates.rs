@@ -14,11 +14,7 @@ use crate::{
     },
 };
 
-query!(
-    QueryTemplatesQuery,
-    QueryType::QueryTemplates,
-    schema_id: Option<Id>
-);
+query!(QueryTemplatesQuery, QueryType::QueryTemplates,);
 
 pub struct QueryTemplatesQueryHandler;
 
@@ -36,10 +32,7 @@ impl QueryHandler for QueryTemplatesQueryHandler {
     ) -> Result<Self::Output, QueryBusError> {
         Template::query(
             ctx.pool(),
-            TemplatesQueryBuilder::default()
-                .schema_id(*query.schema_id())
-                .build()
-                .unwrap(),
+            TemplatesQueryBuilder::default().build().unwrap(),
         )
         .await
         .map_err(Into::into)

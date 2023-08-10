@@ -12,6 +12,7 @@ use perroute_commons::{
         actor::Actor,
         id::Id,
         json_schema::{JsonSchema, JsonSchemaError},
+        vars::Vars,
     },
 };
 use perroute_storage::{
@@ -21,13 +22,17 @@ use perroute_storage::{
     },
     query::FetchableModel,
 };
+use sqlx::types::Json;
+use tap::{TapFallible, TapOptional};
 
 command!(
     CreateSchemaCommand,
     CommandType::CreateSchema,
     schema_id: Id,
     message_type_id: Id,
-    schema: JsonSchema
+    schema: JsonSchema,
+    enabled: bool,
+    vars: Vars
 );
 into_event!(CreateSchemaCommand);
 
@@ -60,20 +65,26 @@ impl CommandHandler for CreateSchemaCommandHandler {
                 .unwrap(),
         )
         .await?
+        .tap_none(|| tracing::error!("message type not found"))
         .unwrap();
-        let actual_version = Schema::max_version_number(ctx.tx(), mt.id()).await?;
+
+        let actual_version = Schema::max_version_number(ctx.tx(), mt.id())
+            .await
+            .tap_err(|e| tracing::error!("Failed to calculate next version number: {e}"))?;
 
         SchemaBuilder::default()
             .id(new_id!())
-            //.schema(JsonSchema::try_from(cmd.schema().clone()).map_err(CreateSchemaError::from)?)
-            .schema(cmd.schema().clone())
+            .schema(Json(cmd.schema.clone()))
             .version(actual_version.increment())
             .published(false)
             .message_type_id(*mt.id())
+            .enabled(*cmd.enabled())
+            .vars(Json(cmd.vars.clone()))
             .build()
             .unwrap()
             .save(ctx.tx())
             .await
+            .tap_err(|e| tracing::error!("Failed to save schema: {e}"))
             .map_err(CommandBusError::from)
     }
 }

@@ -31,8 +31,6 @@ use perroute_cqrs::query_bus::handlers::schema::query_schemas::{
 };
 use perroute_storage::models::schema::Schema;
 use std::convert::identity;
-use tap::TapFallible;
-
 pub type SingleResult = ApiResult<SingleResourceModel<SchemaResource>>;
 pub type CollectionResult = ApiResult<CollectionResourceModel<SchemaResource>>;
 
@@ -92,11 +90,9 @@ impl SchemaRouter {
         let cmd = CreateSchemaCommandBuilder::default()
             .schema_id(new_id!())
             .message_type_id(*message_type.id())
-            .schema(
-                JsonSchema::try_from(body.schema)
-                    .map_err(ApiError::from)
-                    .tap_err(|e| tracing::error!("XXXXXXXXX:{e}"))?,
-            )
+            .schema(body.schema)
+            .enabled(body.enabled)
+            .vars(body.vars)
             .build()
             .unwrap();
 
@@ -124,7 +120,9 @@ impl SchemaRouter {
 
         let cmd = UpdateSchemaCommandBuilder::default()
             .schema_id(*schema.id())
-            .schema(JsonSchema::try_from(body.schema).map_err(ApiError::from)?)
+            .schema(body.schema)
+            .enabled(body.enabled)
+            .vars(body.vars)
             .build()
             .unwrap();
 

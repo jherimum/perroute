@@ -1,7 +1,6 @@
-use super::message_type::{MessageType, MessageTypeQueryBuilder};
 use crate::{
     log_query_error,
-    query::{FetchableModel, ModelQueryBuilder, Projection},
+    query::{ModelQueryBuilder, Projection},
     DatabaseModel,
 };
 use derive_builder::Builder;
@@ -51,43 +50,14 @@ pub struct Channel {
     code: Code,
     name: String,
     enabled: bool,
-
-    #[setters(skip)]
-    #[getter(skip)]
     vars: Json<Vars>,
 }
 
 impl Channel {
-    pub fn vars(&self) -> &Vars {
-        &self.vars
-    }
-
-    pub fn set_vars(mut self, vars: Vars) -> Self {
-        self.vars = Json(vars);
-        self
-    }
-
-    pub async fn message_type_by_code<'e, E: PgExecutor<'e>>(
-        &self,
-        exec: E,
-        code: Code,
-    ) -> Result<Option<MessageType>, sqlx::Error> {
-        // MessageType::find(
-        //     exec,
-        //     MessageTypeQueryBuilder::default()
-        //         .code(Some(code))
-        //         .channel_id(Some(self.id))
-        //         .build()
-        //         .unwrap(),
-        // )
-        // .await
-        todo!()
-    }
-
     #[tracing::instrument(name = "channel.save", skip(exec))]
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
         sqlx::query_as(
-            "INSERT INTO channels (id, code, name, enabled) VALUES($1, $2, $3, $4, $5) RETURNING *",
+            "INSERT INTO channels (id, code, name, enabled, vars) VALUES($1, $2, $3, $4, $5) RETURNING *",
         )
         .bind(self.id)
         .bind(self.code)

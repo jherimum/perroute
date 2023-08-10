@@ -1,5 +1,4 @@
-use std::fmt::Display;
-
+use super::{channel::Channel, message_type::MessageType};
 use crate::{
     query::{ModelQueryBuilder, Projection},
     DatabaseModel,
@@ -10,8 +9,7 @@ use derive_setters::Setters;
 use perroute_commons::types::{code::Code, id::Id, json_schema::JsonSchema, vars::Vars};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Json, FromRow, PgExecutor, QueryBuilder, Type};
-
-use super::{channel::Channel, message_type::MessageType};
+use std::fmt::Display;
 
 impl DatabaseModel for Schema {}
 
@@ -19,16 +17,15 @@ impl DatabaseModel for Schema {}
 pub struct SchemasQuery {
     #[builder(default)]
     id: Option<Id>,
+
     #[builder(default)]
     message_type_id: Option<Id>,
+
     #[builder(default)]
     message_type_code: Option<Code>,
-    #[builder(default)]
-    channel_id: Option<Id>,
+
     #[builder(default)]
     version: Option<Version>,
-    #[builder(default)]
-    channel_code: Option<Code>,
 }
 
 impl ModelQueryBuilder<Schema> for SchemasQuery {
@@ -44,15 +41,8 @@ impl ModelQueryBuilder<Schema> for SchemasQuery {
                 FROM schemas s 
                 INNER JOIN message_types mt 
                 ON s.message_type_id = mt.id 
-                INNER JOIN channels c
-                ON s.channel_id = c.id
                 WHERE 1=1 "#,
         );
-
-        if let Some(channel_code) = self.channel_code.clone() {
-            builder.push(" AND c.code = ");
-            builder.push_bind(channel_code);
-        }
 
         if let Some(message_type_code) = self.message_type_code.clone() {
             builder.push(" AND mt.code = ");
@@ -67,11 +57,6 @@ impl ModelQueryBuilder<Schema> for SchemasQuery {
         if let Some(message_type_id) = self.message_type_id {
             builder.push(" AND s.message_type_id = ");
             builder.push_bind(message_type_id);
-        }
-
-        if let Some(channel_id) = self.channel_id {
-            builder.push(" AND s.channel_id = ");
-            builder.push_bind(channel_id);
         }
 
         if let Some(version) = self.version {
@@ -131,7 +116,7 @@ impl Display for Version {
 pub struct Schema {
     #[setters(skip)]
     id: Id,
-    schema: JsonSchema,
+    schema: Json<JsonSchema>,
 
     #[setters(skip)]
     version: Version,
@@ -143,21 +128,10 @@ pub struct Schema {
 
     enabled: bool,
 
-    #[setters(skip)]
-    #[getter(skip)]
     vars: Json<Vars>,
 }
 
 impl Schema {
-    pub fn vars(&self) -> &Vars {
-        &self.vars
-    }
-
-    pub fn set_vars(mut self, vars: Vars) -> Self {
-        self.vars = Json(vars);
-        self
-    }
-
     pub async fn message_type<'e, E: PgExecutor<'e>>(
         &self,
         exec: E,
@@ -223,7 +197,7 @@ impl Schema {
     ) -> Result<Version, sqlx::Error> {
         sqlx::query_scalar::<_, Version>(
             r#"
-            SELECT MAX(version) as version
+            SELECT coalesce(MAX(version),0) as version
             FROM schemas 
             WHERE 
                 message_type_id= $1

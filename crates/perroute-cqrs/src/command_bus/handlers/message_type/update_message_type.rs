@@ -6,18 +6,21 @@ use crate::{
     },
     into_event,
 };
-use perroute_commons::types::{actor::Actor, id::Id};
+use perroute_commons::types::{actor::Actor, id::Id, vars::Vars};
 use perroute_storage::{
     models::message_type::{MessageType, MessageTypeQueryBuilder},
     query::FetchableModel,
 };
+use sqlx::types::Json;
 
 command!(
     UpdateMessageTypeCommand,
     CommandType::UpdateMessageType,
     message_type_id: Id,
-    description: String,
-    enabled: bool
+    name: String,
+    enabled: bool,
+    vars: Vars
+
 );
 into_event!(UpdateMessageTypeCommand);
 
@@ -51,8 +54,9 @@ impl CommandHandler for UpdateMessageTypeCommandHandler {
         )
         .await?
         .ok_or_else(|| UpdateMessageTypeError::MessageTypeNotFound(*cmd.message_type_id()))?
-        .set_description(cmd.description().clone())
+        .set_name(cmd.name().clone())
         .set_enabled(*cmd.enabled())
+        .set_vars(Json(cmd.vars().clone()))
         .update(ctx.tx())
         .await
         .map_err(CommandBusError::from)

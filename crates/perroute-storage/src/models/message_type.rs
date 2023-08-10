@@ -24,11 +24,8 @@ pub struct MessageType {
     #[setters(skip)]
     code: Code,
 
-    description: String,
+    name: String,
     enabled: bool,
-
-    #[setters(skip)]
-    #[getter(skip)]
     vars: Json<Vars>,
 }
 
@@ -61,14 +58,6 @@ impl ModelQueryBuilder<MessageType> for MessageTypeQuery {
 }
 
 impl MessageType {
-    pub fn vars(&self) -> &Vars {
-        &self.vars
-    }
-
-    pub fn set_vars(mut self, vars: Vars) -> Self {
-        self.vars = Json(vars);
-        self
-    }
     pub async fn schema_by_version<'e, E: PgExecutor<'e>>(
         &self,
         exec: E,
@@ -88,13 +77,13 @@ impl MessageType {
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
         sqlx::query_as(
             r#"
-                    INSERT INTO message_types (id, code, description, enabled, vars) 
+                    INSERT INTO message_types (id, code, name, enabled, vars) 
                     VALUES($1, $2, $3, $4, $5) RETURNING *
                 "#,
         )
         .bind(self.id)
         .bind(self.code)
-        .bind(self.description)
+        .bind(self.name)
         .bind(self.enabled)
         .bind(self.vars)
         .fetch_one(exec)
@@ -106,13 +95,13 @@ impl MessageType {
         sqlx::query_as(
             r#"
                     UPDATE message_types 
-                    SET description= $1, enabled= $2, vars= $4
-                    WHERE id= $4 RETURNING *
+                    SET name= $2, enabled= $3, vars= $4
+                    WHERE id= $1 RETURNING *
                 "#,
         )
-        .bind(self.description)
-        .bind(self.enabled)
         .bind(self.id)
+        .bind(self.name)
+        .bind(self.enabled)
         .bind(self.vars)
         .fetch_one(exec)
         .await

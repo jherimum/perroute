@@ -3,16 +3,19 @@ use crate::api::response::Links;
 use crate::api::response::ResourceBuilder;
 use crate::api::response::SingleResourceModel;
 use perroute_commons::types::id::Id;
+use perroute_connectors::api::DispatchType;
 use perroute_storage::models::template::Template;
 use serde::Serialize;
 
 #[derive(Debug, serde::Deserialize, Clone)]
 pub struct CreateTemplateRequest {
-    pub schema_id: Id,
+    pub channel_id: Id,
+    pub message_type_id: Id,
     pub name: String,
     pub html: Option<String>,
     pub text: Option<String>,
     pub subject: Option<String>,
+    pub dispatch_type: DispatchType,
 }
 
 #[derive(Debug, serde::Deserialize, Clone)]
@@ -30,6 +33,7 @@ pub struct TemplateResource {
     pub html: Option<String>,
     pub text: Option<String>,
     pub subject: Option<String>,
+    pub dispatch_type: DispatchType,
 }
 
 impl From<Template> for TemplateResource {
@@ -40,6 +44,7 @@ impl From<Template> for TemplateResource {
             html: template.html().clone().map(Into::into),
             text: template.text().clone().map(Into::into),
             subject: template.subject().clone().map(Into::into),
+            dispatch_type: *template.dispatch_type(),
         }
     }
 }

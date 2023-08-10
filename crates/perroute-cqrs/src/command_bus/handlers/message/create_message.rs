@@ -19,6 +19,7 @@ use perroute_storage::{
     models::{
         channel::{Channel, ChannelsQueryBuilder},
         message::{Message, MessageBuilder, Status},
+        message_type::{MessageType, MessageTypeQueryBuilder},
         schema::Version,
     },
     query::FetchableModel,
@@ -99,12 +100,17 @@ impl CommandHandler for CreateMessageCommandHandler {
             return Err(CreateMessageCommandError::ChannelDisabled(channel.code().clone()).into());
         }
 
-        let message_type = channel
-            .message_type_by_code(ctx.pool(), cmd.message_type_code().clone())
-            .await?
-            .ok_or_else(|| {
-                CreateMessageCommandError::MessageTypeNotFound(cmd.message_type_code().clone())
-            })?;
+        let message_type = MessageType::find(
+            ctx.pool(),
+            MessageTypeQueryBuilder::default()
+                .code(Some(cmd.message_type_code().clone()))
+                .build()
+                .unwrap(),
+        )
+        .await?
+        .ok_or_else(|| {
+            CreateMessageCommandError::MessageTypeNotFound(cmd.message_type_code().clone())
+        })?;
 
         if !message_type.enabled() {
             return Err(CreateMessageCommandError::MessageTypeDisabled(

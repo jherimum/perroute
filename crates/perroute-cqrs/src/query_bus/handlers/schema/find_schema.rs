@@ -50,11 +50,9 @@ impl QueryHandler for FindSchemaQueryHandler {
     ) -> Result<Self::Output, QueryBusError> {
         let query = SchemasQueryBuilder::default()
             .id(*query.schema_id())
-            .channel_id(*query.channel_id())
             .message_type_id(*query.message_type_id())
             .version(*query.version())
             .message_type_code(query.message_type_code().clone())
-            .channel_code(query.channel_code().clone())
             .build()
             .unwrap();
 

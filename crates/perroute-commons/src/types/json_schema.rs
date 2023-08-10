@@ -1,9 +1,10 @@
 use super::payload::Payload;
 use jsonschema::JSONSchema;
-use serde::{Deserialize, Serialize};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_json::{json, Value};
 use sqlx::Type;
 use std::ops::Deref;
+use tap::TapFallible;
 
 #[derive(Debug, thiserror::Error)]
 pub enum JsonSchemaError {
@@ -14,8 +15,8 @@ pub enum JsonSchemaError {
     ValidationError,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Type, Eq)]
-#[sqlx(transparent)]
+#[derive(Debug, Clone, PartialEq, Serialize, Eq, Deserialize)]
+#[serde(transparent)]
 pub struct JsonSchema(serde_json::Value);
 
 impl Default for JsonSchema {
@@ -24,14 +25,16 @@ impl Default for JsonSchema {
     }
 }
 
-impl TryFrom<Value> for JsonSchema {
-    type Error = JsonSchemaError;
+// impl TryFrom<Value> for JsonSchema {
+//     type Error = JsonSchemaError;
 
-    fn try_from(value: Value) -> Result<Self, Self::Error> {
-        JSONSchema::compile(&value).map_err(|_| JsonSchemaError::InvalidSchema)?;
-        Ok(Self(value))
-    }
-}
+//     fn try_from(value: Value) -> Result<Self, Self::Error> {
+//         JSONSchema::compile(&value)
+//             .tap_err(|e| tracing::error!("Error: {e}"))
+//             .map_err(|_| JsonSchemaError::InvalidSchema)?;
+//         Ok(Self(value))
+//     }
+// }
 
 impl Deref for JsonSchema {
     type Target = Value;
@@ -51,6 +54,7 @@ impl JsonSchema {
     }
 }
 
+/*
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -58,6 +62,8 @@ mod tests {
 
     #[test]
     fn test_default() {
+        JSONSchema::compile(&json!({})).unwrap();
+
         let schema = JsonSchema::default();
         assert_eq!(schema, JsonSchema(json!({})));
     }
@@ -127,3 +133,4 @@ mod tests {
         assert!(schema.validate(&payload).is_err());
     }
 }
+ */

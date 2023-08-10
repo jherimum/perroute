@@ -1,23 +1,28 @@
+use std::ops::Deref;
+
 use crate::{
     api::response::{CollectionResourceModel, Links, ResourceBuilder, SingleResourceModel},
     links::{Linkrelation, ResourceLink},
 };
-use perroute_commons::types::json_schema::JsonSchema;
+use perroute_commons::types::{json_schema::JsonSchema, vars::Vars};
 use perroute_storage::models::{
     message_type::MessageType,
     schema::{Schema, Version},
 };
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
 #[derive(Debug, Deserialize)]
 pub struct CreateSchemaRequest {
-    pub schema: Value,
+    pub schema: JsonSchema,
+    pub enabled: bool,
+    pub vars: Vars,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct UpdateSchemaRequest {
-    pub schema: Value,
+    pub schema: JsonSchema,
+    pub enabled: bool,
+    pub vars: Vars,
 }
 
 #[derive(Debug, Serialize, Clone)]
@@ -25,14 +30,16 @@ pub struct SchemaResource {
     schema: JsonSchema,
     version: Version,
     published: bool,
+    enabled: bool,
 }
 
 impl From<Schema> for SchemaResource {
     fn from(value: Schema) -> Self {
         Self {
-            schema: value.schema().clone(),
+            schema: value.schema().deref().clone(),
             version: *value.version(),
             published: *value.published(),
+            enabled: *value.enabled(),
         }
     }
 }

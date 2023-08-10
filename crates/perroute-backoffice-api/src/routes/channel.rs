@@ -48,6 +48,8 @@ impl ChannelRouter {
         let cmd = CreateChannelCommandBuilder::default()
             .code(body.code().clone())
             .name(body.name().clone())
+            .enabled(body.enabled().clone())
+            .vars(body.vars().clone())
             .build()
             .tap_err(|e| tracing::error!("Failed to build CreateChannelCommand: {e}"))
             .map_err(anyhow::Error::from)?;
@@ -103,6 +105,8 @@ impl ChannelRouter {
         let cmd = UpdateChannelCommandBuilder::default()
             .channel_id(*channel.id())
             .name(body.name)
+            .vars(body.vars)
+            .enabled(body.enabled)
             .build()
             .tap_err(|e| tracing::error!("Failed to build UpdateChannelCommand: {e}"))
             .map_err(anyhow::Error::from)?;

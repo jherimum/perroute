@@ -1,3 +1,4 @@
+use derive_builder::Builder;
 use derive_getters::Getters;
 use erased_serde::serialize_trait_object;
 use perroute_commons::types::{
@@ -23,6 +24,7 @@ pub enum DispatchType {
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, Deserialize, Serialize, Type)]
 pub enum ConnectorPluginId {
     Smtp,
+    Log,
 }
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Serialize, Type)]
@@ -35,16 +37,25 @@ pub enum TemplateSupport {
 #[derive(Serialize, Debug, PartialEq, Eq, Clone)]
 pub struct OptionValue {}
 
-#[derive(Debug, PartialEq, Eq, Clone, Serialize)]
+#[derive(Debug, PartialEq, Eq, Clone, Serialize, Builder)]
 pub struct ConfigurationProperty {
-    pub name: String,
-    pub required: bool,
-    pub description: String,
+    name: &'static str,
+    required: bool,
+    description: &'static str,
 }
 
 #[derive(Debug, Default)]
-pub struct ConfigurationProperties {
-    pub properties: Vec<ConfigurationProperty>,
+pub struct ConfigurationProperties(HashMap<&'static str, ConfigurationProperty>);
+
+impl<const N: usize> From<[ConfigurationProperty; N]> for ConfigurationProperties {
+    fn from(value: [ConfigurationProperty; N]) -> Self {
+        ConfigurationProperties(
+            value
+                .into_iter()
+                .map(|p| (p.name, p))
+                .collect::<HashMap<_, _>>(),
+        )
+    }
 }
 
 pub trait ConnectorPlugin: Sync + Send + Debug {

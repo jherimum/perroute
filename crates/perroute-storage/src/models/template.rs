@@ -19,10 +19,10 @@ impl DatabaseModel for Template {}
 pub struct TemplatesQuery {
     #[builder(default)]
     id: Option<Id>,
-    #[builder(default)]
-    schema_id: Option<Id>,
+
     #[builder(default)]
     message_type_id: Option<Id>,
+
     #[builder(default)]
     channel_id: Option<Id>,
 }
@@ -36,11 +36,6 @@ impl ModelQueryBuilder<Template> for TemplatesQuery {
         if let Some(id) = self.id {
             builder.push(" AND id = ");
             builder.push_bind(id);
-        }
-
-        if let Some(schema_id) = self.schema_id {
-            builder.push(" AND schema_id = ");
-            builder.push_bind(schema_id);
         }
 
         if let Some(channel_id) = self.channel_id {
@@ -68,12 +63,12 @@ pub struct Template {
     subject: Option<TemplateSnippet>,
     html: Option<TemplateSnippet>,
     text: Option<TemplateSnippet>,
-    #[setters(skip)]
-    schema_id: Id,
-    #[setters(skip)]
-    message_type_id: Id,
+
     #[setters(skip)]
     channel_id: Id,
+
+    #[setters(skip)]
+    message_type_id: Id,
 
     #[setters(skip)]
     dispatch_type: DispatchType,
@@ -109,23 +104,23 @@ impl Template {
     }
 
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
-        sqlx::query_as(r#"
-        INSERT INTO templates (id, name, subject, text, html, schema_id, message_type_id, channel_id, vars) 
-        VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)
-        RETURNING *"#
-    )
-    .bind(self.id)
-    .bind(self.name)
-    .bind(self.subject)
-    .bind(self.text)
-    .bind(self.html)
-    .bind(self.schema_id)
-    .bind(self.message_type_id)
-    .bind(self.channel_id)
-    .bind(self.vars)
-    .fetch_one(exec)
-    .await
-    .tap_err(log_query_error!())
+        sqlx::query_as(
+            r#"
+        INSERT INTO templates (id, name, subject, text, html, channel_id, vars, dispatch_type) 
+        VALUES($1, $2, $3, $4, $5, $6, $7, $8)
+        RETURNING *"#,
+        )
+        .bind(self.id)
+        .bind(self.name)
+        .bind(self.subject)
+        .bind(self.text)
+        .bind(self.html)
+        .bind(self.channel_id)
+        .bind(self.vars)
+        .bind(self.dispatch_type)
+        .fetch_one(exec)
+        .await
+        .tap_err(log_query_error!())
     }
 
     pub async fn update<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {

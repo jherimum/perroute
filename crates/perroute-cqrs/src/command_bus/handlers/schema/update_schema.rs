@@ -1,9 +1,3 @@
-use perroute_commons::types::{actor::Actor, id::Id, json_schema::JsonSchema};
-use perroute_storage::{
-    models::schema::{Schema, SchemasQueryBuilder},
-    query::FetchableModel,
-};
-
 use crate::{
     command,
     command_bus::{
@@ -12,12 +6,20 @@ use crate::{
     },
     into_event,
 };
+use perroute_commons::types::{actor::Actor, id::Id, json_schema::JsonSchema, vars::Vars};
+use perroute_storage::{
+    models::schema::{Schema, SchemasQueryBuilder},
+    query::FetchableModel,
+};
+use sqlx::types::Json;
 
 command!(
     UpdateSchemaCommand,
     CommandType::UpdateSchema,
     schema_id: Id,
-    schema: JsonSchema
+    schema: JsonSchema,
+    enabled: bool,
+    vars: Vars
 );
 into_event!(UpdateSchemaCommand);
 
@@ -45,7 +47,9 @@ impl CommandHandler for UpdateSchemaCommandHandler {
         )
         .await?
         .unwrap()
-        .set_schema(cmd.schema().clone())
+        .set_schema(Json(cmd.schema().clone()))
+        .set_enabled(*cmd.enabled())
+        .set_vars(Json(cmd.vars().clone()))
         .update(ctx.tx())
         .await
         .map_err(CommandBusError::from)

@@ -7,26 +7,22 @@ use crate::{
 };
 use derive_builder::Builder;
 use derive_getters::Getters;
-use perroute_commons::{
-    new_id,
-    types::{actor::Actor, code::Code, id::Id, json_schema::JsonSchema},
-};
+use perroute_commons::types::{actor::Actor, code::Code, id::Id, vars::Vars};
 use perroute_storage::{
-    models::{
-        message_type::{MessageType, MessageTypeBuilder, MessageTypeQueryBuilder},
-        schema::SchemaBuilder,
-        schema::Version,
-    },
+    models::message_type::{MessageType, MessageTypeBuilder, MessageTypeQueryBuilder},
     query::FetchableModel,
 };
 use serde::Serialize;
+use sqlx::types::Json;
 
 #[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
 pub struct CreateMessageTypeCommand {
     #[builder(default)]
     message_type_id: Id,
     code: Code,
-    description: String,
+    name: String,
+    enabled: bool,
+    vars: Vars,
 }
 
 impl_command!(CreateMessageTypeCommand, CommandType::CreateMessageType);
@@ -68,24 +64,13 @@ impl CommandHandler for CreateMessageTypeCommandHandler {
         let message_type = MessageTypeBuilder::default()
             .id(*cmd.message_type_id())
             .code(cmd.code().clone())
-            .description(cmd.description().clone())
+            .name(cmd.name().clone())
             .enabled(false)
+            .vars(Json(cmd.vars().clone()))
             .build()
             .unwrap()
             .save(ctx.tx())
             .await?;
-
-        SchemaBuilder::default()
-            .id(new_id!())
-            .schema(JsonSchema::default())
-            .version(Version::default())
-            .message_type_id(*cmd.message_type_id())
-            .published(false)
-            .build()
-            .unwrap()
-            .save(ctx.tx())
-            .await?;
-
         Ok(message_type)
     }
 }

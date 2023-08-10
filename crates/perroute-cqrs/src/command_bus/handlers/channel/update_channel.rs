@@ -8,18 +8,21 @@ use crate::{
 };
 use async_trait::async_trait;
 use derive_new::new;
-use perroute_commons::types::{actor::Actor, id::Id};
+use perroute_commons::types::{actor::Actor, id::Id, vars::Vars};
 use perroute_storage::{
     models::channel::{Channel, ChannelsQueryBuilder},
     query::FetchableModel,
 };
+use sqlx::types::Json;
 use tap::TapFallible;
 
 command!(
     UpdateChannelCommand,
     CommandType::UpdateChannel,
     channel_id: Id,
-    name: String
+    name: String,
+    vars: Vars,
+    enabled: bool
 );
 into_event!(UpdateChannelCommand);
 
@@ -56,6 +59,8 @@ impl CommandHandler for UpdateChannelCommandHandler {
 
         channel
             .set_name(command.name().clone())
+            .set_vars(Json(command.vars().clone()))
+            .set_enabled(*command.enabled())
             .update(ctx.tx())
             .await
             .tap_err(|e| {

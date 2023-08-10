@@ -1,6 +1,7 @@
 use super::email_dispatcher::EmailDispatcher;
 use crate::api::{
-    ConfigurationProperties, ConnectorPlugin, ConnectorPluginId, DispatchType, DispatcherPlugin,
+    ConfigurationProperties, ConfigurationPropertyBuilder, ConnectorPlugin, ConnectorPluginId,
+    DispatchType, DispatcherPlugin,
 };
 use derive_builder::Builder;
 use derive_getters::Getters;
@@ -26,12 +27,10 @@ pub struct SmtpConnector {
 
 impl Default for SmtpConnector {
     fn default() -> Self {
-        let mut plugins: HashMap<DispatchType, Box<dyn DispatcherPlugin>> = HashMap::new();
-        plugins.insert(DispatchType::Email, Box::new(EmailDispatcher::default()));
         Self {
             id: ConnectorPluginId::Smtp,
-            configuration: ConfigurationProperties::default(),
-            plugins,
+            configuration: properties(),
+            plugins: dispatchers(),
         }
     }
 }
@@ -48,4 +47,52 @@ impl ConnectorPlugin for SmtpConnector {
     fn dispatchers(&self) -> &HashMap<DispatchType, Box<dyn DispatcherPlugin>> {
         &self.plugins
     }
+}
+
+fn dispatchers() -> HashMap<DispatchType, Box<dyn DispatcherPlugin>> {
+    let mut plugins: HashMap<DispatchType, Box<dyn DispatcherPlugin>> = HashMap::new();
+    plugins.insert(DispatchType::Email, Box::new(EmailDispatcher::default()));
+    plugins
+}
+
+fn properties() -> ConfigurationProperties {
+    [
+        ConfigurationPropertyBuilder::default()
+            .name("username")
+            .required(true)
+            .description("SMTP username")
+            .build()
+            .unwrap(),
+        ConfigurationPropertyBuilder::default()
+            .name("password")
+            .required(true)
+            .description("SMTP password")
+            .build()
+            .unwrap(),
+        ConfigurationPropertyBuilder::default()
+            .name("port")
+            .required(true)
+            .description("SMTP port")
+            .build()
+            .unwrap(),
+        ConfigurationPropertyBuilder::default()
+            .name("host")
+            .required(true)
+            .description("SMTP host")
+            .build()
+            .unwrap(),
+        ConfigurationPropertyBuilder::default()
+            .name("timeout")
+            .required(false)
+            .description("timeout in miliseconds")
+            .build()
+            .unwrap(),
+        ConfigurationPropertyBuilder::default()
+            .name("starttls")
+            .required(true)
+            .description("starttls flag")
+            .build()
+            .unwrap(),
+    ]
+    .into()
 }

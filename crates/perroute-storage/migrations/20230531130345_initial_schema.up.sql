@@ -18,9 +18,9 @@ CREATE TABLE channels (
 create table message_types(
     id          uuid            not null,
     code        varchar(50)     not null,    
-    description varchar(500)    not null,
+    name        varchar(500)    not null,
     enabled     boolean         not null,
-    vars    jsonb   NOT NULL,
+    vars        jsonb           NOT NULL,
     CONSTRAINT message_types_pk PRIMARY KEY (id),
     CONSTRAINT message_types_code UNIQUE (code)
 );
@@ -40,26 +40,31 @@ create table schemas(
     
 );
 
+
 create table templates(
     id              uuid            not null,
     name            varchar(255)    not null,
     subject         text            null,
     text            text            null,
     html            text            null,
-    schema_id       uuid            not null,
-    message_type_id uuid            NOT NULL,
-    channel_id      uuid            NOT NULL,
+    channel_id      uuid            not null,
+    message_type_id uuid            not null,
     vars            jsonb           NOT NULL,
     dispatch_type   dispatch_type   not null,
 
     constraint templates_pk primary key (id),
-    constraint templates_schema_fk          foreign key (schema_id)        references schemas(id),
-    CONSTRAINT templates_message_type_fk    FOREIGN KEY (message_type_id)   REFERENCES message_types(id),
-    CONSTRAINT templates_channel_fk         FOREIGN KEY (channel_id)        REFERENCES channels(id)
+    CONSTRAINT templates_channel_fk         FOREIGN KEY (channel_id)        REFERENCES channels(id),
+    CONSTRAINT templates_message_type_fk    FOREIGN KEY (message_type_id)   REFERENCES message_types(id)
 );
 
+create table template_compabilities(
+    template_id     uuid            not null,
+    schema_id       uuid            not null,
 
-
+    constraint template_compabilities_pk            primary key (template_id, schema_id),
+    CONSTRAINT template_compabilities_template_fk   FOREIGN KEY (template_id)   REFERENCES templates(id),
+    CONSTRAINT template_compabilities_schema_fk     FOREIGN KEY (schema_id)     REFERENCES schemas(id)
+);
 
 create table connections(
     id          uuid    not null,
@@ -127,7 +132,7 @@ create table message_dispatches(
 create table events(   
     id              uuid                    not null,
     entity_id       uuid                    not null,
-    event_type      varchar                 not null,    
+    event_type      text                    not null,    
     created_at      timestamp               not null,
     scheduled_to    timestamp               not null,
     consumed_at     timestamp               null,

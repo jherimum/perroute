@@ -9,20 +9,14 @@ use crate::{
 use async_trait::async_trait;
 use perroute_commons::types::{actor::Actor, id::Id, template::TemplateSnippet};
 use perroute_connectors::api::DispatchType;
-use perroute_storage::{
-    models::{
-        schema::{Schema, SchemasQueryBuilder},
-        template::{Template, TemplateBuilder},
-    },
-    query::FetchableModel,
-};
+use perroute_storage::models::template::{Template, TemplateBuilder};
 
 command!(
     CreateTemplateCommand,
     CommandType::CreateTemplate,
     template_id: Id,
-    schema_id: Id,
     channel_id: Id,
+    message_type_id: Id,
     name: String,
     html: Option<TemplateSnippet>,
     text: Option<TemplateSnippet>,
@@ -49,26 +43,15 @@ impl CommandHandler for CreateTemplateCommandHandler {
         actor: &Actor,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
-        let schema = Schema::find(
-            ctx.pool(),
-            SchemasQueryBuilder::default()
-                .id(Some(*cmd.schema_id()))
-                .build()
-                .unwrap(),
-        )
-        .await?
-        .unwrap();
-
         TemplateBuilder::default()
             .id(cmd.template_id)
             .name(cmd.name)
             .subject(cmd.subject)
             .text(cmd.text)
             .html(cmd.html)
-            .schema_id(cmd.schema_id)
-            .message_type_id(*schema.message_type_id())
             .channel_id(cmd.channel_id)
             .dispatch_type(cmd.dispatch_type)
+            .message_type_id(cmd.message_type_id)
             .build()
             .unwrap()
             .save(ctx.pool())

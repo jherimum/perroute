@@ -77,7 +77,9 @@ impl MessageTypeRouter {
     ) -> SingleResult {
         let cmd = CreateMessageTypeCommandBuilder::default()
             .code(body.code().clone())
-            .description(body.description().clone())
+            .name(body.name().clone())
+            .vars(body.vars().clone())
+            .enabled(*body.enabled())
             .build()
             .tap_err(|e| tracing::error!("Failed to build CreateMessageTypeCommand:{e}"))
             .map_err(anyhow::Error::from)?;
@@ -105,8 +107,9 @@ impl MessageTypeRouter {
 
         let cmd = UpdateMessageTypeCommandBuilder::default()
             .message_type_id(*message_type.id())
-            .description(body.description().clone())
+            .name(body.name().clone())
             .enabled(*body.enabled())
+            .vars(body.vars().clone())
             .build()
             .tap_err(|e| tracing::error!("Failed to build UpdateMessageTypeCommand: {e}"))
             .map_err(anyhow::Error::from)?;

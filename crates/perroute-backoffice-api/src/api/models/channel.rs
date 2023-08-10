@@ -4,19 +4,24 @@ use crate::{
 };
 use actix_web::HttpRequest;
 use derive_getters::Getters;
-use perroute_commons::types::{code::Code, id::Id};
+use perroute_commons::types::{code::Code, id::Id, vars::Vars};
 use perroute_storage::models::channel::Channel;
 use serde::{Deserialize, Serialize};
+use std::ops::Deref;
 
 #[derive(Debug, serde::Deserialize, Clone, Getters)]
 pub struct CreateChannelRequest {
     code: Code,
     name: String,
+    vars: Vars,
+    enabled: bool,
 }
 
 #[derive(Debug, serde::Deserialize, Clone)]
 pub struct UpdateChannelRequest {
     pub name: String,
+    pub vars: Vars,
+    pub enabled: bool,
 }
 
 #[derive(Clone, Serialize, Debug, Deserialize, PartialEq, Eq)]
@@ -24,6 +29,8 @@ pub struct ChannelResource {
     id: Id,
     code: Code,
     name: String,
+    vars: Vars,
+    enabled: bool,
 }
 
 impl From<Channel> for ChannelResource {
@@ -32,6 +39,8 @@ impl From<Channel> for ChannelResource {
             id: value.id().to_owned(),
             code: value.code().clone(),
             name: value.name().clone(),
+            vars: value.vars().deref().clone(),
+            enabled: *value.enabled(),
         }
     }
 }
