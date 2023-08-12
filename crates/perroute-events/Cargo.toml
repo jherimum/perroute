@@ -1,0 +1,33 @@
+[package]
+name = "perroute-events"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+perroute-storage = { path = "../../crates/perroute-storage" }
+perroute-messaging = { path = "../../crates/perroute-messaging" }
+perroute-commons = { path = "../../crates/perroute-commons" }
+serde = { version = "1", features = ["derive"] }
+sqlx = { version = "0.6", features = [
+    "postgres",
+    "runtime-tokio-rustls",
+    "chrono",
+    "uuid",
+] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+anyhow = "1"
+dotenv = "0.15"
+lapin = "2"
+tap = "1"
+futures = "0.3"
+tokio-util = "0.7.8"
+executor-trait = "2.1.0"
+tokio-executor-trait = "2.1.1"
+tokio-reactor-trait = "1.1.0"
+tracing = "0.1"
+chrono = "0.4.26"
+async-trait = "0.1.72"
+async-recursion = "1.0.4"
+tokio-graceful-shutdown = "0.13.0"

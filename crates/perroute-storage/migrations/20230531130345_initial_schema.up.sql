@@ -1,0 +1,164 @@
+CREATE TABLE passwords (
+	id 		uuid NOT NULL,
+	user_id uuid NOT NULL,
+	hash varchar NOT NULL,
+	CONSTRAINT passwords_pk	PRIMARY KEY(id)
+);
+
+CREATE TABLE users (
+	id 			uuid 	NOT NULL,
+	email 		varchar	NOT NULL,
+	password_id uuid 	NOT NULL,
+	CONSTRAINT users_pk 			PRIMARY KEY (id),
+	CONSTRAINT users_email 			UNIQUE (email),
+	CONSTRAINT users_password_fk	FOREIGN KEY (password_id) REFERENCES passwords(id)
+);
+
+
+CREATE TYPE actor_type AS ENUM ('user', 'system', 'service');
+
+CREATE TABLE command_logs(
+	id 				uuid 		NOT NULL,
+	command_type	varchar 	NOT NULL,
+	actor_type 		actor_type	NOT NULL,
+	actor_id 		uuid 		NULL,
+	payload 		jsonb 		NOT NULL,
+	error 			varchar 	NULL,
+	created_at 		timestamp 	NOT NULL DEFAULT NOW(),
+
+	CONSTRAINT command_logs_pk	PRIMARY KEY (id)
+
+);
+
+CREATE TABLE channels (
+	id 		uuid 	NOT NULL,
+	code 	varchar	NOT NULL,
+	name 	varchar NULL,
+    enabled boolean NOT NULL,
+	CONSTRAINT channels_pk 		PRIMARY KEY (id),
+	CONSTRAINT channels_code	UNIQUE (code)
+);
+
+create table message_types(
+    id          uuid            not null,
+    code        varchar(50)     not null,    
+    description varchar(500)    not null,
+    enabled     boolean         not null,
+    channel_id  uuid            not null,    
+    CONSTRAINT message_types_pk PRIMARY KEY (id),
+    CONSTRAINT message_types_code UNIQUE (code),
+    CONSTRAINT message_types_channel_fk FOREIGN KEY (channel_id) REFERENCES channels(id)
+);
+
+create table schemas(
+    id              uuid    NOT NULL,
+    schema          jsonb   NOT NULL,
+    version         integer NOT NULL,
+    published       boolean NOT NULL,    
+    message_type_id uuid    NOT NULL,
+    channel_id      uuid    NOT NULL,
+    enabled         boolean NOT NULL,
+
+    CONSTRAINT schemas_pk                   PRIMARY KEY (id),
+    CONSTRAINT schemas_message_type_fk      FOREIGN KEY (message_type_id)   REFERENCES message_types(id),
+    CONSTRAINT schemas_channel_fk           FOREIGN KEY (channel_id)        REFERENCES channels(id),
+    CONSTRAINT schemas_message_type_number  UNIQUE      (message_type_id, version)
+    
+);
+
+create table templates(
+    id              uuid            not null,
+    name            varchar(255)    not null,
+    subject         text            null,
+    text            text            null,
+    html            text            null,
+    schema_id       uuid            not null,
+    message_type_id uuid            NOT NULL,
+    channel_id      uuid            NOT NULL,
+
+    constraint templates_pk primary key (id),
+    constraint templates_schema_fk          foreign key (schema_id)        references schemas(id),
+    CONSTRAINT templates_message_type_fk    FOREIGN KEY (message_type_id)   REFERENCES message_types(id),
+    CONSTRAINT templates_channel_fk         FOREIGN KEY (channel_id)        REFERENCES channels(id)
+);
+
+
+
+CREATE TYPE dispatch_type AS ENUM ('email', 'sms', 'push');
+
+create table connections(
+    id          uuid    not null,
+    name        varchar not null,
+    plugin_id   varchar not null,
+    properties  jsonb   not null,
+    enabled     boolean not null,
+
+    constraint connections_pk primary key (id)
+);
+
+create table routes(
+    id                      uuid            not null,
+    name                    varchar         not null,
+    connection_id           uuid            not null,
+    template_id            uuid                null,
+    dispatch_type           dispatch_type   not null,
+    dispatcher_properties   jsonb           not null,
+
+    channel_id              uuid            not null,
+    message_type_id         uuid            not null,
+    schema_id               uuid            not null,
+    
+    constraint routes_pk primary key (id),
+    constraint routes_connection_fk foreign key (connection_id) references connections(id),
+    constraint routes_channel_fk foreign key (channel_id) references channels(id),
+    constraint routes_message_type_fk foreign key (message_type_id) references message_types(id),
+    constraint routes_schema_fk foreign key (schema_id) references schemas(id),
+    constraint routes_template_fk foreign key (template_id) references templates(id)
+);
+
+
+CREATE TYPE message_status AS ENUM ('pending', 'distributed');
+
+create table messages(
+    id uuid not null,
+    payload jsonb not null,
+    recipient jsonb not null,
+    exclude_dispatcher_types jsonb not null,
+    include_dispatcher_types jsonb not null,
+    status message_status not null,
+    scheduled_to timestamp null,
+    schema_id uuid not null,
+    message_type_id uuid not null,
+    channel_id uuid not null,
+
+    CONSTRAINT messages_pk PRIMARY KEY (id),
+    CONSTRAINT messages_schema_fk FOREIGN KEY (schema_id) REFERENCES schemas(id),
+    constraint messages_message_type_fk FOREIGN KEY (message_type_id) REFERENCES message_types(id),
+    constraint messages_channel_fk FOREIGN KEY (channel_id) REFERENCES channels(id)
+);
+
+
+CREATE TYPE message_dispatch_status AS ENUM ('pending', 'queued' ,'success', 'failed');
+
+create table message_dispatches(
+    id              uuid                    not null,
+    message_id      uuid                    not null,
+    route_id        uuid                    not null,    
+    status          message_dispatch_status not null,
+    result          jsonb                   not null,
+
+    constraint message_dispatches_pk primary key (id),
+    constraint message_dispatches_route_fk foreign key (route_id) references routes(id),
+    constraint message_dispatches_message_fk foreign key (message_id) references messages(id)
+);
+
+
+create table events(   
+    id              uuid                    not null,
+    entity_id       uuid                    not null,
+    event_type      varchar                 not null,    
+    created_at      timestamp               not null,
+    scheduled_to    timestamp               not null,
+    consumed_at     timestamp               null,
+    constraint events_pk primary key (id)
+);
