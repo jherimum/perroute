@@ -1,4 +1,6 @@
-use crate::models::connection::Connection;
+use super::connection::Connection;
+use super::schema::Schema;
+use super::{business_unit::BusinessUnit, channel::Channel};
 use crate::{
     query::{ModelQueryBuilder, Projection},
     DatabaseModel,
@@ -7,16 +9,13 @@ use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::types::{id::Id, properties::Properties};
-use perroute_connectors::api::DispatchType;
 use sqlx::{types::Json, FromRow, PgExecutor, Postgres, QueryBuilder};
-
-use super::{channel::Channel, message_type::MessageType, template::Template};
 
 #[derive(Debug, Default, Builder)]
 #[builder(default)]
 pub struct RouteQuery {
     id: Option<Id>,
-    channel_id: Option<Id>,
+    bu_id: Option<Id>,
     message_type_id: Option<Id>,
     schema_id: Option<Id>,
     connection_id: Option<Id>,
@@ -33,9 +32,9 @@ impl ModelQueryBuilder<Route> for RouteQuery {
             builder.push_bind(id);
         }
 
-        if let Some(channel_id) = &self.channel_id {
-            builder.push(" and channel_id = ");
-            builder.push_bind(channel_id);
+        if let Some(bu_id) = &self.bu_id {
+            builder.push(" and bu_id = ");
+            builder.push_bind(bu_id);
         }
 
         if let Some(message_type_id) = &self.message_type_id {
@@ -71,34 +70,34 @@ impl DatabaseModel for Route {}
 pub struct Route {
     #[setters(skip)]
     id: Id,
-
-    name: String,
-    #[setters(skip)]
-    connection_id: Id,
-
-    template_id: Option<Id>,
-
-    dispatch_type: DispatchType,
-
-    dispatcher_properties: Json<Properties>,
-
-    enabled: bool,
-
-    #[setters(skip)]
-    channel_id: Id,
-
-    #[setters(skip)]
-    message_type_id: Id,
-
     #[setters(skip)]
     schema_id: Id,
+    #[setters(skip)]
+    channel_id: Id,
+    #[setters(skip)]
+    bu_id: Id,
+
+    properties: Json<Properties>,
 }
 
 impl Route {
-    pub async fn message_type<'e, E: PgExecutor<'e>>(
-        &self,
-        exec: E,
-    ) -> Result<MessageType, sqlx::Error> {
+    pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
+        todo!()
+    }
+
+    pub async fn update<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
+        todo!()
+    }
+
+    pub async fn delete<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<bool, sqlx::Error> {
+        todo!()
+    }
+
+    pub async fn schema<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Schema, sqlx::Error> {
+        todo!()
+    }
+
+    pub async fn channel<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Channel, sqlx::Error> {
         todo!()
     }
 
@@ -109,14 +108,7 @@ impl Route {
         todo!()
     }
 
-    pub async fn template<'e, E: PgExecutor<'e>>(
-        &self,
-        exec: E,
-    ) -> Result<Option<Template>, sqlx::Error> {
-        todo!()
-    }
-
-    pub async fn channel<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Channel, sqlx::Error> {
+    pub async fn bu<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<BusinessUnit, sqlx::Error> {
         todo!()
     }
 }

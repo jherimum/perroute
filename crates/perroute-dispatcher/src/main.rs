@@ -5,7 +5,6 @@ use perroute_commons::{
     types::{
         id::Id,
         template::{TemplateData, TemplateError, TemplateRender},
-        vars::Vars,
     },
 };
 use perroute_connectors::{
@@ -54,25 +53,23 @@ async fn dispatch<'tr>(
         bail!("Message dispatch is not pending");
     }
     let message = message_dispatch.message(pool).await?;
-    let channel = message.channel(pool).await?;
+    let bu = message.bu(pool).await?;
     let message_type = message.message_type(pool).await?;
     let schema = message.schema(pool).await?;
     let route = message_dispatch.route(pool).await?;
+    let channel = route.channel(pool).await?;
     let connection = route.connection(pool).await?;
     let connector_plugin = plugins.get(connection.plugin_id()).unwrap();
-    let dispatcher = connector_plugin.dispatcher(*route.dispatch_type()).unwrap();
-    let template = route.template(pool).await?;
+    let dispatcher = connector_plugin
+        .dispatcher(*channel.dispatch_type())
+        .unwrap();
+    let template = schema
+        .active_template(pool, *channel.dispatch_type())
+        .await
+        .unwrap();
 
-    let vars = channel
-        .vars()
-        .merge(message_type.vars())
-        .merge(schema.vars())
-        .merge(
-            template
-                .as_ref()
-                .map(|t| t.vars())
-                .unwrap_or(&Vars::default()),
-        );
+    let vars = bu.vars().merge(message_type.vars()).merge(schema.vars());
+    //.merge(template.map(|t| t.vars().deref()).unwrap_or_default());
 
     let template = template.map(|t| DefaultDispatchTemplate::new(t, template_render));
     let template = template.as_ref().map(|t| t as &dyn DispatchTemplate);
@@ -80,14 +77,15 @@ async fn dispatch<'tr>(
     let req = DispatchRequest {
         id: message_dispatch_id,
         connection_properties: connection.properties(),
-        dispatch_properties: route.dispatcher_properties(),
+        dispatch_properties: channel.properties(),
         template,
         recipient: message.recipient().as_ref(),
         payload: message.payload(),
         vars: &vars,
+        subject: None,
     };
 
-    let result = dispatcher.dispatch(&req);
+    let result = dispatcher.dispatch(&req).await;
 
     Ok(())
 
@@ -107,14 +105,6 @@ impl<'tr> DefaultDispatchTemplate<'tr> {
 }
 
 impl<'tr> DispatchTemplate for DefaultDispatchTemplate<'tr> {
-    fn render_subject(&self, data: &TemplateData) -> Result<Option<String>, TemplateError> {
-        self.template
-            .subject()
-            .as_ref()
-            .map(|s| self.render.render(s.as_ref(), data))
-            .transpose()
-    }
-
     fn render_text(&self, data: &TemplateData) -> Result<Option<String>, TemplateError> {
         self.template
             .text()

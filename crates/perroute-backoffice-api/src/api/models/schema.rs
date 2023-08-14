@@ -13,21 +13,21 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize)]
 pub struct CreateSchemaRequest {
-    pub schema: JsonSchema,
+    pub value: JsonSchema,
     pub enabled: bool,
     pub vars: Vars,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct UpdateSchemaRequest {
-    pub schema: JsonSchema,
+    pub value: JsonSchema,
     pub enabled: bool,
     pub vars: Vars,
 }
 
 #[derive(Debug, Serialize, Clone)]
 pub struct SchemaResource {
-    schema: JsonSchema,
+    value: JsonSchema,
     version: Version,
     published: bool,
     enabled: bool,
@@ -36,7 +36,7 @@ pub struct SchemaResource {
 impl From<Schema> for SchemaResource {
     fn from(value: Schema) -> Self {
         Self {
-            schema: value.schema().deref().clone(),
+            value: value.value().deref().clone(),
             version: *value.version(),
             published: *value.published(),
             enabled: *value.enabled(),

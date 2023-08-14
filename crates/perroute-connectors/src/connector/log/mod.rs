@@ -59,6 +59,7 @@ impl ConnectorPlugin for LogConnectorPlugin {
 #[derive(Debug)]
 pub struct LogDispatcherPlugin(DispatchType, ConfigurationProperties);
 
+#[async_trait::async_trait]
 impl DispatcherPlugin for LogDispatcherPlugin {
     fn template_support(&self) -> TemplateSupport {
         TemplateSupport::Mandatory
@@ -72,7 +73,7 @@ impl DispatcherPlugin for LogDispatcherPlugin {
         &self.1
     }
 
-    fn dispatch(
+    async fn dispatch(
         &self,
         req: &crate::api::DispatchRequest,
     ) -> Result<crate::api::DispatchResponse, crate::api::DispatchError> {

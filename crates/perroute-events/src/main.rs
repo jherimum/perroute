@@ -49,7 +49,7 @@ async fn main() -> Result<(), anyhow::Error> {
         tag: "read",
         queue: "read_events",
         exchange: "perroute.events",
-        routing_key: "ChannelCreated",
+        routing_key: "BusinessUnitCreated",
         threads: 4,
         function: |e| tracing::info!("Event consumed: {e:?}"),
     }

@@ -25,6 +25,7 @@ pub enum DispatchType {
 pub enum ConnectorPluginId {
     Smtp,
     Log,
+    SendGrid,
 }
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Serialize, Type)]
@@ -37,11 +38,20 @@ pub enum TemplateSupport {
 #[derive(Serialize, Debug, PartialEq, Eq, Clone)]
 pub struct OptionValue {}
 
+#[derive(Debug, PartialEq, Eq, Clone, Serialize)]
+pub enum ConfigurationPropertyType {
+    String,
+    Number,
+    Boolean,
+}
+
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Builder)]
 pub struct ConfigurationProperty {
     name: &'static str,
     required: bool,
     description: &'static str,
+    property_type: ConfigurationPropertyType,
+    multiple: bool,
 }
 
 #[derive(Debug, Default)]
@@ -67,8 +77,7 @@ pub trait ConnectorPlugin: Sync + Send + Debug {
     }
 }
 
-pub trait DispatchTemplate {
-    fn render_subject(&self, data: &TemplateData) -> Result<Option<String>, TemplateError>;
+pub trait DispatchTemplate: Send + Sync {
     fn render_text(&self, data: &TemplateData) -> Result<Option<String>, TemplateError>;
     fn render_html(&self, data: &TemplateData) -> Result<Option<String>, TemplateError>;
 }
@@ -82,6 +91,7 @@ pub struct DispatchRequest<'t, 'p, 'v, 'r, 'cp, 'dp> {
     pub recipient: &'r Recipient,
     pub payload: &'p Payload,
     pub vars: &'v Vars,
+    pub subject: Option<String>,
 }
 
 impl<'t, 'p, 'v, 'r, 'cp, 'dp> From<&DispatchRequest<'t, 'p, 'v, 'r, 'cp, 'dp>> for TemplateData {
@@ -109,11 +119,12 @@ impl DispatchResponse {
 pub trait ResponseData: Debug + erased_serde::Serialize {}
 serialize_trait_object!(ResponseData);
 
+#[async_trait::async_trait]
 pub trait DispatcherPlugin: Sync + Send + Debug {
     fn template_support(&self) -> TemplateSupport;
     fn dispatch_type(&self) -> DispatchType;
     fn configuration(&self) -> &ConfigurationProperties;
-    fn dispatch(&self, req: &DispatchRequest) -> Result<DispatchResponse, DispatchError>;
+    async fn dispatch(&self, req: &DispatchRequest) -> Result<DispatchResponse, DispatchError>;
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -136,5 +147,40 @@ impl DispatchError {
 impl From<TemplateError> for DispatchError {
     fn from(value: TemplateError) -> Self {
         Self::Unrecoverable(Box::new(value))
+    }
+}
+
+#[derive(Debug)]
+pub struct BaseConnectorPlugin {
+    pub plugin_id: ConnectorPluginId,
+    pub configuration: ConfigurationProperties,
+    pub dispatchers: HashMap<DispatchType, Box<dyn DispatcherPlugin>>,
+}
+
+impl ConnectorPlugin for BaseConnectorPlugin {
+    fn id(&self) -> ConnectorPluginId {
+        self.plugin_id
+    }
+
+    fn configuration(&self) -> &ConfigurationProperties {
+        &self.configuration
+    }
+
+    fn dispatchers(&self) -> &HashMap<DispatchType, Box<dyn DispatcherPlugin>> {
+        &self.dispatchers
+    }
+}
+
+impl BaseConnectorPlugin {
+    pub fn new(
+        plugin_id: ConnectorPluginId,
+        configuration: ConfigurationProperties,
+        dispatchers: HashMap<DispatchType, Box<dyn DispatcherPlugin>>,
+    ) -> Self {
+        Self {
+            plugin_id,
+            configuration,
+            dispatchers,
+        }
     }
 }

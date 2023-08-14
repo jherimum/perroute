@@ -44,7 +44,7 @@ pub enum TemplateError {
     RenderError(String),
 }
 
-pub trait TemplateRender<D: Serialize>: Debug {
+pub trait TemplateRender<D: Serialize>: Debug + Send + Sync {
     fn render(&self, template: &str, data: &D) -> Result<String, TemplateError>;
 }
 

@@ -9,33 +9,33 @@ use crate::{
 use async_trait::async_trait;
 use perroute_commons::types::{actor::Actor, id::Id};
 use perroute_storage::{
-    models::channel::{Channel, ChannelsQueryBuilder},
+    models::business_unit::{BusinessUnit, BusinessUnitQueryBuilder},
     query::FetchableModel,
 };
 
 query!(
-    FindChannelQuery,
-    QueryType::FindChannel,
-    channel_id: Option<Id>
+    FindBusinessUnitQuery,
+    QueryType::FindBusinessUnit,
+    business_unit_id: Option<Id>
 );
-pub struct FindChannelQueryHandler;
+pub struct FindBusinessUnitQueryHandler;
 
 #[async_trait]
-impl QueryHandler for FindChannelQueryHandler {
-    type Query = FindChannelQuery;
-    type Output = Option<Channel>;
+impl QueryHandler for FindBusinessUnitQueryHandler {
+    type Query = FindBusinessUnitQuery;
+    type Output = Option<BusinessUnit>;
 
-    #[tracing::instrument(name = "find_channel_handler", skip(self, ctx))]
+    #[tracing::instrument(name = "find_business_unit_handler", skip(self, ctx))]
     async fn handle(
         &self,
         ctx: &QueryBusContext,
         actor: &Actor,
         query: &Self::Query,
     ) -> Result<Self::Output, QueryBusError> {
-        Channel::find(
+        BusinessUnit::find(
             ctx.pool(),
-            ChannelsQueryBuilder::default()
-                .id(*query.channel_id())
+            BusinessUnitQueryBuilder::default()
+                .id(*query.business_unit_id())
                 .build()
                 .unwrap(),
         )

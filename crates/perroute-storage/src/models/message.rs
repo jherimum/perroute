@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::{types::Json, FromRow, PgExecutor};
 use tap::TapFallible;
 
-use super::{channel::Channel, message_type::MessageType, schema::Schema};
+use super::{business_unit::BusinessUnit, message_type::MessageType, schema::Schema};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, sqlx::Type, Copy)]
 #[sqlx(type_name = "message_status", rename_all = "snake_case")]
@@ -27,7 +27,7 @@ pub struct MessageQuery {
     pub status: Option<Status>,
     pub schema_id: Option<Id>,
     pub message_type_id: Option<Id>,
-    pub channel_id: Option<Id>,
+    pub bu_id: Option<Id>,
     pub scheduled_from: Option<NaiveDateTime>,
     pub scheduled_to: Option<NaiveDateTime>,
 }
@@ -60,9 +60,9 @@ impl ModelQueryBuilder<Message> for MessageQuery {
             builder.push_bind(message_type_id);
         }
 
-        if let Some(channel_id) = self.channel_id {
-            builder.push(" AND channel_id = ");
-            builder.push_bind(channel_id);
+        if let Some(bu_id) = self.bu_id {
+            builder.push(" AND bu_id = ");
+            builder.push_bind(bu_id);
         }
 
         if let Some(scheduled_from) = self.scheduled_from {
@@ -92,11 +92,14 @@ pub struct Message {
     #[setters(skip)]
     payload: Payload,
 
-    status: Status,
+    #[setters(skip)]
+    recipient: Json<Recipient>,
 
     #[setters(skip)]
     #[builder(default)]
-    scheduled_to: Option<NaiveDateTime>,
+    dispatcher_types: Json<HashSet<DispatchType>>,
+
+    status: Status,
 
     #[setters(skip)]
     schema_id: Id,
@@ -105,18 +108,7 @@ pub struct Message {
     message_type_id: Id,
 
     #[setters(skip)]
-    channel_id: Id,
-
-    #[setters(skip)]
-    recipient: Json<Recipient>,
-
-    #[setters(skip)]
-    #[builder(default)]
-    include_dispatcher_types: Json<HashSet<DispatchType>>,
-
-    #[setters(skip)]
-    #[builder(default)]
-    exclude_dispatcher_types: Json<HashSet<DispatchType>>,
+    bu_id: Id,
 }
 
 impl Message {
@@ -127,7 +119,7 @@ impl Message {
         todo!()
     }
 
-    pub async fn channel<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Channel, sqlx::Error> {
+    pub async fn bu<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<BusinessUnit, sqlx::Error> {
         todo!()
     }
 
@@ -138,18 +130,16 @@ impl Message {
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
         sqlx::query_as(
             r#"
-                INSERT INTO messages (id, payload, status, scheduled_to, schema_id, message_type_id, channel_id, recipient, include_dispatcher_types, exclude_dispatcher_types) 
+                INSERT INTO messages (id, payload, recipient, dispatcher_types, status, schema_id, message_type_id, bu_id) 
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *"#,
             ).bind(self.id)
             .bind(self.payload)
+            .bind(self.recipient)
+            .bind(self.dispatcher_types)            
             .bind(self.status)
-            .bind(self.scheduled_to)
             .bind(self.schema_id)
             .bind(self.message_type_id)
-            .bind(self.channel_id)
-            .bind(self.recipient)
-            .bind(self.include_dispatcher_types)
-            .bind(self.exclude_dispatcher_types)
+            .bind(self.bu_id)            
         .fetch_one(exec)
         .await
         .tap_err(log_query_error!())

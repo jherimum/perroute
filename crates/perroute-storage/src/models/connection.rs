@@ -12,10 +12,9 @@ use std::todo;
 #[setters(into)]
 pub struct Connection {
     id: uuid::Uuid,
-    code: String,
+    name: String,
     plugin_id: ConnectorPluginId,
-    description: String,
-
+    enabled: bool,
     properties: Json<Properties>,
 }
 

@@ -30,7 +30,7 @@ command!(
     CommandType::CreateSchema,
     schema_id: Id,
     message_type_id: Id,
-    schema: JsonSchema,
+    value: JsonSchema,
     enabled: bool,
     vars: Vars
 );
@@ -74,7 +74,7 @@ impl CommandHandler for CreateSchemaCommandHandler {
 
         SchemaBuilder::default()
             .id(new_id!())
-            .schema(Json(cmd.schema.clone()))
+            .value(Json(cmd.value.clone()))
             .version(actual_version.increment())
             .published(false)
             .message_type_id(*mt.id())

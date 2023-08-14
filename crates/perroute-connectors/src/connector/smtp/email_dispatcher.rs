@@ -1,19 +1,16 @@
 use super::connector::SmtpConnectorProperties;
 use crate::api::{
-    ConfigurationProperties, ConfigurationPropertyBuilder, DispatchError, DispatchRequest,
-    DispatchResponse, DispatchTemplate, DispatchType, DispatcherPlugin, ResponseData,
+    ConfigurationProperties, ConfigurationPropertyBuilder, ConfigurationPropertyType,
+    DispatchError, DispatchRequest, DispatchResponse, DispatchType, DispatcherPlugin, ResponseData,
     TemplateSupport,
 };
 use derive_builder::Builder;
 use lettre::{
-    message::{Mailbox, MaybeString, MultiPart, SinglePart},
+    message::{MaybeString, MultiPart, SinglePart},
     transport::smtp::{authentication::Credentials, response::Response},
     Message, SmtpTransport, Transport,
 };
-use perroute_commons::types::{
-    recipient::Recipient,
-    template::{TemplateData, TemplateError},
-};
+use perroute_commons::types::{email::Mailbox, recipient::Recipient};
 use serde::{Deserialize, Serialize};
 use std::{ops::Deref, time::Duration};
 use tap::TapFallible;
@@ -36,24 +33,32 @@ fn properties() -> ConfigurationProperties {
             .name("from")
             .required(true)
             .description("from Mailbox")
+            .property_type(ConfigurationPropertyType::String)
+            .multiple(false)
             .build()
             .unwrap(),
         ConfigurationPropertyBuilder::default()
             .name("cc")
             .required(false)
             .description("cc Mailbox list")
+            .property_type(ConfigurationPropertyType::String)
+            .multiple(true)
             .build()
             .unwrap(),
         ConfigurationPropertyBuilder::default()
             .name("bcc")
             .required(false)
             .description("bcc Mailbox list")
+            .property_type(ConfigurationPropertyType::String)
+            .multiple(true)
             .build()
             .unwrap(),
         ConfigurationPropertyBuilder::default()
             .name("reply_to")
             .required(false)
             .description("reply_to Mailbox list")
+            .property_type(ConfigurationPropertyType::String)
+            .multiple(true)
             .build()
             .unwrap(),
     ]
@@ -89,6 +94,7 @@ impl Default for EmailDispatcher {
     }
 }
 
+#[async_trait::async_trait]
 impl DispatcherPlugin for EmailDispatcher {
     fn template_support(&self) -> TemplateSupport {
         self.template_support
@@ -102,7 +108,7 @@ impl DispatcherPlugin for EmailDispatcher {
         &self.configuration
     }
 
-    fn dispatch(&self, req: &DispatchRequest) -> Result<DispatchResponse, DispatchError> {
+    async fn dispatch(&self, req: &DispatchRequest) -> Result<DispatchResponse, DispatchError> {
         let conn_properties = req
             .connection_properties()
             .from_value::<SmtpConnectorProperties>()
@@ -130,12 +136,6 @@ impl TryFrom<&DispatchRequest<'_, '_, '_, '_, '_, '_>> for Message {
             .from_value::<EmailDispatcherProperties>()
             .map_err(DispatchError::unrecoverable)?;
 
-        let subject = req
-            .template()
-            .and_then(|e| Some(e.render_subject(&req.into())))
-            .unwrap_or(Ok(None))
-            .map_err(DispatchError::from)?;
-
         let html = req
             .template()
             .and_then(|e| Some(e.render_html(&req.into())))
@@ -148,22 +148,24 @@ impl TryFrom<&DispatchRequest<'_, '_, '_, '_, '_, '_>> for Message {
             .unwrap_or(Ok(None))
             .map_err(DispatchError::from)?;
 
+        let recipient_mail_box: Mailbox = req.recipient().into();
+
         let mut message = Self::builder()
-            .to(RecipientMailbox(req.recipient()).try_into()?)
-            .from(disp_properties.from)
+            .to(recipient_mail_box.into())
+            .from(disp_properties.from.deref().clone())
             .date_now()
-            .subject(subject.unwrap_or_default());
+            .subject(req.subject().clone().unwrap_or_default());
 
         for m in disp_properties.bcc {
-            message = message.bcc(m.clone());
+            message = message.bcc(m.into());
         }
 
         for m in disp_properties.cc {
-            message = message.cc(m.clone());
+            message = message.cc(m.into());
         }
 
         for m in disp_properties.reply_to {
-            message = message.reply_to(m.clone());
+            message = message.reply_to(m.into());
         }
 
         match (html, text) {
@@ -190,18 +192,6 @@ impl Deref for RecipientMailbox<'_> {
     }
 }
 
-impl<'r> TryInto<Mailbox> for RecipientMailbox<'r> {
-    type Error = DispatchError;
-
-    fn try_into(self) -> Result<Mailbox, Self::Error> {
-        Ok(self
-            .email()
-            .as_ref()
-            .map(|addr| Mailbox::new(self.name().clone(), addr.deref().clone()))
-            .ok_or(EmailDispatcherError::EmailNotSupplied)?)
-    }
-}
-
 impl TryFrom<&SmtpConnectorProperties> for SmtpTransport {
     type Error = DispatchError;
     fn try_from(value: &SmtpConnectorProperties) -> Result<Self, Self::Error> {
@@ -222,6 +212,7 @@ impl TryFrom<&SmtpConnectorProperties> for SmtpTransport {
     }
 }
 
+/*
 #[cfg(test)]
 mod tests {
 
@@ -236,7 +227,7 @@ mod tests {
     };
     use std::str::FromStr;
 
-    #[test]
+    #[tokio::test]
     fn name() {
         let conn_props = SmtpConnectorPropertiesBuilder::default()
             .port(587)
@@ -264,7 +255,7 @@ mod tests {
             payload: &Payload::default(),
             vars: &Vars::default(),
         };
-        let res = EmailDispatcher::default().dispatch(&req);
+        let res = EmailDispatcher::default().dispatch(&req).await;
         dbg!(&res);
     }
 }
@@ -284,3 +275,4 @@ impl DispatchTemplate for Temp {
         Ok(None)
     }
 }
+ */

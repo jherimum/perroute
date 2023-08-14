@@ -17,3 +17,8 @@ thiserror = { workspace = true }
 erased-serde = { workspace = true }
 tap = { workspace = true }
 tracing = { workspace = true }
+sendgrid = { version = "0.19.2", features = ["async"] }
+async-trait = { workspace = true }
+
+[dev-dependencies]
+tokio = { version = "1", features = ["full"] }

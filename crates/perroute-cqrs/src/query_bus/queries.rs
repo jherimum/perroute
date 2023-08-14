@@ -7,8 +7,8 @@ pub trait Query {
 
 #[derive(Debug, Clone, PartialEq, Eq, Display)]
 pub enum QueryType {
-    FindChannel,
-    QueryChannels,
+    FindBusinessUnit,
+    QueryBusinessUnits,
 
     FindMessageTypeQuery,
     QueryMessageTypes,

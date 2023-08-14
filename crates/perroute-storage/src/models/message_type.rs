@@ -1,4 +1,7 @@
-use super::schema::{Schema, SchemasQueryBuilder, Version};
+use super::{
+    business_unit::BusinessUnit,
+    schema::{Schema, SchemasQueryBuilder, Version},
+};
 use crate::{
     log_query_error,
     query::{FetchableModel, ModelQueryBuilder, Projection},
@@ -27,6 +30,9 @@ pub struct MessageType {
     name: String,
     enabled: bool,
     vars: Json<Vars>,
+
+    #[setters(skip)]
+    business_id: Id,
 }
 
 #[derive(Debug, Default, Builder)]
@@ -58,6 +64,14 @@ impl ModelQueryBuilder<MessageType> for MessageTypeQuery {
 }
 
 impl MessageType {
+    pub async fn bu<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<BusinessUnit, sqlx::Error> {
+        todo!()
+    }
+
+    pub async fn schemas<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Vec<Schema>, sqlx::Error> {
+        todo!()
+    }
+
     pub async fn schema_by_version<'e, E: PgExecutor<'e>>(
         &self,
         exec: E,
@@ -77,8 +91,8 @@ impl MessageType {
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
         sqlx::query_as(
             r#"
-                    INSERT INTO message_types (id, code, name, enabled, vars) 
-                    VALUES($1, $2, $3, $4, $5) RETURNING *
+                    INSERT INTO message_types (id, code, name, enabled, vars, bu_id) 
+                    VALUES($1, $2, $3, $4, $5, $6) RETURNING *
                 "#,
         )
         .bind(self.id)
@@ -86,6 +100,7 @@ impl MessageType {
         .bind(self.name)
         .bind(self.enabled)
         .bind(self.vars)
+        .bind(self.business_id)
         .fetch_one(exec)
         .await
         .tap_err(log_query_error!())

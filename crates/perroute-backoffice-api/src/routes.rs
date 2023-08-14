@@ -1,11 +1,11 @@
 use self::{
-    channel::ChannelRouter, health::HealthRouter, message::MessageRouter,
+    business_unit::BusinessUnitRouter, health::HealthRouter, message::MessageRouter,
     message_type::MessageTypeRouter, route::RouteRouter, schema::SchemaRouter,
     template::TemplateRouter,
 };
 use actix_web::{web, Scope};
 
-pub mod channel;
+pub mod business_unit;
 pub mod health;
 pub mod message;
 pub mod message_type;
@@ -92,20 +92,20 @@ pub fn routes() -> Scope {
             ),
         );
 
-    let channels = web::scope("/channels")
+    let bus = web::scope("/business_units")
         .service(
             web::resource("")
-                .name(ChannelRouter::CHANNELS_RESOURCE_NAME)
-                .route(web::get().to(ChannelRouter::query_channels))
-                .route(web::post().to(ChannelRouter::create_channel)),
+                .name(BusinessUnitRouter::BUS_RESOURCE_NAME)
+                .route(web::get().to(BusinessUnitRouter::query_bus))
+                .route(web::post().to(BusinessUnitRouter::create_bu)),
         )
         .service(
-            web::scope("/{channel_id}").service(
+            web::scope("/{business_unit_id}").service(
                 web::resource("")
-                    .name(ChannelRouter::CHANNEL_RESOURCE_NAME)
-                    .route(web::get().to(ChannelRouter::find_channel))
-                    .route(web::put().to(ChannelRouter::update_channel))
-                    .route(web::delete().to(ChannelRouter::delete_channel)),
+                    .name(BusinessUnitRouter::BU_RESOURCE_NAME)
+                    .route(web::get().to(BusinessUnitRouter::find_bu))
+                    .route(web::put().to(BusinessUnitRouter::update_bu))
+                    .route(web::delete().to(BusinessUnitRouter::delete_bu)),
             ),
         );
 
@@ -123,7 +123,7 @@ pub fn routes() -> Scope {
         .service(
             web::scope("/api").service(
                 web::scope("/v1")
-                    .service(channels)
+                    .service(bus)
                     .service(message_types)
                     .service(messages)
                     .service(templates)

@@ -7,7 +7,6 @@ use crate::{
     },
     impl_command, into_event,
 };
-use chrono::NaiveDateTime;
 use derive_builder::Builder;
 use derive_getters::Getters;
 use perroute_commons::types::{
@@ -17,7 +16,7 @@ use perroute_connectors::api::DispatchType;
 use perroute_messaging::events::EventType;
 use perroute_storage::{
     models::{
-        channel::{Channel, ChannelsQueryBuilder},
+        business_unit::{BusinessUnit, BusinessUnitQueryBuilder},
         message::{Message, MessageBuilder, Status},
         message_type::{MessageType, MessageTypeQueryBuilder},
         schema::Version,
@@ -36,18 +35,12 @@ pub struct CreateMessageCommand {
     payload: Payload,
     recipient: Recipient,
 
-    #[builder(default)]
-    scheduled_to: Option<NaiveDateTime>,
-
-    channel_code: Code,
+    bu_code: Code,
     message_type_code: Code,
     schema_version: Version,
 
     #[builder(default)]
-    include_dispatcher_types: HashSet<DispatchType>,
-
-    #[builder(default)]
-    exclude_dispatcher_types: HashSet<DispatchType>,
+    dispatcher_types: HashSet<DispatchType>,
 }
 
 impl_command!(CreateMessageCommand, CommandType::CreateMessage);
@@ -59,16 +52,13 @@ into_event!(
 
 #[derive(Error, Debug)]
 pub enum CreateMessageCommandError {
-    #[error("channel not found: {0}")]
-    ChannelNotFound(Code),
+    #[error("Business unit not found: {0}")]
+    BusinessUnitNotFound(Code),
     #[error("Message type not found: {0}")]
     MessageTypeNotFound(Code),
 
     #[error("Schema not found: {0}")]
     SchemaNotFound(Version),
-
-    #[error("Channel {0} is disabled")]
-    ChannelDisabled(Code),
 
     #[error("Message type {0} is disabled")]
     MessageTypeDisabled(Code),
@@ -95,10 +85,7 @@ impl CommandHandler for CreateMessageCommandHandler {
         actor: &Actor,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
-        let channel = retrieve_channel(ctx.pool(), cmd.channel_code()).await?;
-        if !channel.enabled() {
-            return Err(CreateMessageCommandError::ChannelDisabled(channel.code().clone()).into());
-        }
+        let bu = retrieve_bu(ctx.pool(), cmd.bu_code()).await?;
 
         let message_type = MessageType::find(
             ctx.pool(),
@@ -132,18 +119,16 @@ impl CommandHandler for CreateMessageCommandHandler {
             return Err(CreateMessageCommandError::SchemaDisabled(*cmd.schema_version()).into());
         }
 
-        schema.schema().validate(cmd.payload()).unwrap();
+        schema.value().validate(cmd.payload()).unwrap();
 
         MessageBuilder::default()
             .id(*cmd.message_id())
             .status(Status::Pending)
             .payload(cmd.payload().clone())
-            .scheduled_to(*cmd.scheduled_to())
             .schema_id(*schema.id())
             .message_type_id(*schema.message_type_id())
-            .channel_id(*channel.id())
-            .include_dispatcher_types(Json(cmd.include_dispatcher_types().clone()))
-            .exclude_dispatcher_types(Json(cmd.exclude_dispatcher_types().clone()))
+            .bu_id(*bu.id())
+            .dispatcher_types(Json(cmd.dispatcher_types().clone()))
             .recipient(Json(cmd.recipient().clone()))
             .build()
             .unwrap()
@@ -153,14 +138,14 @@ impl CommandHandler for CreateMessageCommandHandler {
     }
 }
 
-async fn retrieve_channel(pool: &PgPool, code: &Code) -> Result<Channel, CommandBusError> {
-    Channel::find(
+async fn retrieve_bu(pool: &PgPool, code: &Code) -> Result<BusinessUnit, CommandBusError> {
+    BusinessUnit::find(
         pool,
-        ChannelsQueryBuilder::default()
+        BusinessUnitQueryBuilder::default()
             .code(Some(code.clone()))
             .build()
             .unwrap(),
     )
     .await?
-    .ok_or_else(|| CreateMessageCommandError::ChannelNotFound(code.clone()).into())
+    .ok_or_else(|| CreateMessageCommandError::BusinessUnitNotFound(code.clone()).into())
 }

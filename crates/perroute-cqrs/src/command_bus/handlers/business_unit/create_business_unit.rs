@@ -11,7 +11,7 @@ use derive_getters::Getters;
 use perroute_commons::types::{actor::Actor, code::Code, id::Id, vars::Vars};
 use perroute_messaging::events::EventType;
 use perroute_storage::{
-    models::channel::{Channel, ChannelBuilder, ChannelsQueryBuilder},
+    models::business_unit::{BusinessUnit, BusinessUnitBuilder, BusinessUnitQueryBuilder},
     query::FetchableModel,
 };
 use serde::Serialize;
@@ -19,36 +19,35 @@ use sqlx::{types::Json, PgPool};
 use tap::TapFallible;
 
 #[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
-pub struct CreateChannelCommand {
+pub struct CreateBusinessUnitCommand {
     #[builder(default)]
-    channel_id: Id,
+    business_unit_id: Id,
     code: Code,
     name: String,
     vars: Vars,
-    enabled: bool,
 }
-impl_command!(CreateChannelCommand, CommandType::CreateChannel);
+impl_command!(CreateBusinessUnitCommand, CommandType::CreateBusinessUnit);
 into_event!(
-    CreateChannelCommand,
-    EventType::ChannelCreated,
-    |cmd: &CreateChannelCommand| { cmd.channel_id }
+    CreateBusinessUnitCommand,
+    EventType::BusinessUnitCreated,
+    |cmd: &CreateBusinessUnitCommand| { cmd.business_unit_id }
 );
 
 #[derive(Debug)]
-pub struct CreateChannelCommandHandler;
+pub struct CreateBusinessUnitCommandHandler;
 
 #[derive(thiserror::Error, Debug, Clone)]
-pub enum CreateChannelError {
-    #[error("A channel with code {0} already exists")]
+pub enum CreateBusinessUnitError {
+    #[error("A BusinessUnit with code {0} already exists")]
     CodeAlreadyExists(Code),
 }
 
 #[async_trait]
-impl CommandHandler for CreateChannelCommandHandler {
-    type Command = CreateChannelCommand;
-    type Output = Channel;
+impl CommandHandler for CreateBusinessUnitCommandHandler {
+    type Command = CreateBusinessUnitCommand;
+    type Output = BusinessUnit;
 
-    #[tracing::instrument(name = "create_channel_handler", skip(self, ctx))]
+    #[tracing::instrument(name = "create_business_unit_handler", skip(self, ctx))]
     async fn handle<'tx>(
         &self,
         ctx: &mut CommandBusContext<'tx>,
@@ -57,32 +56,31 @@ impl CommandHandler for CreateChannelCommandHandler {
     ) -> Result<Self::Output, CommandBusError> {
         if exists_with_code(ctx.pool(), cmd.code()).await? {
             return Err(CommandBusError::ExpectedError(
-                "Channel with code already exists",
+                "BusinessUnit with code already exists",
             ));
         }
 
-        ChannelBuilder::default()
-            .id(cmd.channel_id)
+        BusinessUnitBuilder::default()
+            .id(cmd.business_unit_id)
             .code(cmd.code)
             .name(cmd.name)
             .vars(Json(cmd.vars))
-            .enabled(true)
             .build()
             .tap_err(|e| {
-                tracing::error!("Failed to build channel: {e}");
+                tracing::error!("Failed to build BusinessUnit: {e}");
             })
             .map_err(anyhow::Error::from)?
             .save(ctx.tx())
             .await
-            .tap_err(|e| tracing::error!("Failed to save channel: {e}"))
+            .tap_err(|e| tracing::error!("Failed to save BusinessUnit: {e}"))
             .map_err(CommandBusError::from)
     }
 }
 
 async fn exists_with_code<'tx>(poll: &PgPool, code: &Code) -> Result<bool, sqlx::Error> {
-    Channel::exists(
+    BusinessUnit::exists(
         poll,
-        ChannelsQueryBuilder::default()
+        BusinessUnitQueryBuilder::default()
             .code(Some(code.clone()))
             .build()
             .unwrap(),
@@ -90,7 +88,7 @@ async fn exists_with_code<'tx>(poll: &PgPool, code: &Code) -> Result<bool, sqlx:
     .await
     .tap_err(|e| {
         tracing::error!(
-            "Failed to checking if channel with code {} exists: {e}",
+            "Failed to checking if BusinessUnit with code {} exists: {e}",
             code
         );
     })

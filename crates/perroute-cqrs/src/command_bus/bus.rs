@@ -2,10 +2,10 @@ use super::{
     commands::Command,
     error::CommandBusError,
     handlers::{
-        channel::{
-            create_channel::CreateChannelCommandHandler,
-            delete_channel::DeleteChannelCommandHandler,
-            update_channel::UpdateChannelCommandHandler,
+        business_unit::{
+            create_business_unit::CreateBusinessUnitCommandHandler,
+            delete_business_unit::DeleteBusinessUnitCommandHandler,
+            update_business_unit::UpdateBusinessUnitCommandHandler,
         },
         message::create_message::CreateMessageCommandHandler,
         message_type::{
@@ -111,9 +111,9 @@ impl CommandBus {
     pub fn complete(pool: PgPool) -> Self {
         Self::builder()
             .with_pool(pool)
-            .with_handler(CreateChannelCommandHandler)
-            .with_handler(DeleteChannelCommandHandler)
-            .with_handler(UpdateChannelCommandHandler)
+            .with_handler(CreateBusinessUnitCommandHandler)
+            .with_handler(DeleteBusinessUnitCommandHandler)
+            .with_handler(UpdateBusinessUnitCommandHandler)
             .with_handler(CreateMessageTypeCommandHandler)
             .with_handler(UpdateMessageTypeCommandHandler)
             .with_handler(DeleteMessageTypeCommandHandler)

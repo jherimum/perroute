@@ -17,7 +17,7 @@ command!(
     UpdateSchemaCommand,
     CommandType::UpdateSchema,
     schema_id: Id,
-    schema: JsonSchema,
+    value: JsonSchema,
     enabled: bool,
     vars: Vars
 );
@@ -47,7 +47,7 @@ impl CommandHandler for UpdateSchemaCommandHandler {
         )
         .await?
         .unwrap()
-        .set_schema(Json(cmd.schema().clone()))
+        .set_value(Json(cmd.value().clone()))
         .set_enabled(*cmd.enabled())
         .set_vars(Json(cmd.vars().clone()))
         .update(ctx.tx())

@@ -15,12 +15,12 @@ command!(
     CreateTemplateCommand,
     CommandType::CreateTemplate,
     template_id: Id,
-    channel_id: Id,
+    bu_id: Id,
     message_type_id: Id,
     name: String,
+    subject: Option<String>,
     html: Option<TemplateSnippet>,
     text: Option<TemplateSnippet>,
-    subject: Option<TemplateSnippet>,
     dispatch_type: DispatchType
 );
 into_event!(CreateTemplateCommand);
@@ -45,11 +45,10 @@ impl CommandHandler for CreateTemplateCommandHandler {
     ) -> Result<Self::Output, CommandBusError> {
         TemplateBuilder::default()
             .id(cmd.template_id)
-            .name(cmd.name)
             .subject(cmd.subject)
             .text(cmd.text)
             .html(cmd.html)
-            .channel_id(cmd.channel_id)
+            .bu_id(cmd.bu_id)
             .dispatch_type(cmd.dispatch_type)
             .message_type_id(cmd.message_type_id)
             .build()

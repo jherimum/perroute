@@ -90,7 +90,7 @@ impl SchemaRouter {
         let cmd = CreateSchemaCommandBuilder::default()
             .schema_id(new_id!())
             .message_type_id(*message_type.id())
-            .schema(body.schema)
+            .value(body.value)
             .enabled(body.enabled)
             .vars(body.vars)
             .build()
@@ -120,7 +120,7 @@ impl SchemaRouter {
 
         let cmd = UpdateSchemaCommandBuilder::default()
             .schema_id(*schema.id())
-            .schema(body.schema)
+            .value(body.value)
             .enabled(body.enabled)
             .vars(body.vars)
             .build()

@@ -18,7 +18,7 @@ pub trait IntoEvent {
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Display, EnumString)]
 pub enum EventType {
-    ChannelCreated,
+    BusinessUnitCreated,
     MessageCreated,
     MessageDistributed,
 }

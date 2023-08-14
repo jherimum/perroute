@@ -11,8 +11,8 @@ pub enum ApiError {
     #[error(transparent)]
     JsonChema(#[from] JsonSchemaError),
 
-    #[error("Channel {0} not found")]
-    ChannelNotFound(Id),
+    #[error("Business unit {0} not found")]
+    BusinessUnitNotFound(Id),
 
     #[error("ApiKey {0} not found")]
     ApiKeyNotFound(Id),
@@ -42,7 +42,7 @@ pub enum ApiError {
 impl From<&ApiError> for RestError {
     fn from(value: &ApiError) -> Self {
         match value {
-            ApiError::ChannelNotFound(_)
+            ApiError::BusinessUnitNotFound(_)
             | ApiError::MessageTypeNotFound(_)
             | ApiError::SchemaNotFound(_)
             | ApiError::TemplateNotFound(_) => Self::NotFound(value.to_string()),

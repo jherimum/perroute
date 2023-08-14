@@ -1,7 +1,7 @@
 use crate::{
     api::response::AsUrl,
     routes::{
-        channel::ChannelRouter, message_type::MessageTypeRouter, route::RouteRouter,
+        business_unit::BusinessUnitRouter, message_type::MessageTypeRouter, route::RouteRouter,
         schema::SchemaRouter, template::TemplateRouter,
     },
 };
@@ -16,10 +16,10 @@ use url::Url;
 pub enum Linkrelation {
     #[serde(rename = "self")]
     Self_,
-    #[serde(rename = "channels")]
-    Channels,
-    #[serde(rename = "channel")]
-    Channel,
+    #[serde(rename = "business_units")]
+    BusinessUnits,
+    #[serde(rename = "business_unit")]
+    BusinessUnit,
     #[serde(rename = "message_types")]
     MessageTypes,
     #[serde(rename = "routes")]
@@ -30,8 +30,8 @@ pub enum Linkrelation {
 
 #[derive(Debug, Serialize, Clone)]
 pub enum ResourceLink {
-    Channel(Id),
-    Channels,
+    BusinessUnit(Id),
+    BusinessUnits,
 
     MessageTypes,
     MessageType(Id),
@@ -49,10 +49,10 @@ pub enum ResourceLink {
 impl AsUrl for ResourceLink {
     fn as_url(&self, req: &HttpRequest) -> Url {
         match self {
-            Self::Channel(id) => {
-                req.url_for(ChannelRouter::CHANNEL_RESOURCE_NAME, [id.to_string()])
+            Self::BusinessUnit(id) => {
+                req.url_for(BusinessUnitRouter::BU_RESOURCE_NAME, [id.to_string()])
             }
-            Self::Channels => req.url_for_static(ChannelRouter::CHANNELS_RESOURCE_NAME),
+            Self::BusinessUnits => req.url_for_static(BusinessUnitRouter::BUS_RESOURCE_NAME),
 
             Self::MessageTypes => {
                 req.url_for_static(MessageTypeRouter::MESSAGE_TYPES_RESOURCE_NAME)

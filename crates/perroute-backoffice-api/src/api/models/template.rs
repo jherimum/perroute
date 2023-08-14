@@ -9,30 +9,27 @@ use serde::Serialize;
 
 #[derive(Debug, serde::Deserialize, Clone)]
 pub struct CreateTemplateRequest {
-    pub channel_id: Id,
+    pub bu_id: Id,
     pub message_type_id: Id,
-    pub name: String,
+    pub subject: Option<String>,
     pub html: Option<String>,
     pub text: Option<String>,
-    pub subject: Option<String>,
     pub dispatch_type: DispatchType,
 }
 
 #[derive(Debug, serde::Deserialize, Clone)]
 pub struct UpdateTemplateRequest {
-    pub name: String,
+    pub subject: Option<String>,
     pub html: Option<String>,
     pub text: Option<String>,
-    pub subject: Option<String>,
 }
 
 #[derive(Debug, Serialize, Clone)]
 pub struct TemplateResource {
     pub id: Id,
-    pub name: String,
+    pub subject: Option<String>,
     pub html: Option<String>,
     pub text: Option<String>,
-    pub subject: Option<String>,
     pub dispatch_type: DispatchType,
 }
 
@@ -40,10 +37,9 @@ impl From<Template> for TemplateResource {
     fn from(template: Template) -> Self {
         Self {
             id: *template.id(),
-            name: template.name().to_owned(),
+            subject: template.subject().clone().map(Into::into),
             html: template.html().clone().map(Into::into),
             text: template.text().clone().map(Into::into),
-            subject: template.subject().clone().map(Into::into),
             dispatch_type: *template.dispatch_type(),
         }
     }

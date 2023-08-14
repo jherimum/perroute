@@ -1,9 +1,10 @@
 use super::{
     commands::CommandType,
     handlers::{
-        channel::{
-            create_channel::CreateChannelError, delete_channel::DeleteChannelError,
-            update_channel::UpdateChannelError,
+        business_unit::{
+            create_business_unit::CreateBusinessUnitError,
+            delete_business_unit::DeleteBusinessUnitError,
+            update_business_unit::UpdateBusinessUnitError,
         },
         message::{
             create_message::CreateMessageCommandError,
@@ -33,13 +34,13 @@ pub enum CommandBusError {
     DatabaseError(#[from] sqlx::Error),
 
     #[error(transparent)]
-    CreateChannel(#[from] CreateChannelError),
+    CreateBusinessUnit(#[from] CreateBusinessUnitError),
 
     #[error(transparent)]
-    UpdateChannel(#[from] UpdateChannelError),
+    UpdateBusinessUnit(#[from] UpdateBusinessUnitError),
 
     #[error(transparent)]
-    DeleteChannel(#[from] DeleteChannelError),
+    DeleteBusinessUnit(#[from] DeleteBusinessUnitError),
 
     #[error(transparent)]
     DeleteMessageType(#[from] DeleteMessageTypeError),

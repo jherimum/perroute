@@ -17,10 +17,9 @@ command!(
     UpdateTemplateCommand,
     CommandType::UpdateTemplate,
     template_id: Id,
-    name: String,
+    subject: Option<String>,
     html: Option<TemplateSnippet>,
-    text: Option<TemplateSnippet>,
-    subject: Option<TemplateSnippet>
+    text: Option<TemplateSnippet>
 );
 into_event!(UpdateTemplateCommand);
 
@@ -51,10 +50,9 @@ impl CommandHandler for UpdateTemplateCommandHandler {
         )
         .await?
         .unwrap()
-        .set_html(cmd.html().clone())
-        .set_text(cmd.text().clone())
-        .set_subject(cmd.subject().clone())
-        .set_name(cmd.name())
+        .set_html(cmd.html)
+        .set_text(cmd.text)
+        .set_subject(cmd.subject)
         .save(ctx.tx())
         .await
         .map_err(Into::into)

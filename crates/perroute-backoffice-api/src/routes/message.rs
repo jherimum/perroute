@@ -39,13 +39,11 @@ async fn create_message(
 ) -> Result<Message, ApiError> {
     let cmd = CreateMessageCommandBuilder::default()
         .payload(body.payload.into())
-        .channel_code(body.channel_code)
+        .bu_code(body.bu_code)
         .message_type_code(body.message_type_code)
         .schema_version(body.schema_version)
         .recipient(body.recipient)
-        .scheduled_to(body.scheduled_to)
-        .include_dispatcher_types(body.include_dispatcher_types)
-        .exclude_dispatcher_types(body.exclude_dispatcher_types)
+        .dispatcher_types(body.dispatcher_types)
         .build()
         .unwrap();
     state

@@ -64,10 +64,9 @@ impl TemplateRouter {
     ) -> SingleResult {
         let cmd = CreateTemplateCommandBuilder::default()
             .template_id(new_id!())
-            .name(body.name)
+            .subject(body.subject)
             .html(body.html.map(Into::into))
             .text(body.text.map(Into::into))
-            .subject(body.subject.map(Into::into))
             .build()
             .unwrap();
         let template = state
@@ -97,7 +96,6 @@ impl TemplateRouter {
             .html(body.html.map(Into::into))
             .text(body.text.map(Into::into))
             .subject(body.subject.map(Into::into))
-            .name(body.name)
             .build()
             .unwrap();
 
@@ -148,7 +146,7 @@ impl TemplateRouter {
         let query = FindTemplateQueryBuilder::default()
             .template_id(path.3)
             .message_type_id(Some(path.1))
-            .channel_id(Some(path.0))
+            .bu_id(Some(path.0))
             .build()
             .unwrap();
 

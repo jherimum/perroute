@@ -5,64 +5,60 @@ use crate::{
 use actix_web::HttpRequest;
 use derive_getters::Getters;
 use perroute_commons::types::{code::Code, id::Id, vars::Vars};
-use perroute_storage::models::channel::Channel;
+use perroute_storage::models::business_unit::BusinessUnit;
 use serde::{Deserialize, Serialize};
 use std::ops::Deref;
 
 #[derive(Debug, serde::Deserialize, Clone, Getters)]
-pub struct CreateChannelRequest {
+pub struct CreateBusinessUnitRequest {
     code: Code,
     name: String,
     vars: Vars,
-    enabled: bool,
 }
 
 #[derive(Debug, serde::Deserialize, Clone)]
-pub struct UpdateChannelRequest {
+pub struct UpdateBusinessUnitRequest {
     pub name: String,
     pub vars: Vars,
-    pub enabled: bool,
 }
 
 #[derive(Clone, Serialize, Debug, Deserialize, PartialEq, Eq)]
-pub struct ChannelResource {
+pub struct BusinessUnitResource {
     id: Id,
     code: Code,
     name: String,
     vars: Vars,
-    enabled: bool,
 }
 
-impl From<Channel> for ChannelResource {
-    fn from(value: Channel) -> Self {
+impl From<BusinessUnit> for BusinessUnitResource {
+    fn from(value: BusinessUnit) -> Self {
         Self {
             id: value.id().to_owned(),
             code: value.code().clone(),
             name: value.name().clone(),
             vars: value.vars().deref().clone(),
-            enabled: *value.enabled(),
         }
     }
 }
 
-impl ResourceBuilder<SingleResourceModel<ChannelResource>> for Channel {
-    fn build(&self, req: &HttpRequest) -> SingleResourceModel<ChannelResource> {
+impl ResourceBuilder<SingleResourceModel<BusinessUnitResource>> for BusinessUnit {
+    fn build(&self, req: &HttpRequest) -> SingleResourceModel<BusinessUnitResource> {
         SingleResourceModel {
-            data: Some(ChannelResource::from(self.clone())),
+            data: Some(BusinessUnitResource::from(self.clone())),
             links: Links::default()
-                .add(Linkrelation::Self_, ResourceLink::Channel(*self.id()))
-                .add(Linkrelation::Channels, ResourceLink::Channels)
+                .add(Linkrelation::Self_, ResourceLink::BusinessUnit(*self.id()))
+                .add(Linkrelation::BusinessUnits, ResourceLink::BusinessUnits)
                 .as_url_map(req),
         }
     }
 }
 
-impl ResourceBuilder<CollectionResourceModel<ChannelResource>> for Vec<Channel> {
-    fn build(&self, req: &HttpRequest) -> CollectionResourceModel<ChannelResource> {
+impl ResourceBuilder<CollectionResourceModel<BusinessUnitResource>> for Vec<BusinessUnit> {
+    fn build(&self, req: &HttpRequest) -> CollectionResourceModel<BusinessUnitResource> {
         CollectionResourceModel {
             data: self.iter().map(|c| c.build(req)).collect(),
             links: Links::default()
-                .add(Linkrelation::Self_, ResourceLink::Channels)
+                .add(Linkrelation::Self_, ResourceLink::BusinessUnits)
                 .as_url_map(req),
         }
     }

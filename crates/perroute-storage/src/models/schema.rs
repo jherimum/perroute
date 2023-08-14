@@ -1,4 +1,4 @@
-use super::{channel::Channel, message_type::MessageType};
+use super::{business_unit::BusinessUnit, message_type::MessageType, template::Template};
 use crate::{
     query::{ModelQueryBuilder, Projection},
     DatabaseModel,
@@ -7,6 +7,7 @@ use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::types::{code::Code, id::Id, json_schema::JsonSchema, vars::Vars};
+use perroute_connectors::api::DispatchType;
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Json, FromRow, PgExecutor, QueryBuilder, Type};
 use std::fmt::Display;
@@ -116,22 +117,38 @@ impl Display for Version {
 pub struct Schema {
     #[setters(skip)]
     id: Id,
-    schema: Json<JsonSchema>,
-
-    #[setters(skip)]
-    version: Version,
-
-    published: bool,
 
     #[setters(skip)]
     message_type_id: Id,
 
-    enabled: bool,
+    #[setters(skip)]
+    bu_id: Id,
 
+    #[setters(skip)]
+    version: Version,
+
+    enabled: bool,
     vars: Json<Vars>,
+    published: bool,
+    value: Json<JsonSchema>,
 }
 
 impl Schema {
+    pub async fn active_template<'e, E: PgExecutor<'e>>(
+        &self,
+        exec: E,
+        dispatch_type: DispatchType,
+    ) -> Result<Option<Template>, sqlx::Error> {
+        todo!()
+    }
+
+    pub async fn templates<'e, E: PgExecutor<'e>>(
+        &self,
+        exec: E,
+    ) -> Result<Vec<Template>, sqlx::Error> {
+        todo!()
+    }
+
     pub async fn message_type<'e, E: PgExecutor<'e>>(
         &self,
         exec: E,
@@ -139,24 +156,25 @@ impl Schema {
         todo!()
     }
 
-    pub async fn channel<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Channel, sqlx::Error> {
+    pub async fn bu<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<BusinessUnit, sqlx::Error> {
         todo!()
     }
 
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
         sqlx::query_as(
             r#"
-                INSERT INTO schemas (id, schema, version, published, message_type_id, enabled, vars) 
+                INSERT INTO schemas (id, value, version, published, message_type_id, enabled, vars, bu_id) 
                 VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING *
             "#,
         )
         .bind(self.id)
-        .bind(self.schema)
+        .bind(self.value)
         .bind(self.version)
         .bind(self.published)
         .bind(self.message_type_id)
         .bind(self.enabled)
         .bind(self.vars)
+        .bind(self.bu_id)
         .fetch_one(exec)
         .await
     }
@@ -166,7 +184,7 @@ impl Schema {
             r#"
             UPDATE schemas 
             SET 
-                schema= $2, 
+                value= $2, 
                 published= $3,
                 enabled = $4,
                 vars =$5
@@ -175,7 +193,7 @@ impl Schema {
             "#,
         )
         .bind(self.id)
-        .bind(self.schema)
+        .bind(self.value)
         .bind(self.published)
         .bind(self.enabled)
         .bind(self.vars)

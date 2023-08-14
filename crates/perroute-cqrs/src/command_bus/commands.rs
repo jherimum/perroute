@@ -28,9 +28,9 @@ pub trait Command: Debug + Serialize + Clone + PartialEq + Eq + Send + Sync + In
 
 #[derive(Display, Debug, Clone)]
 pub enum CommandType {
-    CreateChannel,
-    UpdateChannel,
-    DeleteChannel,
+    CreateBusinessUnit,
+    UpdateBusinessUnit,
+    DeleteBusinessUnit,
 
     CreateMessageType,
     UpdateMessageType,

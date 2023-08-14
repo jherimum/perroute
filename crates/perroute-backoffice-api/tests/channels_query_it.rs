@@ -1,11 +1,11 @@
 mod common;
 use crate::common::TestApp;
 use perroute_backoffice_api::api::{
-    models::channel::ChannelResource,
+    models::business_unit::BusinessUnitResource,
     response::{CollectionResourceModel, SingleResourceModel},
 };
 use perroute_commons::{code, types::id::Id};
-use perroute_storage::models::channel::ChannelBuilder;
+use perroute_storage::models::business_unit::BusinessUnitBuilder;
 use reqwest::Client;
 use sqlx::PgPool;
 use std::str::FromStr;
@@ -20,13 +20,13 @@ fn test_channels_empty(pool: PgPool) {
 
     assert!(response.status() == 200);
     assert!(response
-        .json::<CollectionResourceModel<ChannelResource>>()
+        .json::<CollectionResourceModel<BusinessUnitResource>>()
         .await
         .unwrap()
         .data
         .is_empty());
 
-    let channel = ChannelBuilder::default()
+    let channel = BusinessUnitBuilder::default()
         .id(Id::default())
         .code(code!("WINE"))
         .name("Wine channel")
@@ -40,15 +40,15 @@ fn test_channels_empty(pool: PgPool) {
     assert!(response.status() == 200);
 
     let data = response
-        .json::<CollectionResourceModel<ChannelResource>>()
+        .json::<CollectionResourceModel<BusinessUnitResource>>()
         .await
         .unwrap()
         .data;
 
     assert!(data.len() == 1);
 
-    let model: SingleResourceModel<ChannelResource> = SingleResourceModel {
-        data: Some(ChannelResource::from(channel)),
+    let model: SingleResourceModel<BusinessUnitResource> = SingleResourceModel {
+        data: Some(BusinessUnitResource::from(channel)),
         links: Default::default(),
     };
 
