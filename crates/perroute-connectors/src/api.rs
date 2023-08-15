@@ -15,7 +15,7 @@ use perroute_commons::types::{
     vars::Vars,
 };
 use serde::Serialize;
-use std::{error::Error, fmt::Debug, sync::Arc};
+use std::{error::Error, fmt::Debug};
 
 pub trait ConnectorPlugin: Sync + Send + Debug {
     fn id(&self) -> ConnectorPluginId;
@@ -33,14 +33,14 @@ pub trait ConnectorPlugin: Sync + Send + Debug {
 pub trait DispatcherPlugin: Sync + Send + Debug {
     fn template_support(&self) -> TemplateSupport;
     fn dispatch_type(&self) -> DispatchType;
-    fn configuration(&self) -> Arc<dyn Configuration>;
+    fn configuration(&self) -> &dyn Configuration;
     async fn dispatch(&self, req: &DispatchRequest) -> Result<DispatchResponse, DispatchError>;
 }
 
 pub struct BaseDispatcherPlugin {
     pub dispatch_type: DispatchType,
     pub template_support: TemplateSupport,
-    pub configuration: Arc<dyn Configuration>,
+    pub configuration: Box<dyn Configuration>,
     pub func:
         for<'r> fn(&'r DispatchRequest) -> BoxFuture<'r, Result<DispatchResponse, DispatchError>>,
 }
@@ -49,7 +49,7 @@ impl BaseDispatcherPlugin {
     pub fn new(
         dispatch_type: DispatchType,
         template_support: TemplateSupport,
-        configuration: Arc<dyn Configuration>,
+        configuration: Box<dyn Configuration>,
         func: for<'r> fn(
             &'r DispatchRequest,
         ) -> BoxFuture<'r, Result<DispatchResponse, DispatchError>>,
@@ -83,8 +83,8 @@ impl DispatcherPlugin for BaseDispatcherPlugin {
         self.dispatch_type
     }
 
-    fn configuration(&self) -> Arc<dyn Configuration> {
-        self.configuration.clone()
+    fn configuration(&self) -> &dyn Configuration {
+        self.configuration.as_ref()
     }
 
     async fn dispatch(&self, req: &DispatchRequest) -> Result<DispatchResponse, DispatchError> {
@@ -155,8 +155,8 @@ impl From<TemplateError> for DispatchError {
 #[derive(Debug)]
 pub struct BaseConnectorPlugin {
     pub plugin_id: ConnectorPluginId,
-    pub configuration: Arc<dyn Configuration + Send + Sync>,
-    pub dispatchers: Vec<Arc<dyn DispatcherPlugin>>,
+    pub configuration: Box<dyn Configuration>,
+    pub dispatchers: Vec<Box<dyn DispatcherPlugin>>,
 }
 
 impl ConnectorPlugin for BaseConnectorPlugin {
@@ -176,8 +176,8 @@ impl ConnectorPlugin for BaseConnectorPlugin {
 impl BaseConnectorPlugin {
     pub fn new(
         plugin_id: ConnectorPluginId,
-        configuration: Arc<dyn Configuration + Send + Sync>,
-        dispatchers: Vec<Arc<dyn DispatcherPlugin>>,
+        configuration: Box<dyn Configuration>,
+        dispatchers: Vec<Box<dyn DispatcherPlugin>>,
     ) -> Self {
         Self {
             plugin_id,

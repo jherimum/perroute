@@ -9,7 +9,7 @@ use crate::{
 use derive_builder::Builder;
 use derive_getters::Getters;
 use serde::{Deserialize, Serialize};
-use std::{marker::PhantomData, sync::Arc};
+use std::marker::PhantomData;
 use validator::Validate;
 
 mod email_dispatcher;
@@ -17,11 +17,11 @@ mod email_dispatcher;
 pub fn smtp_connector_plugin() -> impl ConnectorPlugin {
     BaseConnectorPlugin::new(
         crate::types::ConnectorPluginId::Smtp,
-        Arc::new(DefaultConfiguration::new(
+        Box::new(DefaultConfiguration::new(
             smtp_conn_properties(),
             PhantomData::<SmtpConnectorProperties>,
         )),
-        vec![Arc::new(email_dispatcher())],
+        vec![Box::new(email_dispatcher())],
     )
 }
 

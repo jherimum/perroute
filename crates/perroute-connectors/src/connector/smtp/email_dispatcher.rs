@@ -18,7 +18,7 @@ use lettre::{
 };
 use perroute_commons::types::{email::Mailbox, recipient::Recipient};
 use serde::{Deserialize, Serialize};
-use std::{ops::Deref, sync::Arc, time::Duration};
+use std::{ops::Deref, time::Duration};
 use tap::TapFallible;
 use validator::Validate;
 
@@ -26,7 +26,7 @@ pub fn email_dispatcher() -> impl DispatcherPlugin {
     BaseDispatcherPlugin::new(
         DispatchType::Email,
         TemplateSupport::Mandatory,
-        Arc::new(DefaultConfiguration::new(
+        Box::new(DefaultConfiguration::new(
             properties(),
             std::marker::PhantomData::<EmailDispatcherProperties>,
         )),

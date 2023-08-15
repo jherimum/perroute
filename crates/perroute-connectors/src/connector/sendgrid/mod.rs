@@ -12,20 +12,20 @@ use sendgrid::{
     SendgridResult,
 };
 use serde::Deserialize;
-use std::{marker::PhantomData, ops::Deref, sync::Arc};
+use std::{marker::PhantomData, ops::Deref};
 use validator::Validate;
 
 pub fn sendgrid_connector_plugin() -> impl ConnectorPlugin {
     BaseConnectorPlugin::new(
         ConnectorPluginId::SendGrid,
-        Arc::new(DefaultConfiguration::new(
+        Box::new(DefaultConfiguration::new(
             connection_properties(),
             PhantomData::<SendgridConnectionProperties>,
         )),
-        vec![Arc::new(BaseDispatcherPlugin::new(
+        vec![Box::new(BaseDispatcherPlugin::new(
             DispatchType::Email,
             TemplateSupport::Mandatory,
-            Arc::new(DefaultConfiguration::new(
+            Box::new(DefaultConfiguration::new(
                 dispatcher_properties(),
                 PhantomData::<EmailDispatcherProperties>,
             )),
