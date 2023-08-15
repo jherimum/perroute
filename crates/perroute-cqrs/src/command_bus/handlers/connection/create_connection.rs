@@ -9,8 +9,9 @@ use derive_builder::Builder;
 use derive_getters::Getters;
 use perroute_commons::types::{actor::Actor, id::Id, properties::Properties};
 use perroute_connectors::{types::ConnectorPluginId, Plugins};
-use perroute_storage::models::connection::Connection;
+use perroute_storage::models::connection::{Connection, ConnectionBuilder};
 use serde::Serialize;
+use sqlx::types::Json;
 
 #[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
 pub struct CreateConnectionCommand {
@@ -25,7 +26,7 @@ into_event!(CreateConnectionCommand);
 
 #[derive(Debug)]
 pub struct CreateConnectionCommandHandler {
-    plugins: Plugins,
+    pub plugins: Plugins,
 }
 
 #[async_trait::async_trait]
@@ -40,8 +41,20 @@ impl CommandHandler for CreateConnectionCommandHandler {
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
         let connector_plugin = self.plugins.get(cmd.plugin_id).unwrap();
-        let result = connector_plugin.configuration().validate(&cmd.properties);
+        connector_plugin
+            .configuration()
+            .validate(&cmd.properties)
+            .unwrap();
 
-        todo!()
+        Ok(ConnectionBuilder::default()
+            .id(cmd.id)
+            .name(cmd.name)
+            .plugin_id(cmd.plugin_id)
+            .properties(Json(cmd.properties))
+            .build()
+            .unwrap()
+            .save(ctx.tx())
+            .await
+            .unwrap())
     }
 }

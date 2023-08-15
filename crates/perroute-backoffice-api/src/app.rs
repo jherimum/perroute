@@ -3,6 +3,7 @@ use actix_web::{dev::Server, web::Data, App, HttpServer};
 use anyhow::Result;
 use derive_getters::Getters;
 use perroute_commons::configuration::settings::{ServerSettings, Settings};
+use perroute_connectors::Plugins;
 use perroute_cqrs::{command_bus::bus::CommandBus, query_bus::bus::QueryBus};
 use perroute_storage::connection_manager::ConnectionManager;
 use sqlx::PgPool;
@@ -19,7 +20,7 @@ impl AppState {
     pub async fn from_settings(settings: &Settings) -> Result<Self> {
         let pool = ConnectionManager::build_pool(&settings.database).await?;
         Ok(Self {
-            command_bus: CommandBus::complete(pool.clone()),
+            command_bus: CommandBus::complete(pool.clone(), Plugins::full()),
             query_bus: QueryBus::complete(pool),
         })
     }
@@ -28,7 +29,7 @@ impl AppState {
 impl From<PgPool> for AppState {
     fn from(value: PgPool) -> Self {
         Self {
-            command_bus: CommandBus::complete(value.clone()),
+            command_bus: CommandBus::complete(value.clone(), Plugins::full()),
             query_bus: QueryBus::complete(value),
         }
     }

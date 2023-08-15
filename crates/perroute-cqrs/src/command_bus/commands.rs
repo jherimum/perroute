@@ -49,4 +49,6 @@ pub enum CommandType {
     DistributeMessage,
 
     CreateConnection,
+    DeleteConnection,
+    UpdateConnection,
 }

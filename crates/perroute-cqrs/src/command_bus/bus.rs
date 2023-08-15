@@ -7,6 +7,11 @@ use super::{
             delete_business_unit::DeleteBusinessUnitCommandHandler,
             update_business_unit::UpdateBusinessUnitCommandHandler,
         },
+        connection::{
+            create_connection::CreateConnectionCommandHandler,
+            delete_connection::DeleteConnectionCommandHandler,
+            update_connection::UpdateConnectionCommandHandler,
+        },
         message::create_message::CreateMessageCommandHandler,
         message_type::{
             create_message_type::CreateMessageTypeCommandHandler,
@@ -26,6 +31,7 @@ use super::{
     },
 };
 use perroute_commons::types::actor::Actor;
+use perroute_connectors::Plugins;
 use perroute_storage::models::db_event::DbEvent;
 use sqlx::{Acquire, PgConnection, PgPool, Postgres, Transaction};
 use std::{
@@ -74,6 +80,7 @@ impl<'tx> CommandBusContext<'tx> {
 
 #[derive(Default)]
 pub struct CommandBusBuilder {
+    plugins: Option<Plugins>,
     pool: Option<PgPool>,
     handlers: HashMap<TypeId, Box<dyn Any + Send + Sync>>,
 }
@@ -95,6 +102,7 @@ impl CommandBusBuilder {
 
     pub fn build(self) -> CommandBus {
         CommandBus {
+            plugins: self.plugins.expect("Plugins required"),
             pool: self.pool.expect("Pool is required"),
             handlers: Arc::new(self.handlers),
         }
@@ -104,11 +112,12 @@ impl CommandBusBuilder {
 #[derive(Clone, Debug)]
 pub struct CommandBus {
     pool: PgPool,
+    plugins: Plugins,
     handlers: Arc<HashMap<TypeId, Box<dyn Any + Send + Sync>>>,
 }
 
 impl CommandBus {
-    pub fn complete(pool: PgPool) -> Self {
+    pub fn complete(pool: PgPool, plugins: Plugins) -> Self {
         Self::builder()
             .with_pool(pool)
             .with_handler(CreateBusinessUnitCommandHandler)
@@ -125,6 +134,15 @@ impl CommandBus {
             .with_handler(UpdateTemplateCommandHandler)
             .with_handler(DeleteTemplateCommandHandler)
             .with_handler(CreateMessageCommandHandler)
+            .with_handler(CreateConnectionCommandHandler {
+                plugins: plugins.clone(),
+            })
+            .with_handler(UpdateConnectionCommandHandler {
+                plugins: plugins.clone(),
+            })
+            .with_handler(DeleteConnectionCommandHandler {
+                plugins: plugins.clone(),
+            })
             .build()
     }
 
