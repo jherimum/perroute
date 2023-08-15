@@ -1,8 +1,3 @@
-use derive_builder::Builder;
-use derive_getters::Getters;
-use serde::{Deserialize, Serialize};
-use validator::Validate;
-
 use self::email_dispatcher::email_dispatcher;
 use crate::{
     api::{BaseConnectorPlugin, ConnectorPlugin},
@@ -11,9 +6,12 @@ use crate::{
         DefaultConfiguration,
     },
 };
+use derive_builder::Builder;
+use derive_getters::Getters;
+use serde::{Deserialize, Serialize};
 use std::{marker::PhantomData, sync::Arc};
+use validator::Validate;
 
-mod connector;
 mod email_dispatcher;
 
 pub fn smtp_connector_plugin() -> impl ConnectorPlugin {

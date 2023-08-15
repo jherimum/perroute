@@ -1,89 +1,40 @@
 use crate::{
-    api::{ConnectorPlugin, DispatcherPlugin},
-    configuration::{
-        Configuration, ConfigurationProperties, DefaultConfiguration, NilConfiguration,
+    api::{
+        BaseConnectorPlugin, BaseDispatcherPlugin, ConnectorPlugin, DispatchError, DispatchRequest,
+        DispatchResponse,
     },
+    configuration::DefaultConfiguration,
     types::{ConnectorPluginId, DispatchType, TemplateSupport},
 };
-use std::{collections::HashMap, marker::PhantomData, sync::Arc};
+use std::sync::Arc;
 
-#[derive(Debug)]
-pub struct LogConnectorPlugin {
-    properties: Arc<dyn Configuration>,
-    plugins: HashMap<DispatchType, Arc<dyn DispatcherPlugin>>,
-}
-
-impl Default for LogConnectorPlugin {
-    fn default() -> Self {
-        let mut plugins: HashMap<DispatchType, Arc<dyn DispatcherPlugin>> = HashMap::new();
-        plugins.insert(
-            DispatchType::Sms,
-            Arc::new(LogDispatcherPlugin(
-                DispatchType::Sms,
-                ConfigurationProperties::default(),
-            )),
-        );
-        plugins.insert(
-            DispatchType::Push,
-            Arc::new(LogDispatcherPlugin(
-                DispatchType::Push,
-                ConfigurationProperties::default(),
-            )),
-        );
-        plugins.insert(
-            DispatchType::Email,
-            Arc::new(LogDispatcherPlugin(
+pub fn log_connector_plugin() -> impl ConnectorPlugin {
+    BaseConnectorPlugin::new(
+        ConnectorPluginId::Log,
+        Arc::new(DefaultConfiguration::default()),
+        vec![
+            Arc::new(BaseDispatcherPlugin::new(
                 DispatchType::Email,
-                ConfigurationProperties::default(),
+                TemplateSupport::None,
+                Arc::new(DefaultConfiguration::default()),
+                |req| Box::pin(dispatch(req)),
             )),
-        );
-
-        Self {
-            properties: Arc::new(DefaultConfiguration::new(
-                vec![],
-                PhantomData::<NilConfiguration>,
+            Arc::new(BaseDispatcherPlugin::new(
+                DispatchType::Sms,
+                TemplateSupport::None,
+                Arc::new(DefaultConfiguration::default()),
+                |req| Box::pin(dispatch(req)),
             )),
-            plugins,
-        }
-    }
+            Arc::new(BaseDispatcherPlugin::new(
+                DispatchType::Push,
+                TemplateSupport::None,
+                Arc::new(DefaultConfiguration::default()),
+                |req| Box::pin(dispatch(req)),
+            )),
+        ],
+    )
 }
 
-impl ConnectorPlugin for LogConnectorPlugin {
-    fn id(&self) -> ConnectorPluginId {
-        ConnectorPluginId::Log
-    }
-
-    fn configuration(&self) -> Arc<dyn Configuration> {
-        self.properties.clone()
-    }
-
-    fn dispatchers(&self) -> &HashMap<DispatchType, Arc<dyn DispatcherPlugin>> {
-        &self.plugins
-    }
-}
-
-#[derive(Debug)]
-pub struct LogDispatcherPlugin(DispatchType, ConfigurationProperties);
-
-#[async_trait::async_trait]
-impl DispatcherPlugin for LogDispatcherPlugin {
-    fn template_support(&self) -> TemplateSupport {
-        TemplateSupport::Mandatory
-    }
-
-    fn dispatch_type(&self) -> DispatchType {
-        self.0
-    }
-
-    fn configuration(&self) -> Arc<dyn Configuration> {
-        //&self.1
-        todo!()
-    }
-
-    async fn dispatch(
-        &self,
-        req: &crate::api::DispatchRequest,
-    ) -> Result<crate::api::DispatchResponse, crate::api::DispatchError> {
-        todo!()
-    }
+pub async fn dispatch<'r>(_: &DispatchRequest<'r>) -> Result<DispatchResponse, DispatchError> {
+    Ok(DispatchResponse::new(None, None))
 }

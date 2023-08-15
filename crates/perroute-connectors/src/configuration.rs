@@ -1,8 +1,7 @@
-use std::{collections::HashMap, fmt::Debug};
-
 use derive_builder::Builder;
 use perroute_commons::types::properties::{Properties, PropertiesError};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use std::{collections::HashMap, fmt::Debug};
 
 pub trait Configuration: Iterator<Item = ConfigurationProperty> + Debug + Send + Sync {
     fn validate(&self, props: &Properties) -> Result<(), PropertiesError>;

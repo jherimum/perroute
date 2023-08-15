@@ -1,14 +1,15 @@
 use api::ConnectorPlugin;
-use std::{collections::HashMap, fmt::Debug, sync::Arc};
+use connector::{
+    log::log_connector_plugin, sendgrid::sendgrid_connector_plugin, smtp::smtp_connector_plugin,
+};
+use std::{fmt::Debug, sync::Arc};
 use types::ConnectorPluginId;
 
 pub mod api;
 pub mod configuration;
-pub mod connector;
+mod connector;
 pub mod template;
 pub mod types;
-
-use connector::smtp::smtp_connector_plugin;
 
 #[derive(Clone, Debug)]
 pub struct Plugins {
@@ -18,7 +19,11 @@ pub struct Plugins {
 impl Plugins {
     pub fn full() -> Self {
         Self {
-            plugins: Arc::new(vec![Box::new(smtp_connector_plugin())]),
+            plugins: Arc::new(vec![
+                Box::new(smtp_connector_plugin()),
+                Box::new(log_connector_plugin()),
+                Box::new(sendgrid_connector_plugin()),
+            ]),
         }
     }
 }

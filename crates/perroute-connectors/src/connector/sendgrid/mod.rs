@@ -1,141 +1,114 @@
-use derive_builder::Builder;
-use perroute_commons::types::{email::Mailbox, properties::Properties, recipient::Recipient};
+use crate::{
+    api::{
+        BaseConnectorPlugin, BaseDispatcherPlugin, ConnectorPlugin, DispatchError, DispatchRequest,
+        DispatchResponse,
+    },
+    configuration::{ConfigurationProperties, DefaultConfiguration},
+    types::{ConnectorPluginId, DispatchType, TemplateSupport},
+};
+use perroute_commons::types::{email::Mailbox, recipient::Recipient};
 use sendgrid::{
     v3::{Email, Message, Personalization, Sender},
     SendgridResult,
 };
 use serde::Deserialize;
-use std::{collections::HashMap, ops::Deref, sync::Arc};
+use std::{marker::PhantomData, ops::Deref, sync::Arc};
+use validator::Validate;
 
-use crate::{
-    api::{ConnectorPlugin, DispatchError, DispatchRequest, DispatchResponse, DispatcherPlugin},
-    configuration::{Configuration, ConfigurationProperties},
-    types::{ConnectorPluginId, DispatchType, TemplateSupport},
-};
+pub fn sendgrid_connector_plugin() -> impl ConnectorPlugin {
+    BaseConnectorPlugin::new(
+        ConnectorPluginId::SendGrid,
+        Arc::new(DefaultConfiguration::new(
+            connection_properties(),
+            PhantomData::<SendgridConnectionProperties>,
+        )),
+        vec![Arc::new(BaseDispatcherPlugin::new(
+            DispatchType::Email,
+            TemplateSupport::Mandatory,
+            Arc::new(DefaultConfiguration::new(
+                dispatcher_properties(),
+                PhantomData::<EmailDispatcherProperties>,
+            )),
+            |req| Box::pin(dispatch(req)),
+        ))],
+    )
+}
 
-//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
-
-#[derive(Deserialize, Default)]
-pub struct ConnectionProperties {
+#[derive(Deserialize, Default, Debug)]
+pub struct SendgridConnectionProperties {
     api_key: String,
 }
 
-impl TryFrom<&Properties> for ConnectionProperties {
-    type Error = DispatchError;
-
-    fn try_from(value: &Properties) -> Result<Self, Self::Error> {
+impl Validate for SendgridConnectionProperties {
+    fn validate(&self) -> Result<(), validator::ValidationErrors> {
         todo!()
     }
 }
 
-#[derive(Debug)]
-pub struct SendGridConnectorPlugin {
-    id: ConnectorPluginId,
-    configuration: Arc<dyn Configuration>,
-    dispatchers: HashMap<DispatchType, Arc<dyn DispatcherPlugin>>,
+fn connection_properties() -> ConfigurationProperties {
+    todo!()
 }
 
-impl ConnectorPlugin for SendGridConnectorPlugin {
-    fn id(&self) -> ConnectorPluginId {
-        self.id
-    }
-
-    fn configuration(&self) -> Arc<dyn Configuration> {
-        self.configuration.clone()
-    }
-
-    fn dispatchers(&self) -> &HashMap<DispatchType, Arc<dyn DispatcherPlugin>> {
-        &self.dispatchers
-    }
-}
-
-#[derive(Deserialize, Builder)]
+#[derive(Debug, Deserialize)]
 pub struct EmailDispatcherProperties {
     from: Mailbox,
     template_id: Option<String>,
     categories: Vec<String>,
 }
 
-#[derive(Debug)]
-pub struct EmailDispatcherPlugin<'c> {
-    connector_plugin: &'c SendGridConnectorPlugin,
-    template_support: TemplateSupport,
-    dispatch_type: DispatchType,
-    configuration: ConfigurationProperties,
-}
-
-impl<'c> EmailDispatcherPlugin<'c> {
-    fn new(connector_plugin: &'c SendGridConnectorPlugin) -> Self {
-        Self {
-            connector_plugin: connector_plugin,
-            template_support: TemplateSupport::Optional,
-            dispatch_type: DispatchType::Email,
-            configuration: Default::default(),
-        }
-    }
-}
-
-#[async_trait::async_trait]
-impl<'c> DispatcherPlugin for EmailDispatcherPlugin<'c> {
-    fn template_support(&self) -> TemplateSupport {
-        self.template_support
-    }
-
-    fn dispatch_type(&self) -> DispatchType {
-        self.dispatch_type
-    }
-
-    fn configuration(&self) -> Arc<dyn Configuration> {
-        //&self.configuration
+impl Validate for EmailDispatcherProperties {
+    fn validate(&self) -> Result<(), validator::ValidationErrors> {
         todo!()
     }
-
-    async fn dispatch(&self, req: &DispatchRequest) -> Result<DispatchResponse, DispatchError> {
-        // let conn_properties = self
-        //     .connector_plugin
-        //     .configuration
-        //     .build::<ConnectionProperties>(req.connection_properties)
-        //     .unwrap();
-        let conn_properties = ConnectionProperties::default();
-
-        let sender = Sender::new(conn_properties.api_key);
-        let message = build_message(req).unwrap();
-        println!("{}", serde_json::to_string_pretty(&message).unwrap());
-        let r = sender.send(&message).await;
-
-        if r.is_err() {
-            let x = r.err();
-        } else {
-            let x = r.ok();
-            if x.is_some() {
-                let x = x.unwrap();
-                dbg!(&x.status());
-                dbg!(x.text().await);
-            } else {
-                println!("nadaaa");
-            }
-        }
-
-        Ok(DispatchResponse::new(None, None))
-    }
 }
 
+fn dispatcher_properties() -> ConfigurationProperties {
+    todo!()
+}
+
+pub async fn dispatch<'r>(req: &DispatchRequest<'r>) -> Result<DispatchResponse, DispatchError> {
+    let conn_properties = req
+        .connection_properties
+        .from_value::<SendgridConnectionProperties>()
+        .unwrap();
+
+    let sender = Sender::new(conn_properties.api_key);
+    let message = build_message(req).unwrap();
+    println!("{}", serde_json::to_string_pretty(&message).unwrap());
+    let r = sender.send(&message).await;
+
+    if r.is_err() {
+        let x = r.err();
+    } else {
+        let x = r.ok();
+        if x.is_some() {
+            let x = x.unwrap();
+            dbg!(&x.status());
+            dbg!(x.text().await);
+        } else {
+            println!("nadaaa");
+        }
+    }
+
+    Ok(DispatchResponse::new(None, None))
+}
+
+//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
+
 fn build_message(req: &DispatchRequest) -> SendgridResult<Message> {
-    // let disp_props = req
-    //     .dispatch_properties()
-    //     .from_value::<EmailDispatcherProperties>()
-    //     .unwrap();
+    let disp_properties = req
+        .dispatch_properties
+        .from_value::<EmailDispatcherProperties>()
+        .unwrap();
 
-    let disp_props = EmailDispatcherPropertiesBuilder::default().build().unwrap();
-
-    let mut message = Message::new(SendGridEmail::from(disp_props.from).into());
-    if disp_props.template_id.is_some() {
-        message = message.set_template_id(disp_props.template_id.as_ref().unwrap());
+    let mut message = Message::new(SendGridEmail::from(disp_properties.from).into());
+    if disp_properties.template_id.is_some() {
+        message = message.set_template_id(disp_properties.template_id.as_ref().unwrap());
     }
 
     Ok(message
         .add_personalization(personalization_from_request(&req)?)
-        .add_categories(&disp_props.categories)
+        .add_categories(&disp_properties.categories)
         .set_subject(&req.subject().as_ref().cloned().unwrap_or_default()))
 }
 
