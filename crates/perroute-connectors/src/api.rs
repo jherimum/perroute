@@ -15,7 +15,7 @@ use perroute_commons::types::{
     vars::Vars,
 };
 use serde::Serialize;
-use std::{error::Error, fmt::Debug, future::Future, pin::Pin, sync::Arc};
+use std::{error::Error, fmt::Debug, sync::Arc};
 
 pub trait ConnectorPlugin: Sync + Send + Debug {
     fn id(&self) -> ConnectorPluginId;
