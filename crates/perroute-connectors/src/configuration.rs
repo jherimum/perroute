@@ -22,14 +22,14 @@ pub(crate) struct DefaultConfiguration<T>
 where
     T: DeserializeOwned + validator::Validate,
 {
-    properties: Vec<ConfigurationProperty>,
+    properties: ConfigurationProperties,
     _marker: std::marker::PhantomData<T>,
 }
 
 impl Default for DefaultConfiguration<NilConfiguration> {
     fn default() -> Self {
         Self {
-            properties: vec![],
+            properties: Default::default(),
             _marker: std::marker::PhantomData,
         }
     }
@@ -39,10 +39,7 @@ impl<T> DefaultConfiguration<T>
 where
     T: DeserializeOwned + validator::Validate,
 {
-    pub fn new(
-        properties: Vec<ConfigurationProperty>,
-        _marker: std::marker::PhantomData<T>,
-    ) -> Self {
+    pub fn new(properties: ConfigurationProperties, _marker: std::marker::PhantomData<T>) -> Self {
         Self {
             properties,
             _marker,
@@ -57,7 +54,7 @@ where
     type Item = ConfigurationProperty;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.properties.pop()
+        self.properties.0.pop()
     }
 }
 

@@ -4,42 +4,34 @@ use types::ConnectorPluginId;
 
 pub mod api;
 pub mod configuration;
-mod connector;
+pub mod connector;
 pub mod template;
 pub mod types;
 
+use connector::smtp::smtp_connector_plugin;
+
 #[derive(Clone, Debug)]
 pub struct Plugins {
-    data: Arc<HashMap<ConnectorPluginId, Box<dyn ConnectorPlugin>>>,
+    plugins: Arc<Vec<Box<dyn ConnectorPlugin>>>,
 }
 
 impl Plugins {
-    pub fn builder() -> PluginsBuilder {
-        PluginsBuilder::default()
-    }
-    pub fn get(&self, id: &ConnectorPluginId) -> Option<&Box<dyn ConnectorPlugin>> {
-        self.data.get(id)
-    }
-
-    pub fn all(&self) -> Vec<&Box<dyn ConnectorPlugin>> {
-        self.data.values().collect::<Vec<_>>()
-    }
-}
-
-#[derive(Debug, Default)]
-pub struct PluginsBuilder {
-    data: HashMap<ConnectorPluginId, Box<dyn ConnectorPlugin>>,
-}
-
-impl PluginsBuilder {
-    pub fn with_plugin(mut self, plugin: Box<dyn ConnectorPlugin>) -> Self {
-        self.data.insert(plugin.id(), plugin);
-        self
-    }
-
-    pub fn build(self) -> Plugins {
-        Plugins {
-            data: Arc::new(self.data),
+    pub fn full() -> Self {
+        Self {
+            plugins: Arc::new(vec![Box::new(smtp_connector_plugin())]),
         }
+    }
+}
+
+impl Plugins {
+    pub fn get(&self, id: ConnectorPluginId) -> Option<&dyn ConnectorPlugin> {
+        self.plugins
+            .iter()
+            .find(|p| p.id() == id)
+            .map(|p| p.as_ref())
+    }
+
+    pub fn all(&self) -> Vec<&dyn ConnectorPlugin> {
+        self.plugins.iter().map(|p| p.as_ref()).collect()
     }
 }

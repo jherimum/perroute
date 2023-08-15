@@ -39,7 +39,7 @@ impl CommandHandler for CreateConnectionCommandHandler {
         actor: &Actor,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
-        let connector_plugin = self.plugins.get(&cmd.plugin_id).unwrap();
+        let connector_plugin = self.plugins.get(cmd.plugin_id).unwrap();
         let result = connector_plugin.configuration().validate(&cmd.properties);
 
         todo!()

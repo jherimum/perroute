@@ -5,6 +5,7 @@ use crate::{
 };
 use derive_getters::Getters;
 use erased_serde::serialize_trait_object;
+use futures_util::future::BoxFuture;
 use perroute_commons::types::{
     id::Id,
     payload::Payload,
@@ -14,14 +15,17 @@ use perroute_commons::types::{
     vars::Vars,
 };
 use serde::Serialize;
-use std::{collections::HashMap, error::Error, fmt::Debug, sync::Arc};
+use std::{error::Error, fmt::Debug, future::Future, pin::Pin, sync::Arc};
 
 pub trait ConnectorPlugin: Sync + Send + Debug {
     fn id(&self) -> ConnectorPluginId;
-    fn configuration(&self) -> Arc<dyn Configuration>;
-    fn dispatchers(&self) -> &HashMap<DispatchType, Arc<dyn DispatcherPlugin>>;
-    fn dispatcher(&self, ty: DispatchType) -> Option<&Arc<dyn DispatcherPlugin>> {
-        self.dispatchers().get(&ty)
+    fn configuration(&self) -> &dyn Configuration;
+    fn dispatchers(&self) -> Vec<&dyn DispatcherPlugin>;
+    fn dispatcher(&self, ty: DispatchType) -> Option<&dyn DispatcherPlugin> {
+        self.dispatchers()
+            .iter()
+            .find(|d| d.dispatch_type() == ty)
+            .map(|f| *f)
     }
 }
 
@@ -31,6 +35,61 @@ pub trait DispatcherPlugin: Sync + Send + Debug {
     fn dispatch_type(&self) -> DispatchType;
     fn configuration(&self) -> Arc<dyn Configuration>;
     async fn dispatch(&self, req: &DispatchRequest) -> Result<DispatchResponse, DispatchError>;
+}
+
+pub struct BaseDispatcherPlugin {
+    pub dispatch_type: DispatchType,
+    pub template_support: TemplateSupport,
+    pub configuration: Arc<dyn Configuration>,
+    pub func:
+        for<'r> fn(&'r DispatchRequest) -> BoxFuture<'r, Result<DispatchResponse, DispatchError>>,
+}
+
+impl BaseDispatcherPlugin {
+    pub fn new(
+        dispatch_type: DispatchType,
+        template_support: TemplateSupport,
+        configuration: Arc<dyn Configuration>,
+        func: for<'r> fn(
+            &'r DispatchRequest,
+        ) -> BoxFuture<'r, Result<DispatchResponse, DispatchError>>,
+    ) -> Self {
+        Self {
+            dispatch_type,
+            template_support,
+            configuration,
+            func,
+        }
+    }
+}
+
+impl Debug for BaseDispatcherPlugin {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("BaseDispatcherPlugin")
+            .field("dispatch_type", &self.dispatch_type)
+            .field("template_support", &self.template_support)
+            .field("configuration", &self.configuration)
+            .finish()
+    }
+}
+
+#[async_trait::async_trait]
+impl DispatcherPlugin for BaseDispatcherPlugin {
+    fn template_support(&self) -> TemplateSupport {
+        self.template_support
+    }
+
+    fn dispatch_type(&self) -> DispatchType {
+        self.dispatch_type
+    }
+
+    fn configuration(&self) -> Arc<dyn Configuration> {
+        self.configuration.clone()
+    }
+
+    async fn dispatch(&self, req: &DispatchRequest) -> Result<DispatchResponse, DispatchError> {
+        (self.func)(req).await
+    }
 }
 
 #[derive(Getters)]
@@ -97,7 +156,7 @@ impl From<TemplateError> for DispatchError {
 pub struct BaseConnectorPlugin {
     pub plugin_id: ConnectorPluginId,
     pub configuration: Arc<dyn Configuration + Send + Sync>,
-    pub dispatchers: HashMap<DispatchType, Arc<dyn DispatcherPlugin>>,
+    pub dispatchers: Vec<Arc<dyn DispatcherPlugin>>,
 }
 
 impl ConnectorPlugin for BaseConnectorPlugin {
@@ -105,12 +164,12 @@ impl ConnectorPlugin for BaseConnectorPlugin {
         self.plugin_id
     }
 
-    fn configuration(&self) -> Arc<dyn Configuration> {
-        self.configuration.clone()
+    fn configuration(&self) -> &dyn Configuration {
+        self.configuration.as_ref()
     }
 
-    fn dispatchers(&self) -> &HashMap<DispatchType, Arc<dyn DispatcherPlugin>> {
-        &self.dispatchers
+    fn dispatchers(&self) -> Vec<&dyn DispatcherPlugin> {
+        self.dispatchers.iter().map(AsRef::as_ref).collect()
     }
 }
 
@@ -118,7 +177,7 @@ impl BaseConnectorPlugin {
     pub fn new(
         plugin_id: ConnectorPluginId,
         configuration: Arc<dyn Configuration + Send + Sync>,
-        dispatchers: HashMap<DispatchType, Arc<dyn DispatcherPlugin>>,
+        dispatchers: Vec<Arc<dyn DispatcherPlugin>>,
     ) -> Self {
         Self {
             plugin_id,

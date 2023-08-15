@@ -2413,6 +2413,7 @@ dependencies = [
  "derive-getters",
  "derive_builder",
  "erased-serde",
+ "futures-util",
  "lettre",
  "perroute-commons",
  "sendgrid",

@@ -20,6 +20,6 @@ tracing = { workspace = true }
 sendgrid = { version = "0.19.2", features = ["async"] }
 async-trait = { workspace = true }
 validator = { workspace = true }
-
+futures-util = "0.3"
 [dev-dependencies]
 tokio = { version = "1", features = ["full"] }

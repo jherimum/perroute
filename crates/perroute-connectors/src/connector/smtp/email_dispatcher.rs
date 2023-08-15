@@ -1,9 +1,12 @@
-use super::connector::{SmtpConnectorProperties, SmtpConnectorPropertiesBuilder};
+use super::SmtpConnectorProperties;
 use crate::{
-    api::{DispatchError, DispatchRequest, DispatchResponse, DispatcherPlugin, ResponseData},
+    api::{
+        BaseDispatcherPlugin, DispatchError, DispatchRequest, DispatchResponse, DispatcherPlugin,
+        ResponseData,
+    },
     configuration::{
-        Configuration, ConfigurationProperties, ConfigurationPropertyBuilder,
-        ConfigurationPropertyType,
+        ConfigurationProperties, ConfigurationPropertyBuilder, ConfigurationPropertyType,
+        DefaultConfiguration,
     },
     types::{DispatchType, TemplateSupport},
 };
@@ -18,6 +21,15 @@ use serde::{Deserialize, Serialize};
 use std::{ops::Deref, sync::Arc, time::Duration};
 use tap::TapFallible;
 
+pub fn email_dispatcher() -> impl DispatcherPlugin {
+    BaseDispatcherPlugin::new(
+        DispatchType::Email,
+        TemplateSupport::Mandatory,
+        Arc::new(DefaultConfiguration::default()),
+        |req| Box::pin(dispatch(req)),
+    )
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum EmailDispatcherError {
     #[error("email not supplied")]
@@ -30,7 +42,21 @@ impl From<EmailDispatcherError> for DispatchError {
     }
 }
 
-fn properties() -> ConfigurationProperties {
+pub async fn dispatch<'r>(req: &DispatchRequest<'r>) -> Result<DispatchResponse, DispatchError> {
+    let conn_properties = req
+        .connection_properties
+        .from_value::<SmtpConnectorProperties>()
+        .unwrap();
+
+    let transport = SmtpTransport::try_from(&conn_properties)?;
+
+    transport
+        .send(&Message::try_from(req)?)
+        .map_err(|e| DispatchError::Unrecoverable(Box::new(e)))
+        .map(|response| DispatchResponse::new(None, Some(Box::new(EmailResponse(response)))))
+}
+
+pub fn properties() -> ConfigurationProperties {
     [
         ConfigurationPropertyBuilder::default()
             .name("from")
@@ -80,57 +106,8 @@ pub struct EmailDispatcherProperties {
     reply_to: Vec<Mailbox>,
 }
 
-#[derive(Debug)]
-pub struct EmailDispatcher {
-    configuration: ConfigurationProperties,
-    dispatch_type: DispatchType,
-    template_support: TemplateSupport,
-}
-
-impl Default for EmailDispatcher {
-    fn default() -> Self {
-        Self {
-            configuration: properties(),
-            dispatch_type: DispatchType::Email,
-            template_support: TemplateSupport::Mandatory,
-        }
-    }
-}
-
-#[async_trait::async_trait]
-impl DispatcherPlugin for EmailDispatcher {
-    fn template_support(&self) -> TemplateSupport {
-        self.template_support
-    }
-
-    fn dispatch_type(&self) -> DispatchType {
-        self.dispatch_type
-    }
-
-    fn configuration(&self) -> Arc<dyn Configuration> {
-        //&self.configuration
-        todo!()
-    }
-
-    async fn dispatch(&self, req: &DispatchRequest) -> Result<DispatchResponse, DispatchError> {
-        // let conn_properties = req
-        //     .connection_properties()
-        //     .from_value::<SmtpConnectorProperties>()
-        //     .map_err(DispatchError::unrecoverable)?;
-
-        let conn_properties = SmtpConnectorPropertiesBuilder::default().build().unwrap();
-
-        let transport = SmtpTransport::try_from(&conn_properties)?;
-
-        transport
-            .send(&Message::try_from(req)?)
-            .map_err(|e| DispatchError::Unrecoverable(Box::new(e)))
-            .map(|response| DispatchResponse::new(None, Some(Box::new(EmailResponse(response)))))
-    }
-}
-
 #[derive(Serialize, Debug)]
-pub struct EmailResponse(Response);
+pub struct EmailResponse(pub Response);
 impl ResponseData for EmailResponse {}
 
 impl TryFrom<&DispatchRequest<'_>> for Message {
