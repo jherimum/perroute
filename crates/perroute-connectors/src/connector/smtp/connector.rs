@@ -1,12 +1,17 @@
 use super::email_dispatcher::EmailDispatcher;
-use crate::api::{
-    BaseConnectorPlugin, ConfigurationProperties, ConfigurationPropertyBuilder,
-    ConfigurationPropertyType, ConnectorPlugin, ConnectorPluginId, DispatchType, DispatcherPlugin,
+use crate::{
+    api::{BaseConnectorPlugin, ConnectorPlugin, DispatcherPlugin},
+    configuration::{
+        Configuration, ConfigurationProperties, ConfigurationPropertyBuilder,
+        ConfigurationPropertyType, DefaultConfiguration,
+    },
+    types::{ConnectorPluginId, DispatchType},
 };
 use derive_builder::Builder;
 use derive_getters::Getters;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
+use validator::Validate;
 
 #[derive(Debug, Deserialize, Getters, Builder, Serialize)]
 pub struct SmtpConnectorProperties {
@@ -18,15 +23,24 @@ pub struct SmtpConnectorProperties {
     starttls: bool,
 }
 
+impl Validate for SmtpConnectorProperties {
+    fn validate(&self) -> Result<(), validator::ValidationErrors> {
+        todo!()
+    }
+}
+
 #[derive(Debug)]
 pub struct SmtpConnector(BaseConnectorPlugin);
 
-impl Default for SmtpConnector {
-    fn default() -> Self {
+impl SmtpConnector {
+    pub fn new() -> Self {
         Self(BaseConnectorPlugin {
-            plugin_id: todo!(),
-            configuration: todo!(),
-            dispatchers: todo!(),
+            plugin_id: ConnectorPluginId::Smtp,
+            configuration: Arc::new(DefaultConfiguration::new(
+                vec![],
+                std::marker::PhantomData::<SmtpConnectorProperties>,
+            )),
+            dispatchers: HashMap::new(),
         })
     }
 }
@@ -36,11 +50,11 @@ impl ConnectorPlugin for SmtpConnector {
         self.0.id()
     }
 
-    fn configuration(&self) -> &ConfigurationProperties {
-        &self.0.configuration()
+    fn configuration(&self) -> Arc<dyn Configuration> {
+        self.0.configuration().clone()
     }
 
-    fn dispatchers(&self) -> &HashMap<DispatchType, Box<dyn DispatcherPlugin>> {
+    fn dispatchers(&self) -> &HashMap<DispatchType, Arc<dyn DispatcherPlugin>> {
         &self.0.dispatchers()
     }
 }

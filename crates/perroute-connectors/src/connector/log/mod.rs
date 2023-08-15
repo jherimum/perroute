@@ -1,42 +1,48 @@
-use crate::api::{
-    ConfigurationProperties, ConnectorPlugin, ConnectorPluginId, DispatchType, DispatcherPlugin,
-    TemplateSupport,
+use crate::{
+    api::{ConnectorPlugin, DispatcherPlugin},
+    configuration::{
+        Configuration, ConfigurationProperties, DefaultConfiguration, NilConfiguration,
+    },
+    types::{ConnectorPluginId, DispatchType, TemplateSupport},
 };
-use std::collections::HashMap;
+use std::{collections::HashMap, marker::PhantomData, sync::Arc};
 
 #[derive(Debug)]
 pub struct LogConnectorPlugin {
-    properties: ConfigurationProperties,
-    plugins: HashMap<DispatchType, Box<dyn DispatcherPlugin>>,
+    properties: Arc<dyn Configuration>,
+    plugins: HashMap<DispatchType, Arc<dyn DispatcherPlugin>>,
 }
 
 impl Default for LogConnectorPlugin {
     fn default() -> Self {
-        let mut plugins: HashMap<DispatchType, Box<dyn DispatcherPlugin>> = HashMap::new();
+        let mut plugins: HashMap<DispatchType, Arc<dyn DispatcherPlugin>> = HashMap::new();
         plugins.insert(
             DispatchType::Sms,
-            Box::new(LogDispatcherPlugin(
+            Arc::new(LogDispatcherPlugin(
                 DispatchType::Sms,
                 ConfigurationProperties::default(),
             )),
         );
         plugins.insert(
             DispatchType::Push,
-            Box::new(LogDispatcherPlugin(
+            Arc::new(LogDispatcherPlugin(
                 DispatchType::Push,
                 ConfigurationProperties::default(),
             )),
         );
         plugins.insert(
             DispatchType::Email,
-            Box::new(LogDispatcherPlugin(
+            Arc::new(LogDispatcherPlugin(
                 DispatchType::Email,
                 ConfigurationProperties::default(),
             )),
         );
 
         Self {
-            properties: Default::default(),
+            properties: Arc::new(DefaultConfiguration::new(
+                vec![],
+                PhantomData::<NilConfiguration>,
+            )),
             plugins,
         }
     }
@@ -47,11 +53,11 @@ impl ConnectorPlugin for LogConnectorPlugin {
         ConnectorPluginId::Log
     }
 
-    fn configuration(&self) -> &ConfigurationProperties {
-        &self.properties
+    fn configuration(&self) -> Arc<dyn Configuration> {
+        self.properties.clone()
     }
 
-    fn dispatchers(&self) -> &HashMap<DispatchType, Box<dyn DispatcherPlugin>> {
+    fn dispatchers(&self) -> &HashMap<DispatchType, Arc<dyn DispatcherPlugin>> {
         &self.plugins
     }
 }
@@ -69,8 +75,9 @@ impl DispatcherPlugin for LogDispatcherPlugin {
         self.0
     }
 
-    fn configuration(&self) -> &ConfigurationProperties {
-        &self.1
+    fn configuration(&self) -> Arc<dyn Configuration> {
+        //&self.1
+        todo!()
     }
 
     async fn dispatch(

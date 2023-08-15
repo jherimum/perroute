@@ -19,6 +19,7 @@ tap = { workspace = true }
 tracing = { workspace = true }
 sendgrid = { version = "0.19.2", features = ["async"] }
 async-trait = { workspace = true }
+validator = { workspace = true }
 
 [dev-dependencies]
 tokio = { version = "1", features = ["full"] }

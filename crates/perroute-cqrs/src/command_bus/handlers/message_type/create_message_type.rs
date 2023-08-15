@@ -23,6 +23,7 @@ pub struct CreateMessageTypeCommand {
     name: String,
     enabled: bool,
     vars: Vars,
+    bu_id: Id,
 }
 
 impl_command!(CreateMessageTypeCommand, CommandType::CreateMessageType);
@@ -67,6 +68,7 @@ impl CommandHandler for CreateMessageTypeCommandHandler {
             .name(cmd.name().clone())
             .enabled(false)
             .vars(Json(cmd.vars().clone()))
+            .business_id(cmd.bu_id)
             .build()
             .unwrap()
             .save(ctx.tx())

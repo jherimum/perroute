@@ -1,11 +1,12 @@
 use self::{
-    business_unit::BusinessUnitRouter, health::HealthRouter, message::MessageRouter,
-    message_type::MessageTypeRouter, route::RouteRouter, schema::SchemaRouter,
-    template::TemplateRouter,
+    business_unit::BusinessUnitRouter, connection::ConnectionsRouter, health::HealthRouter,
+    message::MessageRouter, message_type::MessageTypeRouter, route::RouteRouter,
+    schema::SchemaRouter, template::TemplateRouter,
 };
 use actix_web::{web, Scope};
 
 pub mod business_unit;
+pub mod connection;
 pub mod health;
 pub mod message;
 pub mod message_type;
@@ -114,6 +115,9 @@ pub fn routes() -> Scope {
             .name(MessageRouter::MESSAGES_RESOURCE_NAME)
             .route(web::post().to(MessageRouter::create_message)),
     );
+
+    let connections = web::scope("/connections")
+        .service(web::resource("").route(web::post().to(ConnectionsRouter::create)));
 
     web::scope("")
         .service(

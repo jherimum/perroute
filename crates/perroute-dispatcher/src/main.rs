@@ -7,10 +7,7 @@ use perroute_commons::{
         template::{TemplateData, TemplateError, TemplateRender},
     },
 };
-use perroute_connectors::{
-    api::{DispatchRequest, DispatchTemplate},
-    Plugins,
-};
+use perroute_connectors::{api::DispatchRequest, template::DispatchTemplate, Plugins};
 use perroute_messaging::connection::{Config, RecoverableConnection};
 use perroute_storage::{
     connection_manager::ConnectionManager,

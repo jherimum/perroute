@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use perroute_commons::types::{actor::Actor, id::Id};
+use perroute_commons::types::actor::Actor;
 use perroute_storage::{
     models::template::{Template, TemplatesQueryBuilder},
     query::FetchableModel,

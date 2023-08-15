@@ -7,7 +7,7 @@ use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::types::{code::Code, id::Id, json_schema::JsonSchema, vars::Vars};
-use perroute_connectors::api::DispatchType;
+use perroute_connectors::types::DispatchType;
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Json, FromRow, PgExecutor, QueryBuilder, Type};
 use std::fmt::Display;

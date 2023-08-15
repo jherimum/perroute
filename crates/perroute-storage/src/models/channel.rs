@@ -2,7 +2,7 @@ use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::types::{id::Id, properties::Properties};
-use perroute_connectors::api::DispatchType;
+use perroute_connectors::types::DispatchType;
 use sqlx::{types::Json, FromRow, PgExecutor};
 
 use super::{business_unit::BusinessUnit, connection::Connection, route::Route};

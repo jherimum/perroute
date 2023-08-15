@@ -2,7 +2,7 @@ use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::types::{id::Id, properties::Properties};
-use perroute_connectors::api::ConnectorPluginId;
+use perroute_connectors::types::ConnectorPluginId;
 use sqlx::{types::Json, Executor, FromRow};
 use std::todo;
 

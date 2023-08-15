@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 anyhow = { workspace = true }
-config = { workspace = true }
+config.workspace = true
 strum_macros = { workspace = true }
 thiserror = { workspace = true }
 tap = { workspace = true }
@@ -38,6 +38,7 @@ jsonschema = { workspace = true }
 actix-web = { workspace = true }
 handlebars = { workspace = true }
 lettre = { workspace = true, features = ["serde"] }
+validator = { workspace = true }
 
 [dev-dependencies]
 temp-env = "0.3"

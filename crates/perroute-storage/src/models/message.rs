@@ -6,7 +6,7 @@ use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::types::{id::Id, payload::Payload, recipient::Recipient};
-use perroute_connectors::api::DispatchType;
+use perroute_connectors::types::DispatchType;
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Json, FromRow, PgExecutor};
 use tap::TapFallible;

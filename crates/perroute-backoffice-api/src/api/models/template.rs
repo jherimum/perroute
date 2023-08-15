@@ -3,7 +3,7 @@ use crate::api::response::Links;
 use crate::api::response::ResourceBuilder;
 use crate::api::response::SingleResourceModel;
 use perroute_commons::types::id::Id;
-use perroute_connectors::api::DispatchType;
+use perroute_connectors::types::DispatchType;
 use perroute_storage::models::template::Template;
 use serde::Serialize;
 

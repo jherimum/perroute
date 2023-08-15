@@ -1,8 +1,11 @@
-use super::connector::SmtpConnectorProperties;
-use crate::api::{
-    ConfigurationProperties, ConfigurationPropertyBuilder, ConfigurationPropertyType,
-    DispatchError, DispatchRequest, DispatchResponse, DispatchType, DispatcherPlugin, ResponseData,
-    TemplateSupport,
+use super::connector::{SmtpConnectorProperties, SmtpConnectorPropertiesBuilder};
+use crate::{
+    api::{DispatchError, DispatchRequest, DispatchResponse, DispatcherPlugin, ResponseData},
+    configuration::{
+        Configuration, ConfigurationProperties, ConfigurationPropertyBuilder,
+        ConfigurationPropertyType,
+    },
+    types::{DispatchType, TemplateSupport},
 };
 use derive_builder::Builder;
 use lettre::{
@@ -12,7 +15,7 @@ use lettre::{
 };
 use perroute_commons::types::{email::Mailbox, recipient::Recipient};
 use serde::{Deserialize, Serialize};
-use std::{ops::Deref, time::Duration};
+use std::{ops::Deref, sync::Arc, time::Duration};
 use tap::TapFallible;
 
 #[derive(Debug, thiserror::Error)]
@@ -104,15 +107,18 @@ impl DispatcherPlugin for EmailDispatcher {
         self.dispatch_type
     }
 
-    fn configuration(&self) -> &ConfigurationProperties {
-        &self.configuration
+    fn configuration(&self) -> Arc<dyn Configuration> {
+        //&self.configuration
+        todo!()
     }
 
     async fn dispatch(&self, req: &DispatchRequest) -> Result<DispatchResponse, DispatchError> {
-        let conn_properties = req
-            .connection_properties()
-            .from_value::<SmtpConnectorProperties>()
-            .map_err(DispatchError::unrecoverable)?;
+        // let conn_properties = req
+        //     .connection_properties()
+        //     .from_value::<SmtpConnectorProperties>()
+        //     .map_err(DispatchError::unrecoverable)?;
+
+        let conn_properties = SmtpConnectorPropertiesBuilder::default().build().unwrap();
 
         let transport = SmtpTransport::try_from(&conn_properties)?;
 
@@ -127,14 +133,16 @@ impl DispatcherPlugin for EmailDispatcher {
 pub struct EmailResponse(Response);
 impl ResponseData for EmailResponse {}
 
-impl TryFrom<&DispatchRequest<'_, '_, '_, '_, '_, '_>> for Message {
+impl TryFrom<&DispatchRequest<'_>> for Message {
     type Error = DispatchError;
 
     fn try_from(req: &DispatchRequest) -> Result<Self, Self::Error> {
-        let disp_properties = req
-            .dispatch_properties()
-            .from_value::<EmailDispatcherProperties>()
-            .map_err(DispatchError::unrecoverable)?;
+        // let disp_properties = req
+        //     .dispatch_properties()
+        //     .from_value::<EmailDispatcherProperties>()
+        //     .map_err(DispatchError::unrecoverable)?;
+
+        let disp_properties = EmailDispatcherPropertiesBuilder::default().build().unwrap();
 
         let html = req
             .template()

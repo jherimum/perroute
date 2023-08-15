@@ -14,7 +14,6 @@ use actix_web::web::{Data, Json, Path};
 use perroute_commons::new_id;
 use perroute_commons::types::actor::Actor;
 use perroute_commons::types::id::Id;
-use perroute_commons::types::json_schema::JsonSchema;
 use perroute_cqrs::command_bus::handlers::schema::create_schema::CreateSchemaCommandBuilder;
 use perroute_cqrs::command_bus::handlers::schema::delete_schema::DeleteSchemaCommandBuilder;
 use perroute_cqrs::command_bus::handlers::schema::update_schema::UpdateSchemaCommandBuilder;

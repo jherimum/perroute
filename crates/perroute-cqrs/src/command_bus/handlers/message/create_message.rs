@@ -12,7 +12,7 @@ use derive_getters::Getters;
 use perroute_commons::types::{
     actor::Actor, code::Code, id::Id, payload::Payload, recipient::Recipient,
 };
-use perroute_connectors::api::DispatchType;
+use perroute_connectors::types::DispatchType;
 use perroute_messaging::events::EventType;
 use perroute_storage::{
     models::{

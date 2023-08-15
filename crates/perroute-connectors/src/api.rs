@@ -1,4 +1,8 @@
-use derive_builder::Builder;
+use crate::{
+    configuration::Configuration,
+    template::DispatchTemplate,
+    types::{ConnectorPluginId, DispatchType, TemplateSupport},
+};
 use derive_getters::Getters;
 use erased_serde::serialize_trait_object;
 use perroute_commons::types::{
@@ -9,92 +13,39 @@ use perroute_commons::types::{
     template::{TemplateData, TemplateError},
     vars::Vars,
 };
-use serde::{Deserialize, Serialize};
-use sqlx::Type;
-use std::{collections::HashMap, error::Error, fmt::Debug};
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Type, Copy, Hash)]
-#[sqlx(type_name = "dispatch_type", rename_all = "snake_case")]
-pub enum DispatchType {
-    Sms,
-    Email,
-    Push,
-}
-
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, Deserialize, Serialize, Type)]
-pub enum ConnectorPluginId {
-    Smtp,
-    Log,
-    SendGrid,
-}
-
-#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Serialize, Type)]
-pub enum TemplateSupport {
-    Mandatory,
-    Optional,
-    None,
-}
-
-#[derive(Serialize, Debug, PartialEq, Eq, Clone)]
-pub struct OptionValue {}
-
-#[derive(Debug, PartialEq, Eq, Clone, Serialize)]
-pub enum ConfigurationPropertyType {
-    String,
-    Number,
-    Boolean,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Builder)]
-pub struct ConfigurationProperty {
-    name: &'static str,
-    required: bool,
-    description: &'static str,
-    property_type: ConfigurationPropertyType,
-    multiple: bool,
-}
-
-#[derive(Debug, Default)]
-pub struct ConfigurationProperties(HashMap<&'static str, ConfigurationProperty>);
-
-impl<const N: usize> From<[ConfigurationProperty; N]> for ConfigurationProperties {
-    fn from(value: [ConfigurationProperty; N]) -> Self {
-        ConfigurationProperties(
-            value
-                .into_iter()
-                .map(|p| (p.name, p))
-                .collect::<HashMap<_, _>>(),
-        )
-    }
-}
+use serde::Serialize;
+use std::{collections::HashMap, error::Error, fmt::Debug, sync::Arc};
 
 pub trait ConnectorPlugin: Sync + Send + Debug {
     fn id(&self) -> ConnectorPluginId;
-    fn configuration(&self) -> &ConfigurationProperties;
-    fn dispatchers(&self) -> &HashMap<DispatchType, Box<dyn DispatcherPlugin>>;
-    fn dispatcher(&self, ty: DispatchType) -> Option<&Box<dyn DispatcherPlugin>> {
+    fn configuration(&self) -> Arc<dyn Configuration>;
+    fn dispatchers(&self) -> &HashMap<DispatchType, Arc<dyn DispatcherPlugin>>;
+    fn dispatcher(&self, ty: DispatchType) -> Option<&Arc<dyn DispatcherPlugin>> {
         self.dispatchers().get(&ty)
     }
 }
 
-pub trait DispatchTemplate: Send + Sync {
-    fn render_text(&self, data: &TemplateData) -> Result<Option<String>, TemplateError>;
-    fn render_html(&self, data: &TemplateData) -> Result<Option<String>, TemplateError>;
+#[async_trait::async_trait]
+pub trait DispatcherPlugin: Sync + Send + Debug {
+    fn template_support(&self) -> TemplateSupport;
+    fn dispatch_type(&self) -> DispatchType;
+    fn configuration(&self) -> Arc<dyn Configuration>;
+    async fn dispatch(&self, req: &DispatchRequest) -> Result<DispatchResponse, DispatchError>;
 }
 
 #[derive(Getters)]
-pub struct DispatchRequest<'t, 'p, 'v, 'r, 'cp, 'dp> {
+pub struct DispatchRequest<'r> {
     pub id: Id,
-    pub connection_properties: &'cp Properties,
-    pub dispatch_properties: &'dp Properties,
-    pub template: Option<&'t dyn DispatchTemplate>,
+    pub connection_properties: &'r Properties,
+    pub dispatch_properties: &'r Properties,
+    pub template: Option<&'r dyn DispatchTemplate>,
     pub recipient: &'r Recipient,
-    pub payload: &'p Payload,
-    pub vars: &'v Vars,
+    pub payload: &'r Payload,
+    pub vars: &'r Vars,
     pub subject: Option<String>,
 }
 
-impl<'t, 'p, 'v, 'r, 'cp, 'dp> From<&DispatchRequest<'t, 'p, 'v, 'r, 'cp, 'dp>> for TemplateData {
+impl<'r> From<&DispatchRequest<'r>> for TemplateData {
     fn from(value: &DispatchRequest) -> Self {
         Self {
             payload: value.payload.clone(),
@@ -118,14 +69,6 @@ impl DispatchResponse {
 
 pub trait ResponseData: Debug + erased_serde::Serialize {}
 serialize_trait_object!(ResponseData);
-
-#[async_trait::async_trait]
-pub trait DispatcherPlugin: Sync + Send + Debug {
-    fn template_support(&self) -> TemplateSupport;
-    fn dispatch_type(&self) -> DispatchType;
-    fn configuration(&self) -> &ConfigurationProperties;
-    async fn dispatch(&self, req: &DispatchRequest) -> Result<DispatchResponse, DispatchError>;
-}
 
 #[derive(Debug, thiserror::Error)]
 pub enum DispatchError {
@@ -153,8 +96,8 @@ impl From<TemplateError> for DispatchError {
 #[derive(Debug)]
 pub struct BaseConnectorPlugin {
     pub plugin_id: ConnectorPluginId,
-    pub configuration: ConfigurationProperties,
-    pub dispatchers: HashMap<DispatchType, Box<dyn DispatcherPlugin>>,
+    pub configuration: Arc<dyn Configuration + Send + Sync>,
+    pub dispatchers: HashMap<DispatchType, Arc<dyn DispatcherPlugin>>,
 }
 
 impl ConnectorPlugin for BaseConnectorPlugin {
@@ -162,11 +105,11 @@ impl ConnectorPlugin for BaseConnectorPlugin {
         self.plugin_id
     }
 
-    fn configuration(&self) -> &ConfigurationProperties {
-        &self.configuration
+    fn configuration(&self) -> Arc<dyn Configuration> {
+        self.configuration.clone()
     }
 
-    fn dispatchers(&self) -> &HashMap<DispatchType, Box<dyn DispatcherPlugin>> {
+    fn dispatchers(&self) -> &HashMap<DispatchType, Arc<dyn DispatcherPlugin>> {
         &self.dispatchers
     }
 }
@@ -174,8 +117,8 @@ impl ConnectorPlugin for BaseConnectorPlugin {
 impl BaseConnectorPlugin {
     pub fn new(
         plugin_id: ConnectorPluginId,
-        configuration: ConfigurationProperties,
-        dispatchers: HashMap<DispatchType, Box<dyn DispatcherPlugin>>,
+        configuration: Arc<dyn Configuration + Send + Sync>,
+        dispatchers: HashMap<DispatchType, Arc<dyn DispatcherPlugin>>,
     ) -> Self {
         Self {
             plugin_id,

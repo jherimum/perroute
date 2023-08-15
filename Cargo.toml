@@ -56,7 +56,7 @@ tokio-util = "0.7"
 executor-trait = "2"
 async-recursion = "1"
 derive_setters = "0.1"
-
+validator = "0.16"
 
 [profile.release]
 strip = true
