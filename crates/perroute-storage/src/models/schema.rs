@@ -26,6 +26,12 @@ pub struct SchemasQuery {
     message_type_code: Option<Code>,
 
     #[builder(default)]
+    bu_id: Option<Id>,
+
+    #[builder(default)]
+    bu_code: Option<Code>,
+
+    #[builder(default)]
     version: Option<Version>,
 }
 
@@ -42,12 +48,19 @@ impl ModelQueryBuilder<Schema> for SchemasQuery {
                 FROM schemas s 
                 INNER JOIN message_types mt 
                 ON s.message_type_id = mt.id 
+                INNER JOIN business_units bu
+                ON s.bu_id = bu.id
                 WHERE 1=1 "#,
         );
 
         if let Some(message_type_code) = self.message_type_code.clone() {
             builder.push(" AND mt.code = ");
             builder.push_bind(message_type_code);
+        }
+
+        if let Some(bu_code) = self.bu_code.clone() {
+            builder.push(" AND bu.code = ");
+            builder.push_bind(bu_code);
         }
 
         if let Some(id) = self.id {
@@ -63,6 +76,11 @@ impl ModelQueryBuilder<Schema> for SchemasQuery {
         if let Some(version) = self.version {
             builder.push(" AND s.version = ");
             builder.push_bind(version);
+        }
+
+        if let Some(bu_id) = self.bu_id {
+            builder.push(" AND s.bu_id = ");
+            builder.push_bind(bu_id);
         }
 
         builder
@@ -128,9 +146,9 @@ pub struct Schema {
     version: Version,
 
     enabled: bool,
-    vars: Json<Vars>,
+    vars: Vars,
     published: bool,
-    value: Json<JsonSchema>,
+    value: JsonSchema,
 }
 
 impl Schema {

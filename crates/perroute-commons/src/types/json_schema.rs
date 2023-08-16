@@ -2,6 +2,7 @@ use super::payload::Payload;
 use jsonschema::JSONSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
+use sqlx::Type;
 use std::ops::Deref;
 
 #[derive(Debug, thiserror::Error)]
@@ -13,7 +14,7 @@ pub enum JsonSchemaError {
     ValidationError,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Eq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Eq, Deserialize, Type)]
 #[serde(transparent)]
 pub struct JsonSchema(serde_json::Value);
 

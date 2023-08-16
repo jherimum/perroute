@@ -7,7 +7,7 @@ use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::types::{id::Id, properties::Properties};
-use perroute_connectors::{api::ConnectorPlugin, types::DispatchType, Plugins};
+use perroute_connectors::types::DispatchType;
 use sqlx::{types::Json, FromRow, PgExecutor};
 
 #[derive(Debug, Default, Builder)]
@@ -42,7 +42,7 @@ pub struct Channel {
     id: Id,
     #[setters(skip)]
     dispatch_type: DispatchType,
-    properties: Json<Properties>,
+    properties: Properties,
     enabled: bool,
     priority: i32,
     #[setters(skip)]

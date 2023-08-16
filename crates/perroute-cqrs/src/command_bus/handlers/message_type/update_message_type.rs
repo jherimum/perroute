@@ -11,12 +11,11 @@ use perroute_storage::{
     models::message_type::{MessageType, MessageTypeQueryBuilder},
     query::FetchableModel,
 };
-use sqlx::types::Json;
 
 command!(
     UpdateMessageTypeCommand,
     CommandType::UpdateMessageType,
-    message_type_id: Id,
+    id: Id,
     name: String,
     enabled: bool,
     vars: Vars
@@ -48,15 +47,15 @@ impl CommandHandler for UpdateMessageTypeCommandHandler {
         MessageType::find(
             ctx.tx(),
             MessageTypeQueryBuilder::default()
-                .id(Some(*cmd.message_type_id()))
+                .id(Some(cmd.id))
                 .build()
                 .unwrap(),
         )
         .await?
-        .ok_or_else(|| UpdateMessageTypeError::MessageTypeNotFound(*cmd.message_type_id()))?
-        .set_name(cmd.name().clone())
-        .set_enabled(*cmd.enabled())
-        .set_vars(Json(cmd.vars().clone()))
+        .ok_or(UpdateMessageTypeError::MessageTypeNotFound(cmd.id))?
+        .set_name(cmd.name)
+        .set_enabled(cmd.enabled)
+        .set_vars(cmd.vars)
         .update(ctx.tx())
         .await
         .map_err(CommandBusError::from)

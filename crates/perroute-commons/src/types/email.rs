@@ -19,9 +19,9 @@ impl Deref for Mailbox {
     }
 }
 
-impl Into<lettre::message::Mailbox> for Mailbox {
-    fn into(self) -> lettre::message::Mailbox {
-        self.0
+impl From<Mailbox> for lettre::message::Mailbox {
+    fn from(val: Mailbox) -> Self {
+        val.0
     }
 }
 
@@ -44,8 +44,8 @@ impl FromStr for Email {
     }
 }
 
-impl Into<Address> for Email {
-    fn into(self) -> Address {
-        self.0
+impl From<Email> for Address {
+    fn from(val: Email) -> Self {
+        val.0
     }
 }

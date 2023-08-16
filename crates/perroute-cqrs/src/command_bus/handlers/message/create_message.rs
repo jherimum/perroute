@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 use crate::{
     command_bus::{
         bus::CommandBusContext, commands::CommandType, error::CommandBusError,
@@ -12,25 +10,22 @@ use derive_getters::Getters;
 use perroute_commons::types::{
     actor::Actor, code::Code, id::Id, payload::Payload, recipient::Recipient,
 };
-use perroute_connectors::types::DispatchType;
+use perroute_connectors::types::DispatchTypes;
 use perroute_messaging::events::EventType;
 use perroute_storage::{
     models::{
-        business_unit::{BusinessUnit, BusinessUnitQueryBuilder},
         message::{Message, MessageBuilder, Status},
-        message_type::{MessageType, MessageTypeQueryBuilder},
-        schema::Version,
+        schema::{Schema, SchemasQueryBuilder, Version},
     },
     query::FetchableModel,
 };
 use serde::Serialize;
-use sqlx::{types::Json, PgPool};
 use thiserror::Error;
 
 #[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
 pub struct CreateMessageCommand {
     #[builder(default)]
-    message_id: Id,
+    id: Id,
 
     payload: Payload,
     recipient: Recipient,
@@ -40,14 +35,14 @@ pub struct CreateMessageCommand {
     schema_version: Version,
 
     #[builder(default)]
-    dispatcher_types: HashSet<DispatchType>,
+    dispatcher_types: DispatchTypes,
 }
 
 impl_command!(CreateMessageCommand, CommandType::CreateMessage);
 into_event!(
     CreateMessageCommand,
     EventType::MessageCreated,
-    |cmd: &CreateMessageCommand| { cmd.message_id }
+    |cmd: &CreateMessageCommand| { cmd.id }
 );
 
 #[derive(Error, Debug)]
@@ -85,19 +80,21 @@ impl CommandHandler for CreateMessageCommandHandler {
         actor: &Actor,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
-        let bu = retrieve_bu(ctx.pool(), cmd.bu_code()).await?;
-
-        let message_type = MessageType::find(
+        let schema = Schema::find(
             ctx.pool(),
-            MessageTypeQueryBuilder::default()
-                .code(Some(cmd.message_type_code().clone()))
+            SchemasQueryBuilder::default()
+                .message_type_code(Some(cmd.message_type_code.clone()))
+                .bu_code(Some(cmd.bu_code))
+                .version(Some(cmd.schema_version))
                 .build()
                 .unwrap(),
         )
-        .await?
-        .ok_or_else(|| {
-            CreateMessageCommandError::MessageTypeNotFound(cmd.message_type_code().clone())
-        })?;
+        .await
+        .unwrap()
+        .unwrap();
+
+        let bu = schema.bu(ctx.pool()).await?;
+        let message_type = schema.message_type(ctx.pool()).await?;
 
         if !message_type.enabled() {
             return Err(CreateMessageCommandError::MessageTypeDisabled(
@@ -106,46 +103,29 @@ impl CommandHandler for CreateMessageCommandHandler {
             .into());
         }
 
-        let schema = message_type
-            .schema_by_version(ctx.pool(), *cmd.schema_version())
-            .await?
-            .ok_or_else(|| CreateMessageCommandError::SchemaNotFound(*cmd.schema_version()))?;
-
         if !schema.enabled() {
-            return Err(CreateMessageCommandError::SchemaDisabled(*cmd.schema_version()).into());
+            return Err(CreateMessageCommandError::SchemaDisabled(cmd.schema_version).into());
         }
 
         if !schema.published() {
-            return Err(CreateMessageCommandError::SchemaDisabled(*cmd.schema_version()).into());
+            return Err(CreateMessageCommandError::SchemaDisabled(cmd.schema_version).into());
         }
 
-        schema.value().validate(cmd.payload()).unwrap();
+        schema.value().validate(&cmd.payload).unwrap();
 
         MessageBuilder::default()
-            .id(*cmd.message_id())
+            .id(cmd.id)
             .status(Status::Pending)
-            .payload(cmd.payload().clone())
+            .payload(cmd.payload)
             .schema_id(*schema.id())
             .message_type_id(*schema.message_type_id())
             .bu_id(*bu.id())
-            .dispatcher_types(Json(cmd.dispatcher_types().clone()))
-            .recipient(Json(cmd.recipient().clone()))
+            .dispatcher_types(cmd.dispatcher_types)
+            .recipient(cmd.recipient)
             .build()
             .unwrap()
             .save(ctx.tx())
             .await
             .map_err(CommandBusError::from)
     }
-}
-
-async fn retrieve_bu(pool: &PgPool, code: &Code) -> Result<BusinessUnit, CommandBusError> {
-    BusinessUnit::find(
-        pool,
-        BusinessUnitQueryBuilder::default()
-            .code(Some(code.clone()))
-            .build()
-            .unwrap(),
-    )
-    .await?
-    .ok_or_else(|| CreateMessageCommandError::BusinessUnitNotFound(code.clone()).into())
 }

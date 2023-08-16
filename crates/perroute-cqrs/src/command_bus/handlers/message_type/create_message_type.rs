@@ -13,15 +13,13 @@ use perroute_storage::{
     query::FetchableModel,
 };
 use serde::Serialize;
-use sqlx::types::Json;
 
 #[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
 pub struct CreateMessageTypeCommand {
     #[builder(default)]
-    message_type_id: Id,
+    id: Id,
     code: Code,
     name: String,
-    enabled: bool,
     vars: Vars,
     bu_id: Id,
 }
@@ -53,7 +51,8 @@ impl CommandHandler for CreateMessageTypeCommandHandler {
         if MessageType::exists(
             ctx.pool(),
             MessageTypeQueryBuilder::default()
-                .code(Some(cmd.code().clone()))
+                .code(Some(cmd.code.clone()))
+                .bu_id(Some(cmd.bu_id))
                 .build()
                 .unwrap(),
         )
@@ -63,12 +62,12 @@ impl CommandHandler for CreateMessageTypeCommandHandler {
         }
 
         let message_type = MessageTypeBuilder::default()
-            .id(*cmd.message_type_id())
-            .code(cmd.code().clone())
-            .name(cmd.name().clone())
+            .id(cmd.id)
+            .code(cmd.code)
+            .name(cmd.name)
             .enabled(false)
-            .vars(Json(cmd.vars().clone()))
-            .business_id(cmd.bu_id)
+            .vars(cmd.vars)
+            .bu_id(cmd.bu_id)
             .build()
             .unwrap()
             .save(ctx.tx())

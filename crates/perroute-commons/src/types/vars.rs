@@ -1,8 +1,9 @@
 use serde::{Deserialize, Serialize};
+use sqlx::types::Json;
 use std::collections::HashMap;
 
 #[derive(Debug, Serialize, Default, Clone, PartialEq, Eq, sqlx::Type, Deserialize)]
-pub struct Vars(HashMap<String, String>);
+pub struct Vars(Json<HashMap<String, String>>);
 
 impl Vars {
     pub fn merge(&self, other: &Self) -> Self {

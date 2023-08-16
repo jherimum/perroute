@@ -56,4 +56,8 @@ pub enum CommandType {
     CreateChannel,
     DeleteChannel,
     UpdateChannel,
+
+    CreateRoute,
+    DeleteRoute,
+    UpdateRoute,
 }

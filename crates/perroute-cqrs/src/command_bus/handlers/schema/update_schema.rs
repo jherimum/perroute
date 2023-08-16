@@ -11,12 +11,11 @@ use perroute_storage::{
     models::schema::{Schema, SchemasQueryBuilder},
     query::FetchableModel,
 };
-use sqlx::types::Json;
 
 command!(
     UpdateSchemaCommand,
     CommandType::UpdateSchema,
-    schema_id: Id,
+    id: Id,
     value: JsonSchema,
     enabled: bool,
     vars: Vars
@@ -41,15 +40,15 @@ impl CommandHandler for UpdateSchemaCommandHandler {
         Schema::find(
             ctx.tx(),
             SchemasQueryBuilder::default()
-                .id(Some(*cmd.schema_id()))
+                .id(Some(cmd.id))
                 .build()
                 .unwrap(),
         )
         .await?
         .unwrap()
-        .set_value(Json(cmd.value().clone()))
-        .set_enabled(*cmd.enabled())
-        .set_vars(Json(cmd.vars().clone()))
+        .set_value(cmd.value)
+        .set_enabled(cmd.enabled)
+        .set_vars(cmd.vars)
         .update(ctx.tx())
         .await
         .map_err(CommandBusError::from)

@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 use crate::{
     api::response::{CollectionResourceModel, Links, ResourceBuilder, SingleResourceModel},
     links::{Linkrelation, ResourceLink},
@@ -36,7 +34,7 @@ pub struct SchemaResource {
 impl From<Schema> for SchemaResource {
     fn from(value: Schema) -> Self {
         Self {
-            value: value.value().deref().clone(),
+            value: value.value().clone(),
             version: *value.version(),
             published: *value.published(),
             enabled: *value.enabled(),

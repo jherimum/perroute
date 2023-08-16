@@ -7,7 +7,7 @@ use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::types::{id::Id, properties::Properties};
 use perroute_connectors::{api::ConnectorPlugin, types::ConnectorPluginId, Plugins};
-use sqlx::{types::Json, Executor, FromRow};
+use sqlx::{Executor, FromRow};
 
 #[derive(Debug, FromRow, Getters, Setters, Builder)]
 #[builder(setter(into))]
@@ -21,7 +21,7 @@ pub struct Connection {
     #[setters(skip)]
     plugin_id: ConnectorPluginId,
     enabled: bool,
-    properties: Json<Properties>,
+    properties: Properties,
 }
 
 #[derive(Debug, Default, Builder)]
@@ -49,7 +49,7 @@ impl DatabaseModel for Connection {}
 
 impl Connection {
     pub fn plugin<'p>(&self, plugins: &'p Plugins) -> Option<&'p dyn ConnectorPlugin> {
-        plugins.get(&self.plugin_id())
+        plugins.get(self.plugin_id())
     }
 
     pub async fn save<'e, E: Executor<'e>>(self, _exec: E) -> Result<Self, sqlx::Error> {

@@ -29,10 +29,10 @@ pub struct MessageType {
 
     name: String,
     enabled: bool,
-    vars: Json<Vars>,
+    vars: Vars,
 
     #[setters(skip)]
-    business_id: Id,
+    bu_id: Id,
 }
 
 #[derive(Debug, Default, Builder)]
@@ -41,6 +41,9 @@ pub struct MessageTypeQuery {
     id: Option<Id>,
     #[builder(default)]
     code: Option<Code>,
+
+    #[builder(default)]
+    bu_id: Option<Id>,
 }
 
 impl ModelQueryBuilder<MessageType> for MessageTypeQuery {
@@ -57,6 +60,11 @@ impl ModelQueryBuilder<MessageType> for MessageTypeQuery {
         if let Some(id) = &self.id {
             query_builder.push(" and id = ");
             query_builder.push_bind(id);
+        }
+
+        if let Some(bu_id) = &self.bu_id {
+            query_builder.push(" and bu_id = ");
+            query_builder.push_bind(bu_id);
         }
 
         query_builder
@@ -100,7 +108,7 @@ impl MessageType {
         .bind(self.name)
         .bind(self.enabled)
         .bind(self.vars)
-        .bind(self.business_id)
+        .bind(self.bu_id)
         .fetch_one(exec)
         .await
         .tap_err(log_query_error!())

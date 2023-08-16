@@ -16,7 +16,7 @@ use crate::{
 command!(
     DeleteSchemaCommand,
     CommandType::DeleteSchema,
-    schema_id: Id
+    id: Id
 );
 into_event!(DeleteSchemaCommand);
 
@@ -38,7 +38,7 @@ impl CommandHandler for DeleteSchemaCommandHandler {
         Schema::find(
             ctx.tx(),
             SchemasQueryBuilder::default()
-                .id(Some(*cmd.schema_id()))
+                .id(Some(cmd.id))
                 .build()
                 .unwrap(),
         )

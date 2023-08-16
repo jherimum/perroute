@@ -22,16 +22,14 @@ use perroute_storage::{
     },
     query::FetchableModel,
 };
-use sqlx::types::Json;
 use tap::{TapFallible, TapOptional};
 
 command!(
     CreateSchemaCommand,
     CommandType::CreateSchema,
-    schema_id: Id,
+    id: Id,
     message_type_id: Id,
     value: JsonSchema,
-    enabled: bool,
     vars: Vars
 );
 into_event!(CreateSchemaCommand);
@@ -60,7 +58,7 @@ impl CommandHandler for CreateSchemaCommandHandler {
         let mt = MessageType::find(
             ctx.tx(),
             MessageTypeQueryBuilder::default()
-                .id(Some(*cmd.message_type_id()))
+                .id(Some(cmd.message_type_id))
                 .build()
                 .unwrap(),
         )
@@ -74,12 +72,12 @@ impl CommandHandler for CreateSchemaCommandHandler {
 
         SchemaBuilder::default()
             .id(new_id!())
-            .value(Json(cmd.value.clone()))
+            .value(cmd.value)
             .version(actual_version.increment())
             .published(false)
             .message_type_id(*mt.id())
-            .enabled(*cmd.enabled())
-            .vars(Json(cmd.vars.clone()))
+            .enabled(false)
+            .vars(cmd.vars)
             .build()
             .unwrap()
             .save(ctx.tx())

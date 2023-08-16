@@ -87,10 +87,9 @@ impl SchemaRouter {
         .await?;
 
         let cmd = CreateSchemaCommandBuilder::default()
-            .schema_id(new_id!())
+            .id(new_id!())
             .message_type_id(*message_type.id())
             .value(body.value)
-            .enabled(body.enabled)
             .vars(body.vars)
             .build()
             .unwrap();
@@ -118,7 +117,7 @@ impl SchemaRouter {
             Self::retrieve_schema(state.query_bus(), &actor, *path.as_ref(), identity).await?;
 
         let cmd = UpdateSchemaCommandBuilder::default()
-            .schema_id(*schema.id())
+            .id(*schema.id())
             .value(body.value)
             .enabled(body.enabled)
             .vars(body.vars)
@@ -142,7 +141,7 @@ impl SchemaRouter {
             Self::retrieve_schema(state.query_bus(), &actor, *path.as_ref(), identity).await?;
 
         let cmd = DeleteSchemaCommandBuilder::default()
-            .schema_id(*schema.id())
+            .id(*schema.id())
             .build()
             .unwrap();
 

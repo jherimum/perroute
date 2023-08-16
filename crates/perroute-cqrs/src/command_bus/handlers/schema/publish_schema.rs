@@ -15,7 +15,7 @@ use perroute_storage::{
 command!(
     PublishSchemaCommand,
     CommandType::PublishSchema,
-    schema_id: Id
+    id: Id
 );
 into_event!(PublishSchemaCommand);
 
@@ -37,7 +37,7 @@ impl CommandHandler for PublishSchemaCommandHandler {
         Schema::find(
             ctx.tx(),
             SchemasQueryBuilder::default()
-                .id(Some(*cmd.schema_id()))
+                .id(Some(cmd.id))
                 .build()
                 .unwrap(),
         )

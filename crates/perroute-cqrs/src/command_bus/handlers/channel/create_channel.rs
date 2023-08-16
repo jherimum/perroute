@@ -17,7 +17,6 @@ use perroute_storage::{
     },
     query::FetchableModel,
 };
-use sqlx::types::Json;
 
 #[derive(Debug, serde::Serialize, Clone, PartialEq, Eq, Builder, Getters)]
 pub struct CreateChannelCommand {
@@ -80,7 +79,7 @@ impl CommandHandler for CreateChannelCommandHandler {
             .id(cmd.id)
             .connection_id(cmd.connection_id)
             .business_unit_id(cmd.bu_id)
-            .properties(Json(cmd.dispatch_properties))
+            .properties(cmd.dispatch_properties)
             .dispatch_type(cmd.dispatch_type)
             .priority(cmd.priority)
             .build()

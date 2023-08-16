@@ -3,31 +3,31 @@ use crate::{
         BaseConnectorPlugin, BaseDispatcherPlugin, ConnectorPlugin, DispatchError, DispatchRequest,
         DispatchResponse,
     },
-    configuration::DefaultConfiguration,
+    configuration::{DefaultConfiguration, NilConfiguration},
     types::{ConnectorPluginId, DispatchType, TemplateSupport},
 };
 
 pub fn log_connector_plugin() -> impl ConnectorPlugin {
     BaseConnectorPlugin::new(
         ConnectorPluginId::Log,
-        Box::new(DefaultConfiguration::default()),
+        Box::<DefaultConfiguration<NilConfiguration>>::default(),
         vec![
             Box::new(BaseDispatcherPlugin::new(
                 DispatchType::Email,
                 TemplateSupport::None,
-                Box::new(DefaultConfiguration::default()),
+                Box::<DefaultConfiguration<NilConfiguration>>::default(),
                 |req| Box::pin(dispatch(req)),
             )),
             Box::new(BaseDispatcherPlugin::new(
                 DispatchType::Sms,
                 TemplateSupport::None,
-                Box::new(DefaultConfiguration::default()),
+                Box::<DefaultConfiguration<NilConfiguration>>::default(),
                 |req| Box::pin(dispatch(req)),
             )),
             Box::new(BaseDispatcherPlugin::new(
                 DispatchType::Push,
                 TemplateSupport::None,
-                Box::new(DefaultConfiguration::default()),
+                Box::<DefaultConfiguration<NilConfiguration>>::default(),
                 |req| Box::pin(dispatch(req)),
             )),
         ],

@@ -1,5 +1,6 @@
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_json::Value;
+use sqlx::Type;
 use validator::{Validate, ValidationErrors};
 
 #[derive(Debug, thiserror::Error)]
@@ -11,7 +12,7 @@ pub enum PropertiesError {
     ValidationError(#[from] ValidationErrors),
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Default, Type)]
 pub struct Properties(Value);
 
 impl Properties {

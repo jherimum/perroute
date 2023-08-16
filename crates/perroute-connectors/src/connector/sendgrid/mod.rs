@@ -107,7 +107,7 @@ fn build_message(req: &DispatchRequest) -> SendgridResult<Message> {
     }
 
     Ok(message
-        .add_personalization(personalization_from_request(&req)?)
+        .add_personalization(personalization_from_request(req)?)
         .add_categories(&disp_properties.categories)
         .set_subject(&req.subject().as_ref().cloned().unwrap_or_default()))
 }
@@ -119,9 +119,9 @@ fn personalization_from_request(req: &DispatchRequest) -> SendgridResult<Persona
 
 pub struct SendGridEmail(Email);
 
-impl Into<Email> for SendGridEmail {
-    fn into(self) -> Email {
-        self.0
+impl From<SendGridEmail> for Email {
+    fn from(val: SendGridEmail) -> Self {
+        val.0
     }
 }
 

@@ -25,7 +25,7 @@ pub trait ConnectorPlugin: Sync + Send + Debug {
         self.dispatchers()
             .iter()
             .find(|d| d.dispatch_type() == *ty)
-            .map(|f| *f)
+            .copied()
     }
 }
 

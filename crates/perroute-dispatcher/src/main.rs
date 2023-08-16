@@ -76,7 +76,7 @@ async fn dispatch<'tr>(
         connection_properties: connection.properties(),
         dispatch_properties: channel.properties(),
         template,
-        recipient: message.recipient().as_ref(),
+        recipient: message.recipient(),
         payload: message.payload(),
         vars: &vars,
         subject: None,

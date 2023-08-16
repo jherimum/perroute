@@ -14,7 +14,6 @@ use perroute_storage::{
     query::FetchableModel,
 };
 use serde::Serialize;
-use sqlx::types::Json;
 
 #[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
 pub struct UpdateChannelCommand {
@@ -63,7 +62,7 @@ impl CommandHandler for UpdateChannelCommandHandler {
         Ok(channel
             .set_enabled(cmd.enabled)
             .set_priority(cmd.priority)
-            .set_properties(Json(cmd.dispatch_properties))
+            .set_properties(cmd.dispatch_properties)
             .update(ctx.tx())
             .await
             .unwrap())

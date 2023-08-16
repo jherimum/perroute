@@ -86,7 +86,6 @@ impl<'tx> CommandBusContext<'tx> {
 
 #[derive(Default)]
 pub struct CommandBusBuilder {
-    plugins: Option<Plugins>,
     pool: Option<PgPool>,
     handlers: HashMap<TypeId, Box<dyn Any + Send + Sync>>,
 }
@@ -108,7 +107,6 @@ impl CommandBusBuilder {
 
     pub fn build(self) -> CommandBus {
         CommandBus {
-            plugins: self.plugins.expect("Plugins required"),
             pool: self.pool.expect("Pool is required"),
             handlers: Arc::new(self.handlers),
         }
@@ -118,7 +116,6 @@ impl CommandBusBuilder {
 #[derive(Clone, Debug)]
 pub struct CommandBus {
     pool: PgPool,
-    plugins: Plugins,
     handlers: Arc<HashMap<TypeId, Box<dyn Any + Send + Sync>>>,
 }
 

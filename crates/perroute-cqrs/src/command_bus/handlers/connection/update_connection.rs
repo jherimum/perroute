@@ -14,7 +14,6 @@ use perroute_storage::{
     query::FetchableModel,
 };
 use serde::Serialize;
-use sqlx::types::Json;
 
 #[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
 pub struct UpdateConnectionCommand {
@@ -63,7 +62,7 @@ impl CommandHandler for UpdateConnectionCommandHandler {
         Ok(conn
             .set_enabled(cmd.enabled)
             .set_name(cmd.name)
-            .set_properties(Json(cmd.properties))
+            .set_properties(cmd.properties)
             .update(ctx.tx())
             .await
             .unwrap())

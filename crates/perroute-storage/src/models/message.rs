@@ -6,7 +6,7 @@ use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::types::{id::Id, payload::Payload, recipient::Recipient};
-use perroute_connectors::types::DispatchType;
+use perroute_connectors::types::{DispatchType, DispatchTypes};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Json, FromRow, PgExecutor};
 use tap::TapFallible;
@@ -93,11 +93,11 @@ pub struct Message {
     payload: Payload,
 
     #[setters(skip)]
-    recipient: Json<Recipient>,
+    recipient: Recipient,
 
     #[setters(skip)]
     #[builder(default)]
-    dispatcher_types: Json<HashSet<DispatchType>>,
+    dispatcher_types: DispatchTypes,
 
     status: Status,
 

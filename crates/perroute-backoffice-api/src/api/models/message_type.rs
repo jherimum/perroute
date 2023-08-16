@@ -13,7 +13,6 @@ use serde::Serialize;
 pub struct CreateMessageTypeRequest {
     code: Code,
     name: String,
-    enabled: bool,
     vars: Vars,
     bu_id: Id,
 }

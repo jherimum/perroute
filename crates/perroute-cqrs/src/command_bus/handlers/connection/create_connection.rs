@@ -11,7 +11,6 @@ use perroute_commons::types::{actor::Actor, id::Id, properties::Properties};
 use perroute_connectors::{types::ConnectorPluginId, Plugins};
 use perroute_storage::models::connection::{Connection, ConnectionBuilder};
 use serde::Serialize;
-use sqlx::types::Json;
 
 #[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
 pub struct CreateConnectionCommand {
@@ -50,7 +49,7 @@ impl CommandHandler for CreateConnectionCommandHandler {
             .id(cmd.id)
             .name(cmd.name)
             .plugin_id(cmd.plugin_id)
-            .properties(Json(cmd.properties))
+            .properties(cmd.properties)
             .build()
             .unwrap()
             .save(ctx.tx())
