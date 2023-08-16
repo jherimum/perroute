@@ -13,30 +13,30 @@ pub mod types;
 
 #[derive(Clone, Debug)]
 pub struct Plugins {
-    plugins: Arc<Vec<Box<dyn ConnectorPlugin>>>,
+    plugins: Vec<Arc<dyn ConnectorPlugin>>,
 }
 
 impl Plugins {
     pub fn full() -> Self {
         Self {
-            plugins: Arc::new(vec![
-                Box::new(smtp_connector_plugin()),
-                Box::new(log_connector_plugin()),
-                Box::new(sendgrid_connector_plugin()),
-            ]),
+            plugins: vec![
+                Arc::new(smtp_connector_plugin()),
+                Arc::new(log_connector_plugin()),
+                Arc::new(sendgrid_connector_plugin()),
+            ],
         }
     }
 }
 
 impl Plugins {
-    pub fn get(&self, id: &ConnectorPluginId) -> Option<&dyn ConnectorPlugin> {
+    pub fn get(&self, id: &ConnectorPluginId) -> Option<Arc<dyn ConnectorPlugin>> {
         self.plugins
             .iter()
             .find(|p| p.id() == *id)
-            .map(|p| p.as_ref())
+            .map(|p| p.clone())
     }
 
-    pub fn all(&self) -> Vec<&dyn ConnectorPlugin> {
-        self.plugins.iter().map(|p| p.as_ref()).collect()
+    pub fn all(&self) -> Vec<Arc<dyn ConnectorPlugin>> {
+        self.plugins.iter().map(|p| p.clone()).collect()
     }
 }

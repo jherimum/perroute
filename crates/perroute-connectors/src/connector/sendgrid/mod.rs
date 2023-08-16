@@ -41,12 +41,12 @@ pub struct SendgridConnectionProperties {
 
 impl Validate for SendgridConnectionProperties {
     fn validate(&self) -> Result<(), validator::ValidationErrors> {
-        todo!()
+        Ok(())
     }
 }
 
 fn connection_properties() -> ConfigurationProperties {
-    todo!()
+    ConfigurationProperties::default()
 }
 
 #[derive(Debug, Deserialize)]
@@ -58,12 +58,12 @@ pub struct EmailDispatcherProperties {
 
 impl Validate for EmailDispatcherProperties {
     fn validate(&self) -> Result<(), validator::ValidationErrors> {
-        todo!()
+        Ok(())
     }
 }
 
 fn dispatcher_properties() -> ConfigurationProperties {
-    todo!()
+    ConfigurationProperties::default()
 }
 
 pub async fn dispatch<'r>(req: &DispatchRequest<'r>) -> Result<DispatchResponse, DispatchError> {

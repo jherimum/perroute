@@ -3,8 +3,9 @@ use perroute_commons::types::properties::{Properties, PropertiesError};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::{collections::HashMap, fmt::Debug};
 
-pub trait Configuration: Iterator<Item = ConfigurationProperty> + Debug + Send + Sync {
+pub trait Configuration: Debug + Send + Sync {
     fn validate(&self, props: &Properties) -> Result<(), PropertiesError>;
+    fn properties(&self) -> Vec<&ConfigurationProperty>;
 }
 
 #[derive(Debug, Deserialize, Default)]
@@ -46,23 +47,16 @@ where
     }
 }
 
-impl<T> Iterator for DefaultConfiguration<T>
-where
-    T: DeserializeOwned + validator::Validate + Debug,
-{
-    type Item = ConfigurationProperty;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.properties.0.pop()
-    }
-}
-
 impl<T> Configuration for DefaultConfiguration<T>
 where
     T: DeserializeOwned + validator::Validate + Debug + Send + Sync,
 {
     fn validate(&self, props: &Properties) -> Result<(), PropertiesError> {
         props.from_value::<T>().map(|_| ())
+    }
+
+    fn properties(&self) -> Vec<&ConfigurationProperty> {
+        self.properties.0.iter().collect()
     }
 }
 

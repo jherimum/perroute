@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::{
     query::{ModelQueryBuilder, Projection},
     DatabaseModel,
@@ -48,7 +50,7 @@ impl ModelQueryBuilder<Connection> for ConnectionQuery {
 impl DatabaseModel for Connection {}
 
 impl Connection {
-    pub fn plugin<'p>(&self, plugins: &'p Plugins) -> Option<&'p dyn ConnectorPlugin> {
+    pub fn plugin(&self, plugins: &Plugins) -> Option<Arc<dyn ConnectorPlugin>> {
         plugins.get(self.plugin_id())
     }
 

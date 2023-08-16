@@ -14,12 +14,14 @@ use tracing_actix_web::TracingLogger;
 pub struct AppState {
     command_bus: CommandBus,
     query_bus: QueryBus,
+    plugins: Plugins,
 }
 
 impl AppState {
     pub async fn from_settings(settings: &Settings) -> Result<Self> {
         let pool = ConnectionManager::build_pool(&settings.database).await?;
         Ok(Self {
+            plugins: Plugins::full(),
             command_bus: CommandBus::complete(pool.clone(), Plugins::full()),
             query_bus: QueryBus::complete(pool),
         })
@@ -29,6 +31,7 @@ impl AppState {
 impl From<PgPool> for AppState {
     fn from(value: PgPool) -> Self {
         Self {
+            plugins: Plugins::full(),
             command_bus: CommandBus::complete(value.clone(), Plugins::full()),
             query_bus: QueryBus::complete(value),
         }

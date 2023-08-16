@@ -2,13 +2,15 @@ use crate::{
     api::response::AsUrl,
     routes::{
         business_unit::BusinessUnitRouter, connection::ConnectionsRouter,
-        message_type::MessageTypeRouter, route::RouteRouter, schema::SchemaRouter,
-        template::TemplateRouter,
+        message_type::MessageTypeRouter, plugin::PluginRouter, route::RouteRouter,
+        schema::SchemaRouter, template::TemplateRouter,
     },
 };
 use actix_web::HttpRequest;
 use perroute_commons::types::id::Id;
+use perroute_connectors::types::ConnectorPluginId;
 use serde::Serialize;
+use std::string::ToString;
 use tap::TapFallible;
 use url::Url;
 
@@ -30,9 +32,14 @@ pub enum Linkrelation {
 
     #[serde(rename = "connections")]
     Connections,
-
     #[serde(rename = "connection")]
     Connection,
+
+    #[serde(rename = "plugin")]
+    Plugin,
+
+    #[serde(rename = "plugins")]
+    Plugins,
 }
 
 #[derive(Debug, Serialize, Clone)]
@@ -54,6 +61,9 @@ pub enum ResourceLink {
 
     Connections,
     Connection(Id),
+
+    Plugin(ConnectorPluginId),
+    Plugins,
 }
 
 impl AsUrl for ResourceLink {
@@ -97,6 +107,11 @@ impl AsUrl for ResourceLink {
                 ConnectionsRouter::CONN_RESOURCE_NAME,
                 [connection_id.to_string()],
             ),
+
+            Self::Plugin(plugin_id) => {
+                req.url_for(PluginRouter::PLUGIN_RESOURCE_NAME, [plugin_id.to_string()])
+            }
+            Self::Plugins => req.url_for_static(PluginRouter::PLUGINS_RESOURCE_NAME),
         }
         .tap_err(|e| tracing::error!("Failed to build url: {}", e))
         .expect("msg")

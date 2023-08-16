@@ -1,7 +1,7 @@
 use self::{
     business_unit::BusinessUnitRouter, connection::ConnectionsRouter, health::HealthRouter,
-    message::MessageRouter, message_type::MessageTypeRouter, route::RouteRouter,
-    schema::SchemaRouter, template::TemplateRouter,
+    message::MessageRouter, message_type::MessageTypeRouter, plugin::PluginRouter,
+    route::RouteRouter, schema::SchemaRouter, template::TemplateRouter,
 };
 use actix_web::{web, Scope};
 
@@ -10,6 +10,7 @@ pub mod connection;
 pub mod health;
 pub mod message;
 pub mod message_type;
+pub mod plugin;
 pub mod route;
 pub mod schema;
 pub mod template;
@@ -127,6 +128,20 @@ pub fn routes() -> Scope {
     let connections = web::scope("/connections")
         .service(web::resource("").route(web::post().to(ConnectionsRouter::create)));
 
+    let plugins = web::scope("/plugins")
+        .service(
+            web::resource("")
+                .name(PluginRouter::PLUGINS_RESOURCE_NAME)
+                .route(web::get().to(PluginRouter::query)),
+        )
+        .service(
+            web::scope("/{id}").service(
+                web::resource("")
+                    .name(PluginRouter::PLUGIN_RESOURCE_NAME)
+                    .route(web::get().to(PluginRouter::find)),
+            ),
+        );
+
     web::scope("")
         .service(
             web::resource(HealthRouter::HEALTH_RESOURCE_NAME)
@@ -140,7 +155,8 @@ pub fn routes() -> Scope {
                     .service(messages)
                     .service(templates)
                     .service(routes)
-                    .service(connections),
+                    .service(connections)
+                    .service(plugins),
             ),
         )
 }

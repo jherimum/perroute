@@ -50,6 +50,10 @@ impl ResourceBuilder<SingleResourceModel<ConnectionResource>> for Connection {
             data: Some(ConnectionResource::from(self.clone())),
             links: Links::default()
                 .add(Linkrelation::Self_, ResourceLink::Connection(*self.id()))
+                .add(
+                    Linkrelation::Plugin,
+                    ResourceLink::Plugin(*self.plugin_id()),
+                )
                 .add(Linkrelation::Connections, ResourceLink::Connections)
                 .as_url_map(req),
         }
