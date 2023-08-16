@@ -12,6 +12,7 @@ use sqlx::{types::Json, FromRow, PgExecutor, QueryBuilder, Type};
 use super::{
     message::{Message, MessageQueryBuilder},
     route::{Route, RouteQueryBuilder},
+    template::{Template, TemplatesQueryBuilder},
 };
 
 impl DatabaseModel for MessageDispatch {}
@@ -100,6 +101,17 @@ impl MessageDispatch {
             exec,
             RouteQueryBuilder::default()
                 .id(Some(self.route_id))
+                .build()
+                .unwrap(),
+        )
+        .await
+    }
+
+    pub async fn template<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Template, sqlx::Error> {
+        Template::find_one(
+            exec,
+            TemplatesQueryBuilder::default()
+                .id(Some(self.template_id))
                 .build()
                 .unwrap(),
         )

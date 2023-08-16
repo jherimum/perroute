@@ -24,7 +24,7 @@ CREATE TABLE business_units (
 	CONSTRAINT business_units_code	UNIQUE (code)
 );
 
-create table channel(
+create table channels(
     id              uuid            not null,
     dispatch_type   dispatch_type   not null,
     properties      jsonb           not null,
@@ -32,10 +32,10 @@ create table channel(
     enabled         boolean         not null,
     priority        integer         not null,
     connection_id   uuid            not null,
-    constraint channel_pk primary key (id),
-    constraint channel_bu_fk foreign key (business_unit_id) references business_units(id),
-    constraint channel_bu_dispatch_type_priority unique (business_unit_id, dispatch_type, priority),
-    constraint channel_connection_fk foreign key (connection_id) references connections(id)
+    constraint channels_pk primary key (id),
+    constraint channels_bu_fk foreign key (business_unit_id) references business_units(id),
+    constraint channels_bu_dispatch_type_priority unique (business_unit_id, dispatch_type, priority),
+    constraint channels_connection_fk foreign key (connection_id) references connections(id)
 );
 
 create table message_types(
@@ -93,7 +93,7 @@ create table routes(
 
     constraint routes_pk primary key (id),
     constraint routes_schema_fk foreign key (schema_id) references schemas(id),
-    constraint routes_channel_fk foreign key (channel_id) references channel(id),
+    constraint routes_channel_fk foreign key (channel_id) references channels(id),
     constraint routes_bu_fk foreign key (business_unit_id) references business_units(id),
     constraint routes_schema_channel unique (schema_id, channel_id)
 

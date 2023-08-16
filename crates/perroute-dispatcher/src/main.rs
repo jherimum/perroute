@@ -50,7 +50,7 @@ async fn dispatch<'tr>(
         bail!("Message dispatch is not pending");
     }
     let message = message_dispatch.message(pool).await?;
-    let business_unit = message.bu(pool).await?;
+    let business_unit = message.business_unit(pool).await?;
     let message_type = message.message_type(pool).await?;
     let schema = message.schema(pool).await?;
     let route = message_dispatch.route(pool).await?;

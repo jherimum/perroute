@@ -119,7 +119,7 @@ impl Message {
         todo!()
     }
 
-    pub async fn bu<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<BusinessUnit, sqlx::Error> {
+    pub async fn business_unit<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<BusinessUnit, sqlx::Error> {
         todo!()
     }
 

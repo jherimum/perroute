@@ -72,28 +72,15 @@ impl ModelQueryBuilder<MessageType> for MessageTypeQuery {
 }
 
 impl MessageType {
-    pub async fn bu<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<BusinessUnit, sqlx::Error> {
+    pub async fn business_unit<'e, E: PgExecutor<'e>>(
+        self,
+        exec: E,
+    ) -> Result<BusinessUnit, sqlx::Error> {
         todo!()
     }
 
     pub async fn schemas<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Vec<Schema>, sqlx::Error> {
         todo!()
-    }
-
-    pub async fn schema_by_version<'e, E: PgExecutor<'e>>(
-        &self,
-        exec: E,
-        version: Version,
-    ) -> Result<Option<Schema>, sqlx::Error> {
-        Schema::find(
-            exec,
-            SchemasQueryBuilder::default()
-                .version(Some(version))
-                .message_type_id(Some(self.id))
-                .build()
-                .unwrap(),
-        )
-        .await
     }
 
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {

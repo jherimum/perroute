@@ -20,6 +20,7 @@ use perroute_storage::{
     query::FetchableModel,
 };
 use serde::Serialize;
+use tap::TapFallible;
 use thiserror::Error;
 
 #[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
@@ -93,7 +94,14 @@ impl CommandHandler for CreateMessageCommandHandler {
         .unwrap()
         .unwrap();
 
-        let business_unit = schema.bu(ctx.pool()).await?;
+        if !schema.enabled() {
+            return Err(CreateMessageCommandError::SchemaDisabled(cmd.schema_version).into());
+        }
+
+        if !schema.published() {
+            return Err(CreateMessageCommandError::SchemaDisabled(cmd.schema_version).into());
+        }
+
         let message_type = schema.message_type(ctx.pool()).await?;
 
         if !message_type.enabled() {
@@ -101,14 +109,6 @@ impl CommandHandler for CreateMessageCommandHandler {
                 message_type.code().clone(),
             )
             .into());
-        }
-
-        if !schema.enabled() {
-            return Err(CreateMessageCommandError::SchemaDisabled(cmd.schema_version).into());
-        }
-
-        if !schema.published() {
-            return Err(CreateMessageCommandError::SchemaDisabled(cmd.schema_version).into());
         }
 
         schema.value().validate(&cmd.payload).unwrap();
@@ -119,7 +119,7 @@ impl CommandHandler for CreateMessageCommandHandler {
             .payload(cmd.payload)
             .schema_id(*schema.id())
             .message_type_id(*schema.message_type_id())
-            .business_unit_id(*business_unit.id())
+            .business_unit_id(*schema.business_unit_id())
             .dispatcher_types(cmd.dispatcher_types)
             .recipient(cmd.recipient)
             .build()

@@ -1,7 +1,10 @@
-use super::{channel::Channel, message_type::MessageType};
+use super::{
+    channel::{Channel, ChannelQueryBuilder},
+    message_type::{MessageType, MessageTypeQueryBuilder},
+};
 use crate::{
     log_query_error,
-    query::{ModelQueryBuilder, Projection},
+    query::{FetchableModel, ModelQueryBuilder, Projection},
     DatabaseModel,
 };
 use derive_builder::Builder;
@@ -93,13 +96,20 @@ impl BusinessUnit {
         self,
         exec: E,
     ) -> Result<Vec<MessageType>, sqlx::Error> {
-        todo!()
+        MessageType::query(
+            exec,
+            MessageTypeQueryBuilder::default()
+                .business_unit_id(Some(self.id))
+                .build()
+                .unwrap(),
+        )
+        .await
     }
 
     pub async fn channels<'e, E: PgExecutor<'e>>(
         self,
         exec: E,
     ) -> Result<Vec<Channel>, sqlx::Error> {
-        todo!()
+        Channel::query(exec, ChannelQueryBuilder::default().build().unwrap()).await
     }
 }

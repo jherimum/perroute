@@ -76,7 +76,6 @@ pub struct Route {
     channel_id: Id,
     #[setters(skip)]
     business_unit_id: Id,
-
     #[setters(skip)]
     message_type_id: Id,
 

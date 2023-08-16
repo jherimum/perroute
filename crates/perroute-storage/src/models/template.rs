@@ -10,7 +10,6 @@ use perroute_commons::types::{id::Id, template::TemplateSnippet, vars::Vars};
 use perroute_connectors::types::DispatchType;
 use sqlx::{types::Json, FromRow, PgExecutor, QueryBuilder};
 use tap::TapFallible;
-
 use super::{business_unit::BusinessUnit, message_type::MessageType, schema::Schema};
 
 impl DatabaseModel for Template {}

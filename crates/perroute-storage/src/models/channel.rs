@@ -1,6 +1,11 @@
-use super::{business_unit::BusinessUnit, connection::Connection, route::Route};
+use super::{
+    business_unit::{BusinessUnit, BusinessUnitQueryBuilder},
+    connection::{Connection, ConnectionQueryBuilder},
+    route::{Route, RouteQueryBuilder},
+};
 use crate::{
-    query::{ModelQueryBuilder, Projection},
+    log_query_error,
+    query::{FetchableModel, ModelQueryBuilder, Projection},
     DatabaseModel,
 };
 use derive_builder::Builder;
@@ -8,12 +13,14 @@ use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::types::{id::Id, properties::Properties};
 use perroute_connectors::types::DispatchType;
-use sqlx::{types::Json, FromRow, PgExecutor};
+use sqlx::{FromRow, PgExecutor};
+use tap::TapFallible;
 
 #[derive(Debug, Default, Builder)]
 #[builder(default)]
 pub struct ChannelQuery {
     id: Option<Id>,
+    business_unit_id: Option<Id>,
 }
 
 impl ModelQueryBuilder<Channel> for ChannelQuery {
@@ -25,6 +32,11 @@ impl ModelQueryBuilder<Channel> for ChannelQuery {
         if let Some(id) = self.id {
             builder.push(" AND id = ");
             builder.push_bind(id);
+        }
+
+        if let Some(business_unit_id) = self.business_unit_id {
+            builder.push(" AND business_unit_id = ");
+            builder.push_bind(business_unit_id);
         }
 
         builder
@@ -53,29 +65,83 @@ pub struct Channel {
 
 impl Channel {
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
-        todo!()
+        sqlx::query_as(
+            "
+            INSERT INTO channels (id, properties, priority, business_unit_id, connection_id, dispatch_type, enabled) 
+            VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING *",
+        )
+        .bind(self.id)
+        .bind(self.properties)
+        .bind(self.priority)
+        .bind(self.business_unit_id)
+        .bind(self.connection_id)
+        .bind(self.dispatch_type)
+        .bind(self.enabled)
+        .fetch_one(exec)
+        .await
+        .tap_err(log_query_error!())
     }
 
     pub async fn update<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
-        todo!()
+        sqlx::query_as(
+            "
+            UPDATE channels SET properties= $2, priority=$3, enabled=$4 
+            WHERE id= $1 RETURNING *",
+        )
+        .bind(self.id)
+        .bind(self.properties)
+        .bind(self.priority)
+        .bind(self.enabled)
+        .fetch_one(exec)
+        .await
+        .tap_err(log_query_error!())
     }
 
     pub async fn delete<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<bool, sqlx::Error> {
-        todo!()
+        sqlx::query("DELETE FROM channels WHERE id= $1")
+            .bind(self.id)
+            .execute(exec)
+            .await
+            .tap_err(log_query_error!())
+            .map(|result| result.rows_affected() > 0)
     }
 
     pub async fn connection<'e, E: PgExecutor<'e>>(
         &self,
         exec: E,
     ) -> Result<Connection, sqlx::Error> {
-        todo!()
+        Connection::find_one(
+            exec,
+            ConnectionQueryBuilder::default()
+                .id(Some(self.connection_id))
+                .build()
+                .unwrap(),
+        )
+        .await
     }
 
-    pub async fn bu<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<BusinessUnit, sqlx::Error> {
-        todo!()
+    pub async fn business_unit<'e, E: PgExecutor<'e>>(
+        &self,
+        exec: E,
+    ) -> Result<BusinessUnit, sqlx::Error> {
+        BusinessUnit::find_one(
+            exec,
+            BusinessUnitQueryBuilder::default()
+                .id(Some(self.business_unit_id))
+                .build()
+                .unwrap(),
+        )
+        .await
     }
 
     pub async fn routes<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Vec<Route>, sqlx::Error> {
-        todo!()
+        Route::query(
+            exec,
+            RouteQueryBuilder::default()
+                .business_unit_id(Some(self.business_unit_id))
+                .build()
+                .unwrap(),
+        )
+        .await
     }
 }

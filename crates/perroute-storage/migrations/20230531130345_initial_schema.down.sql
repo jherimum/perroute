@@ -6,7 +6,7 @@ drop table routes;
 drop table templates;
 drop table schemas;
 drop table message_types;
-drop table channel;
+drop table channels;
 drop table business_units;
 drop table connections;
 drop type message_dispatch_status;
