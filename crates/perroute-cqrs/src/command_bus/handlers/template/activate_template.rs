@@ -16,7 +16,7 @@ use perroute_storage::{
 command!(
     ActivateTemplateCommand,
     CommandType::ActivateTemplate,
-    template_id: Id
+    id: Id
 );
 into_event!(ActivateTemplateCommand);
 
@@ -41,7 +41,7 @@ impl CommandHandler for ActivateTemplateCommandHandler {
         let actual_template = Template::find(
             ctx.pool(),
             TemplatesQueryBuilder::default()
-                .id(Some(*cmd.template_id()))
+                .id(Some(cmd.id))
                 .build()
                 .unwrap(),
         )

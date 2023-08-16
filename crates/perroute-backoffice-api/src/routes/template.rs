@@ -17,6 +17,7 @@ use perroute_commons::{
 };
 use perroute_cqrs::{
     command_bus::handlers::template::{
+        activate_template::{ActivateTemplateCommandBuilder, ActivateTemplateCommandHandler},
         create_template::{CreateTemplateCommandBuilder, CreateTemplateCommandHandler},
         delete_template::{DeleteTemplateCommandBuilder, DeleteTemplateCommandHandler},
         update_template::{UpdateTemplateCommandBuilder, UpdateTemplateCommandHandler},
@@ -40,6 +41,7 @@ pub struct TemplateRouter;
 impl TemplateRouter {
     pub const TEMPLATES_RESOURCE_NAME: &str = "templates";
     pub const TEMPLATE_RESOURCE_NAME: &str = "template";
+    pub const TEMPLATE_ACTIVATION_RESOURCE_NAME: &str = "activation";
 
     #[tracing::instrument]
     pub async fn query_templates(
@@ -84,7 +86,7 @@ impl TemplateRouter {
     pub async fn update_template(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
-        path: Path<(Id, Id, Id, Id)>,
+        path: Path<Id>,
         Json(body): Json<UpdateTemplateRequest>,
     ) -> SingleResult {
         let template = Self::retrieve_template(state.query_bus(), &actor, *path.as_ref(), identity)
@@ -111,7 +113,7 @@ impl TemplateRouter {
     pub async fn delete_template(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
-        path: Path<(Id, Id, Id, Id)>,
+        path: Path<Id>,
     ) -> EmptyApiResult {
         let template = Self::retrieve_template(state.query_bus(), &actor, *path.as_ref(), identity)
             .await
@@ -129,10 +131,31 @@ impl TemplateRouter {
     }
 
     #[tracing::instrument]
+    pub async fn activate(
+        state: Data<AppState>,
+        ActorExtractor(actor): ActorExtractor,
+        path: Path<Id>,
+    ) -> SingleResult {
+        let template = Self::retrieve_template(state.query_bus(), &actor, *path.as_ref(), identity)
+            .await
+            .unwrap();
+        let cmd = ActivateTemplateCommandBuilder::default()
+            .id(*template.id())
+            .build()
+            .unwrap();
+        state
+            .command_bus()
+            .execute::<_, ActivateTemplateCommandHandler, _>(&actor, &cmd)
+            .await
+            .map(ApiResponse::ok)
+            .map_err(ApiError::from)
+    }
+
+    #[tracing::instrument]
     pub async fn find_template(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
-        path: Path<(Id, Id, Id, Id)>,
+        path: Path<Id>,
     ) -> SingleResult {
         Self::retrieve_template(state.query_bus(), &actor, *path.as_ref(), ApiResponse::ok).await
     }
@@ -140,20 +163,18 @@ impl TemplateRouter {
     pub async fn retrieve_template<R>(
         query_bus: &QueryBus,
         actor: &Actor,
-        path: (Id, Id, Id, Id),
+        path: Id,
         map: impl FnOnce(Template) -> R + Send + Sync,
     ) -> Result<R, ApiError> {
         let query = FindTemplateQueryBuilder::default()
-            .template_id(path.3)
-            .message_type_id(Some(path.1))
-            .bu_id(Some(path.0))
+            .template_id(path)
             .build()
             .unwrap();
 
         query_bus
             .execute::<_, FindTemplateQueryHandler, _>(actor, &query)
             .await?
-            .ok_or_else(|| ApiError::TemplateNotFound(path.3))
+            .ok_or_else(|| ApiError::TemplateNotFound(path))
             .map(map)
     }
 }

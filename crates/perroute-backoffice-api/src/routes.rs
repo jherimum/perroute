@@ -23,13 +23,21 @@ pub fn routes() -> Scope {
                 .route(web::post().to(TemplateRouter::create_template)),
         )
         .service(
-            web::scope("/{template_id}").service(
-                web::resource("")
-                    .name(TemplateRouter::TEMPLATE_RESOURCE_NAME)
-                    .route(web::get().to(TemplateRouter::find_template))
-                    .route(web::put().to(TemplateRouter::update_template))
-                    .route(web::delete().to(TemplateRouter::delete_template)),
-            ),
+            web::scope("/{template_id}")
+                .service(
+                    web::resource("")
+                        .name(TemplateRouter::TEMPLATE_RESOURCE_NAME)
+                        .route(web::get().to(TemplateRouter::find_template))
+                        .route(web::put().to(TemplateRouter::update_template))
+                        .route(web::delete().to(TemplateRouter::delete_template)),
+                )
+                .service(
+                    web::scope("/activation").service(
+                        web::resource("")
+                            .name(TemplateRouter::TEMPLATE_ACTIVATION_RESOURCE_NAME)
+                            .route(web::post().to(TemplateRouter::activate)),
+                    ),
+                ),
         );
 
     let schemas = web::scope("/schemas")
@@ -131,7 +139,8 @@ pub fn routes() -> Scope {
                     .service(message_types)
                     .service(messages)
                     .service(templates)
-                    .service(routes),
+                    .service(routes)
+                    .service(connections),
             ),
         )
 }
