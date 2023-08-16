@@ -6,8 +6,8 @@ use std::{ops::Deref, str::FromStr};
 pub struct Mailbox(lettre::message::Mailbox);
 
 impl Mailbox {
-    pub fn new(email: Email, name: Option<String>) -> Mailbox {
-        Mailbox(lettre::message::Mailbox::new(name, email.into()))
+    pub fn new(email: Email, name: Option<String>) -> Self {
+        Self(lettre::message::Mailbox::new(name, email.into()))
     }
 }
 

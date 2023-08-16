@@ -75,7 +75,7 @@ impl DbEvent {
         .await
     }
 
-    pub async fn update<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<DbEvent, sqlx::Error> {
+    pub async fn update<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Self, sqlx::Error> {
         sqlx::query_as(
             r#"
             UPDATE events

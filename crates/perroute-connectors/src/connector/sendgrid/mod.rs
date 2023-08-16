@@ -141,7 +141,7 @@ impl From<Mailbox> for SendGridEmail {
             email = email.set_name(mail_box.deref().name.as_ref().unwrap().to_string());
         }
 
-        SendGridEmail(email)
+        Self(email)
     }
 }
 

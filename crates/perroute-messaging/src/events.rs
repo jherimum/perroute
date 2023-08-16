@@ -27,7 +27,7 @@ impl Decode<'_, Postgres> for EventType {
     fn decode(value: PgValueRef<'_>) -> Result<Self, BoxDynError> {
         match value.format() {
             PgValueFormat::Binary => Ok(Self::from_str(value.as_str().unwrap()).unwrap()),
-            PgValueFormat::Text => Ok(value.as_str()?.parse::<EventType>()?),
+            PgValueFormat::Text => Ok(value.as_str()?.parse::<Self>()?),
         }
     }
 }

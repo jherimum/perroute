@@ -191,9 +191,9 @@ impl TryFrom<&SmtpConnectorProperties> for SmtpTransport {
     type Error = DispatchError;
     fn try_from(value: &SmtpConnectorProperties) -> Result<Self, Self::Error> {
         Ok(if *value.starttls() {
-            SmtpTransport::starttls_relay(value.host())
+            Self::starttls_relay(value.host())
         } else {
-            SmtpTransport::relay(value.host())
+            Self::relay(value.host())
         }
         .map_err(DispatchError::unrecoverable)
         .tap_err(|e| tracing::error!("Failed to build SmtpTransport: {e}"))?

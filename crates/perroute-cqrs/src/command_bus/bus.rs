@@ -153,9 +153,7 @@ impl CommandBus {
             .with_handler(UpdateChannelCommandHandler {
                 plugins: plugins.clone(),
             })
-            .with_handler(DeleteChannelCommandHandler {
-                plugins: plugins.clone(),
-            })
+            .with_handler(DeleteChannelCommandHandler { plugins: plugins })
             .build()
     }
 

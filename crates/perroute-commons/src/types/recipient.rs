@@ -25,7 +25,7 @@ pub struct Inner {
 
 impl From<Recipient> for Mailbox {
     fn from(value: Recipient) -> Self {
-        Mailbox::new(
+        Self::new(
             value.email().as_ref().unwrap().clone(),
             value.name().clone(),
         )
@@ -34,7 +34,7 @@ impl From<Recipient> for Mailbox {
 
 impl From<&Recipient> for Mailbox {
     fn from(value: &Recipient) -> Self {
-        Mailbox::new(
+        Self::new(
             value.email().as_ref().unwrap().clone(),
             value.name().clone(),
         )
