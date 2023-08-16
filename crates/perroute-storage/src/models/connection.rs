@@ -9,7 +9,7 @@ use perroute_commons::types::{id::Id, properties::Properties};
 use perroute_connectors::{api::ConnectorPlugin, types::ConnectorPluginId, Plugins};
 use sqlx::{Executor, FromRow};
 
-#[derive(Debug, FromRow, Getters, Setters, Builder)]
+#[derive(Debug, FromRow, Getters, Setters, Builder, Clone)]
 #[builder(setter(into))]
 #[setters(prefix = "set_")]
 #[setters(into)]

@@ -1,8 +1,9 @@
 use crate::{
     api::response::AsUrl,
     routes::{
-        business_unit::BusinessUnitRouter, message_type::MessageTypeRouter, route::RouteRouter,
-        schema::SchemaRouter, template::TemplateRouter,
+        business_unit::BusinessUnitRouter, connection::ConnectionsRouter,
+        message_type::MessageTypeRouter, route::RouteRouter, schema::SchemaRouter,
+        template::TemplateRouter,
     },
 };
 use actix_web::HttpRequest;
@@ -26,6 +27,12 @@ pub enum Linkrelation {
     Routes,
     #[serde(rename = "schemas")]
     Schemas,
+
+    #[serde(rename = "connections")]
+    Connections,
+
+    #[serde(rename = "connection")]
+    Connection,
 }
 
 #[derive(Debug, Serialize, Clone)]
@@ -44,6 +51,9 @@ pub enum ResourceLink {
 
     Routes,
     Route(Id),
+
+    Connections,
+    Connection(Id),
 }
 
 impl AsUrl for ResourceLink {
@@ -82,6 +92,11 @@ impl AsUrl for ResourceLink {
             Self::Route(route_id) => {
                 req.url_for(RouteRouter::ROUTE_RESOURCE_NAME, [route_id.to_string()])
             }
+            Self::Connections => req.url_for_static(ConnectionsRouter::CONNS_RESOURCE_NAME),
+            Self::Connection(connection_id) => req.url_for(
+                ConnectionsRouter::CONN_RESOURCE_NAME,
+                [connection_id.to_string()],
+            ),
         }
         .tap_err(|e| tracing::error!("Failed to build url: {}", e))
         .expect("msg")

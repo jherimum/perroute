@@ -10,6 +10,9 @@ use actix_web::{
 pub struct ConnectionsRouter;
 
 impl ConnectionsRouter {
+    pub const CONN_RESOURCE_NAME: &str = "connection";
+    pub const CONNS_RESOURCE_NAME: &str = "connections";
+
     pub async fn create(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
