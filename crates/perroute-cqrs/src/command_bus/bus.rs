@@ -7,6 +7,11 @@ use super::{
             delete_business_unit::DeleteBusinessUnitCommandHandler,
             update_business_unit::UpdateBusinessUnitCommandHandler,
         },
+        channel::{
+            create_channel::CreateChannelCommandHandler,
+            delete_channel::DeleteChannelCommandHandler,
+            update_channel::UpdateChannelCommandHandler,
+        },
         connection::{
             create_connection::CreateConnectionCommandHandler,
             delete_connection::DeleteConnectionCommandHandler,
@@ -141,6 +146,15 @@ impl CommandBus {
                 plugins: plugins.clone(),
             })
             .with_handler(DeleteConnectionCommandHandler {
+                plugins: plugins.clone(),
+            })
+            .with_handler(CreateChannelCommandHandler {
+                plugins: plugins.clone(),
+            })
+            .with_handler(UpdateChannelCommandHandler {
+                plugins: plugins.clone(),
+            })
+            .with_handler(DeleteChannelCommandHandler {
                 plugins: plugins.clone(),
             })
             .build()

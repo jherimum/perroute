@@ -1,3 +1,4 @@
+use super::{channel::Channel, message_type::MessageType};
 use crate::{
     log_query_error,
     query::{ModelQueryBuilder, Projection},
@@ -9,8 +10,6 @@ use derive_setters::Setters;
 use perroute_commons::types::{code::Code, id::Id, vars::Vars};
 use sqlx::{types::Json, FromRow, PgExecutor};
 use tap::TapFallible;
-
-use super::{channel::Channel, message_type::MessageType};
 
 #[derive(Debug, Default, Builder)]
 #[builder(default)]

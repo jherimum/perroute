@@ -29,10 +29,10 @@ impl Plugins {
 }
 
 impl Plugins {
-    pub fn get(&self, id: ConnectorPluginId) -> Option<&dyn ConnectorPlugin> {
+    pub fn get(&self, id: &ConnectorPluginId) -> Option<&dyn ConnectorPlugin> {
         self.plugins
             .iter()
-            .find(|p| p.id() == id)
+            .find(|p| p.id() == *id)
             .map(|p| p.as_ref())
     }
 

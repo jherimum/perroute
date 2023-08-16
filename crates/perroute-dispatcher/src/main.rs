@@ -56,9 +56,9 @@ async fn dispatch<'tr>(
     let route = message_dispatch.route(pool).await?;
     let channel = route.channel(pool).await?;
     let connection = route.connection(pool).await?;
-    let connector_plugin = plugins.get(*connection.plugin_id()).unwrap();
+    let connector_plugin = plugins.get(connection.plugin_id()).unwrap();
     let dispatcher = connector_plugin
-        .dispatcher(*channel.dispatch_type())
+        .dispatcher(channel.dispatch_type())
         .unwrap();
     let template = schema
         .active_template(pool, *channel.dispatch_type())

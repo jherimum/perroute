@@ -51,4 +51,8 @@ pub enum CommandType {
     CreateConnection,
     DeleteConnection,
     UpdateConnection,
+
+    CreateChannel,
+    DeleteChannel,
+    UpdateChannel,
 }

@@ -10,32 +10,31 @@ use derive_getters::Getters;
 use perroute_commons::types::{actor::Actor, id::Id, properties::Properties};
 use perroute_connectors::Plugins;
 use perroute_storage::{
-    models::connection::{Connection, ConnectionQueryBuilder},
+    models::channel::{Channel, ChannelQueryBuilder},
     query::FetchableModel,
 };
 use serde::Serialize;
 use sqlx::types::Json;
 
 #[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
-pub struct UpdateConnectionCommand {
+pub struct UpdateChannelCommand {
     id: Id,
-    name: String,
-    properties: Properties,
+    dispatch_properties: Properties,
     enabled: bool,
+    priority: i32,
 }
-
-impl_command!(UpdateConnectionCommand, CommandType::UpdateConnection);
-into_event!(UpdateConnectionCommand);
+impl_command!(UpdateChannelCommand, CommandType::UpdateChannel);
+into_event!(UpdateChannelCommand);
 
 #[derive(Debug)]
-pub struct UpdateConnectionCommandHandler {
+pub struct UpdateChannelCommandHandler {
     pub plugins: Plugins,
 }
 
 #[async_trait::async_trait]
-impl CommandHandler for UpdateConnectionCommandHandler {
-    type Command = UpdateConnectionCommand;
-    type Output = Connection;
+impl CommandHandler for UpdateChannelCommandHandler {
+    type Command = UpdateChannelCommand;
+    type Output = Channel;
 
     async fn handle<'tx>(
         &self,
@@ -43,9 +42,9 @@ impl CommandHandler for UpdateConnectionCommandHandler {
         actor: &Actor,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
-        let conn = Connection::find(
+        let channel = Channel::find(
             ctx.pool(),
-            ConnectionQueryBuilder::default()
+            ChannelQueryBuilder::default()
                 .id(Some(cmd.id))
                 .build()
                 .unwrap(),
@@ -54,16 +53,17 @@ impl CommandHandler for UpdateConnectionCommandHandler {
         .unwrap()
         .unwrap();
 
-        let connector_plugin = self.plugins.get(conn.plugin_id()).unwrap();
-        connector_plugin
-            .configuration()
-            .validate(&cmd.properties)
+        let conn = channel.connection(ctx.pool()).await.unwrap();
+        let plugin = conn.plugin(&self.plugins).unwrap();
+        let disp = plugin.dispatcher(channel.dispatch_type()).unwrap();
+        disp.configuration()
+            .validate(cmd.dispatch_properties())
             .unwrap();
 
-        Ok(conn
+        Ok(channel
             .set_enabled(cmd.enabled)
-            .set_name(cmd.name)
-            .set_properties(Json(cmd.properties))
+            .set_priority(cmd.priority)
+            .set_properties(Json(cmd.dispatch_properties))
             .update(ctx.tx())
             .await
             .unwrap())

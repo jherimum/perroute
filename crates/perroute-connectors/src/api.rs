@@ -21,10 +21,10 @@ pub trait ConnectorPlugin: Sync + Send + Debug {
     fn id(&self) -> ConnectorPluginId;
     fn configuration(&self) -> &dyn Configuration;
     fn dispatchers(&self) -> Vec<&dyn DispatcherPlugin>;
-    fn dispatcher(&self, ty: DispatchType) -> Option<&dyn DispatcherPlugin> {
+    fn dispatcher(&self, ty: &DispatchType) -> Option<&dyn DispatcherPlugin> {
         self.dispatchers()
             .iter()
-            .find(|d| d.dispatch_type() == ty)
+            .find(|d| d.dispatch_type() == *ty)
             .map(|f| *f)
     }
 }
