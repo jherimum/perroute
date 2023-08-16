@@ -26,7 +26,7 @@ pub struct SchemasQuery {
     message_type_code: Option<Code>,
 
     #[builder(default)]
-    bu_id: Option<Id>,
+    business_unit_id: Option<Id>,
 
     #[builder(default)]
     bu_code: Option<Code>,
@@ -49,7 +49,7 @@ impl ModelQueryBuilder<Schema> for SchemasQuery {
                 INNER JOIN message_types mt 
                 ON s.message_type_id = mt.id 
                 INNER JOIN business_units bu
-                ON s.bu_id = bu.id
+                ON s.business_unit_id = bu.id
                 WHERE 1=1 "#,
         );
 
@@ -78,9 +78,9 @@ impl ModelQueryBuilder<Schema> for SchemasQuery {
             builder.push_bind(version);
         }
 
-        if let Some(bu_id) = self.bu_id {
-            builder.push(" AND s.bu_id = ");
-            builder.push_bind(bu_id);
+        if let Some(business_unit_id) = self.business_unit_id {
+            builder.push(" AND s.business_unit_id = ");
+            builder.push_bind(business_unit_id);
         }
 
         builder
@@ -140,7 +140,7 @@ pub struct Schema {
     message_type_id: Id,
 
     #[setters(skip)]
-    bu_id: Id,
+    business_unit_id: Id,
 
     #[setters(skip)]
     version: Version,
@@ -181,7 +181,7 @@ impl Schema {
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
         sqlx::query_as(
             r#"
-                INSERT INTO schemas (id, value, version, published, message_type_id, enabled, vars, bu_id) 
+                INSERT INTO schemas (id, value, version, published, message_type_id, enabled, vars, business_unit_id) 
                 VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING *
             "#,
         )
@@ -192,7 +192,7 @@ impl Schema {
         .bind(self.message_type_id)
         .bind(self.enabled)
         .bind(self.vars)
-        .bind(self.bu_id)
+        .bind(self.business_unit_id)
         .fetch_one(exec)
         .await
     }

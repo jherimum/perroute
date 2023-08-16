@@ -19,7 +19,7 @@ use serde::Serialize;
 #[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
 pub struct FindSchemaQuery {
     #[builder(default)]
-    bu_id: Option<Id>,
+    business_unit_id: Option<Id>,
     #[builder(default)]
     message_type_id: Option<Id>,
     #[builder(default)]

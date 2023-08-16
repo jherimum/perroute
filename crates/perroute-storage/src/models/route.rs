@@ -9,13 +9,13 @@ use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::types::{id::Id, properties::Properties};
-use sqlx::{types::Json, FromRow, PgExecutor, Postgres, QueryBuilder};
+use sqlx::{FromRow, PgExecutor, Postgres, QueryBuilder};
 
 #[derive(Debug, Default, Builder)]
 #[builder(default)]
 pub struct RouteQuery {
     id: Option<Id>,
-    bu_id: Option<Id>,
+    business_unit_id: Option<Id>,
     message_type_id: Option<Id>,
     schema_id: Option<Id>,
     connection_id: Option<Id>,
@@ -32,9 +32,9 @@ impl ModelQueryBuilder<Route> for RouteQuery {
             builder.push_bind(id);
         }
 
-        if let Some(bu_id) = &self.bu_id {
-            builder.push(" and bu_id = ");
-            builder.push_bind(bu_id);
+        if let Some(business_unit_id) = &self.business_unit_id {
+            builder.push(" and business_unit_id = ");
+            builder.push_bind(business_unit_id);
         }
 
         if let Some(message_type_id) = &self.message_type_id {
@@ -75,9 +75,12 @@ pub struct Route {
     #[setters(skip)]
     channel_id: Id,
     #[setters(skip)]
-    bu_id: Id,
+    business_unit_id: Id,
 
-    properties: Json<Properties>,
+    #[setters(skip)]
+    message_type_id: Id,
+
+    properties: Properties,
 }
 
 impl Route {

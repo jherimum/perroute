@@ -46,7 +46,7 @@ impl CommandHandler for UpdateBusinessUnitCommandHandler {
         actor: &Actor,
         command: Self::Command,
     ) -> Result<BusinessUnit, CommandBusError> {
-        let bu = BusinessUnit::find(
+        let business_unit = BusinessUnit::find(
             ctx.tx(),
             BusinessUnitQueryBuilder::default()
                 .id(Some(*command.business_unit_id()))
@@ -56,7 +56,8 @@ impl CommandHandler for UpdateBusinessUnitCommandHandler {
         .await?
         .unwrap();
 
-        bu.set_name(command.name().clone())
+        business_unit
+            .set_name(command.name().clone())
             .set_vars(Json(command.vars().clone()))
             .update(ctx.tx())
             .await

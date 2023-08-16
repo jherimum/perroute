@@ -41,7 +41,7 @@ impl CommandHandler for DeleteBusinessUnitCommandHandler {
         actor: &Actor,
         command: Self::Command,
     ) -> Result<bool, CommandBusError> {
-        let bu = BusinessUnit::find(
+        let business_unit = BusinessUnit::find(
             ctx.tx(),
             BusinessUnitQueryBuilder::default()
                 .id(Some(*command.business_unit_id()))

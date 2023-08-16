@@ -79,7 +79,7 @@ impl MessageTypeRouter {
             .code(body.code().clone())
             .name(body.name().clone())
             .vars(body.vars().clone())
-            .bu_id(*body.bu_id())
+            .business_unit_id(*body.business_unit_id())
             .build()
             .tap_err(|e| tracing::error!("Failed to build CreateMessageTypeCommand:{e}"))
             .map_err(anyhow::Error::from)?;

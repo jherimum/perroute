@@ -19,7 +19,7 @@ query!(
     template_id: Id,
     message_type_id: Option<Id>,
     schema_id: Option<Id>,
-    bu_id: Option<Id>
+    business_unit_id: Option<Id>
 );
 
 pub struct FindTemplateQueryHandler;
@@ -40,7 +40,7 @@ impl QueryHandler for FindTemplateQueryHandler {
             ctx.pool(),
             TemplatesQueryBuilder::default()
                 .id(Some(*query.template_id()))
-                .bu_id(*query.bu_id())
+                .business_unit_id(*query.business_unit_id())
                 .build()
                 .unwrap(),
         )

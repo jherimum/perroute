@@ -93,7 +93,7 @@ impl CommandHandler for CreateMessageCommandHandler {
         .unwrap()
         .unwrap();
 
-        let bu = schema.bu(ctx.pool()).await?;
+        let business_unit = schema.bu(ctx.pool()).await?;
         let message_type = schema.message_type(ctx.pool()).await?;
 
         if !message_type.enabled() {
@@ -119,7 +119,7 @@ impl CommandHandler for CreateMessageCommandHandler {
             .payload(cmd.payload)
             .schema_id(*schema.id())
             .message_type_id(*schema.message_type_id())
-            .bu_id(*bu.id())
+            .business_unit_id(*business_unit.id())
             .dispatcher_types(cmd.dispatcher_types)
             .recipient(cmd.recipient)
             .build()

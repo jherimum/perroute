@@ -9,7 +9,7 @@ use serde::Serialize;
 
 #[derive(Debug, serde::Deserialize, Clone)]
 pub struct CreateTemplateRequest {
-    pub bu_id: Id,
+    pub business_unit_id: Id,
     pub message_type_id: Id,
     pub subject: Option<String>,
     pub html: Option<String>,

@@ -108,10 +108,11 @@ impl BusinessUnitRouter {
         path: Path<Id>,
         Json(body): Json<UpdateBusinessUnitRequest>,
     ) -> SingleResult {
-        let bu = Self::retrieve_bu(state.query_bus(), &actor, path.into_inner(), identity).await?;
+        let business_unit =
+            Self::retrieve_bu(state.query_bus(), &actor, path.into_inner(), identity).await?;
 
         let cmd = UpdateBusinessUnitCommandBuilder::default()
-            .business_unit_id(*bu.id())
+            .business_unit_id(*business_unit.id())
             .name(body.name)
             .vars(body.vars)
             .build()
@@ -132,10 +133,11 @@ impl BusinessUnitRouter {
         ActorExtractor(actor): ActorExtractor,
         path: Path<Id>,
     ) -> EmptyApiResult {
-        let bu = Self::retrieve_bu(state.query_bus(), &actor, path.into_inner(), identity).await?;
+        let business_unit =
+            Self::retrieve_bu(state.query_bus(), &actor, path.into_inner(), identity).await?;
 
         let cmd = DeleteBusinessUnitCommandBuilder::default()
-            .business_unit_id(*bu.id())
+            .business_unit_id(*business_unit.id())
             .build()
             .tap_err(|e| tracing::error!("Failed to build DeleteBusinessUnitCommand: {e}"))
             .map_err(anyhow::Error::from)?;

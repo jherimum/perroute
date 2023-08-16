@@ -14,7 +14,7 @@ pub struct CreateMessageTypeRequest {
     code: Code,
     name: String,
     vars: Vars,
-    bu_id: Id,
+    business_unit_id: Id,
 }
 
 #[derive(Debug, serde::Deserialize, Clone, Getters)]

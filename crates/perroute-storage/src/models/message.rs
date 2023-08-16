@@ -27,7 +27,7 @@ pub struct MessageQuery {
     pub status: Option<Status>,
     pub schema_id: Option<Id>,
     pub message_type_id: Option<Id>,
-    pub bu_id: Option<Id>,
+    pub business_unit_id: Option<Id>,
     pub scheduled_from: Option<NaiveDateTime>,
     pub scheduled_to: Option<NaiveDateTime>,
 }
@@ -60,9 +60,9 @@ impl ModelQueryBuilder<Message> for MessageQuery {
             builder.push_bind(message_type_id);
         }
 
-        if let Some(bu_id) = self.bu_id {
-            builder.push(" AND bu_id = ");
-            builder.push_bind(bu_id);
+        if let Some(business_unit_id) = self.business_unit_id {
+            builder.push(" AND business_unit_id = ");
+            builder.push_bind(business_unit_id);
         }
 
         if let Some(scheduled_from) = self.scheduled_from {
@@ -108,7 +108,7 @@ pub struct Message {
     message_type_id: Id,
 
     #[setters(skip)]
-    bu_id: Id,
+    business_unit_id: Id,
 }
 
 impl Message {
@@ -130,7 +130,7 @@ impl Message {
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
         sqlx::query_as(
             r#"
-                INSERT INTO messages (id, payload, recipient, dispatcher_types, status, schema_id, message_type_id, bu_id) 
+                INSERT INTO messages (id, payload, recipient, dispatcher_types, status, schema_id, message_type_id, business_unit_id) 
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *"#,
             ).bind(self.id)
             .bind(self.payload)
@@ -139,7 +139,7 @@ impl Message {
             .bind(self.status)
             .bind(self.schema_id)
             .bind(self.message_type_id)
-            .bind(self.bu_id)            
+            .bind(self.business_unit_id)            
         .fetch_one(exec)
         .await
         .tap_err(log_query_error!())

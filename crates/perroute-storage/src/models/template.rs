@@ -27,7 +27,7 @@ pub struct TemplatesQuery {
     message_type_id: Option<Id>,
 
     #[builder(default)]
-    bu_id: Option<Id>,
+    business_unit_id: Option<Id>,
 
     #[builder(default)]
     dispatch_type: Option<DispatchType>,
@@ -44,9 +44,9 @@ impl ModelQueryBuilder<Template> for TemplatesQuery {
             builder.push_bind(id);
         }
 
-        if let Some(bu_id) = self.bu_id {
-            builder.push(" AND bu_id = ");
-            builder.push_bind(bu_id);
+        if let Some(business_unit_id) = self.business_unit_id {
+            builder.push(" AND business_unit_id = ");
+            builder.push_bind(business_unit_id);
         }
 
         if let Some(schema_id) = self.schema_id {
@@ -92,7 +92,7 @@ pub struct Template {
     message_type_id: Id,
 
     #[setters(skip)]
-    bu_id: Id,
+    business_unit_id: Id,
 }
 
 impl Template {
@@ -114,7 +114,7 @@ impl Template {
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
         sqlx::query_as(
             r#"
-        INSERT INTO templates (id, dispatch_type, subject, text, html, vars, active, schema_id, message_type_id, bu_id) 
+        INSERT INTO templates (id, dispatch_type, subject, text, html, vars, active, schema_id, message_type_id, business_unit_id) 
         VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         RETURNING *"#,
         )
@@ -127,7 +127,7 @@ impl Template {
         .bind(self.active)
         .bind(self.schema_id)
         .bind(self.message_type_id)
-        .bind(self.bu_id)
+        .bind(self.business_unit_id)
         
         
         .fetch_one(exec)

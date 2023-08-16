@@ -101,7 +101,7 @@ pub fn routes() -> Scope {
             ),
         );
 
-    let bus = web::scope("/business_units")
+    let business_units = web::scope("/business_units")
         .service(
             web::resource("")
                 .name(BusinessUnitRouter::BUS_RESOURCE_NAME)
@@ -135,7 +135,7 @@ pub fn routes() -> Scope {
         .service(
             web::scope("/api").service(
                 web::scope("/v1")
-                    .service(bus)
+                    .service(business_units)
                     .service(message_types)
                     .service(messages)
                     .service(templates)

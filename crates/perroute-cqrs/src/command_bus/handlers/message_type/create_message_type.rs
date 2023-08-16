@@ -21,7 +21,7 @@ pub struct CreateMessageTypeCommand {
     code: Code,
     name: String,
     vars: Vars,
-    bu_id: Id,
+    business_unit_id: Id,
 }
 
 impl_command!(CreateMessageTypeCommand, CommandType::CreateMessageType);
@@ -52,7 +52,7 @@ impl CommandHandler for CreateMessageTypeCommandHandler {
             ctx.pool(),
             MessageTypeQueryBuilder::default()
                 .code(Some(cmd.code.clone()))
-                .bu_id(Some(cmd.bu_id))
+                .business_unit_id(Some(cmd.business_unit_id))
                 .build()
                 .unwrap(),
         )
@@ -67,7 +67,7 @@ impl CommandHandler for CreateMessageTypeCommandHandler {
             .name(cmd.name)
             .enabled(false)
             .vars(cmd.vars)
-            .bu_id(cmd.bu_id)
+            .business_unit_id(cmd.business_unit_id)
             .build()
             .unwrap()
             .save(ctx.tx())

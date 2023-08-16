@@ -32,7 +32,7 @@ pub struct MessageType {
     vars: Vars,
 
     #[setters(skip)]
-    bu_id: Id,
+    business_unit_id: Id,
 }
 
 #[derive(Debug, Default, Builder)]
@@ -43,7 +43,7 @@ pub struct MessageTypeQuery {
     code: Option<Code>,
 
     #[builder(default)]
-    bu_id: Option<Id>,
+    business_unit_id: Option<Id>,
 }
 
 impl ModelQueryBuilder<MessageType> for MessageTypeQuery {
@@ -62,9 +62,9 @@ impl ModelQueryBuilder<MessageType> for MessageTypeQuery {
             query_builder.push_bind(id);
         }
 
-        if let Some(bu_id) = &self.bu_id {
-            query_builder.push(" and bu_id = ");
-            query_builder.push_bind(bu_id);
+        if let Some(business_unit_id) = &self.business_unit_id {
+            query_builder.push(" and business_unit_id = ");
+            query_builder.push_bind(business_unit_id);
         }
 
         query_builder
@@ -99,7 +99,7 @@ impl MessageType {
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
         sqlx::query_as(
             r#"
-                    INSERT INTO message_types (id, code, name, enabled, vars, bu_id) 
+                    INSERT INTO message_types (id, code, name, enabled, vars, business_unit_id) 
                     VALUES($1, $2, $3, $4, $5, $6) RETURNING *
                 "#,
         )
@@ -108,7 +108,7 @@ impl MessageType {
         .bind(self.name)
         .bind(self.enabled)
         .bind(self.vars)
-        .bind(self.bu_id)
+        .bind(self.business_unit_id)
         .fetch_one(exec)
         .await
         .tap_err(log_query_error!())

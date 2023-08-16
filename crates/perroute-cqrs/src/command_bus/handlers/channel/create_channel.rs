@@ -22,7 +22,7 @@ use perroute_storage::{
 pub struct CreateChannelCommand {
     id: Id,
     connection_id: Id,
-    bu_id: Id,
+    business_unit_id: Id,
     dispatch_type: DispatchType,
     dispatch_properties: Properties,
     priority: i32,
@@ -47,10 +47,10 @@ impl CommandHandler for CreateChannelCommandHandler {
         actor: &Actor,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
-        let bu = BusinessUnit::find(
+        let business_unit = BusinessUnit::find(
             ctx.pool(),
             BusinessUnitQueryBuilder::default()
-                .id(Some(cmd.bu_id))
+                .id(Some(cmd.business_unit_id))
                 .build()
                 .unwrap(),
         )
@@ -78,7 +78,7 @@ impl CommandHandler for CreateChannelCommandHandler {
         Ok(ChannelBuilder::default()
             .id(cmd.id)
             .connection_id(cmd.connection_id)
-            .business_unit_id(cmd.bu_id)
+            .business_unit_id(cmd.business_unit_id)
             .properties(cmd.dispatch_properties)
             .dispatch_type(cmd.dispatch_type)
             .priority(cmd.priority)

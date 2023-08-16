@@ -60,7 +60,7 @@ impl CommandHandler for CreateTemplateCommandHandler {
             .text(cmd.text)
             .html(cmd.html)
             .active(false)
-            .bu_id(*schema.bu_id())
+            .business_unit_id(*schema.business_unit_id())
             .dispatch_type(cmd.dispatch_type)
             .message_type_id(*schema.message_type_id())
             .vars(Json(cmd.vars))

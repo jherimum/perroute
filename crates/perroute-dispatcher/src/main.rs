@@ -50,7 +50,7 @@ async fn dispatch<'tr>(
         bail!("Message dispatch is not pending");
     }
     let message = message_dispatch.message(pool).await?;
-    let bu = message.bu(pool).await?;
+    let business_unit = message.bu(pool).await?;
     let message_type = message.message_type(pool).await?;
     let schema = message.schema(pool).await?;
     let route = message_dispatch.route(pool).await?;
@@ -65,7 +65,10 @@ async fn dispatch<'tr>(
         .await
         .unwrap();
 
-    let vars = bu.vars().merge(message_type.vars()).merge(schema.vars());
+    let vars = business_unit
+        .vars()
+        .merge(message_type.vars())
+        .merge(schema.vars());
     //.merge(template.map(|t| t.vars().deref()).unwrap_or_default());
 
     let template = template.map(|t| DefaultDispatchTemplate::new(t, template_render));

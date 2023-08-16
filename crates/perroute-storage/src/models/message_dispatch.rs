@@ -75,10 +75,11 @@ pub struct MessageDispatchResult {
 #[builder(setter(into))]
 pub struct MessageDispatch {
     id: Id,
-    message_id: Id,
-    route_id: Id,
     status: MessageDispatchStatus,
     result: Option<MessageDispatchResult>,
+    template_id: Id,
+    message_id: Id,
+    route_id: Id,
 }
 
 impl MessageDispatch {
@@ -122,7 +123,7 @@ impl MessageDispatch {
     pub async fn save<'e, E: PgExecutor<'e>>(&self, executor: E) -> Result<Self, sqlx::Error> {
         sqlx::query_as(
             r#"
-            INSERT INTO message_dispatches (id, message_id, route_id, status, result)
+            INSERT INTO message_dispatches (id, message_id, route_id, status, template_id)
             VALUES ($1, $2, $3, $4, $5)
             RETURNING *
             "#,
@@ -131,7 +132,7 @@ impl MessageDispatch {
         .bind(self.message_id)
         .bind(self.route_id)
         .bind(self.status)
-        .bind(self.result.clone())
+        .bind(self.template_id)
         .fetch_one(executor)
         .await
     }
