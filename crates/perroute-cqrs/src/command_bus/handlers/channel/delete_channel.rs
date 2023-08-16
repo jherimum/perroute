@@ -22,9 +22,7 @@ impl_command!(DeleteChannelCommand, CommandType::DeleteChannel);
 into_event!(DeleteChannelCommand);
 
 #[derive(Debug)]
-pub struct DeleteChannelCommandHandler {
-    pub plugins: Plugins,
-}
+pub struct DeleteChannelCommandHandler;
 
 #[async_trait::async_trait]
 impl CommandHandler for DeleteChannelCommandHandler {

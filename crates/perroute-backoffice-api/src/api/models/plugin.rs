@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crate::{
     api::response::{CollectionResourceModel, Links, ResourceBuilder, SingleResourceModel},
     links::{Linkrelation, ResourceLink},
@@ -11,6 +9,7 @@ use perroute_connectors::{
     types::{ConnectorPluginId, DispatchType},
 };
 use serde::Serialize;
+use std::sync::Arc;
 
 #[derive(Clone, Serialize, Debug, PartialEq, Eq)]
 pub struct ConnectorPluginResource {
@@ -35,13 +34,13 @@ impl From<Arc<dyn ConnectorPlugin>> for ConnectorPluginResource {
                 .into_iter()
                 .cloned()
                 .collect(),
-            dispatcher_plugins: Default::default(),
+            dispatcher_plugins: value.dispatchers().into_iter().map(|d| d.into()).collect(),
         }
     }
 }
 
-impl From<Arc<dyn DispatcherPlugin>> for DispatcherPluginResource {
-    fn from(value: Arc<dyn DispatcherPlugin>) -> Self {
+impl From<&dyn DispatcherPlugin> for DispatcherPluginResource {
+    fn from(value: &dyn DispatcherPlugin) -> Self {
         Self {
             dispatch_type: value.dispatch_type(),
             configuration: value
@@ -66,7 +65,7 @@ impl ResourceBuilder<SingleResourceModel<ConnectorPluginResource>> for Arc<dyn C
     }
 }
 
-impl<'p> ResourceBuilder<CollectionResourceModel<ConnectorPluginResource>>
+impl ResourceBuilder<CollectionResourceModel<ConnectorPluginResource>>
     for Vec<Arc<dyn ConnectorPlugin>>
 {
     fn build(&self, req: &HttpRequest) -> CollectionResourceModel<ConnectorPluginResource> {

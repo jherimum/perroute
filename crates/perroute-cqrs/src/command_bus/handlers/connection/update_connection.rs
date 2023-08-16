@@ -27,9 +27,7 @@ impl_command!(UpdateConnectionCommand, CommandType::UpdateConnection);
 into_event!(UpdateConnectionCommand);
 
 #[derive(Debug)]
-pub struct UpdateConnectionCommandHandler {
-    pub plugins: Plugins,
-}
+pub struct UpdateConnectionCommandHandler;
 
 #[async_trait::async_trait]
 impl CommandHandler for UpdateConnectionCommandHandler {
@@ -53,7 +51,7 @@ impl CommandHandler for UpdateConnectionCommandHandler {
         .unwrap()
         .unwrap();
 
-        let connector_plugin = self.plugins.get(conn.plugin_id()).unwrap();
+        let connector_plugin = ctx.plugins().get(conn.plugin_id()).unwrap();
         connector_plugin
             .configuration()
             .validate(&cmd.properties)

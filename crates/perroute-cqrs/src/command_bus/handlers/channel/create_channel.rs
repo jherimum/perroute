@@ -32,9 +32,7 @@ impl_command!(CreateChannelCommand, CommandType::CreateChannel);
 into_event!(CreateChannelCommand);
 
 #[derive(Debug)]
-pub struct CreateChannelCommandHandler {
-    pub plugins: Plugins,
-}
+pub struct CreateChannelCommandHandler;
 
 #[async_trait::async_trait]
 impl CommandHandler for CreateChannelCommandHandler {
@@ -69,7 +67,7 @@ impl CommandHandler for CreateChannelCommandHandler {
         .unwrap()
         .unwrap();
 
-        let plugin = conn.plugin(&self.plugins).unwrap();
+        let plugin = conn.plugin(ctx.plugins()).unwrap();
         let disp = plugin.dispatcher(cmd.dispatch_type()).unwrap();
         disp.configuration()
             .validate(cmd.dispatch_properties())

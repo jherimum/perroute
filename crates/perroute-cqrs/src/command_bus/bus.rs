@@ -50,17 +50,21 @@ use tap::{TapFallible, TapOptional};
 
 #[derive(Debug)]
 pub struct CommandBusContext<'tx> {
+    plugins: Plugins,
     pool: PgPool,
     tx: Transaction<'tx, Postgres>,
 }
 
 impl<'tx> CommandBusContext<'tx> {
-    pub async fn begin(pool: PgPool) -> Result<CommandBusContext<'tx>, CommandBusError> {
+    pub async fn begin(
+        pool: PgPool,
+        plugins: Plugins,
+    ) -> Result<CommandBusContext<'tx>, CommandBusError> {
         let tx = pool
             .begin()
             .await
             .tap_err(|e| tracing::error!("Failed to begin transaction: {e}"))?;
-        Ok(Self { pool, tx })
+        Ok(Self { plugins, pool, tx })
     }
 
     pub fn tx(&mut self) -> &mut Transaction<'tx, Postgres> {
@@ -69,6 +73,10 @@ impl<'tx> CommandBusContext<'tx> {
 
     pub const fn pool(&self) -> &PgPool {
         &self.pool
+    }
+
+    pub fn plugins(&self) -> &Plugins {
+        &self.plugins
     }
 
     pub async fn conn(&mut self) -> &mut PgConnection {
@@ -86,11 +94,17 @@ impl<'tx> CommandBusContext<'tx> {
 
 #[derive(Default)]
 pub struct CommandBusBuilder {
+    plugins: Option<Plugins>,
     pool: Option<PgPool>,
     handlers: HashMap<TypeId, Box<dyn Any + Send + Sync>>,
 }
 
 impl CommandBusBuilder {
+    pub fn with_plugins(mut self, plugins: Plugins) -> Self {
+        self.plugins = Some(plugins);
+        self
+    }
+
     pub fn with_pool(mut self, pool: PgPool) -> Self {
         self.pool = Some(pool);
         self
@@ -107,6 +121,7 @@ impl CommandBusBuilder {
 
     pub fn build(self) -> CommandBus {
         CommandBus {
+            plugins: self.plugins.expect("Plugins are required"),
             pool: self.pool.expect("Pool is required"),
             handlers: Arc::new(self.handlers),
         }
@@ -115,6 +130,7 @@ impl CommandBusBuilder {
 
 #[derive(Clone, Debug)]
 pub struct CommandBus {
+    plugins: Plugins,
     pool: PgPool,
     handlers: Arc<HashMap<TypeId, Box<dyn Any + Send + Sync>>>,
 }
@@ -122,6 +138,7 @@ pub struct CommandBus {
 impl CommandBus {
     pub fn complete(pool: PgPool, plugins: Plugins) -> Self {
         Self::builder()
+            .with_plugins(plugins)
             .with_pool(pool)
             .with_handler(CreateBusinessUnitCommandHandler)
             .with_handler(DeleteBusinessUnitCommandHandler)
@@ -138,22 +155,12 @@ impl CommandBus {
             .with_handler(DeleteTemplateCommandHandler)
             .with_handler(ActivateTemplateCommandHandler)
             .with_handler(CreateMessageCommandHandler)
-            .with_handler(CreateConnectionCommandHandler {
-                plugins: plugins.clone(),
-            })
-            .with_handler(UpdateConnectionCommandHandler {
-                plugins: plugins.clone(),
-            })
-            .with_handler(DeleteConnectionCommandHandler {
-                plugins: plugins.clone(),
-            })
-            .with_handler(CreateChannelCommandHandler {
-                plugins: plugins.clone(),
-            })
-            .with_handler(UpdateChannelCommandHandler {
-                plugins: plugins.clone(),
-            })
-            .with_handler(DeleteChannelCommandHandler { plugins: plugins })
+            .with_handler(CreateConnectionCommandHandler)
+            .with_handler(UpdateConnectionCommandHandler)
+            .with_handler(DeleteConnectionCommandHandler)
+            .with_handler(CreateChannelCommandHandler)
+            .with_handler(UpdateChannelCommandHandler)
+            .with_handler(DeleteChannelCommandHandler)
             .build()
     }
 
@@ -182,7 +189,7 @@ impl CommandBus {
             .tap_none(|| tracing::error!("Handler not found for command: {}", cmd.ty()))
             .ok_or_else(|| CommandBusError::HandlerNotFound(cmd.ty()))?;
 
-        let mut ctx = CommandBusContext::begin(self.pool.clone())
+        let mut ctx = CommandBusContext::begin(self.pool.clone(), self.plugins.clone())
             .await
             .tap_err(|e| tracing::error!("Failed to create command bus context: {e}"))?;
 

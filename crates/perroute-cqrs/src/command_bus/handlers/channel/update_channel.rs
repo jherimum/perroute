@@ -26,9 +26,7 @@ impl_command!(UpdateChannelCommand, CommandType::UpdateChannel);
 into_event!(UpdateChannelCommand);
 
 #[derive(Debug)]
-pub struct UpdateChannelCommandHandler {
-    pub plugins: Plugins,
-}
+pub struct UpdateChannelCommandHandler;
 
 #[async_trait::async_trait]
 impl CommandHandler for UpdateChannelCommandHandler {
@@ -53,7 +51,7 @@ impl CommandHandler for UpdateChannelCommandHandler {
         .unwrap();
 
         let conn = channel.connection(ctx.pool()).await.unwrap();
-        let plugin = conn.plugin(&self.plugins).unwrap();
+        let plugin = conn.plugin(&ctx.plugins()).unwrap();
         let disp = plugin.dispatcher(channel.dispatch_type()).unwrap();
         disp.configuration()
             .validate(cmd.dispatch_properties())

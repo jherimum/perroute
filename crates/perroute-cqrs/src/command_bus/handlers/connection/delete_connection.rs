@@ -24,9 +24,7 @@ impl_command!(DeleteConnectionCommand, CommandType::DeleteConnection);
 into_event!(DeleteConnectionCommand);
 
 #[derive(Debug)]
-pub struct DeleteConnectionCommandHandler {
-    pub plugins: Plugins,
-}
+pub struct DeleteConnectionCommandHandler;
 
 #[async_trait::async_trait]
 impl CommandHandler for DeleteConnectionCommandHandler {

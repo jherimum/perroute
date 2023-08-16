@@ -24,9 +24,7 @@ impl_command!(CreateConnectionCommand, CommandType::CreateConnection);
 into_event!(CreateConnectionCommand);
 
 #[derive(Debug)]
-pub struct CreateConnectionCommandHandler {
-    pub plugins: Plugins,
-}
+pub struct CreateConnectionCommandHandler;
 
 #[async_trait::async_trait]
 impl CommandHandler for CreateConnectionCommandHandler {
@@ -39,7 +37,7 @@ impl CommandHandler for CreateConnectionCommandHandler {
         actor: &Actor,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
-        let connector_plugin = self.plugins.get(cmd.plugin_id()).unwrap();
+        let connector_plugin = ctx.plugins().get(cmd.plugin_id()).unwrap();
         connector_plugin
             .configuration()
             .validate(&cmd.properties)
