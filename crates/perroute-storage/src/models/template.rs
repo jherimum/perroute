@@ -21,10 +21,16 @@ pub struct TemplatesQuery {
     id: Option<Id>,
 
     #[builder(default)]
+    schema_id: Option<Id>,
+
+    #[builder(default)]
     message_type_id: Option<Id>,
 
     #[builder(default)]
     bu_id: Option<Id>,
+
+    #[builder(default)]
+    dispatch_type: Option<DispatchType>,
 }
 
 impl ModelQueryBuilder<Template> for TemplatesQuery {
@@ -43,9 +49,19 @@ impl ModelQueryBuilder<Template> for TemplatesQuery {
             builder.push_bind(bu_id);
         }
 
+        if let Some(schema_id) = self.schema_id {
+            builder.push(" AND schema_id = ");
+            builder.push_bind(schema_id);
+        }
+
         if let Some(message_type_id) = self.message_type_id {
             builder.push(" AND message_type_id = ");
             builder.push_bind(message_type_id);
+        }
+
+        if let Some(dispath_type) = self.dispatch_type {
+            builder.push(" AND dispatch_type = ");
+            builder.push_bind(dispath_type);
         }
 
         builder

@@ -28,6 +28,7 @@ use super::{
             update_schema::UpdateSchemaCommandHandler,
         },
         template::{
+            activate_template::ActivateTemplateCommandHandler,
             create_template::CreateTemplateCommandHandler,
             delete_template::DeleteTemplateCommandHandler,
             update_template::UpdateTemplateCommandHandler,
@@ -138,6 +139,7 @@ impl CommandBus {
             .with_handler(CreateTemplateCommandHandler)
             .with_handler(UpdateTemplateCommandHandler)
             .with_handler(DeleteTemplateCommandHandler)
+            .with_handler(ActivateTemplateCommandHandler)
             .with_handler(CreateMessageCommandHandler)
             .with_handler(CreateConnectionCommandHandler {
                 plugins: plugins.clone(),

@@ -7,21 +7,27 @@ use crate::{
     into_event,
 };
 use async_trait::async_trait;
-use perroute_commons::types::{actor::Actor, id::Id, template::TemplateSnippet};
+use perroute_commons::types::{actor::Actor, id::Id, template::TemplateSnippet, vars::Vars};
 use perroute_connectors::types::DispatchType;
-use perroute_storage::models::template::{Template, TemplateBuilder};
+use perroute_storage::{
+    models::{
+        schema::{Schema, SchemasQueryBuilder},
+        template::{Template, TemplateBuilder},
+    },
+    query::FetchableModel,
+};
+use sqlx::types::Json;
 
 command!(
     CreateTemplateCommand,
     CommandType::CreateTemplate,
-    template_id: Id,
-    bu_id: Id,
-    message_type_id: Id,
-    name: String,
+    id: Id,
     subject: Option<String>,
     html: Option<TemplateSnippet>,
     text: Option<TemplateSnippet>,
-    dispatch_type: DispatchType
+    dispatch_type: DispatchType,
+    schema_id: Id,
+    vars: Vars
 );
 into_event!(CreateTemplateCommand);
 
@@ -36,21 +42,28 @@ impl CommandHandler for CreateTemplateCommandHandler {
     type Command = CreateTemplateCommand;
     type Output = Template;
 
-    #[tracing::instrument(name = "create_temploate_handler", skip(self, ctx))]
+    #[tracing::instrument(name = "create_template_handler", skip(self, ctx))]
     async fn handle<'tx>(
         &self,
         ctx: &mut CommandBusContext<'tx>,
         actor: &Actor,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
+        let schema = Schema::find(ctx.pool(), SchemasQueryBuilder::default().build().unwrap())
+            .await
+            .unwrap()
+            .unwrap();
+
         TemplateBuilder::default()
-            .id(cmd.template_id)
+            .id(cmd.id)
             .subject(cmd.subject)
             .text(cmd.text)
             .html(cmd.html)
-            .bu_id(cmd.bu_id)
+            .active(false)
+            .bu_id(*schema.bu_id())
             .dispatch_type(cmd.dispatch_type)
-            .message_type_id(cmd.message_type_id)
+            .message_type_id(*schema.message_type_id())
+            .vars(Json(cmd.vars))
             .build()
             .unwrap()
             .save(ctx.pool())

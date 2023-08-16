@@ -7,19 +7,21 @@ use crate::{
     into_event,
 };
 use async_trait::async_trait;
-use perroute_commons::types::{actor::Actor, id::Id, template::TemplateSnippet};
+use perroute_commons::types::{actor::Actor, id::Id, template::TemplateSnippet, vars::Vars};
 use perroute_storage::{
     models::template::{Template, TemplatesQueryBuilder},
     query::FetchableModel,
 };
+use sqlx::types::Json;
 
 command!(
     UpdateTemplateCommand,
     CommandType::UpdateTemplate,
-    template_id: Id,
+    id: Id,
     subject: Option<String>,
     html: Option<TemplateSnippet>,
-    text: Option<TemplateSnippet>
+    text: Option<TemplateSnippet>,
+    vars: Vars
 );
 into_event!(UpdateTemplateCommand);
 
@@ -34,7 +36,7 @@ impl CommandHandler for UpdateTemplateCommandHandler {
     type Command = UpdateTemplateCommand;
     type Output = Template;
 
-    #[tracing::instrument(name = "update_temploate_handler", skip(self, ctx))]
+    #[tracing::instrument(name = "update_template_handler", skip(self, ctx))]
     async fn handle<'tx>(
         &self,
         ctx: &mut CommandBusContext<'tx>,
@@ -44,7 +46,7 @@ impl CommandHandler for UpdateTemplateCommandHandler {
         Template::find(
             ctx.pool(),
             TemplatesQueryBuilder::default()
-                .id(Some(*cmd.template_id()))
+                .id(Some(cmd.id))
                 .build()
                 .unwrap(),
         )
@@ -53,6 +55,7 @@ impl CommandHandler for UpdateTemplateCommandHandler {
         .set_html(cmd.html)
         .set_text(cmd.text)
         .set_subject(cmd.subject)
+        .set_vars(Json(cmd.vars))
         .save(ctx.tx())
         .await
         .map_err(Into::into)

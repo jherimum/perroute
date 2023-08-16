@@ -44,6 +44,7 @@ pub enum CommandType {
     CreateTemplate,
     UpdateTemplate,
     DeleteTemplate,
+    ActivateTemplate,
 
     CreateMessage,
     DistributeMessage,

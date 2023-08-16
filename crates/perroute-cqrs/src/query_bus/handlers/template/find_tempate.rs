@@ -18,6 +18,7 @@ query!(
     QueryType::FindTemplate,
     template_id: Id,
     message_type_id: Option<Id>,
+    schema_id: Option<Id>,
     bu_id: Option<Id>
 );
 
@@ -39,7 +40,6 @@ impl QueryHandler for FindTemplateQueryHandler {
             ctx.pool(),
             TemplatesQueryBuilder::default()
                 .id(Some(*query.template_id()))
-                .message_type_id(*query.message_type_id())
                 .bu_id(*query.bu_id())
                 .build()
                 .unwrap(),

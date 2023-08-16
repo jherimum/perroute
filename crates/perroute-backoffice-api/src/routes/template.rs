@@ -63,7 +63,7 @@ impl TemplateRouter {
         Json(body): Json<CreateTemplateRequest>,
     ) -> SingleResult {
         let cmd = CreateTemplateCommandBuilder::default()
-            .template_id(new_id!())
+            .id(new_id!())
             .subject(body.subject)
             .html(body.html.map(Into::into))
             .text(body.text.map(Into::into))
@@ -92,7 +92,7 @@ impl TemplateRouter {
             .unwrap();
 
         let cmd = UpdateTemplateCommandBuilder::default()
-            .template_id(*template.id())
+            .id(*template.id())
             .html(body.html.map(Into::into))
             .text(body.text.map(Into::into))
             .subject(body.subject.map(Into::into))
