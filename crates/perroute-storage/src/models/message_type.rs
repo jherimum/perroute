@@ -1,6 +1,6 @@
 use super::{
-    business_unit::BusinessUnit,
-    schema::{Schema, SchemasQueryBuilder, Version},
+    business_unit::{BusinessUnit, BusinessUnitQueryBuilder},
+    schema::{Schema, SchemasQueryBuilder},
 };
 use crate::{
     log_query_error,
@@ -11,10 +11,43 @@ use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::types::{code::Code, id::Id, vars::Vars};
-use sqlx::{types::Json, FromRow, PgExecutor, Postgres, QueryBuilder};
+use sqlx::{FromRow, PgExecutor, Postgres, QueryBuilder};
 use tap::TapFallible;
 
 impl DatabaseModel for MessageType {}
+
+#[derive(Debug, Default, Builder)]
+#[builder(default)]
+pub struct MessageTypeQuery {
+    id: Option<Id>,
+    code: Option<Code>,
+    business_unit_id: Option<Id>,
+}
+
+impl ModelQueryBuilder<MessageType> for MessageTypeQuery {
+    fn build(&self, projection: Projection) -> QueryBuilder<'_, Postgres> {
+        let mut query_builder = projection.query_builder();
+
+        query_builder.push(" FROM message_types WHERE 1=1");
+
+        if let Some(code) = self.code.clone() {
+            query_builder.push(" and code = ");
+            query_builder.push_bind(code);
+        }
+
+        if let Some(id) = self.id {
+            query_builder.push(" and id = ");
+            query_builder.push_bind(id);
+        }
+
+        if let Some(business_unit_id) = self.business_unit_id {
+            query_builder.push(" and business_unit_id = ");
+            query_builder.push_bind(business_unit_id);
+        }
+
+        query_builder
+    }
+}
 
 #[derive(Debug, FromRow, PartialEq, Eq, Clone, Getters, Setters, Builder)]
 #[builder(setter(into))]
@@ -35,52 +68,30 @@ pub struct MessageType {
     business_unit_id: Id,
 }
 
-#[derive(Debug, Default, Builder)]
-pub struct MessageTypeQuery {
-    #[builder(default)]
-    id: Option<Id>,
-    #[builder(default)]
-    code: Option<Code>,
-
-    #[builder(default)]
-    business_unit_id: Option<Id>,
-}
-
-impl ModelQueryBuilder<MessageType> for MessageTypeQuery {
-    fn build(&self, projection: Projection) -> QueryBuilder<'_, Postgres> {
-        let mut query_builder = projection.query_builder();
-
-        query_builder.push(" FROM message_types WHERE 1=1");
-
-        if let Some(code) = &self.code {
-            query_builder.push(" and code = ");
-            query_builder.push_bind(code);
-        }
-
-        if let Some(id) = &self.id {
-            query_builder.push(" and id = ");
-            query_builder.push_bind(id);
-        }
-
-        if let Some(business_unit_id) = &self.business_unit_id {
-            query_builder.push(" and business_unit_id = ");
-            query_builder.push_bind(business_unit_id);
-        }
-
-        query_builder
-    }
-}
-
 impl MessageType {
     pub async fn business_unit<'e, E: PgExecutor<'e>>(
         self,
         exec: E,
     ) -> Result<BusinessUnit, sqlx::Error> {
-        todo!()
+        BusinessUnit::find_one(
+            exec,
+            BusinessUnitQueryBuilder::default()
+                .id(Some(self.business_unit_id))
+                .build()
+                .unwrap(),
+        )
+        .await
     }
 
     pub async fn schemas<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Vec<Schema>, sqlx::Error> {
-        todo!()
+        Schema::query(
+            exec,
+            SchemasQueryBuilder::default()
+                .message_type_id(Some(self.id))
+                .build()
+                .unwrap(),
+        )
+        .await
     }
 
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {

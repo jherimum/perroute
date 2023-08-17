@@ -10,7 +10,7 @@ use derive_getters::Getters;
 use perroute_commons::types::{actor::Actor, id::Id, properties::Properties};
 use perroute_connectors::Plugins;
 use perroute_storage::{
-    models::channel::{Channel, ChannelQueryBuilder},
+    models::channel::{Channel, ChannelQueryBuilder, Priority},
     query::FetchableModel,
 };
 use serde::Serialize;
@@ -20,7 +20,7 @@ pub struct UpdateChannelCommand {
     id: Id,
     dispatch_properties: Properties,
     enabled: bool,
-    priority: i32,
+    priority: Priority,
 }
 impl_command!(UpdateChannelCommand, CommandType::UpdateChannel);
 into_event!(UpdateChannelCommand);

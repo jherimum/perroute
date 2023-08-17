@@ -1,6 +1,11 @@
+use super::{
+    business_unit::{BusinessUnit, BusinessUnitQueryBuilder},
+    message_type::{MessageType, MessageTypeQueryBuilder},
+    schema::{Schema, SchemasQueryBuilder},
+};
 use crate::{
     log_query_error,
-    query::{ModelQueryBuilder, Projection},
+    query::{FetchableModel, ModelQueryBuilder, Projection},
     DatabaseModel,
 };
 use derive_builder::Builder;
@@ -10,25 +15,14 @@ use perroute_commons::types::{id::Id, template::TemplateSnippet, vars::Vars};
 use perroute_connectors::types::DispatchType;
 use sqlx::{types::Json, FromRow, PgExecutor, QueryBuilder};
 use tap::TapFallible;
-use super::{business_unit::BusinessUnit, message_type::MessageType, schema::Schema};
 
-impl DatabaseModel for Template {}
-
-#[derive(Debug, Builder)]
+#[derive(Debug, Builder, Default)]
+#[builder(default)]
 pub struct TemplatesQuery {
-    #[builder(default)]
     id: Option<Id>,
-
-    #[builder(default)]
     schema_id: Option<Id>,
-
-    #[builder(default)]
     message_type_id: Option<Id>,
-
-    #[builder(default)]
     business_unit_id: Option<Id>,
-
-    #[builder(default)]
     dispatch_type: Option<DispatchType>,
 }
 
@@ -67,6 +61,8 @@ impl ModelQueryBuilder<Template> for TemplatesQuery {
     }
 }
 
+impl DatabaseModel for Template {}
+
 #[derive(Debug, FromRow, PartialEq, Eq, Clone, Getters, Setters, Builder)]
 #[builder(setter(into))]
 #[setters(prefix = "set_")]
@@ -99,15 +95,39 @@ impl Template {
         &self,
         exec: E,
     ) -> Result<MessageType, sqlx::Error> {
-        todo!()
+        MessageType::find_one(
+            exec,
+            MessageTypeQueryBuilder::default()
+                .id(Some(self.message_type_id))
+                .build()
+                .unwrap(),
+        )
+        .await
     }
 
     pub async fn schema<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Schema, sqlx::Error> {
-        todo!()
+        Schema::find_one(
+            exec,
+            SchemasQueryBuilder::default()
+                .id(Some(self.schema_id))
+                .build()
+                .unwrap(),
+        )
+        .await
     }
 
-    pub async fn bu<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<BusinessUnit, sqlx::Error> {
-        todo!()
+    pub async fn business_unit<'e, E: PgExecutor<'e>>(
+        &self,
+        exec: E,
+    ) -> Result<BusinessUnit, sqlx::Error> {
+        BusinessUnit::find_one(
+            exec,
+            BusinessUnitQueryBuilder::default()
+                .id(Some(self.business_unit_id))
+                .build()
+                .unwrap(),
+        )
+        .await
     }
 
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
@@ -127,8 +147,6 @@ impl Template {
         .bind(self.schema_id)
         .bind(self.message_type_id)
         .bind(self.business_unit_id)
-        
-        
         .fetch_one(exec)
         .await
         .tap_err(log_query_error!())

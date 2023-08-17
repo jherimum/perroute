@@ -85,16 +85,20 @@ create table templates(
 );
 
 create table routes(
-    id            uuid            not null,
-    schema_id     uuid            not null,
-    channel_id    uuid            not null,
-    business_unit_id         uuid            not null,
-    properties    jsonb           not null,
+    id                  uuid            not null,
+    schema_id           uuid            not null,
+    channel_id          uuid            not null,
+    business_unit_id    uuid            not null,
+    message_type_id     uuid            not null,
+    properties          jsonb           not null,
+    connection_id       jsonb           not null,
 
     constraint routes_pk primary key (id),
-    constraint routes_schema_fk foreign key (schema_id) references schemas(id),
-    constraint routes_channel_fk foreign key (channel_id) references channels(id),
-    constraint routes_bu_fk foreign key (business_unit_id) references business_units(id),
+    constraint routes_schema_fk         foreign key (schema_id)         references schemas(id),
+    constraint routes_channel_fk        foreign key (channel_id)        references channels(id),
+    constraint routes_bu_fk             foreign key (business_unit_id)  references business_units(id),
+    constraint routes_message_type_fk   foreign key (message_type_id)   references message_types(id),
+    constraint routes_connection_fk     foreign key (connection_id)     references connections(id),
     constraint routes_schema_channel unique (schema_id, channel_id)
 
 );

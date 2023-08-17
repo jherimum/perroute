@@ -2,11 +2,8 @@ use crate::{
     api::response::{CollectionResourceModel, Links, ResourceBuilder, SingleResourceModel},
     links::{Linkrelation, ResourceLink},
 };
-use perroute_commons::types::{json_schema::JsonSchema, vars::Vars};
-use perroute_storage::models::{
-    message_type::MessageType,
-    schema::{Schema, Version},
-};
+use perroute_commons::types::{json_schema::JsonSchema, vars::Vars, version::Version};
+use perroute_storage::models::{message_type::MessageType, schema::Schema};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize)]

@@ -8,19 +8,20 @@ use crate::{
 use derive_builder::Builder;
 use derive_getters::Getters;
 use perroute_commons::types::{
-    actor::Actor, code::Code, id::Id, payload::Payload, recipient::Recipient,
+    actor::Actor, code::Code, id::Id, payload::Payload, recipient::Recipient, version::Version,
 };
 use perroute_connectors::types::DispatchTypes;
 use perroute_messaging::events::EventType;
 use perroute_storage::{
     models::{
+        business_unit::{BusinessUnit, BusinessUnitQueryBuilder},
         message::{Message, MessageBuilder, Status},
-        schema::{Schema, SchemasQueryBuilder, Version},
+        message_type::{MessageType, MessageTypeQueryBuilder},
+        schema::{Schema, SchemasQueryBuilder},
     },
     query::FetchableModel,
 };
 use serde::Serialize;
-use tap::TapFallible;
 use thiserror::Error;
 
 #[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
@@ -81,11 +82,27 @@ impl CommandHandler for CreateMessageCommandHandler {
         actor: &Actor,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
+        let bu = BusinessUnit::find(
+            ctx.pool(),
+            BusinessUnitQueryBuilder::default().build().unwrap(),
+        )
+        .await?
+        .unwrap();
+
+        let message_type = MessageType::find(
+            ctx.pool(),
+            MessageTypeQueryBuilder::default()
+                .business_unit_id(Some(*bu.id()))
+                .build()
+                .unwrap(),
+        )
+        .await?
+        .unwrap();
+
         let schema = Schema::find(
             ctx.pool(),
             SchemasQueryBuilder::default()
-                .message_type_code(Some(cmd.message_type_code.clone()))
-                .bu_code(Some(cmd.bu_code))
+                .message_type_id(Some(*message_type.id()))
                 .version(Some(cmd.schema_version))
                 .build()
                 .unwrap(),

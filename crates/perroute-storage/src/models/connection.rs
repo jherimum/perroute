@@ -1,7 +1,7 @@
-use std::sync::Arc;
-
+use super::channel::{Channel, ChannelQueryBuilder};
 use crate::{
-    query::{ModelQueryBuilder, Projection},
+    log_query_error,
+    query::{FetchableModel, ModelQueryBuilder, Projection},
     DatabaseModel,
 };
 use derive_builder::Builder;
@@ -9,7 +9,9 @@ use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::types::{id::Id, properties::Properties};
 use perroute_connectors::{api::ConnectorPlugin, types::ConnectorPluginId, Plugins};
-use sqlx::{Executor, FromRow};
+use sqlx::{FromRow, PgExecutor};
+use std::sync::Arc;
+use tap::TapFallible;
 
 #[derive(Debug, FromRow, Getters, Setters, Builder, Clone)]
 #[builder(setter(into))]
@@ -18,11 +20,14 @@ use sqlx::{Executor, FromRow};
 pub struct Connection {
     #[setters(skip)]
     id: Id,
+
     name: String,
 
     #[setters(skip)]
     plugin_id: ConnectorPluginId,
+
     enabled: bool,
+
     properties: Properties,
 }
 
@@ -30,6 +35,7 @@ pub struct Connection {
 #[builder(default)]
 pub struct ConnectionQuery {
     id: Option<Id>,
+    plugin_id: Option<ConnectorPluginId>,
 }
 
 impl ModelQueryBuilder<Connection> for ConnectionQuery {
@@ -43,6 +49,11 @@ impl ModelQueryBuilder<Connection> for ConnectionQuery {
             builder.push_bind(id);
         }
 
+        if let Some(plugin_id) = self.plugin_id {
+            builder.push(" AND plugin_id = ");
+            builder.push_bind(plugin_id);
+        }
+
         builder
     }
 }
@@ -54,15 +65,65 @@ impl Connection {
         plugins.get(self.plugin_id())
     }
 
-    pub async fn save<'e, E: Executor<'e>>(self, _exec: E) -> Result<Self, sqlx::Error> {
-        Ok(self)
+    pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
+        sqlx::query_as(
+            r#"
+            INSERT INTO connections (id, name, plugin_id, enabled, properties ) 
+            VALUES($1, $2, $3, $4, $5) RETURNING *
+            "#,
+        )
+        .bind(self.id)
+        .bind(self.name)
+        .bind(self.plugin_id)
+        .bind(self.enabled)
+        .bind(self.properties)
+        .fetch_one(exec)
+        .await
+        .tap_err(log_query_error!())
     }
 
-    pub async fn update<'e, E: Executor<'e>>(self, _exec: E) -> Result<Self, sqlx::Error> {
-        Ok(self)
+    pub async fn update<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
+        sqlx::query_as(
+            r#"
+            UPDATE connections 
+            SET name= $2, enabled=$3, properties=$4 
+            WHERE id= $1 RETURNING *
+            "#,
+        )
+        .bind(self.id)
+        .bind(self.name)
+        .bind(self.enabled)
+        .bind(self.properties)
+        .fetch_one(exec)
+        .await
+        .tap_err(log_query_error!())
     }
 
-    pub async fn delete<'e, E: Executor<'e>>(self, _exec: E) -> Result<Self, sqlx::Error> {
-        Ok(self)
+    pub async fn delete<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<bool, sqlx::Error> {
+        sqlx::query(
+            r#"
+                DELETE FROM connections 
+                WHERE id= $1
+                "#,
+        )
+        .bind(self.id)
+        .execute(exec)
+        .await
+        .tap_err(log_query_error!())
+        .map(|result| result.rows_affected() > 0)
+    }
+
+    pub async fn channels<'e, E: PgExecutor<'e>>(
+        self,
+        exec: E,
+    ) -> Result<Vec<Channel>, sqlx::Error> {
+        Channel::query(
+            exec,
+            ChannelQueryBuilder::default()
+                .connection_id(Some(self.id))
+                .build()
+                .unwrap(),
+        )
+        .await
     }
 }

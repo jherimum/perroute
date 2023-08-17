@@ -13,7 +13,6 @@ use perroute_storage::{
     models::business_unit::{BusinessUnit, BusinessUnitQueryBuilder},
     query::FetchableModel,
 };
-use sqlx::types::Json;
 use tap::TapFallible;
 
 command!(
@@ -57,8 +56,8 @@ impl CommandHandler for UpdateBusinessUnitCommandHandler {
         .unwrap();
 
         business_unit
-            .set_name(command.name().clone())
-            .set_vars(Json(command.vars().clone()))
+            .set_name(command.name.clone())
+            .set_vars(command.vars.clone())
             .update(ctx.tx())
             .await
             .tap_err(|e| {

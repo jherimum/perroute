@@ -1,17 +1,14 @@
-use std::collections::HashSet;
-
+use super::{business_unit::BusinessUnit, message_type::MessageType, schema::Schema};
 use crate::{log_query_error, query::ModelQueryBuilder, DatabaseModel};
 use chrono::NaiveDateTime;
 use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::types::{id::Id, payload::Payload, recipient::Recipient};
-use perroute_connectors::types::{DispatchType, DispatchTypes};
+use perroute_connectors::types::DispatchTypes;
 use serde::{Deserialize, Serialize};
-use sqlx::{types::Json, FromRow, PgExecutor};
+use sqlx::{FromRow, PgExecutor};
 use tap::TapFallible;
-
-use super::{business_unit::BusinessUnit, message_type::MessageType, schema::Schema};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, sqlx::Type, Copy)]
 #[sqlx(type_name = "message_status", rename_all = "snake_case")]
@@ -119,7 +116,10 @@ impl Message {
         todo!()
     }
 
-    pub async fn business_unit<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<BusinessUnit, sqlx::Error> {
+    pub async fn business_unit<'e, E: PgExecutor<'e>>(
+        &self,
+        exec: E,
+    ) -> Result<BusinessUnit, sqlx::Error> {
         todo!()
     }
 
@@ -135,11 +135,11 @@ impl Message {
             ).bind(self.id)
             .bind(self.payload)
             .bind(self.recipient)
-            .bind(self.dispatcher_types)            
+            .bind(self.dispatcher_types)
             .bind(self.status)
             .bind(self.schema_id)
             .bind(self.message_type_id)
-            .bind(self.business_unit_id)            
+            .bind(self.business_unit_id)
         .fetch_one(exec)
         .await
         .tap_err(log_query_error!())

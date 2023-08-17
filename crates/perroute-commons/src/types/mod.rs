@@ -8,3 +8,4 @@ pub mod properties;
 pub mod recipient;
 pub mod template;
 pub mod vars;
+pub mod version;

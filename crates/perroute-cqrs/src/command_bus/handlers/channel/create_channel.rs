@@ -12,7 +12,7 @@ use perroute_connectors::{types::DispatchType, Plugins};
 use perroute_storage::{
     models::{
         business_unit::{BusinessUnit, BusinessUnitQueryBuilder},
-        channel::{Channel, ChannelBuilder},
+        channel::{Channel, ChannelBuilder, Priority},
         connection::{Connection, ConnectionQueryBuilder},
     },
     query::FetchableModel,
@@ -25,7 +25,7 @@ pub struct CreateChannelCommand {
     business_unit_id: Id,
     dispatch_type: DispatchType,
     dispatch_properties: Properties,
-    priority: i32,
+    priority: Priority,
 }
 
 impl_command!(CreateChannelCommand, CommandType::CreateChannel);

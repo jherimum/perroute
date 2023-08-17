@@ -9,9 +9,9 @@ use crate::{
 use async_trait::async_trait;
 use derive_builder::Builder;
 use derive_getters::Getters;
-use perroute_commons::types::{actor::Actor, code::Code, id::Id};
+use perroute_commons::types::{actor::Actor, code::Code, id::Id, version::Version};
 use perroute_storage::{
-    models::schema::{Schema, SchemasQueryBuilder, Version},
+    models::schema::{Schema, SchemasQueryBuilder},
     query::FetchableModel,
 };
 use serde::Serialize;
@@ -22,8 +22,6 @@ pub struct FindSchemaQuery {
     business_unit_id: Option<Id>,
     #[builder(default)]
     message_type_id: Option<Id>,
-    #[builder(default)]
-    message_type_code: Option<Code>,
     #[builder(default)]
     version: Option<Version>,
     #[builder(default)]
@@ -52,7 +50,6 @@ impl QueryHandler for FindSchemaQueryHandler {
             .id(*query.schema_id())
             .message_type_id(*query.message_type_id())
             .version(*query.version())
-            .message_type_code(query.message_type_code().clone())
             .build()
             .unwrap();
 

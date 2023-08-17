@@ -1,10 +1,9 @@
 use crate::api::response::{Links, ResourceBuilder, SingleResourceModel};
-use perroute_commons::types::{code::Code, id::Id, payload::Payload, recipient::Recipient};
-use perroute_connectors::types::DispatchTypes;
-use perroute_storage::models::{
-    message::{Message, Status},
-    schema::Version,
+use perroute_commons::types::{
+    code::Code, id::Id, payload::Payload, recipient::Recipient, version::Version,
 };
+use perroute_connectors::types::DispatchTypes;
+use perroute_storage::models::message::{Message, Status};
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Debug, Clone)]

@@ -13,7 +13,8 @@ use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::types::{id::Id, properties::Properties};
 use perroute_connectors::types::DispatchType;
-use sqlx::{FromRow, PgExecutor};
+use serde::Serialize;
+use sqlx::{FromRow, PgExecutor, Type};
 use tap::TapFallible;
 
 #[derive(Debug, Default, Builder)]
@@ -21,6 +22,7 @@ use tap::TapFallible;
 pub struct ChannelQuery {
     id: Option<Id>,
     business_unit_id: Option<Id>,
+    connection_id: Option<Id>,
 }
 
 impl ModelQueryBuilder<Channel> for ChannelQuery {
@@ -39,6 +41,11 @@ impl ModelQueryBuilder<Channel> for ChannelQuery {
             builder.push_bind(business_unit_id);
         }
 
+        if let Some(connection_id) = self.connection_id {
+            builder.push(" AND connection_id = ");
+            builder.push_bind(connection_id);
+        }
+
         builder
     }
 }
@@ -52,31 +59,38 @@ impl DatabaseModel for Channel {}
 pub struct Channel {
     #[setters(skip)]
     id: Id,
+
     #[setters(skip)]
     dispatch_type: DispatchType,
+
     properties: Properties,
     enabled: bool,
-    priority: i32,
+    priority: Priority,
+
     #[setters(skip)]
     connection_id: Id,
     #[setters(skip)]
     business_unit_id: Id,
 }
 
+#[derive(Debug, PartialEq, Eq, Clone, Type, Serialize)]
+pub struct Priority(i32);
+
 impl Channel {
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
         sqlx::query_as(
-            "
-            INSERT INTO channels (id, properties, priority, business_unit_id, connection_id, dispatch_type, enabled) 
-            VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING *",
+            r#"
+            INSERT INTO channels (id, dispatch_type, properties, enabled, priority, connection_id, business_unit_id ) 
+            VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING *
+            "#,
         )
         .bind(self.id)
-        .bind(self.properties)
-        .bind(self.priority)
-        .bind(self.business_unit_id)
-        .bind(self.connection_id)
         .bind(self.dispatch_type)
+        .bind(self.properties)
         .bind(self.enabled)
+        .bind(self.priority)
+        .bind(self.connection_id)
+        .bind(self.business_unit_id)
         .fetch_one(exec)
         .await
         .tap_err(log_query_error!())
@@ -84,9 +98,11 @@ impl Channel {
 
     pub async fn update<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
         sqlx::query_as(
-            "
-            UPDATE channels SET properties= $2, priority=$3, enabled=$4 
-            WHERE id= $1 RETURNING *",
+            r#"
+            UPDATE channels 
+            SET properties= $2, priority=$3, enabled=$4 
+            WHERE id= $1 RETURNING *
+            "#,
         )
         .bind(self.id)
         .bind(self.properties)
@@ -98,12 +114,17 @@ impl Channel {
     }
 
     pub async fn delete<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<bool, sqlx::Error> {
-        sqlx::query("DELETE FROM channels WHERE id= $1")
-            .bind(self.id)
-            .execute(exec)
-            .await
-            .tap_err(log_query_error!())
-            .map(|result| result.rows_affected() > 0)
+        sqlx::query(
+            r#"
+                DELETE FROM channels 
+                WHERE id= $1
+                "#,
+        )
+        .bind(self.id)
+        .execute(exec)
+        .await
+        .tap_err(log_query_error!())
+        .map(|result| result.rows_affected() > 0)
     }
 
     pub async fn connection<'e, E: PgExecutor<'e>>(
@@ -138,7 +159,7 @@ impl Channel {
         Route::query(
             exec,
             RouteQueryBuilder::default()
-                .business_unit_id(Some(self.business_unit_id))
+                .channel_id(Some(self.id))
                 .build()
                 .unwrap(),
         )

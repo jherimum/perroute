@@ -1,16 +1,18 @@
-use super::{business_unit::BusinessUnit, message_type::MessageType, template::Template};
+use super::{
+    business_unit::{BusinessUnit, BusinessUnitQueryBuilder},
+    message_type::{MessageType, MessageTypeQueryBuilder},
+    template::{Template, TemplatesQueryBuilder},
+};
 use crate::{
-    query::{ModelQueryBuilder, Projection},
+    query::{FetchableModel, ModelQueryBuilder, Projection},
     DatabaseModel,
 };
 use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
-use perroute_commons::types::{code::Code, id::Id, json_schema::JsonSchema, vars::Vars};
+use perroute_commons::types::{id::Id, json_schema::JsonSchema, vars::Vars, version::Version};
 use perroute_connectors::types::DispatchType;
-use serde::{Deserialize, Serialize};
-use sqlx::{types::Json, FromRow, PgExecutor, QueryBuilder, Type};
-use std::fmt::Display;
+use sqlx::{FromRow, PgExecutor};
 
 impl DatabaseModel for Schema {}
 
@@ -23,13 +25,7 @@ pub struct SchemasQuery {
     message_type_id: Option<Id>,
 
     #[builder(default)]
-    message_type_code: Option<Code>,
-
-    #[builder(default)]
     business_unit_id: Option<Id>,
-
-    #[builder(default)]
-    bu_code: Option<Code>,
 
     #[builder(default)]
     version: Option<Version>,
@@ -37,31 +33,13 @@ pub struct SchemasQuery {
 
 impl ModelQueryBuilder<Schema> for SchemasQuery {
     fn build(&self, projection: Projection) -> sqlx::QueryBuilder<'_, sqlx::Postgres> {
-        let mut builder = QueryBuilder::new(match projection {
-            Projection::Row => "SELECT s.*",
-            Projection::Count => "SELECT COUNT(*)",
-            Projection::Id => "SELECT s.id",
-        });
+        let mut builder = projection.query_builder();
 
         builder.push(
             r#" 
-                FROM schemas s 
-                INNER JOIN message_types mt 
-                ON s.message_type_id = mt.id 
-                INNER JOIN business_units bu
-                ON s.business_unit_id = bu.id
+                FROM schemas s                 
                 WHERE 1=1 "#,
         );
-
-        if let Some(message_type_code) = self.message_type_code.clone() {
-            builder.push(" AND mt.code = ");
-            builder.push_bind(message_type_code);
-        }
-
-        if let Some(bu_code) = self.bu_code.clone() {
-            builder.push(" AND bu.code = ");
-            builder.push_bind(bu_code);
-        }
 
         if let Some(id) = self.id {
             builder.push(" AND s.id = ");
@@ -84,47 +62,6 @@ impl ModelQueryBuilder<Schema> for SchemasQuery {
         }
 
         builder
-    }
-}
-
-#[derive(Debug, PartialEq, Eq, Clone, Type, Serialize, Deserialize, Copy)]
-#[sqlx(transparent)]
-#[serde(transparent)]
-pub struct Version(i32);
-
-impl Default for Version {
-    fn default() -> Self {
-        Self(1)
-    }
-}
-
-impl Version {
-    pub const fn increment(self) -> Self {
-        Self(self.0 + 1)
-    }
-}
-
-impl From<i32> for Version {
-    fn from(value: i32) -> Self {
-        Self(value)
-    }
-}
-
-impl From<Version> for i32 {
-    fn from(value: Version) -> Self {
-        value.0
-    }
-}
-
-impl From<&Version> for i32 {
-    fn from(value: &Version) -> Self {
-        value.0
-    }
-}
-
-impl Display for Version {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
     }
 }
 
@@ -164,21 +101,42 @@ impl Schema {
         &self,
         exec: E,
     ) -> Result<Vec<Template>, sqlx::Error> {
-        todo!()
+        Template::query(
+            exec,
+            TemplatesQueryBuilder::default()
+                .schema_id(Some(self.id))
+                .build()
+                .unwrap(),
+        )
+        .await
     }
 
     pub async fn message_type<'e, E: PgExecutor<'e>>(
         &self,
         exec: E,
     ) -> Result<MessageType, sqlx::Error> {
-        todo!()
+        MessageType::find_one(
+            exec,
+            MessageTypeQueryBuilder::default()
+                .id(Some(self.message_type_id))
+                .build()
+                .unwrap(),
+        )
+        .await
     }
 
     pub async fn business_unit<'e, E: PgExecutor<'e>>(
         &self,
         exec: E,
     ) -> Result<BusinessUnit, sqlx::Error> {
-        todo!()
+        BusinessUnit::find_one(
+            exec,
+            BusinessUnitQueryBuilder::default()
+                .id(Some(self.business_unit_id))
+                .build()
+                .unwrap(),
+        )
+        .await
     }
 
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
@@ -209,7 +167,6 @@ impl Schema {
                 published= $3,
                 enabled = $4,
                 vars =$5
-
             WHERE id= $1 RETURNING *
             "#,
         )

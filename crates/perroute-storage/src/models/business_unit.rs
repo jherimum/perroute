@@ -11,7 +11,7 @@ use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::types::{code::Code, id::Id, vars::Vars};
-use sqlx::{types::Json, FromRow, PgExecutor};
+use sqlx::{FromRow, PgExecutor};
 use tap::TapFallible;
 
 #[derive(Debug, Default, Builder)]
@@ -40,7 +40,6 @@ impl ModelQueryBuilder<BusinessUnit> for BusinessUnitQuery {
         builder
     }
 }
-
 impl DatabaseModel for BusinessUnit {}
 
 #[derive(Debug, FromRow, PartialEq, Eq, Clone, Getters, Setters, Builder)]
@@ -53,14 +52,17 @@ pub struct BusinessUnit {
     #[setters(skip)]
     code: Code,
     name: String,
-    vars: Json<Vars>,
+    vars: Vars,
 }
 
 impl BusinessUnit {
     #[tracing::instrument(name = "business_unit.save", skip(exec))]
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
         sqlx::query_as(
-            "INSERT INTO business_units (id, code, name, vars) VALUES($1, $2, $3, $4) RETURNING *",
+            r#"
+            INSERT INTO business_units (id, code, name, vars) 
+            VALUES($1, $2, $3, $4) RETURNING *
+            "#,
         )
         .bind(self.id)
         .bind(self.code)
@@ -73,23 +75,34 @@ impl BusinessUnit {
 
     #[tracing::instrument(name = "business_unit.update", skip(exec))]
     pub async fn update<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
-        sqlx::query_as("UPDATE business_units SET name= $2, vars=$3 WHERE id= $1 RETURNING *")
-            .bind(self.id)
-            .bind(self.name)
-            .bind(self.vars)
-            .fetch_one(exec)
-            .await
-            .tap_err(log_query_error!())
+        sqlx::query_as(
+            r#"
+            UPDATE business_units 
+            SET name= $2, vars=$3 
+            WHERE id= $1 RETURNING *
+            "#,
+        )
+        .bind(self.id)
+        .bind(self.name)
+        .bind(self.vars)
+        .fetch_one(exec)
+        .await
+        .tap_err(log_query_error!())
     }
 
     #[tracing::instrument(name = "business_unit.delete", skip(exec))]
     pub async fn delete<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<bool, sqlx::Error> {
-        sqlx::query("DELETE FROM business_units WHERE id= $1")
-            .bind(self.id)
-            .execute(exec)
-            .await
-            .tap_err(log_query_error!())
-            .map(|result| result.rows_affected() > 0)
+        sqlx::query(
+            r#"
+            DELETE FROM business_units 
+            WHERE id= $1
+            "#,
+        )
+        .bind(self.id)
+        .execute(exec)
+        .await
+        .tap_err(log_query_error!())
+        .map(|result| result.rows_affected() > 0)
     }
 
     pub async fn message_types<'e, E: PgExecutor<'e>>(
@@ -110,6 +123,13 @@ impl BusinessUnit {
         self,
         exec: E,
     ) -> Result<Vec<Channel>, sqlx::Error> {
-        Channel::query(exec, ChannelQueryBuilder::default().build().unwrap()).await
+        Channel::query(
+            exec,
+            ChannelQueryBuilder::default()
+                .business_unit_id(Some(self.id))
+                .build()
+                .unwrap(),
+        )
+        .await
     }
 }

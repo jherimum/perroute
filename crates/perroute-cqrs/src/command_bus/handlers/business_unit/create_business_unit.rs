@@ -64,7 +64,7 @@ impl CommandHandler for CreateBusinessUnitCommandHandler {
             .id(cmd.business_unit_id)
             .code(cmd.code)
             .name(cmd.name)
-            .vars(Json(cmd.vars))
+            .vars(cmd.vars)
             .build()
             .tap_err(|e| {
                 tracing::error!("Failed to build BusinessUnit: {e}");
