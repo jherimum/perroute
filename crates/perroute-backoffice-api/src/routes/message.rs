@@ -39,7 +39,7 @@ async fn create_message(
 ) -> Result<Message, ApiError> {
     let cmd = CreateMessageCommandBuilder::default()
         .payload(body.payload.into())
-        .bu_code(body.bu_code)
+        .business_unit_code(body.bu_code)
         .message_type_code(body.message_type_code)
         .schema_version(body.schema_version)
         .recipient(body.recipient)

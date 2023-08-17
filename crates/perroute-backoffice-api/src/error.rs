@@ -1,7 +1,7 @@
 use actix_web::ResponseError;
 use perroute_commons::{
     rest::RestError,
-    types::{id::Id, json_schema::JsonSchemaError},
+    types::{id::Id, json_schema::InvalidSchemaError},
 };
 use perroute_cqrs::{command_bus::error::CommandBusError, query_bus::error::QueryBusError};
 use thiserror::Error;
@@ -9,7 +9,7 @@ use thiserror::Error;
 #[derive(Debug, Error)]
 pub enum ApiError {
     #[error(transparent)]
-    JsonChema(#[from] JsonSchemaError),
+    InvalidSchema(#[from] InvalidSchemaError),
 
     #[error("Business unit {0} not found")]
     BusinessUnitNotFound(Id),

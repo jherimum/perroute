@@ -1,7 +1,7 @@
 use crate::{
     api::response::AsUrl,
     routes::{
-        business_unit::BusinessUnitRouter, connection::ConnectionsRouter,
+        business_unit::BusinessUnitRouter, channel::ChannelsRouter, connection::ConnectionsRouter,
         message_type::MessageTypeRouter, plugin::PluginRouter, route::RouteRouter,
         schema::SchemaRouter, template::TemplateRouter,
     },
@@ -40,6 +40,12 @@ pub enum Linkrelation {
 
     #[serde(rename = "plugins")]
     Plugins,
+
+    #[serde(rename = "channel")]
+    Channel,
+
+    #[serde(rename = "channels")]
+    Channels,
 }
 
 #[derive(Debug, Serialize, Clone)]
@@ -64,6 +70,9 @@ pub enum ResourceLink {
 
     Plugin(ConnectorPluginId),
     Plugins,
+
+    Channel(Id),
+    Channels,
 }
 
 impl AsUrl for ResourceLink {
@@ -112,6 +121,11 @@ impl AsUrl for ResourceLink {
                 req.url_for(PluginRouter::PLUGIN_RESOURCE_NAME, [plugin_id.to_string()])
             }
             Self::Plugins => req.url_for_static(PluginRouter::PLUGINS_RESOURCE_NAME),
+
+            Self::Channels => req.url_for_static(ChannelsRouter::CHANNELS_RESOURCE_NAME),
+            Self::Channel(id) => {
+                req.url_for(ChannelsRouter::CHANNEL_RESOURCE_NAME, [id.to_string()])
+            }
         }
         .tap_err(|e| tracing::error!("Failed to build url: {}", e))
         .expect("msg")

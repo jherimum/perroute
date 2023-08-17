@@ -9,7 +9,7 @@ pub trait Configuration: Debug + Send + Sync {
 }
 
 #[derive(Debug, Deserialize, Default)]
-pub struct NilConfiguration;
+pub struct NilConfiguration {}
 
 impl validator::Validate for NilConfiguration {
     fn validate(&self) -> Result<(), validator::ValidationErrors> {

@@ -11,7 +11,7 @@ use perroute_commons::{
     types::{
         actor::Actor,
         id::Id,
-        json_schema::{JsonSchema, JsonSchemaError},
+        json_schema::{InvalidSchemaError, JsonSchema},
         vars::Vars,
     },
 };
@@ -37,7 +37,7 @@ into_event!(CreateSchemaCommand);
 #[derive(Debug, thiserror::Error)]
 pub enum CreateSchemaError {
     #[error(transparent)]
-    InvalidSchema(#[from] JsonSchemaError),
+    InvalidSchema(#[from] InvalidSchemaError),
 }
 
 #[derive(Debug)]

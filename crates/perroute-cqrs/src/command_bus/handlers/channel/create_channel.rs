@@ -7,12 +7,12 @@ use crate::{
 };
 use derive_builder::Builder;
 use derive_getters::Getters;
-use perroute_commons::types::{actor::Actor, id::Id, properties::Properties};
-use perroute_connectors::{types::DispatchType, Plugins};
+use perroute_commons::types::{actor::Actor, id::Id, priority::Priority, properties::Properties};
+use perroute_connectors::types::DispatchType;
 use perroute_storage::{
     models::{
         business_unit::{BusinessUnit, BusinessUnitQueryBuilder},
-        channel::{Channel, ChannelBuilder, Priority},
+        channel::{Channel, ChannelBuilder},
         connection::{Connection, ConnectionQueryBuilder},
     },
     query::FetchableModel,
@@ -80,6 +80,7 @@ impl CommandHandler for CreateChannelCommandHandler {
             .properties(cmd.dispatch_properties)
             .dispatch_type(cmd.dispatch_type)
             .priority(cmd.priority)
+            .enabled(false)
             .build()
             .unwrap()
             .save(ctx.tx())

@@ -3,13 +3,14 @@ CREATE TYPE actor_type AS ENUM ('user', 'system', 'service');
 CREATE TYPE dispatch_type AS ENUM ('email', 'sms', 'push');
 CREATE TYPE message_status AS ENUM ('pending', 'distributed');
 CREATE TYPE message_dispatch_status AS ENUM ('pending', 'queued' ,'success', 'failed');
+CREATE TYPE plugin_id AS ENUM ('log', 'smtp', 'sendgrid');
 
 create table connections(
-    id          uuid    not null,
-    name        varchar not null,
-    plugin_id   varchar not null,
-    properties  jsonb   not null,
-    enabled     boolean not null,
+    id          uuid        not null,
+    name        varchar     not null,
+    plugin_id   plugin_id   not null,
+    properties  jsonb       not null,
+    enabled     boolean     not null,
     constraint connections_pk primary key (id)
 );
 

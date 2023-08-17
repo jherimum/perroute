@@ -41,15 +41,16 @@ impl CommandHandler for DeleteBusinessUnitCommandHandler {
         actor: &Actor,
         command: Self::Command,
     ) -> Result<bool, CommandBusError> {
-        let business_unit = BusinessUnit::find(
+        Ok(BusinessUnit::find(
             ctx.tx(),
             BusinessUnitQueryBuilder::default()
                 .id(Some(*command.business_unit_id()))
                 .build()
                 .unwrap(),
         )
-        .await?;
-
-        Ok(true)
+        .await?
+        .ok_or_else(|| DeleteBusinessUnitError::BusinessUnitNotFound(command.business_unit_id))?
+        .delete(ctx.tx())
+        .await?)
     }
 }

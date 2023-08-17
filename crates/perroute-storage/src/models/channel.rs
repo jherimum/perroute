@@ -11,9 +11,9 @@ use crate::{
 use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
-use perroute_commons::types::{id::Id, properties::Properties};
+use perroute_commons::types::{id::Id, priority::Priority, properties::Properties};
 use perroute_connectors::types::DispatchType;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgExecutor, Type};
 use tap::TapFallible;
 
@@ -72,9 +72,6 @@ pub struct Channel {
     #[setters(skip)]
     business_unit_id: Id,
 }
-
-#[derive(Debug, PartialEq, Eq, Clone, Type, Serialize)]
-pub struct Priority(i32);
 
 impl Channel {
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {

@@ -13,6 +13,7 @@ pub enum PropertiesError {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Default, Type)]
+#[sqlx(transparent)]
 pub struct Properties(Value);
 
 impl Properties {

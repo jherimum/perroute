@@ -3,6 +3,7 @@ use sqlx::types::Json;
 use std::collections::HashMap;
 
 #[derive(Debug, Serialize, Default, Clone, PartialEq, Eq, sqlx::Type, Deserialize)]
+#[sqlx(transparent)]
 pub struct Vars(Json<HashMap<String, String>>);
 
 impl Vars {

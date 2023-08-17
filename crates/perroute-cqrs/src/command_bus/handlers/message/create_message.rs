@@ -8,7 +8,8 @@ use crate::{
 use derive_builder::Builder;
 use derive_getters::Getters;
 use perroute_commons::types::{
-    actor::Actor, code::Code, id::Id, payload::Payload, recipient::Recipient, version::Version,
+    actor::Actor, code::Code, id::Id, json_schema::InvalidPayloadError, payload::Payload,
+    recipient::Recipient, version::Version,
 };
 use perroute_connectors::types::DispatchTypes;
 use perroute_messaging::events::EventType;
@@ -22,21 +23,17 @@ use perroute_storage::{
     query::FetchableModel,
 };
 use serde::Serialize;
+use tap::TapFallible;
 use thiserror::Error;
 
 #[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
 pub struct CreateMessageCommand {
-    #[builder(default)]
     id: Id,
-
     payload: Payload,
     recipient: Recipient,
-
-    bu_code: Code,
+    business_unit_code: Code,
     message_type_code: Code,
     schema_version: Version,
-
-    #[builder(default)]
     dispatcher_types: DispatchTypes,
 }
 
@@ -51,6 +48,7 @@ into_event!(
 pub enum CreateMessageCommandError {
     #[error("Business unit not found: {0}")]
     BusinessUnitNotFound(Code),
+
     #[error("Message type not found: {0}")]
     MessageTypeNotFound(Code),
 
@@ -64,7 +62,10 @@ pub enum CreateMessageCommandError {
     SchemaDisabled(Version),
 
     #[error("Schema {0} is not published")]
-    SchemaBotPublished(Version),
+    SchemaNotPublished(Version),
+
+    #[error(transparent)]
+    InvalidPayload(#[from] InvalidPayloadError),
 }
 
 #[derive(Debug)]
@@ -84,20 +85,33 @@ impl CommandHandler for CreateMessageCommandHandler {
     ) -> Result<Self::Output, CommandBusError> {
         let bu = BusinessUnit::find(
             ctx.pool(),
-            BusinessUnitQueryBuilder::default().build().unwrap(),
+            BusinessUnitQueryBuilder::default()
+                .code(Some(cmd.business_unit_code.clone()))
+                .build()
+                .unwrap(),
         )
-        .await?
-        .unwrap();
+        .await
+        .tap_err(|e| tracing::error!("Failed to retrieve business unit:{e}"))?
+        .ok_or_else(|| CreateMessageCommandError::BusinessUnitNotFound(cmd.business_unit_code))?;
 
         let message_type = MessageType::find(
             ctx.pool(),
             MessageTypeQueryBuilder::default()
                 .business_unit_id(Some(*bu.id()))
+                .code(Some(cmd.message_type_code.clone()))
                 .build()
                 .unwrap(),
         )
-        .await?
-        .unwrap();
+        .await
+        .tap_err(|e| tracing::error!("Failed to retrieve message type:{e}"))?
+        .ok_or_else(|| CreateMessageCommandError::MessageTypeNotFound(cmd.message_type_code))?;
+
+        if !message_type.enabled() {
+            return Err(CreateMessageCommandError::MessageTypeDisabled(
+                message_type.code().clone(),
+            )
+            .into());
+        }
 
         let schema = Schema::find(
             ctx.pool(),
@@ -108,27 +122,22 @@ impl CommandHandler for CreateMessageCommandHandler {
                 .unwrap(),
         )
         .await
-        .unwrap()
-        .unwrap();
+        .tap_err(|e| tracing::error!("Failed to retrieve schema:{e}"))?
+        .ok_or_else(|| CreateMessageCommandError::SchemaNotFound(cmd.schema_version))?;
 
         if !schema.enabled() {
             return Err(CreateMessageCommandError::SchemaDisabled(cmd.schema_version).into());
         }
 
         if !schema.published() {
-            return Err(CreateMessageCommandError::SchemaDisabled(cmd.schema_version).into());
+            return Err(CreateMessageCommandError::SchemaNotPublished(cmd.schema_version).into());
         }
 
-        let message_type = schema.message_type(ctx.pool()).await?;
-
-        if !message_type.enabled() {
-            return Err(CreateMessageCommandError::MessageTypeDisabled(
-                message_type.code().clone(),
-            )
-            .into());
-        }
-
-        schema.value().validate(&cmd.payload).unwrap();
+        schema
+            .value()
+            .validate(&cmd.payload)
+            .tap_err(|e| tracing::error!("Invalid payload: {e}"))
+            .map_err(CreateMessageCommandError::from)?;
 
         MessageBuilder::default()
             .id(cmd.id)

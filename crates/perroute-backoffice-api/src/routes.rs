@@ -1,11 +1,12 @@
 use self::{
-    business_unit::BusinessUnitRouter, connection::ConnectionsRouter, health::HealthRouter,
-    message::MessageRouter, message_type::MessageTypeRouter, plugin::PluginRouter,
-    route::RouteRouter, schema::SchemaRouter, template::TemplateRouter,
+    business_unit::BusinessUnitRouter, channel::ChannelsRouter, connection::ConnectionsRouter,
+    health::HealthRouter, message::MessageRouter, message_type::MessageTypeRouter,
+    plugin::PluginRouter, route::RouteRouter, schema::SchemaRouter, template::TemplateRouter,
 };
 use actix_web::{web, Scope};
 
 pub mod business_unit;
+pub mod channel;
 pub mod connection;
 pub mod health;
 pub mod message;
@@ -125,9 +126,6 @@ pub fn routes() -> Scope {
             .route(web::post().to(MessageRouter::create_message)),
     );
 
-    let connections = web::scope("/connections")
-        .service(web::resource("").route(web::post().to(ConnectionsRouter::create)));
-
     let plugins = web::scope("/plugins")
         .service(
             web::resource("")
@@ -139,6 +137,40 @@ pub fn routes() -> Scope {
                 web::resource("")
                     .name(PluginRouter::PLUGIN_RESOURCE_NAME)
                     .route(web::get().to(PluginRouter::find)),
+            ),
+        );
+
+    let connections = web::scope("/connections")
+        .service(
+            web::resource("")
+                .name(ConnectionsRouter::CONNS_RESOURCE_NAME)
+                .route(web::get().to(ConnectionsRouter::query))
+                .route(web::post().to(ConnectionsRouter::create)),
+        )
+        .service(
+            web::scope("/{conn_id}").service(
+                web::resource("")
+                    .name(ConnectionsRouter::CONN_RESOURCE_NAME)
+                    .route(web::get().to(ConnectionsRouter::get))
+                    .route(web::put().to(ConnectionsRouter::update))
+                    .route(web::delete().to(ConnectionsRouter::delete)),
+            ),
+        );
+
+    let channels = web::scope("/channels")
+        .service(
+            web::resource("")
+                .name(ChannelsRouter::CHANNELS_RESOURCE_NAME)
+                .route(web::get().to(ChannelsRouter::query))
+                .route(web::post().to(ChannelsRouter::create)),
+        )
+        .service(
+            web::scope("/{channel_id}").service(
+                web::resource("")
+                    .name(ChannelsRouter::CHANNEL_RESOURCE_NAME)
+                    .route(web::get().to(ChannelsRouter::get))
+                    .route(web::put().to(ChannelsRouter::update))
+                    .route(web::delete().to(ChannelsRouter::delete)),
             ),
         );
 
@@ -156,7 +188,8 @@ pub fn routes() -> Scope {
                     .service(templates)
                     .service(routes)
                     .service(connections)
-                    .service(plugins),
+                    .service(plugins)
+                    .service(channels),
             ),
         )
 }

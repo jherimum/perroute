@@ -7,10 +7,9 @@ use crate::{
 };
 use derive_builder::Builder;
 use derive_getters::Getters;
-use perroute_commons::types::{actor::Actor, id::Id, properties::Properties};
-use perroute_connectors::Plugins;
+use perroute_commons::types::{actor::Actor, id::Id, priority::Priority, properties::Properties};
 use perroute_storage::{
-    models::channel::{Channel, ChannelQueryBuilder, Priority},
+    models::channel::{Channel, ChannelQueryBuilder},
     query::FetchableModel,
 };
 use serde::Serialize;

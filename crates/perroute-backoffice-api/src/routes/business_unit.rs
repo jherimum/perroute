@@ -146,7 +146,9 @@ impl BusinessUnitRouter {
             .command_bus()
             .execute::<_, DeleteBusinessUnitCommandHandler, _>(&actor, &cmd)
             .await
-            .tap_err(|e| tracing::error!("Failed to delete Business unit: {e}"))
+            .tap_err(|e: &perroute_cqrs::command_bus::error::CommandBusError| {
+                tracing::error!("Failed to delete Business unit: {e}")
+            })
             .map(|_| ApiResponse::ok_empty())?)
     }
 

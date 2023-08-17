@@ -8,7 +8,7 @@ use crate::{
 use derive_builder::Builder;
 use derive_getters::Getters;
 use perroute_commons::types::{actor::Actor, id::Id, properties::Properties};
-use perroute_connectors::{types::ConnectorPluginId, Plugins};
+use perroute_connectors::types::ConnectorPluginId;
 use perroute_storage::models::connection::{Connection, ConnectionBuilder};
 use serde::Serialize;
 
@@ -48,6 +48,7 @@ impl CommandHandler for CreateConnectionCommandHandler {
             .name(cmd.name)
             .plugin_id(cmd.plugin_id)
             .properties(cmd.properties)
+            .enabled(false)
             .build()
             .unwrap()
             .save(ctx.tx())

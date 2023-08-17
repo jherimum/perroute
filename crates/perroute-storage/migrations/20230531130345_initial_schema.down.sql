@@ -9,6 +9,7 @@ drop table message_types;
 drop table channels;
 drop table business_units;
 drop table connections;
+drop type plugin_id;
 drop type message_dispatch_status;
 drop type actor_type;
 drop type message_status;

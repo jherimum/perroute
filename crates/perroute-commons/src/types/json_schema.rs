@@ -1,17 +1,30 @@
 use super::payload::Payload;
-use jsonschema::JSONSchema;
+use jsonschema::{
+    output::{ErrorDescription, OutputUnit},
+    JSONSchema,
+};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sqlx::Type;
-use std::ops::Deref;
+use std::{collections::VecDeque, fmt::Display, ops::Deref};
+use tap::TapFallible;
 
-#[derive(Debug, thiserror::Error)]
-pub enum JsonSchemaError {
-    #[error("Invalid schema")]
-    InvalidSchema,
+#[derive(thiserror::Error, Debug)]
+pub struct InvalidSchemaError(String);
 
-    #[error("Invalid input")]
-    ValidationError,
+impl Display for InvalidSchemaError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.0)
+    }
+}
+
+#[derive(thiserror::Error, Debug)]
+pub struct InvalidPayloadError(VecDeque<OutputUnit<ErrorDescription>>);
+
+impl Display for InvalidPayloadError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        todo!()
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Eq, Deserialize, Type)]
@@ -24,16 +37,16 @@ impl Default for JsonSchema {
     }
 }
 
-// impl TryFrom<Value> for JsonSchema {
-//     type Error = JsonSchemaError;
+impl TryFrom<Value> for JsonSchema {
+    type Error = InvalidSchemaError;
 
-//     fn try_from(value: Value) -> Result<Self, Self::Error> {
-//         JSONSchema::compile(&value)
-//             .tap_err(|e| tracing::error!("Error: {e}"))
-//             .map_err(|_| JsonSchemaError::InvalidSchema)?;
-//         Ok(Self(value))
-//     }
-// }
+    fn try_from(value: Value) -> Result<Self, Self::Error> {
+        JSONSchema::compile(&value)
+            .tap_err(|e| tracing::error!("Invalid schema: {e}"))
+            .map_err(|e| InvalidSchemaError(e.to_string()))?;
+        Ok(Self(value))
+    }
+}
 
 impl Deref for JsonSchema {
     type Target = Value;
@@ -44,16 +57,15 @@ impl Deref for JsonSchema {
 }
 
 impl JsonSchema {
-    pub fn validate(&self, payload: &Payload) -> Result<(), JsonSchemaError> {
+    pub fn validate(&self, payload: &Payload) -> Result<(), InvalidPayloadError> {
         let compiled = JSONSchema::compile(&self.0).unwrap();
         match compiled.apply(payload).basic() {
             jsonschema::output::BasicOutput::Valid(_) => Ok(()),
-            jsonschema::output::BasicOutput::Invalid(_) => Err(JsonSchemaError::ValidationError),
+            jsonschema::output::BasicOutput::Invalid(e) => Err(InvalidPayloadError(e)),
         }
     }
 }
 
-/*
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -61,75 +73,75 @@ mod tests {
 
     #[test]
     fn test_default() {
-        JSONSchema::compile(&json!({})).unwrap();
+        JSONSchema::compile(&json!({
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "type": "object",
+          "properties": {
+            "order_number": {
+              "type": "string1"
+            }
+          },
+          "requir1ed": [
+            "order_numqber"
+          ]
+        }))
+        .unwrap();
 
         let schema = JsonSchema::default();
         assert_eq!(schema, JsonSchema(json!({})));
     }
 
-    #[test]
-    fn test_try_from() {
-        let schema = JsonSchema::try_from(json!({
-          "$schema": "http://json-schema.org/draft-04/schema#",
-          "type": "object",
-          "properties": {
-            "order_number": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "order_number"
-          ]
-        }));
+    // #[test]
+    // fn test_try_from() {
+    //     let schema = JsonSchema(json!({
+    //       "$schema": "http://json-schema.org/draft-04/schema#",
+    //       "type": "object",
+    //       "properties": {
+    //         "order_number": {
+    //           "type": "string"
+    //         }
+    //       },
+    //       "required": [
+    //         "order_number"
+    //       ]
+    //     }));
 
-        assert!(schema.is_ok());
+    //     assert!(schema.is_ok());
 
-        let schema = JsonSchema::try_from(json!({
-          "$schema": "http://json-schema.org/draft-04/schema#",
-          "type": "object",
-          "properties": {
-            "order_number": {
-              "type": "str"
-            }
-          },
-          "required": [
-            "order_number"
-          ]
-        }));
+    //     let schema = JsonSchema(json!({
+    //       "$schema": "http://json-schema.org/draft-04/schema#",
+    //       "type": "object",
+    //       "properties": {
+    //         "order_number": {
+    //           "type": "str"
+    //         }
+    //       },
+    //       "required": [
+    //         "order_number"
+    //       ]
+    //     }));
 
-        assert!(schema.is_err());
-    }
+    //     assert!(schema.is_err());
+    // }
 
-    #[test]
-    fn test_validate() {
-        let schema = JsonSchema::try_from(json!({
-          "$schema": "http://json-schema.org/draft-04/schema#",
-          "type": "object",
-          "properties": {
-            "order_number": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "order_number"
-          ]
-        }));
+    // #[test]
+    // fn test_validate() {
+    //     let schema = JsonSchema();
 
-        assert!(schema.is_ok());
+    //     assert!(schema.is_ok());
 
-        let payload = Payload::new(json!({
-          "order_number": "123"
-        }));
+    //     let payload = Payload::new(json!({
+    //       "order_number": "123"
+    //     }));
 
-        let schema = schema.unwrap();
+    //     let schema = schema.unwrap();
 
-        assert!(schema.validate(&payload).is_ok());
+    //     assert!(schema.validate(&payload).is_ok());
 
-        let payload = Payload::new(json!({
-          "order_number": 123
-        }));
+    //     let payload = Payload::new(json!({
+    //       "order_number": 123
+    //     }));
 
-        assert!(schema.validate(&payload).is_err());
-    }
+    //     assert!(schema.validate(&payload).is_err());
+    // }
 }
- */

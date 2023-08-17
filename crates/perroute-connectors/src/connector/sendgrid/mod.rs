@@ -17,7 +17,7 @@ use validator::Validate;
 
 pub fn sendgrid_connector_plugin() -> impl ConnectorPlugin {
     BaseConnectorPlugin::new(
-        ConnectorPluginId::SendGrid,
+        ConnectorPluginId::Sendgrid,
         Box::new(DefaultConfiguration::new(
             connection_properties(),
             PhantomData::<SendgridConnectionProperties>,
