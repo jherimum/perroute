@@ -4,7 +4,6 @@ CREATE TYPE dispatch_type AS ENUM ('email', 'sms', 'push');
 CREATE TYPE message_status AS ENUM ('pending', 'distributed');
 CREATE TYPE message_dispatch_status AS ENUM ('pending', 'queued' ,'success', 'failed');
 
-
 create table connections(
     id          uuid    not null,
     name        varchar not null,
@@ -14,110 +13,107 @@ create table connections(
     constraint connections_pk primary key (id)
 );
 
-
 CREATE TABLE business_units (
 	id 		uuid 	NOT NULL,
 	code 	varchar	NOT NULL,
 	name 	varchar NULL,
     vars    jsonb   NOT NULL,
-	CONSTRAINT business_units_pk 		PRIMARY KEY (id),
+	CONSTRAINT business_units_pk 	PRIMARY KEY (id),
 	CONSTRAINT business_units_code	UNIQUE (code)
 );
 
 create table channels(
-    id              uuid            not null,
-    dispatch_type   dispatch_type   not null,
-    properties      jsonb           not null,
-    business_unit_id           uuid            not null, 
-    enabled         boolean         not null,
-    priority        integer         not null,
-    connection_id   uuid            not null,
-    constraint channels_pk primary key (id),
-    constraint channels_bu_fk foreign key (business_unit_id) references business_units(id),
-    constraint channels_bu_dispatch_type_priority unique (business_unit_id, dispatch_type, priority),
+    id                  uuid            not null,
+    dispatch_type       dispatch_type   not null,
+    properties          jsonb           not null,
+    enabled             boolean         not null,
+    priority            integer         not null,
+    connection_id       uuid            not null,
+    business_unit_id    uuid            not null, 
+    constraint channels_pk      primary key (id),    
+    constraint channels_bu_fk   foreign key (business_unit_id) references business_units(id),
     constraint channels_connection_fk foreign key (connection_id) references connections(id)
 );
 
 create table message_types(
-    id          uuid            not null,
-    code        varchar(50)     not null,    
-    name        varchar(500)    not null,
-    enabled     boolean         not null,
-    vars        jsonb           NOT NULL,
-    business_unit_id       uuid            not null,
+    id                  uuid            not null,
+    code                varchar(50)     not null,    
+    name                varchar(500)    not null,
+    enabled             boolean         not null,
+    vars                jsonb           NOT NULL,
+    business_unit_id    uuid            not null,
     CONSTRAINT message_types_pk PRIMARY KEY (id),
-    CONSTRAINT message_types_code UNIQUE (code),
+    CONSTRAINT message_types_code UNIQUE (code, business_unit_id),
     CONSTRAINT message_types_bu_fk FOREIGN KEY (business_unit_id) REFERENCES business_units(id)
 );
 
 create table schemas(
-    id              uuid    NOT NULL,
-    value           jsonb   NOT NULL,
-    version         integer NOT NULL,
-    published       boolean NOT NULL,    
-    vars            jsonb   NOT NULL,
-    enabled         boolean NOT NULL,
-    message_type_id uuid    NOT NULL,
-    business_unit_id           uuid    NOT NULL,
+    id                  uuid    NOT NULL,
+    value               jsonb   NOT NULL,
+    version             integer NOT NULL,
+    published           boolean NOT NULL,    
+    vars                jsonb   NOT NULL,
+    enabled             boolean NOT NULL,
+    message_type_id     uuid    NOT NULL,
+    business_unit_id    uuid    NOT NULL,
 
     CONSTRAINT schemas_pk                   PRIMARY KEY (id),
-    CONSTRAINT schemas_message_type_fk      FOREIGN KEY (message_type_id)   REFERENCES message_types(id),
     CONSTRAINT schemas_message_type_number  UNIQUE      (message_type_id, version),
-    constraint schemas_bu_fk                foreign key (business_unit_id)             references business_units(id)
+    CONSTRAINT schemas_message_type_fk      FOREIGN KEY (message_type_id)   REFERENCES message_types(id),
+    constraint schemas_bu_fk                foreign key (business_unit_id)  references business_units(id)
 );
 
 create table templates(
-    id              uuid            not null,
-    dispatch_type   dispatch_type   not null,
-    subject         text            null,
-    text            text            null,
-    html            text            null,
-    vars            jsonb           NOT NULL,
-    active          boolean         not null,
-    schema_id       uuid            not null,
-    message_type_id uuid            not null,
-    business_unit_id           uuid            not null,
+    id                  uuid            not null,
+    dispatch_type       dispatch_type   not null,
+    subject             text            null,
+    text                text            null,
+    html                text            null,
+    vars                jsonb           NOT NULL,
+    active              boolean         not null,
+    schema_id           uuid            not null,
+    message_type_id     uuid            not null,
+    business_unit_id    uuid            not null,
     
     constraint templates_pk primary key (id),
-    constraint templates_schema_fk foreign key (schema_id) references schemas(id),
-    constraint templates_message_type_fk foreign key (message_type_id) references message_types(id),
-    constraint templates_bu_fk foreign key (business_unit_id) references business_units(id)
+    constraint templates_schema_fk          foreign key (schema_id) references schemas(id),
+    constraint templates_message_type_fk    foreign key (message_type_id) references message_types(id),
+    constraint templates_bu_fk              foreign key (business_unit_id) references business_units(id)
 );
 
 create table routes(
     id                  uuid            not null,
+    properties          jsonb           not null,
     schema_id           uuid            not null,
     channel_id          uuid            not null,
     business_unit_id    uuid            not null,
     message_type_id     uuid            not null,
-    properties          jsonb           not null,
-    connection_id       jsonb           not null,
+    connection_id       uuid           not null,
 
     constraint routes_pk primary key (id),
+    constraint routes_schema_channel unique (schema_id, channel_id),
     constraint routes_schema_fk         foreign key (schema_id)         references schemas(id),
     constraint routes_channel_fk        foreign key (channel_id)        references channels(id),
     constraint routes_bu_fk             foreign key (business_unit_id)  references business_units(id),
     constraint routes_message_type_fk   foreign key (message_type_id)   references message_types(id),
-    constraint routes_connection_fk     foreign key (connection_id)     references connections(id),
-    constraint routes_schema_channel unique (schema_id, channel_id)
-
+    constraint routes_connection_fk     foreign key (connection_id)     references connections(id)
 );
 
 
 create table messages(
-    id                          uuid            not null,
-    payload                     jsonb           not null,
-    recipient                   jsonb           not null,
-    dispatch_types              jsonb           not null,
-    status                      message_status  not null,
-    schema_id                   uuid            not null,
-    message_type_id             uuid            not null,
-    business_unit_id                       uuid            not null,
+    id                  uuid            not null,
+    payload             jsonb           not null,
+    recipient           jsonb           not null,
+    dispatch_types      jsonb           not null,
+    status              message_status  not null,
+    schema_id           uuid            not null,
+    message_type_id     uuid            not null,
+    business_unit_id    uuid            not null,
     
     constraint messages_pk primary key (id),
-    constraint messages_schema_fk foreign key (schema_id) references schemas(id),
+    constraint messages_schema_fk       foreign key (schema_id) references schemas(id),
     constraint messages_message_type_fk foreign key (message_type_id) references message_types(id),
-    constraint messages_bu_fk foreign key (business_unit_id) references business_units(id)
+    constraint messages_bu_fk           foreign key (business_unit_id) references business_units(id)
 );
 
 create table message_dispatches(
