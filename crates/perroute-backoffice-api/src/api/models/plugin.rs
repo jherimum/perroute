@@ -27,7 +27,7 @@ pub struct DispatcherPluginResource {
 impl From<Arc<dyn ConnectorPlugin>> for ConnectorPluginResource {
     fn from(value: Arc<dyn ConnectorPlugin>) -> Self {
         Self {
-            id: value.id().clone(),
+            id: value.id(),
             configuration: value
                 .configuration()
                 .properties()
@@ -70,7 +70,7 @@ impl ResourceBuilder<CollectionResourceModel<ConnectorPluginResource>>
 {
     fn build(&self, req: &HttpRequest) -> CollectionResourceModel<ConnectorPluginResource> {
         CollectionResourceModel {
-            data: self.into_iter().map(|c| c.build(req)).collect(),
+            data: self.iter().map(|c| c.build(req)).collect(),
             links: Links::default()
                 .add(Linkrelation::Self_, ResourceLink::Plugins)
                 .as_url_map(req),

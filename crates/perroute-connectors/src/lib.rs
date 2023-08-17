@@ -30,13 +30,10 @@ impl Plugins {
 
 impl Plugins {
     pub fn get(&self, id: &ConnectorPluginId) -> Option<Arc<dyn ConnectorPlugin>> {
-        self.plugins
-            .iter()
-            .find(|p| p.id() == *id)
-            .map(|p| p.clone())
+        self.plugins.iter().find(|p| p.id() == *id).cloned()
     }
 
     pub fn all(&self) -> Vec<Arc<dyn ConnectorPlugin>> {
-        self.plugins.iter().map(|p| p.clone()).collect()
+        self.plugins.to_vec()
     }
 }

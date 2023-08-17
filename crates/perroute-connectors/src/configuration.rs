@@ -81,7 +81,7 @@ pub struct ConfigurationProperties(Vec<ConfigurationProperty>);
 
 impl<const N: usize> From<[ConfigurationProperty; N]> for ConfigurationProperties {
     fn from(value: [ConfigurationProperty; N]) -> Self {
-        ConfigurationProperties(
+        Self(
             value
                 .into_iter()
                 .map(|p| (p.name, p))

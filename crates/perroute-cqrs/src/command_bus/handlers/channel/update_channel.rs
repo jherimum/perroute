@@ -51,7 +51,7 @@ impl CommandHandler for UpdateChannelCommandHandler {
         .unwrap();
 
         let conn = channel.connection(ctx.pool()).await.unwrap();
-        let plugin = conn.plugin(&ctx.plugins()).unwrap();
+        let plugin = conn.plugin(ctx.plugins()).unwrap();
         let disp = plugin.dispatcher(channel.dispatch_type()).unwrap();
         disp.configuration()
             .validate(cmd.dispatch_properties())
