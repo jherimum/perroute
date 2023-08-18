@@ -6,6 +6,7 @@ use crate::{
     },
     into_event,
 };
+use anyhow::Context;
 use perroute_commons::{
     new_id,
     types::{
@@ -17,12 +18,21 @@ use perroute_commons::{
 };
 use perroute_storage::{
     models::{
-        message_type::{MessageType, MessageTypeQueryBuilder},
+        message_type::{MessageType, MessageTypeQuery},
         schema::{Schema, SchemaBuilder},
     },
     query::FetchableModel,
 };
-use tap::{TapFallible, TapOptional};
+use tap::TapFallible;
+
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    #[error(transparent)]
+    InvalidSchema(#[from] InvalidSchemaError),
+
+    #[error("Message type with id {0} not found")]
+    MessageTypeNotFound(Id),
+}
 
 command!(
     CreateSchemaCommand,
@@ -33,12 +43,6 @@ command!(
     vars: Vars
 );
 into_event!(CreateSchemaCommand);
-
-#[derive(Debug, thiserror::Error)]
-pub enum Error {
-    #[error(transparent)]
-    InvalidSchema(#[from] InvalidSchemaError),
-}
 
 #[derive(Debug)]
 pub struct CreateSchemaCommandHandler;
@@ -55,34 +59,27 @@ impl CommandHandler for CreateSchemaCommandHandler {
         _: &Actor,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
-        let mt = MessageType::find(
-            ctx.tx(),
-            MessageTypeQueryBuilder::default()
-                .id(Some(cmd.message_type_id))
-                .build()
-                .unwrap(),
-        )
-        .await?
-        .tap_none(|| tracing::error!("message type not found"))
-        .unwrap();
+        let mt = MessageType::find(ctx.tx(), MessageTypeQuery::with_id(cmd.message_type_id))
+            .await
+            .tap_err(|e| tracing::error!("Failed to retrieve message type: {e}"))?
+            .ok_or(Error::MessageTypeNotFound(cmd.message_type_id))?;
 
-        let actual_version = Schema::max_version_number(ctx.tx(), mt.id())
+        let next_version = Schema::next_version(ctx.tx(), mt.id())
             .await
             .tap_err(|e| tracing::error!("Failed to calculate next version number: {e}"))?;
 
-        SchemaBuilder::default()
+        Ok(SchemaBuilder::default()
             .id(new_id!())
             .value(cmd.value)
-            .version(actual_version.increment())
+            .version(next_version)
             .published(false)
-            .message_type_id(*mt.id())
+            .message_type_id(cmd.message_type_id)
             .enabled(false)
             .vars(cmd.vars)
             .build()
-            .unwrap()
+            .context("Failed to build schema")?
             .save(ctx.tx())
             .await
-            .tap_err(|e| tracing::error!("Failed to save schema: {e}"))
-            .map_err(CommandBusError::from)
+            .tap_err(|e| tracing::error!("Failed to save schema: {e}"))?)
     }
 }

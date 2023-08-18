@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use sqlx::Type;
+use std::ops::Deref;
 use std::{fmt::Display, str::FromStr};
 
 #[macro_export]
@@ -17,6 +18,14 @@ pub struct ParseError(#[from] uuid::Error);
 #[sqlx(transparent)]
 #[serde(transparent)]
 pub struct Id(pub uuid::Uuid);
+
+impl Deref for Id {
+    type Target = uuid::Uuid;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 impl Id {
     pub fn new() -> Self {

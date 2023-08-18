@@ -1,5 +1,6 @@
 use super::{
     business_unit::{BusinessUnit, BusinessUnitQueryBuilder},
+    message::{Message, MessageQuery},
     message_type::{MessageType, MessageTypeQueryBuilder},
     template::{Template, TemplatesQueryBuilder},
 };
@@ -35,6 +36,14 @@ impl SchemasQuery {
     pub fn with_id(id: Id) -> Self {
         Self {
             id: Some(id),
+            ..Default::default()
+        }
+    }
+
+    pub fn with_id_and_business_unit(id: Id, business_unit_id: Id) -> Self {
+        Self {
+            id: Some(id),
+            business_unit_id: Some(business_unit_id),
             ..Default::default()
         }
     }
@@ -155,6 +164,13 @@ impl Schema {
         .await
     }
 
+    pub async fn exists_messages<'e, E: PgExecutor<'e>>(
+        &self,
+        exec: E,
+    ) -> Result<bool, sqlx::Error> {
+        Message::exists(exec, MessageQuery::with_id(self.id)).await
+    }
+
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
         sqlx::query_as(
             r#"
@@ -203,7 +219,7 @@ impl Schema {
             .map(|r| r.rows_affected() > 0)
     }
 
-    pub async fn max_version_number(
+    pub async fn next_version(
         exec: &mut sqlx::PgConnection,
         message_type_id: &Id,
     ) -> Result<Version, sqlx::Error> {
@@ -218,6 +234,6 @@ impl Schema {
         .bind(message_type_id)
         .fetch_optional(exec)
         .await
-        .map(|r| r.unwrap_or_default())
+        .map(|r| r.map(|v| v.increment()).unwrap_or_default())
     }
 }

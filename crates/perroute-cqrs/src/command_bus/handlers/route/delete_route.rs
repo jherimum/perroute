@@ -8,7 +8,21 @@ use crate::{
 use derive_builder::Builder;
 use derive_getters::Getters;
 use perroute_commons::types::{actor::Actor, id::Id};
+use perroute_storage::{
+    models::route::{Route, RouteQuery},
+    query::FetchableModel,
+};
 use serde::Serialize;
+use tap::TapFallible;
+
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    #[error("Route with id {0} not found")]
+    RouteNotFound(Id),
+
+    #[error("Route {0} could not be deleted: {1}")]
+    RouteDelete(Id, &'static str),
+}
 
 #[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
 pub struct DeleteRouteCommand {
@@ -33,6 +47,18 @@ impl CommandHandler for DeleteRouteCommandHandler {
         _: &Actor,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
-        Ok(false)
+        let route = Route::find(ctx.pool(), RouteQuery::with_id(cmd.id))
+            .await
+            .tap_err(|e| tracing::error!("Failed to retrieve route {}: {e}", cmd.id))?
+            .ok_or(Error::RouteNotFound(cmd.id))?;
+
+        if route.exists_message_dispatch(ctx.pool()).await? {
+            return Err(Error::RouteDelete(cmd.id, "Route has message dispatches").into());
+        }
+
+        Ok(route
+            .delete(ctx.tx())
+            .await
+            .tap_err(|e| tracing::error!("Failed to delete route {}: {e}", cmd.id))?)
     }
 }

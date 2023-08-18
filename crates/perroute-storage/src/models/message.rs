@@ -29,6 +29,50 @@ pub struct MessageQuery {
     pub scheduled_to: Option<NaiveDateTime>,
 }
 
+impl MessageQuery {
+    pub fn with_id(id: Id) -> Self {
+        Self {
+            id: Some(id),
+            ..Default::default()
+        }
+    }
+
+    pub fn with_schema_id(schema_id: Id) -> Self {
+        Self {
+            schema_id: Some(schema_id),
+            ..Default::default()
+        }
+    }
+
+    pub fn with_message_type_id(message_type_id: Id) -> Self {
+        Self {
+            message_type_id: Some(message_type_id),
+            ..Default::default()
+        }
+    }
+
+    pub fn with_business_unit_id(business_unit_id: Id) -> Self {
+        Self {
+            business_unit_id: Some(business_unit_id),
+            ..Default::default()
+        }
+    }
+
+    pub fn with_scheduled_from(scheduled_from: NaiveDateTime) -> Self {
+        Self {
+            scheduled_from: Some(scheduled_from),
+            ..Default::default()
+        }
+    }
+
+    pub fn with_scheduled_to(scheduled_to: NaiveDateTime) -> Self {
+        Self {
+            scheduled_to: Some(scheduled_to),
+            ..Default::default()
+        }
+    }
+}
+
 impl ModelQueryBuilder<Message> for MessageQuery {
     fn build(
         &self,

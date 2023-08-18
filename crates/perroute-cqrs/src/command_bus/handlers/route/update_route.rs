@@ -5,14 +5,30 @@ use crate::{
     },
     impl_command, into_event,
 };
+use anyhow::anyhow;
+use anyhow::Context;
 use derive_builder::Builder;
 use derive_getters::Getters;
-use perroute_commons::types::{actor::Actor, id::Id, properties::Properties};
+use perroute_commons::types::{
+    actor::Actor,
+    id::Id,
+    properties::{Properties, PropertiesError},
+};
 use perroute_storage::{
     models::route::{Route, RouteQuery},
     query::FetchableModel,
 };
 use serde::Serialize;
+use tap::TapFallible;
+
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    #[error("Route with id {0} not found")]
+    RouteNotFound(Id),
+
+    #[error("Invalid properties: {0}")]
+    InvalidProperties(#[from] PropertiesError),
+}
 
 #[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
 pub struct UpdateRouteCommand {
@@ -38,10 +54,40 @@ impl CommandHandler for UpdateRouteCommandHandler {
         _: &Actor,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
-        let route = Route::find_one(ctx.pool(), RouteQuery::with_id(cmd.id))
+        let route = Route::find(ctx.pool(), RouteQuery::with_id(cmd.id))
             .await
-            .unwrap();
+            .tap_err(|e| tracing::error!("Failed to retrieve route {}: {e}", cmd.id))?
+            .ok_or(Error::RouteNotFound(cmd.id))?;
 
-        Ok(route)
+        let channel = route
+            .channel(ctx.pool())
+            .await
+            .context("Channel expected to exists")?;
+
+        let conn = route
+            .connection(ctx.pool())
+            .await
+            .context("Connection expected to exists")?;
+
+        let plugin = ctx
+            .plugins()
+            .get(conn.plugin_id())
+            .ok_or(anyhow!("Plugin {} not found", conn.plugin_id()))?;
+
+        let dispatcher = plugin.dispatcher(channel.dispatch_type()).ok_or(anyhow!(
+            "Dispatcher not found for channel dispatch type {}",
+            channel.dispatch_type()
+        ))?;
+
+        dispatcher
+            .configuration()
+            .validate(&channel.properties().merge(&cmd.properties))
+            .map_err(Error::from)?;
+
+        Ok(route
+            .set_properties(cmd.properties)
+            .update(ctx.tx())
+            .await
+            .tap_err(|e| tracing::error!("Failed to update route:{e}"))?)
     }
 }

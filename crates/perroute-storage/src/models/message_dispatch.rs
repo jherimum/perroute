@@ -26,6 +26,15 @@ pub struct MessageDispatchQuery {
     status: Option<MessageDispatchStatus>,
 }
 
+impl MessageDispatchQuery {
+    pub fn with_route_id(route_id: Id) -> Self {
+        Self {
+            route_id: Some(route_id),
+            ..Default::default()
+        }
+    }
+}
+
 impl ModelQueryBuilder<MessageDispatch> for MessageDispatchQuery {
     fn build(&self, projection: crate::query::Projection) -> QueryBuilder<'_, sqlx::Postgres> {
         let mut builder = projection.query_builder();

@@ -1,4 +1,5 @@
 use crate::DatabaseModel;
+use perroute_commons::types::id::Id;
 use sqlx::{postgres::PgRow, FromRow, PgExecutor, Postgres, QueryBuilder, Row};
 
 #[async_trait::async_trait]
@@ -8,6 +9,7 @@ pub trait FetchableModel<Q: ModelQueryBuilder<M>, M> {
     async fn find<'e, E: PgExecutor<'e>>(exec: E, query: Q) -> Result<Option<M>, sqlx::Error>;
     async fn find_one<'e, E: PgExecutor<'e>>(exec: E, query: Q) -> Result<M, sqlx::Error>;
     async fn exists<'e, E: PgExecutor<'e>>(exec: E, query: Q) -> Result<bool, sqlx::Error>;
+    async fn ids<'e, E: PgExecutor<'e>>(exec: E, query: Q) -> Result<Vec<Id>, sqlx::Error>;
 }
 
 #[async_trait::async_trait]
@@ -31,6 +33,18 @@ where
             .fetch_all(exec)
             .await
     }
+
+    async fn ids<'e, E: PgExecutor<'e>>(exec: E, query: Q) -> Result<Vec<Id>, sqlx::Error> {
+        Ok(query
+            .build(Projection::Id)
+            .build()
+            .fetch_all(exec)
+            .await?
+            .iter()
+            .map(|r| r.get(0))
+            .collect::<Vec<Id>>())
+    }
+
     async fn find<'e, E: PgExecutor<'e>>(exec: E, query: Q) -> Result<Option<M>, sqlx::Error> {
         query
             .build(Projection::Row)

@@ -1,6 +1,9 @@
+use std::ops::Deref;
+
 use super::business_unit::BusinessUnitQueryBuilder;
 use super::channel::ChannelQueryBuilder;
 use super::connection::{Connection, ConnectionQueryBuilder};
+use super::message_dispatch::{MessageDispatch, MessageDispatchQuery};
 use super::message_type::{MessageType, MessageTypeQueryBuilder};
 use super::schema::{Schema, SchemasQueryBuilder};
 use super::{business_unit::BusinessUnit, channel::Channel};
@@ -32,6 +35,13 @@ impl RouteQuery {
     pub fn with_id(id: Id) -> RouteQuery {
         Self {
             id: Some(id),
+            ..Default::default()
+        }
+    }
+
+    pub fn with_schema_id(schema_id: Id) -> RouteQuery {
+        Self {
+            schema_id: Some(schema_id),
             ..Default::default()
         }
     }
@@ -100,6 +110,19 @@ pub struct Route {
 }
 
 impl Route {
+    pub async fn batch_delete<'e, E: PgExecutor<'e>>(
+        ids: Vec<Id>,
+        exec: E,
+    ) -> Result<u64, sqlx::Error> {
+        let uuids = ids.iter().map(|id| *id.deref()).collect::<Vec<_>>();
+        sqlx::query("DELETE FROM routes WHERE id= ANY($1)")
+            .bind(uuids)
+            .execute(exec)
+            .await
+            .tap_err(log_query_error!())
+            .map(|result| result.rows_affected())
+    }
+
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
         sqlx::query_as(
             r#"
@@ -210,5 +233,12 @@ impl Route {
                 .unwrap(),
         )
         .await
+    }
+
+    pub async fn exists_message_dispatch<'e, E: PgExecutor<'e>>(
+        &self,
+        exec: E,
+    ) -> Result<bool, sqlx::Error> {
+        MessageDispatch::exists(exec, MessageDispatchQuery::with_route_id(self.id)).await
     }
 }

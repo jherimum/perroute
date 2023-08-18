@@ -23,9 +23,13 @@ use super::{
             delete_message_type::DeleteMessageTypeCommandHandler,
             update_message_type::UpdateMessageTypeCommandHandler,
         },
+        route::{
+            create_route::CreateRouteCommandHandler, delete_route::DeleteRouteCommandHandler,
+            update_route::UpdateRouteCommandHandler,
+        },
         schema::{
             create_schema::CreateSchemaCommandHandler, delete_schema::DeleteSchemaCommandHandler,
-            update_schema::UpdateSchemaCommandHandler,
+            publish_schema::PublishSchemaCommandHandler, update_schema::UpdateSchemaCommandHandler,
         },
         template::{
             activate_template::ActivateTemplateCommandHandler,
@@ -140,27 +144,38 @@ impl CommandBus {
         Self::builder()
             .with_plugins(plugins)
             .with_pool(pool)
+            //business unit
             .with_handler(CreateBusinessUnitCommandHandler)
             .with_handler(DeleteBusinessUnitCommandHandler)
             .with_handler(UpdateBusinessUnitCommandHandler)
+            //message type
             .with_handler(CreateMessageTypeCommandHandler)
             .with_handler(UpdateMessageTypeCommandHandler)
             .with_handler(DeleteMessageTypeCommandHandler)
+            //schema
             .with_handler(CreateSchemaCommandHandler)
-            .with_handler(CreateSchemaCommandHandler)
+            .with_handler(PublishSchemaCommandHandler)
             .with_handler(DeleteSchemaCommandHandler)
             .with_handler(UpdateSchemaCommandHandler)
+            //template
             .with_handler(CreateTemplateCommandHandler)
             .with_handler(UpdateTemplateCommandHandler)
             .with_handler(DeleteTemplateCommandHandler)
             .with_handler(ActivateTemplateCommandHandler)
+            //message
             .with_handler(CreateMessageCommandHandler)
+            //opnnection
             .with_handler(CreateConnectionCommandHandler)
             .with_handler(UpdateConnectionCommandHandler)
             .with_handler(DeleteConnectionCommandHandler)
+            //channel
             .with_handler(CreateChannelCommandHandler)
             .with_handler(UpdateChannelCommandHandler)
             .with_handler(DeleteChannelCommandHandler)
+            //route
+            .with_handler(CreateRouteCommandHandler)
+            .with_handler(UpdateRouteCommandHandler)
+            .with_handler(DeleteRouteCommandHandler)
             .build()
     }
 

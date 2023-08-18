@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use super::{
     business_unit::{BusinessUnit, BusinessUnitQueryBuilder},
     message_type::{MessageType, MessageTypeQueryBuilder},
@@ -24,6 +26,22 @@ pub struct TemplatesQuery {
     message_type_id: Option<Id>,
     business_unit_id: Option<Id>,
     dispatch_type: Option<DispatchType>,
+}
+
+impl TemplatesQuery {
+    pub fn with_id(id: Id) -> Self {
+        Self {
+            id: Some(id),
+            ..Default::default()
+        }
+    }
+
+    pub fn with_schema_id(schema_id: Id) -> Self {
+        Self {
+            schema_id: Some(schema_id),
+            ..Default::default()
+        }
+    }
 }
 
 impl ModelQueryBuilder<Template> for TemplatesQuery {
@@ -178,5 +196,18 @@ impl Template {
             .await
             .tap_err(log_query_error!())
             .map(|result| result.rows_affected() > 0)
+    }
+
+    pub async fn batch_delete<'e, E: PgExecutor<'e>>(
+        ids: Vec<Id>,
+        exec: E,
+    ) -> Result<u64, sqlx::Error> {
+        let uuids = ids.iter().map(|id| *id.deref()).collect::<Vec<_>>();
+        sqlx::query("DELETE FROM templates WHERE id= ANY($1)")
+            .bind(uuids)
+            .execute(exec)
+            .await
+            .tap_err(log_query_error!())
+            .map(|result| result.rows_affected())
     }
 }
