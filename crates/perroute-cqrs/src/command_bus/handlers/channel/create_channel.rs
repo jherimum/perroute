@@ -5,10 +5,16 @@ use crate::{
     },
     impl_command, into_event,
 };
+use anyhow::Context;
 use derive_builder::Builder;
 use derive_getters::Getters;
-use perroute_commons::types::{actor::Actor, id::Id, priority::Priority, properties::Properties};
-use perroute_connectors::types::DispatchType;
+use perroute_commons::types::{
+    actor::Actor,
+    id::Id,
+    priority::Priority,
+    properties::{Properties, PropertiesError},
+};
+use perroute_connectors::types::{ConnectorPluginId, DispatchType};
 use perroute_storage::{
     models::{
         business_unit::{BusinessUnit, BusinessUnitQueryBuilder},
@@ -17,6 +23,7 @@ use perroute_storage::{
     },
     query::FetchableModel,
 };
+use tap::TapFallible;
 
 #[derive(Debug, serde::Serialize, Clone, PartialEq, Eq, Builder, Getters)]
 pub struct CreateChannelCommand {
@@ -31,6 +38,24 @@ pub struct CreateChannelCommand {
 impl_command!(CreateChannelCommand, CommandType::CreateChannel);
 into_event!(CreateChannelCommand);
 
+#[derive(Debug, thiserror::Error)]
+pub enum CreateChannelCommandHandlerError {
+    #[error("Business unit {0} not found")]
+    BusinessUnitNotFound(Id),
+
+    #[error("Connection {0} not found")]
+    ConnectionNotFound(Id),
+
+    #[error("Plugin {0} not found")]
+    PluginNotFound(ConnectorPluginId),
+
+    #[error("Dispatch type  {0} not supoorted by plugin")]
+    DispatchTypeNotSupported(DispatchType),
+
+    #[error("Invalid properties")]
+    InvalidProperties(#[from] PropertiesError),
+}
+
 #[derive(Debug)]
 pub struct CreateChannelCommandHandler;
 
@@ -42,36 +67,44 @@ impl CommandHandler for CreateChannelCommandHandler {
     async fn handle<'tx>(
         &self,
         ctx: &mut CommandBusContext<'tx>,
-        actor: &Actor,
+        _: &Actor,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
-        let business_unit = BusinessUnit::find(
+        let _ = BusinessUnit::find(
             ctx.pool(),
             BusinessUnitQueryBuilder::default()
                 .id(Some(cmd.business_unit_id))
                 .build()
-                .unwrap(),
+                .context("Failed to build BusinessUnitQuery")?,
         )
         .await
-        .unwrap()
-        .unwrap();
+        .tap_err(|e| tracing::error!("Failed to retrieve business unit: {e}"))?
+        .ok_or_else(|| {
+            CreateChannelCommandHandlerError::BusinessUnitNotFound(cmd.business_unit_id)
+        })?;
 
         let conn = Connection::find(
             ctx.pool(),
             ConnectionQueryBuilder::default()
                 .id(Some(cmd.connection_id))
                 .build()
-                .unwrap(),
+                .context("Failed to build ConnectionQuery")?,
         )
         .await
-        .unwrap()
-        .unwrap();
+        .tap_err(|e| tracing::error!("Failed to retrieve connection: {e}"))?
+        .ok_or_else(|| CreateChannelCommandHandlerError::ConnectionNotFound(cmd.connection_id))?;
 
-        let plugin = conn.plugin(ctx.plugins()).unwrap();
-        let disp = plugin.dispatcher(cmd.dispatch_type()).unwrap();
+        let plugin = conn
+            .plugin(ctx.plugins())
+            .ok_or_else(|| CreateChannelCommandHandlerError::PluginNotFound(*conn.plugin_id()))?;
+
+        let disp = plugin.dispatcher(cmd.dispatch_type()).ok_or_else(|| {
+            CreateChannelCommandHandlerError::DispatchTypeNotSupported(cmd.dispatch_type)
+        })?;
+
         disp.configuration()
             .validate(cmd.dispatch_properties())
-            .unwrap();
+            .map_err(CreateChannelCommandHandlerError::from)?;
 
         Ok(ChannelBuilder::default()
             .id(cmd.id)
@@ -82,9 +115,9 @@ impl CommandHandler for CreateChannelCommandHandler {
             .priority(cmd.priority)
             .enabled(false)
             .build()
-            .unwrap()
+            .context("Failed to build Channel")?
             .save(ctx.tx())
             .await
-            .unwrap())
+            .tap_err(|e| tracing::error!("Failed to save channel:{e}"))?)
     }
 }

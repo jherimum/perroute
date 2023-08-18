@@ -11,9 +11,9 @@ use perroute_commons::types::{actor::Actor, id::Id, properties::Properties};
 use perroute_connectors::Plugins;
 use perroute_storage::{
     models::{
-        channel::{Channel, ChannelQueryBuilder},
+        channel::{Channel, ChannelQuery},
         route::{Route, RouteBuilder},
-        schema::{Schema, SchemasQueryBuilder},
+        schema::{Schema, SchemasQuery},
     },
     query::FetchableModel,
 };
@@ -47,7 +47,7 @@ impl CommandHandler for CreateRouteCommandHandler {
         _: &Actor,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
-        let channel = Channel::find(ctx.pool(), ChannelQueryBuilder::default().build().unwrap())
+        let channel = Channel::find(ctx.pool(), ChannelQuery::with_id(cmd.channel_id))
             .await
             .unwrap()
             .unwrap();
@@ -59,7 +59,7 @@ impl CommandHandler for CreateRouteCommandHandler {
         let props = channel.properties().merge(&cmd.properties);
         disp.configuration().validate(&props).unwrap();
 
-        let schema = Schema::find(ctx.pool(), SchemasQueryBuilder::default().build().unwrap())
+        let schema = Schema::find(ctx.pool(), SchemasQuery::with_id(cmd.schema_id))
             .await
             .unwrap()
             .unwrap();

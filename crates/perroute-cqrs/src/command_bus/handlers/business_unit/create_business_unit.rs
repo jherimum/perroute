@@ -15,7 +15,7 @@ use perroute_storage::{
     query::FetchableModel,
 };
 use serde::Serialize;
-use sqlx::{types::Json, PgPool};
+use sqlx::PgPool;
 use tap::TapFallible;
 
 #[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]

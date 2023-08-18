@@ -8,7 +8,6 @@ use crate::{
 use derive_builder::Builder;
 use derive_getters::Getters;
 use perroute_commons::types::{actor::Actor, id::Id};
-use perroute_connectors::Plugins;
 use perroute_storage::{
     models::connection::{Connection, ConnectionQueryBuilder},
     query::FetchableModel,

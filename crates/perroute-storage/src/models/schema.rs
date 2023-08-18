@@ -31,6 +31,15 @@ pub struct SchemasQuery {
     version: Option<Version>,
 }
 
+impl SchemasQuery {
+    pub fn with_id(id: Id) -> Self {
+        Self {
+            id: Some(id),
+            ..Default::default()
+        }
+    }
+}
+
 impl ModelQueryBuilder<Schema> for SchemasQuery {
     fn build(&self, projection: Projection) -> sqlx::QueryBuilder<'_, sqlx::Postgres> {
         let mut builder = projection.query_builder();

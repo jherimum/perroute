@@ -6,6 +6,11 @@ use super::{
             delete_business_unit::DeleteBusinessUnitError,
             update_business_unit::UpdateBusinessUnitError,
         },
+        channel::{
+            create_channel::CreateChannelCommandHandlerError,
+            delete_channel::DeleteChannelCommandHandlerError,
+            update_channel::UpdateChannelCommandHandlerError,
+        },
         message::{
             create_message::CreateMessageCommandError,
             distribute_message::DistributeMessageCommandHandlerError,
@@ -59,4 +64,13 @@ pub enum CommandBusError {
 
     #[error(transparent)]
     DistributeMessage(#[from] DistributeMessageCommandHandlerError),
+
+    #[error(transparent)]
+    CreateChannel(#[from] CreateChannelCommandHandlerError),
+
+    #[error(transparent)]
+    UpdateChannel(#[from] UpdateChannelCommandHandlerError),
+
+    #[error(transparent)]
+    DeleteChannel(#[from] DeleteChannelCommandHandlerError),
 }

@@ -9,7 +9,7 @@ use derive_builder::Builder;
 use derive_getters::Getters;
 use perroute_commons::types::{actor::Actor, id::Id, properties::Properties};
 use perroute_storage::{
-    models::route::{Route, RouteQueryBuilder},
+    models::route::{Route, RouteQuery},
     query::FetchableModel,
 };
 use serde::Serialize;
@@ -38,7 +38,7 @@ impl CommandHandler for UpdateRouteCommandHandler {
         _: &Actor,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
-        let route = Route::find_one(ctx.pool(), RouteQueryBuilder::default().build().unwrap())
+        let route = Route::find_one(ctx.pool(), RouteQuery::with_id(cmd.id))
             .await
             .unwrap();
 

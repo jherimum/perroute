@@ -34,7 +34,7 @@ impl CommandHandler for CreateConnectionCommandHandler {
     async fn handle<'tx>(
         &self,
         ctx: &mut CommandBusContext<'tx>,
-        actor: &Actor,
+        _: &Actor,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
         let connector_plugin = ctx.plugins().get(cmd.plugin_id()).unwrap();

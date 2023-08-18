@@ -28,6 +28,15 @@ pub struct RouteQuery {
     channel_id: Option<Id>,
 }
 
+impl RouteQuery {
+    pub fn with_id(id: Id) -> RouteQuery {
+        Self {
+            id: Some(id),
+            ..Default::default()
+        }
+    }
+}
+
 impl ModelQueryBuilder<Route> for RouteQuery {
     fn build(&self, projection: Projection) -> QueryBuilder<'_, Postgres> {
         let mut builder = projection.query_builder();

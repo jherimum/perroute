@@ -9,7 +9,7 @@ use crate::{
 use async_trait::async_trait;
 use perroute_commons::types::{actor::Actor, id::Id};
 use perroute_storage::{
-    models::business_unit::{BusinessUnit, BusinessUnitQueryBuilder},
+    models::business_unit::{BusinessUnit, BusinessUnitQuery},
     query::FetchableModel,
 };
 
@@ -43,13 +43,12 @@ impl CommandHandler for DeleteBusinessUnitCommandHandler {
     ) -> Result<bool, CommandBusError> {
         Ok(BusinessUnit::find(
             ctx.tx(),
-            BusinessUnitQueryBuilder::default()
-                .id(Some(*command.business_unit_id()))
-                .build()
-                .unwrap(),
+            BusinessUnitQuery::with_id(command.business_unit_id),
         )
         .await?
-        .ok_or_else(|| DeleteBusinessUnitError::BusinessUnitNotFound(command.business_unit_id))?
+        .ok_or(DeleteBusinessUnitError::BusinessUnitNotFound(
+            command.business_unit_id,
+        ))?
         .delete(ctx.tx())
         .await?)
     }

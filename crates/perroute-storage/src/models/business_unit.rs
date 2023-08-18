@@ -21,6 +21,15 @@ pub struct BusinessUnitQuery {
     code: Option<Code>,
 }
 
+impl BusinessUnitQuery {
+    pub fn with_id(id: Id) -> Self {
+        Self {
+            id: Some(id),
+            ..Default::default()
+        }
+    }
+}
+
 impl ModelQueryBuilder<BusinessUnit> for BusinessUnitQuery {
     fn build(&self, projection: Projection) -> sqlx::QueryBuilder<'_, sqlx::Postgres> {
         let mut builder = projection.query_builder();

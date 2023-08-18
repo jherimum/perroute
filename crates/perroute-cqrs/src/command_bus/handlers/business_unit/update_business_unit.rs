@@ -10,7 +10,7 @@ use async_trait::async_trait;
 use derive_new::new;
 use perroute_commons::types::{actor::Actor, id::Id, vars::Vars};
 use perroute_storage::{
-    models::business_unit::{BusinessUnit, BusinessUnitQueryBuilder},
+    models::business_unit::{BusinessUnit, BusinessUnitQuery},
     query::FetchableModel,
 };
 use tap::TapFallible;
@@ -47,10 +47,7 @@ impl CommandHandler for UpdateBusinessUnitCommandHandler {
     ) -> Result<BusinessUnit, CommandBusError> {
         let business_unit = BusinessUnit::find(
             ctx.tx(),
-            BusinessUnitQueryBuilder::default()
-                .id(Some(*command.business_unit_id()))
-                .build()
-                .unwrap(),
+            BusinessUnitQuery::with_id(command.business_unit_id),
         )
         .await?
         .unwrap();

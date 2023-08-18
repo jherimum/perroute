@@ -13,8 +13,7 @@ use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::types::{id::Id, priority::Priority, properties::Properties};
 use perroute_connectors::types::DispatchType;
-use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, PgExecutor, Type};
+use sqlx::{FromRow, PgExecutor};
 use tap::TapFallible;
 
 #[derive(Debug, Default, Builder)]
@@ -23,6 +22,15 @@ pub struct ChannelQuery {
     id: Option<Id>,
     business_unit_id: Option<Id>,
     connection_id: Option<Id>,
+}
+
+impl ChannelQuery {
+    pub fn with_id(id: Id) -> Self {
+        Self {
+            id: Some(id),
+            ..Default::default()
+        }
+    }
 }
 
 impl ModelQueryBuilder<Channel> for ChannelQuery {
