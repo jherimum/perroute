@@ -5,13 +5,14 @@ use crate::{
     },
     impl_command, into_event,
 };
+use anyhow::Context;
 use async_trait::async_trait;
 use derive_builder::Builder;
 use derive_getters::Getters;
 use perroute_commons::types::{actor::Actor, code::Code, id::Id, vars::Vars};
 use perroute_messaging::events::EventType;
 use perroute_storage::{
-    models::business_unit::{BusinessUnit, BusinessUnitBuilder, BusinessUnitQueryBuilder},
+    models::business_unit::{BusinessUnit, BusinessUnitBuilder, BusinessUnitQuery},
     query::FetchableModel,
 };
 use serde::Serialize;
@@ -54,42 +55,27 @@ impl CommandHandler for CreateBusinessUnitCommandHandler {
         actor: &Actor,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
-        if exists_with_code(ctx.pool(), cmd.code()).await? {
-            return Err(CommandBusError::ExpectedError(
-                "BusinessUnit with code already exists",
-            ));
+        if exists_with_code(ctx.pool(), &cmd.code).await? {
+            return Err(CreateBusinessUnitError::CodeAlreadyExists(cmd.code).into());
         }
 
-        BusinessUnitBuilder::default()
+        Ok(BusinessUnitBuilder::default()
             .id(cmd.business_unit_id)
             .code(cmd.code)
             .name(cmd.name)
             .vars(cmd.vars)
             .build()
-            .tap_err(|e| {
-                tracing::error!("Failed to build BusinessUnit: {e}");
-            })
-            .map_err(anyhow::Error::from)?
+            .context("Failed to build BusinessUnit")?
             .save(ctx.tx())
             .await
-            .tap_err(|e| tracing::error!("Failed to save BusinessUnit: {e}"))
-            .map_err(CommandBusError::from)
+            .tap_err(|e| tracing::error!("Failed to save BusinessUnit: {e}"))?)
     }
 }
 
 async fn exists_with_code<'tx>(poll: &PgPool, code: &Code) -> Result<bool, sqlx::Error> {
-    BusinessUnit::exists(
-        poll,
-        BusinessUnitQueryBuilder::default()
-            .code(Some(code.clone()))
-            .build()
-            .unwrap(),
-    )
-    .await
-    .tap_err(|e| {
-        tracing::error!(
-            "Failed to checking if BusinessUnit with code {} exists: {e}",
-            code
-        );
-    })
+    BusinessUnit::exists(poll, BusinessUnitQuery::with_code(code.clone()))
+        .await
+        .tap_err(|e| {
+            tracing::error!("Failed to check if BusinessUnit exists:{e}");
+        })
 }

@@ -15,6 +15,12 @@ use perroute_storage::{
 };
 use tap::TapFallible;
 
+#[derive(thiserror::Error, Debug, Clone)]
+pub enum UpdateBusinessUnitError {
+    #[error("BusinessUnit with id {0} nor found")]
+    BusinessUnitNotFound(Id),
+}
+
 command!(
     UpdateBusinessUnitCommand,
     CommandType::UpdateBusinessUnit,
@@ -26,12 +32,6 @@ into_event!(UpdateBusinessUnitCommand);
 
 #[derive(Debug, new)]
 pub struct UpdateBusinessUnitCommandHandler;
-
-#[derive(thiserror::Error, Debug, Clone)]
-pub enum UpdateBusinessUnitError {
-    #[error("BusinessUnit with id {0} nor found")]
-    BusinessUnitNotFound(Id),
-}
 
 #[async_trait]
 impl CommandHandler for UpdateBusinessUnitCommandHandler {
@@ -45,24 +45,29 @@ impl CommandHandler for UpdateBusinessUnitCommandHandler {
         actor: &Actor,
         command: Self::Command,
     ) -> Result<BusinessUnit, CommandBusError> {
-        let business_unit = BusinessUnit::find(
+        Ok(BusinessUnit::find(
             ctx.tx(),
             BusinessUnitQuery::with_id(command.business_unit_id),
         )
-        .await?
-        .unwrap();
-
-        business_unit
-            .set_name(command.name.clone())
-            .set_vars(command.vars.clone())
-            .update(ctx.tx())
-            .await
-            .tap_err(|e| {
-                tracing::error!(
-                    "Error while updating business unit {}: {e}",
-                    command.business_unit_id()
-                );
-            })
-            .map_err(CommandBusError::from)
+        .await
+        .tap_err(|e| {
+            tracing::error!(
+                "Error while fetching business unit {}: {e}",
+                command.business_unit_id()
+            );
+        })?
+        .ok_or(UpdateBusinessUnitError::BusinessUnitNotFound(
+            command.business_unit_id,
+        ))?
+        .set_name(command.name.clone())
+        .set_vars(command.vars.clone())
+        .update(ctx.tx())
+        .await
+        .tap_err(|e| {
+            tracing::error!(
+                "Failed to update business unit {}: {e}",
+                command.business_unit_id()
+            );
+        })?)
     }
 }

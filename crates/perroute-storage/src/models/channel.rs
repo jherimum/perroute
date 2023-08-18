@@ -31,6 +31,13 @@ impl ChannelQuery {
             ..Default::default()
         }
     }
+
+    pub fn from_business_unit(business_unit_id: Id) -> Self {
+        Self {
+            business_unit_id: Some(business_unit_id),
+            ..Default::default()
+        }
+    }
 }
 
 impl ModelQueryBuilder<Channel> for ChannelQuery {

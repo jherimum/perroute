@@ -28,6 +28,13 @@ impl BusinessUnitQuery {
             ..Default::default()
         }
     }
+
+    pub fn with_code(code: Code) -> Self {
+        Self {
+            code: Some(code),
+            ..Default::default()
+        }
+    }
 }
 
 impl ModelQueryBuilder<BusinessUnit> for BusinessUnitQuery {

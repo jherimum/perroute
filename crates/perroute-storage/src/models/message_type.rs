@@ -24,6 +24,15 @@ pub struct MessageTypeQuery {
     business_unit_id: Option<Id>,
 }
 
+impl MessageTypeQuery {
+    pub fn from_business_unit(business_unit_id: Id) -> Self {
+        Self {
+            business_unit_id: Some(business_unit_id),
+            ..Default::default()
+        }
+    }
+}
+
 impl ModelQueryBuilder<MessageType> for MessageTypeQuery {
     fn build(&self, projection: Projection) -> QueryBuilder<'_, Postgres> {
         let mut query_builder = projection.query_builder();

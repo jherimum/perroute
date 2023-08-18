@@ -3,7 +3,7 @@ use super::{
     handlers::{
         business_unit::{
             create_business_unit::CreateBusinessUnitError,
-            delete_business_unit::DeleteBusinessUnitError,
+            delete_business_unit::DeleteBusinessUnitCommandHandlerError,
             update_business_unit::UpdateBusinessUnitError,
         },
         channel::{
@@ -45,7 +45,7 @@ pub enum CommandBusError {
     UpdateBusinessUnit(#[from] UpdateBusinessUnitError),
 
     #[error(transparent)]
-    DeleteBusinessUnit(#[from] DeleteBusinessUnitError),
+    DeleteBusinessUnit(#[from] DeleteBusinessUnitCommandHandlerError),
 
     #[error(transparent)]
     DeleteMessageType(#[from] DeleteMessageTypeError),
