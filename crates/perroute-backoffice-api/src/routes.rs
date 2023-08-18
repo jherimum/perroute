@@ -107,16 +107,16 @@ pub fn routes() -> Scope {
         .service(
             web::resource("")
                 .name(BusinessUnitRouter::BUS_RESOURCE_NAME)
-                .route(web::get().to(BusinessUnitRouter::query_bus))
-                .route(web::post().to(BusinessUnitRouter::create_bu)),
+                .route(web::get().to(BusinessUnitRouter::query))
+                .route(web::post().to(BusinessUnitRouter::create)),
         )
         .service(
             web::scope("/{business_unit_id}").service(
                 web::resource("")
                     .name(BusinessUnitRouter::BU_RESOURCE_NAME)
-                    .route(web::get().to(BusinessUnitRouter::find_bu))
-                    .route(web::put().to(BusinessUnitRouter::update_bu))
-                    .route(web::delete().to(BusinessUnitRouter::delete_bu)),
+                    .route(web::get().to(BusinessUnitRouter::get))
+                    .route(web::put().to(BusinessUnitRouter::update))
+                    .route(web::delete().to(BusinessUnitRouter::delete)),
             ),
         );
 

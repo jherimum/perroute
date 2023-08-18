@@ -40,7 +40,7 @@ impl From<MessageType> for MessageTypeResource {
             code: value.code().clone(),
             name: value.name().clone(),
             enabled: *value.enabled(),
-            vars: value.vars().deref().clone(),
+            vars: value.vars().clone(),
         }
     }
 }

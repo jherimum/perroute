@@ -3,40 +3,40 @@ use crate::{
     links::{Linkrelation, ResourceLink},
 };
 use actix_web::HttpRequest;
-use derive_getters::Getters;
-use perroute_commons::types::{code::Code, id::Id, vars::Vars};
 use perroute_storage::models::business_unit::BusinessUnit;
 use serde::{Deserialize, Serialize};
-use std::ops::Deref;
+use std::collections::HashMap;
+use validator::Validate;
 
-#[derive(Debug, serde::Deserialize, Clone, Getters)]
+#[derive(Debug, serde::Deserialize, Clone, Validate)]
 pub struct CreateBusinessUnitRequest {
-    code: Code,
-    name: String,
-    vars: Vars,
+    #[validate(custom = "perroute_commons::types::code::Code::validate")]
+    pub code: String,
+    pub name: String,
+    pub vars: HashMap<String, String>,
 }
 
-#[derive(Debug, serde::Deserialize, Clone)]
+#[derive(Debug, serde::Deserialize, Clone, Validate)]
 pub struct UpdateBusinessUnitRequest {
     pub name: String,
-    pub vars: Vars,
+    pub vars: HashMap<String, String>,
 }
 
 #[derive(Clone, Serialize, Debug, Deserialize, PartialEq, Eq)]
 pub struct BusinessUnitResource {
-    id: Id,
-    code: Code,
+    id: String,
+    code: String,
     name: String,
-    vars: Vars,
+    vars: HashMap<String, String>,
 }
 
 impl From<BusinessUnit> for BusinessUnitResource {
     fn from(value: BusinessUnit) -> Self {
         Self {
-            id: value.id().to_owned(),
-            code: value.code().clone(),
+            id: value.id().to_string(),
+            code: value.code().to_string(),
             name: value.name().clone(),
-            vars: value.vars().deref().clone(),
+            vars: value.vars().into(),
         }
     }
 }

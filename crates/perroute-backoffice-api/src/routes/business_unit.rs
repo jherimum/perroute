@@ -12,8 +12,13 @@ use crate::{
     extractors::actor::ActorExtractor,
     links::ResourceLink,
 };
-use actix_web::web::{Data, Json, Path};
-use perroute_commons::types::{actor::Actor, id::Id};
+use actix_web::web::{Data, Path};
+use actix_web_validator::Json;
+use anyhow::Context;
+use perroute_commons::{
+    new_id,
+    types::{actor::Actor, code::Code, id::Id},
+};
 use perroute_cqrs::{
     command_bus::handlers::business_unit::{
         create_business_unit::{
@@ -37,7 +42,7 @@ use perroute_cqrs::{
     },
 };
 use perroute_storage::models::business_unit::BusinessUnit;
-use std::convert::identity;
+use std::{convert::identity, str::FromStr};
 use tap::TapFallible;
 
 pub type SingleResult = ApiResult<SingleResourceModel<BusinessUnitResource>>;
@@ -50,15 +55,16 @@ impl BusinessUnitRouter {
     pub const BUS_RESOURCE_NAME: &str = "business_units";
 
     #[tracing::instrument(skip(state))]
-    pub async fn create_bu(
+    pub async fn create(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
         Json(body): Json<CreateBusinessUnitRequest>,
     ) -> SingleResult {
         let cmd = CreateBusinessUnitCommandBuilder::default()
-            .code(body.code().clone())
-            .name(body.name().clone())
-            .vars(body.vars().clone())
+            .id(new_id!())
+            .code(Code::from_str(&body.code).context("Invalid code")?)
+            .name(body.name)
+            .vars(body.vars.into())
             .build()
             .tap_err(|e| tracing::error!("Failed to build CreateBusinessUnitCommand: {e}"))
             .map_err(anyhow::Error::from)?;
@@ -72,7 +78,7 @@ impl BusinessUnitRouter {
     }
 
     #[tracing::instrument(skip(state))]
-    pub async fn find_bu(
+    pub async fn get(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
         path: Path<Id>,
@@ -84,7 +90,7 @@ impl BusinessUnitRouter {
     }
 
     #[tracing::instrument(skip(state))]
-    pub async fn query_bus(
+    pub async fn query(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
     ) -> CollectionResult {
@@ -102,7 +108,7 @@ impl BusinessUnitRouter {
     }
 
     #[tracing::instrument(skip(state))]
-    pub async fn update_bu(
+    pub async fn update(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
         path: Path<Id>,
@@ -114,7 +120,7 @@ impl BusinessUnitRouter {
         let cmd = UpdateBusinessUnitCommandBuilder::default()
             .business_unit_id(*business_unit.id())
             .name(body.name)
-            .vars(body.vars)
+            .vars(body.vars.into())
             .build()
             .tap_err(|e| tracing::error!("Failed to build UpdateBusinessUnitCommand: {e}"))
             .map_err(anyhow::Error::from)?;
@@ -128,7 +134,7 @@ impl BusinessUnitRouter {
     }
 
     #[tracing::instrument(skip(state))]
-    pub async fn delete_bu(
+    pub async fn delete(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
         path: Path<Id>,
@@ -152,7 +158,7 @@ impl BusinessUnitRouter {
             .map(|_| ApiResponse::ok_empty())?)
     }
 
-    pub async fn retrieve_bu<R>(
+    async fn retrieve_bu<R>(
         query_bus: &QueryBus,
         actor: &Actor,
         id: Id,

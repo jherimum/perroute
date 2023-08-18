@@ -26,7 +26,7 @@ pub enum Error {
 
 #[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
 pub struct CreateBusinessUnitCommand {
-    business_unit_id: Id,
+    id: Id,
     code: Code,
     name: String,
     vars: Vars,
@@ -35,7 +35,7 @@ impl_command!(CreateBusinessUnitCommand, CommandType::CreateBusinessUnit);
 into_event!(
     CreateBusinessUnitCommand,
     EventType::BusinessUnitCreated,
-    |cmd: &CreateBusinessUnitCommand| { cmd.business_unit_id }
+    |cmd: &CreateBusinessUnitCommand| { cmd.id }
 );
 
 #[derive(Debug)]
@@ -68,7 +68,7 @@ impl CommandHandler for CreateBusinessUnitCommandHandler {
         }
 
         Ok(BusinessUnitBuilder::default()
-            .id(cmd.business_unit_id)
+            .id(cmd.id)
             .code(cmd.code)
             .name(cmd.name)
             .vars(cmd.vars)

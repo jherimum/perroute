@@ -1,7 +1,8 @@
 use regex::Regex;
 use serde::{de::Visitor, Deserialize, Serialize};
 use sqlx::Type;
-use std::{fmt::Display, str::FromStr};
+use std::{borrow::Cow, fmt::Display, str::FromStr};
+use validator::ValidationError;
 
 #[macro_export]
 macro_rules! code {
@@ -13,6 +14,20 @@ macro_rules! code {
 #[derive(Debug, Clone, PartialEq, Eq, Type)]
 #[sqlx(transparent)]
 pub struct Code(String);
+
+impl Code {
+    pub fn validate(code: &str) -> Result<(), ValidationError> {
+        if let Err(_) = Self::from_str(code) {
+            return Err(ValidationError {
+                code: Cow::Borrowed("code"),
+                message: Some(Cow::Borrowed("Invalid code")),
+                params: Default::default(),
+            });
+        }
+
+        Ok(())
+    }
+}
 
 #[derive(thiserror::Error, Debug, PartialEq, Eq)]
 #[error("Invalid code {0}")]

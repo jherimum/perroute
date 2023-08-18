@@ -4,10 +4,15 @@ use perroute_commons::{
     types::{id::Id, json_schema::InvalidSchemaError},
 };
 use perroute_cqrs::{command_bus::error::CommandBusError, query_bus::error::QueryBusError};
+use std::collections::HashMap;
 use thiserror::Error;
+use validator::{ValidationError, ValidationErrors, ValidationErrorsKind};
 
 #[derive(Debug, Error)]
 pub enum ApiError {
+    #[error(transparent)]
+    ValidationError(#[from] actix_web_validator::Error),
+
     #[error(transparent)]
     InvalidSchema(#[from] InvalidSchemaError),
 
@@ -34,9 +39,6 @@ pub enum ApiError {
 
     #[error(transparent)]
     Unexpected(#[from] anyhow::Error),
-
-    #[error("{0}")]
-    Const(&'static str),
 }
 
 impl From<&ApiError> for RestError {
@@ -49,9 +51,61 @@ impl From<&ApiError> for RestError {
             ApiError::CommandBus(CommandBusError::ExpectedError(message)) => {
                 Self::UnprocessableEntity(message.to_string())
             }
+            ApiError::ValidationError(error) => match error {
+                actix_web_validator::Error::Validate(e) => {
+                    RestError::BadRequest(validation_errors_to_hashmap(e))
+                }
+                actix_web_validator::Error::Deserialize(_) => todo!(),
+                actix_web_validator::Error::JsonPayloadError(_) => todo!(),
+                actix_web_validator::Error::UrlEncodedError(_) => todo!(),
+                actix_web_validator::Error::QsError(_) => todo!(),
+            },
             _ => Self::InternalServer,
         }
     }
+}
+
+fn validation_errors_to_hashmap(errors: &ValidationErrors) -> Option<HashMap<String, String>> {
+    if errors.is_empty() {
+        return None;
+    }
+
+    let mut map = HashMap::new();
+    for (key, kind) in errors.errors() {
+        map.extend(build_kind(key.to_string(), kind));
+    }
+
+    Some(map)
+}
+
+fn build_kind(key: String, kind: &ValidationErrorsKind) -> Vec<(String, String)> {
+    let mut errors = Vec::new();
+
+    if let ValidationErrorsKind::Field(f) = kind {
+        errors.push((
+            key.clone(),
+            f.iter()
+                .map(ValidationError::to_string)
+                .collect::<Vec<_>>()
+                .join(","),
+        ));
+    }
+
+    if let ValidationErrorsKind::List(l) = kind {
+        for (i, e) in l {
+            for (k, e) in e.errors() {
+                errors.extend(build_kind(format!("{}[{}].{}", key, i, k), &e));
+            }
+        }
+    }
+
+    if let ValidationErrorsKind::Struct(l) = kind {
+        for (k, e) in l.as_ref().errors() {
+            errors.extend(build_kind(format!("{}.{}", key, k), &e));
+        }
+    }
+
+    errors
 }
 
 impl ResponseError for ApiError {

@@ -29,6 +29,8 @@ strum_macros = { workspace = true }
 sqlx = { workspace = true, features = ["postgres", "runtime-tokio-rustls"] }
 futures = { workspace = true }
 http = { workspace = true }
+validator = { workspace = true, features = ["derive"] }
+actix-web-validator = { workspace = true }
 
 [dev-dependencies]
 reqwest = { version = "0.11.18", features = [
