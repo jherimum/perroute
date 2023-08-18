@@ -38,6 +38,13 @@ impl SchemasQuery {
             ..Default::default()
         }
     }
+
+    pub fn with_message_type_id(message_type_id: Id) -> Self {
+        Self {
+            message_type_id: Some(message_type_id),
+            ..Default::default()
+        }
+    }
 }
 
 impl ModelQueryBuilder<Schema> for SchemasQuery {

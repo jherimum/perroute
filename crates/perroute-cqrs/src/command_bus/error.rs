@@ -1,31 +1,6 @@
 use super::{
     commands::CommandType,
-    handlers::{
-        business_unit::{
-            create_business_unit::CreateBusinessUnitError,
-            delete_business_unit::DeleteBusinessUnitCommandHandlerError,
-            update_business_unit::UpdateBusinessUnitError,
-        },
-        channel::{
-            create_channel::CreateChannelCommandHandlerError,
-            delete_channel::DeleteChannelCommandHandlerError,
-            update_channel::UpdateChannelCommandHandlerError,
-        },
-        connection::{
-            create_connection::CreateConnectionCommandHandlerError,
-            delete_connection::DeleteConnectionCommandHandlerError,
-        },
-        message::{
-            create_message::CreateMessageCommandError,
-            distribute_message::DistributeMessageCommandHandlerError,
-        },
-        message_type::{
-            create_message_type::CreateMessageTypeError,
-            delete_message_type::DeleteMessageTypeError,
-            update_message_type::UpdateMessageTypeError,
-        },
-        schema::create_schema::CreateSchemaError,
-    },
+    handlers::{business_unit, channel, connection, message, message_type, schema},
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -43,44 +18,47 @@ pub enum CommandBusError {
     DatabaseError(#[from] sqlx::Error),
 
     #[error(transparent)]
-    CreateBusinessUnit(#[from] CreateBusinessUnitError),
+    CreateBusinessUnit(#[from] business_unit::create_business_unit::Error),
 
     #[error(transparent)]
-    UpdateBusinessUnit(#[from] UpdateBusinessUnitError),
+    UpdateBusinessUnit(#[from] business_unit::update_business_unit::Error),
 
     #[error(transparent)]
-    DeleteBusinessUnit(#[from] DeleteBusinessUnitCommandHandlerError),
+    DeleteBusinessUnit(#[from] business_unit::delete_business_unit::Error),
 
     #[error(transparent)]
-    DeleteMessageType(#[from] DeleteMessageTypeError),
+    DeleteMessageType(#[from] message_type::delete_message_type::Error),
 
     #[error(transparent)]
-    UpdateMessageType(#[from] UpdateMessageTypeError),
+    UpdateMessageType(#[from] message_type::update_message_type::Error),
 
     #[error(transparent)]
-    CreateMessageType(#[from] CreateMessageTypeError),
+    CreateMessageType(#[from] message_type::create_message_type::Error),
 
     #[error(transparent)]
-    CreateSchema(#[from] CreateSchemaError),
+    CreateSchema(#[from] schema::create_schema::Error),
 
     #[error(transparent)]
-    CreateMessage(#[from] CreateMessageCommandError),
+    CreateMessage(#[from] message::create_message::Error),
 
     #[error(transparent)]
-    DistributeMessage(#[from] DistributeMessageCommandHandlerError),
+    DistributeMessage(#[from] message::distribute_message::Error),
 
     #[error(transparent)]
-    CreateChannel(#[from] CreateChannelCommandHandlerError),
+    CreateChannel(#[from] channel::create_channel::Error),
 
     #[error(transparent)]
-    UpdateChannel(#[from] UpdateChannelCommandHandlerError),
+    UpdateChannel(#[from] channel::update_channel::Error),
 
     #[error(transparent)]
-    DeleteChannel(#[from] DeleteChannelCommandHandlerError),
+    DeleteChannel(#[from] channel::delete_channel::Error),
 
     #[error(transparent)]
-    CreateConnection(#[from] CreateConnectionCommandHandlerError),
+    CreateConnection(#[from] connection::create_connection::Error),
 
     #[error(transparent)]
-    DeleteConnection(#[from] DeleteConnectionCommandHandlerError),
+    UpdateConnection(#[from] connection::update_connection::Error),
+
+    #[error(transparent)]
+    DeleteConnection(#[from] connection::delete_connection::Error),
 }

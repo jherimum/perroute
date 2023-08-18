@@ -1,6 +1,6 @@
 use super::{
     business_unit::{BusinessUnit, BusinessUnitQueryBuilder},
-    schema::{Schema, SchemasQueryBuilder},
+    schema::{Schema, SchemasQuery, SchemasQueryBuilder},
 };
 use crate::{
     log_query_error,
@@ -25,8 +25,23 @@ pub struct MessageTypeQuery {
 }
 
 impl MessageTypeQuery {
-    pub fn from_business_unit(business_unit_id: Id) -> Self {
+    pub fn with_business_unit(business_unit_id: Id) -> Self {
         Self {
+            business_unit_id: Some(business_unit_id),
+            ..Default::default()
+        }
+    }
+
+    pub fn with_id(id: Id) -> Self {
+        Self {
+            id: Some(id),
+            ..Default::default()
+        }
+    }
+
+    pub fn with_code_and_business_unit(code: Code, business_unit_id: Id) -> Self {
+        Self {
+            code: Some(code),
             business_unit_id: Some(business_unit_id),
             ..Default::default()
         }
@@ -79,7 +94,7 @@ pub struct MessageType {
 
 impl MessageType {
     pub async fn business_unit<'e, E: PgExecutor<'e>>(
-        self,
+        &self,
         exec: E,
     ) -> Result<BusinessUnit, sqlx::Error> {
         BusinessUnit::find_one(
@@ -90,6 +105,13 @@ impl MessageType {
                 .unwrap(),
         )
         .await
+    }
+
+    pub async fn exists_schemas<'e, E: PgExecutor<'e>>(
+        &self,
+        exec: E,
+    ) -> Result<bool, sqlx::Error> {
+        Schema::exists(exec, SchemasQuery::with_message_type_id(self.id)).await
     }
 
     pub async fn schemas<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Vec<Schema>, sqlx::Error> {

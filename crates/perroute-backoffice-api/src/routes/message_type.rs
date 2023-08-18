@@ -133,7 +133,7 @@ impl MessageTypeRouter {
                 .await?;
 
         let cmd = DeleteMessageTypeCommandBuilder::default()
-            .message_type_id(*message_type.id())
+            .id(*message_type.id())
             .build()
             .tap_err(|e| tracing::error!("Failed to build DeleteMessageTypeCommand: {e}"))
             .map_err(anyhow::Error::from)?;

@@ -53,7 +53,7 @@ impl CommandHandler for CreateRouteCommandHandler {
             .unwrap();
 
         let conn = channel.connection(ctx.pool()).await.unwrap();
-        let plugin = conn.plugin(&self.plugins).unwrap();
+        let plugin = ctx.plugins().get(conn.plugin_id()).unwrap();
         let disp = plugin.dispatcher(channel.dispatch_type()).unwrap();
 
         let props = channel.properties().merge(&cmd.properties);

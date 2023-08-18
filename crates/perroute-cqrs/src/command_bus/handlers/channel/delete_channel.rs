@@ -5,14 +5,13 @@ use crate::{
     },
     impl_command, into_event,
 };
-use anyhow::Context;
 use derive_builder::Builder;
 use derive_getters::Getters;
 use perroute_commons::types::{actor::Actor, id::Id};
 use perroute_storage::{
     models::{
         channel::{Channel, ChannelQuery},
-        route::{Route, RouteQueryBuilder},
+        route::{Route, RouteQuery},
     },
     query::FetchableModel,
 };
@@ -26,12 +25,12 @@ impl_command!(DeleteChannelCommand, CommandType::DeleteChannel);
 into_event!(DeleteChannelCommand);
 
 #[derive(Debug, thiserror::Error)]
-pub enum DeleteChannelCommandHandlerError {
+pub enum Error {
     #[error("Channel {0} not found")]
     ChannelNotFound(Id),
 
     #[error("Channel {0} could not be deleted: {1}")]
-    ChannelNotDeletable(Id, &'static str),
+    ChannelDelete(Id, &'static str),
 }
 
 #[derive(Debug)]
@@ -49,21 +48,15 @@ impl CommandHandler for DeleteChannelCommandHandler {
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
         let channel = Channel::find(ctx.pool(), ChannelQuery::with_id(cmd.id))
-            .await?
-            .ok_or(DeleteChannelCommandHandlerError::ChannelNotFound(cmd.id))
-            .tap_err(|e| tracing::error!("{e}"))?;
+            .await
+            .tap_err(|e| tracing::error!("Failed to retrieve channel {}: {e}", cmd.id))?
+            .ok_or(Error::ChannelNotFound(cmd.id))?;
 
-        if Route::exists(
-            ctx.pool(),
-            RouteQueryBuilder::default()
-                .channel_id(Some(*channel.id()))
-                .build()
-                .context("Failed to build RouteQuery")?,
-        )
-        .await
-        .tap_err(|e| tracing::error!("Failed to check if route exists:{e}"))?
+        if Route::exists(ctx.pool(), RouteQuery::with_id(*channel.id()))
+            .await
+            .tap_err(|e| tracing::error!("Failed to check if route exists:{e}"))?
         {
-            return Err(DeleteChannelCommandHandlerError::ChannelNotDeletable(
+            return Err(Error::ChannelDelete(
                 *channel.id(),
                 "There are routes associated to this channel",
             )
@@ -73,6 +66,6 @@ impl CommandHandler for DeleteChannelCommandHandler {
         Ok(channel
             .delete(ctx.tx())
             .await
-            .tap_err(|e| tracing::error!("Failed fo delete channel: {e}"))?)
+            .tap_err(|e| tracing::error!("Failed to delete channel{}: {e}", cmd.id))?)
     }
 }

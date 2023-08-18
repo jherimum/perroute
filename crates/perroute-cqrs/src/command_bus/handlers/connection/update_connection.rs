@@ -5,14 +5,29 @@ use crate::{
     },
     impl_command, into_event,
 };
+use anyhow::Context;
 use derive_builder::Builder;
 use derive_getters::Getters;
-use perroute_commons::types::{actor::Actor, id::Id, properties::Properties};
+use perroute_commons::types::{
+    actor::Actor,
+    id::Id,
+    properties::{Properties, PropertiesError},
+};
 use perroute_storage::{
-    models::connection::{Connection, ConnectionQueryBuilder},
+    models::connection::{Connection, ConnectionQuery},
     query::FetchableModel,
 };
 use serde::Serialize;
+use tap::TapFallible;
+
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    #[error("Connection with id {0} not found")]
+    ConnectionNotFound(Id),
+
+    #[error("Invalid properties: {0}")]
+    InvalidProperties(#[from] PropertiesError),
+}
 
 #[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
 pub struct UpdateConnectionCommand {
@@ -36,25 +51,22 @@ impl CommandHandler for UpdateConnectionCommandHandler {
     async fn handle<'tx>(
         &self,
         ctx: &mut CommandBusContext<'tx>,
-        actor: &Actor,
+        _: &Actor,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
-        let conn = Connection::find(
-            ctx.pool(),
-            ConnectionQueryBuilder::default()
-                .id(Some(cmd.id))
-                .build()
-                .unwrap(),
-        )
-        .await
-        .unwrap()
-        .unwrap();
+        let conn = Connection::find(ctx.pool(), ConnectionQuery::with_id(cmd.id))
+            .await?
+            .ok_or(Error::ConnectionNotFound(cmd.id))?;
 
-        let connector_plugin = ctx.plugins().get(conn.plugin_id()).unwrap();
+        let connector_plugin = ctx
+            .plugins()
+            .get(conn.plugin_id())
+            .context("Plugin with id not found")?;
+
         connector_plugin
             .configuration()
             .validate(&cmd.properties)
-            .unwrap();
+            .map_err(Error::from)?;
 
         Ok(conn
             .set_enabled(cmd.enabled)
@@ -62,6 +74,8 @@ impl CommandHandler for UpdateConnectionCommandHandler {
             .set_properties(cmd.properties)
             .update(ctx.tx())
             .await
-            .unwrap())
+            .tap_err(|e| {
+                tracing::error!("Failed to update connection {}: {e}", cmd.id);
+            })?)
     }
 }

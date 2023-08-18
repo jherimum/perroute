@@ -8,21 +8,25 @@ use crate::{
 };
 use perroute_commons::types::{actor::Actor, id::Id};
 use perroute_storage::{
-    models::message_type::{MessageType, MessageTypeQueryBuilder},
+    models::message_type::{MessageType, MessageTypeQuery},
     query::FetchableModel,
 };
+use tap::TapFallible;
 
 command!(
     DeleteMessageTypeCommand,
     CommandType::DeleteMessageType,
-    message_type_id: Id
+    id: Id
 );
 into_event!(DeleteMessageTypeCommand);
 
 #[derive(thiserror::Error, Debug, Clone)]
-pub enum DeleteMessageTypeError {
+pub enum Error {
     #[error("Message type with id {0} not found")]
     MessageTypeNotFound(Id),
+
+    #[error("Message type {0} could not be deleted:{1}")]
+    MessageTypeDelete(Id, &'static str),
 }
 
 #[derive(Debug)]
@@ -40,17 +44,27 @@ impl CommandHandler for DeleteMessageTypeCommandHandler {
         _: &Actor,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
-        MessageType::find(
-            ctx.tx(),
-            MessageTypeQueryBuilder::default()
-                .id(Some(*cmd.message_type_id()))
-                .build()
-                .unwrap(),
-        )
-        .await?
-        .ok_or_else(|| DeleteMessageTypeError::MessageTypeNotFound(*cmd.message_type_id()))?
-        .delete(ctx.tx())
-        .await
-        .map_err(CommandBusError::from)
+        let message_type = MessageType::find(ctx.tx(), MessageTypeQuery::with_id(cmd.id))
+            .await
+            .tap_err(|e| tracing::error!("Failed to retrive message type {}: {e}", cmd.id))?
+            .ok_or_else(|| Error::MessageTypeNotFound(cmd.id))?;
+
+        if message_type.exists_schemas(ctx.pool()).await.tap_err(|e| {
+            tracing::error!(
+                "Failed to check if schemas exists for message type {}:{e}",
+                cmd.id
+            )
+        })? {
+            return Err(Error::MessageTypeDelete(
+                cmd.id,
+                "Threre are schemas associated with message type",
+            )
+            .into());
+        }
+
+        Ok(message_type
+            .delete(ctx.tx())
+            .await
+            .tap_err(|e| tracing::error!("Failed to delete message type {}:{e}", cmd.id))?)
     }
 }

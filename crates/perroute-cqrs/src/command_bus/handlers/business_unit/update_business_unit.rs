@@ -16,7 +16,7 @@ use perroute_storage::{
 use tap::TapFallible;
 
 #[derive(thiserror::Error, Debug, Clone)]
-pub enum UpdateBusinessUnitError {
+pub enum Error {
     #[error("BusinessUnit with id {0} nor found")]
     BusinessUnitNotFound(Id),
 }
@@ -42,7 +42,7 @@ impl CommandHandler for UpdateBusinessUnitCommandHandler {
     async fn handle<'ctx>(
         &self,
         ctx: &mut CommandBusContext<'ctx>,
-        actor: &Actor,
+        _: &Actor,
         command: Self::Command,
     ) -> Result<BusinessUnit, CommandBusError> {
         Ok(BusinessUnit::find(
@@ -53,12 +53,10 @@ impl CommandHandler for UpdateBusinessUnitCommandHandler {
         .tap_err(|e| {
             tracing::error!(
                 "Error while fetching business unit {}: {e}",
-                command.business_unit_id()
+                command.business_unit_id
             );
         })?
-        .ok_or(UpdateBusinessUnitError::BusinessUnitNotFound(
-            command.business_unit_id,
-        ))?
+        .ok_or(Error::BusinessUnitNotFound(command.business_unit_id))?
         .set_name(command.name.clone())
         .set_vars(command.vars.clone())
         .update(ctx.tx())

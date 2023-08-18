@@ -16,12 +16,16 @@ use perroute_storage::{
     query::FetchableModel,
 };
 use serde::Serialize;
-use sqlx::PgPool;
 use tap::TapFallible;
+
+#[derive(thiserror::Error, Debug, Clone)]
+pub enum Error {
+    #[error("A BusinessUnit with code {0} already exists")]
+    CodeAlreadyExists(Code),
+}
 
 #[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
 pub struct CreateBusinessUnitCommand {
-    #[builder(default)]
     business_unit_id: Id,
     code: Code,
     name: String,
@@ -37,12 +41,6 @@ into_event!(
 #[derive(Debug)]
 pub struct CreateBusinessUnitCommandHandler;
 
-#[derive(thiserror::Error, Debug, Clone)]
-pub enum CreateBusinessUnitError {
-    #[error("A BusinessUnit with code {0} already exists")]
-    CodeAlreadyExists(Code),
-}
-
 #[async_trait]
 impl CommandHandler for CreateBusinessUnitCommandHandler {
     type Command = CreateBusinessUnitCommand;
@@ -52,11 +50,21 @@ impl CommandHandler for CreateBusinessUnitCommandHandler {
     async fn handle<'tx>(
         &self,
         ctx: &mut CommandBusContext<'tx>,
-        actor: &Actor,
+        _: &Actor,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
-        if exists_with_code(ctx.pool(), &cmd.code).await? {
-            return Err(CreateBusinessUnitError::CodeAlreadyExists(cmd.code).into());
+        let code_exists =
+            BusinessUnit::exists(ctx.pool(), BusinessUnitQuery::with_code(cmd.code.clone()))
+                .await
+                .tap_err(|e| {
+                    tracing::error!(
+                        "Failed to check if business Unit with code {} exists:{e}",
+                        cmd.code
+                    );
+                })?;
+
+        if code_exists {
+            return Err(Error::CodeAlreadyExists(cmd.code).into());
         }
 
         Ok(BusinessUnitBuilder::default()
@@ -70,12 +78,4 @@ impl CommandHandler for CreateBusinessUnitCommandHandler {
             .await
             .tap_err(|e| tracing::error!("Failed to save BusinessUnit: {e}"))?)
     }
-}
-
-async fn exists_with_code<'tx>(poll: &PgPool, code: &Code) -> Result<bool, sqlx::Error> {
-    BusinessUnit::exists(poll, BusinessUnitQuery::with_code(code.clone()))
-        .await
-        .tap_err(|e| {
-            tracing::error!("Failed to check if BusinessUnit exists:{e}");
-        })
 }

@@ -32,7 +32,7 @@ impl ChannelQuery {
         }
     }
 
-    pub fn from_business_unit(business_unit_id: Id) -> Self {
+    pub fn with_business_unit(business_unit_id: Id) -> Self {
         Self {
             business_unit_id: Some(business_unit_id),
             ..Default::default()

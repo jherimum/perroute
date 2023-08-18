@@ -9,10 +9,19 @@ use derive_builder::Builder;
 use derive_getters::Getters;
 use perroute_commons::types::{actor::Actor, code::Code, id::Id, vars::Vars};
 use perroute_storage::{
-    models::message_type::{MessageType, MessageTypeBuilder, MessageTypeQueryBuilder},
+    models::message_type::{
+        MessageType, MessageTypeBuilder, MessageTypeQuery, MessageTypeQueryBuilder,
+    },
     query::FetchableModel,
 };
 use serde::Serialize;
+use tap::TapFallible;
+
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    #[error("Code {0} already exists")]
+    CodeAlreadyExists(Code),
+}
 
 #[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
 pub struct CreateMessageTypeCommand {
@@ -26,12 +35,6 @@ pub struct CreateMessageTypeCommand {
 
 impl_command!(CreateMessageTypeCommand, CommandType::CreateMessageType);
 into_event!(CreateMessageTypeCommand);
-
-#[derive(Debug, thiserror::Error)]
-pub enum CreateMessageTypeError {
-    #[error("Code {0} already exists")]
-    CodeAlreadyExists(Code),
-}
 
 #[derive(Debug)]
 pub struct CreateMessageTypeCommandHandler;
@@ -50,15 +53,11 @@ impl CommandHandler for CreateMessageTypeCommandHandler {
     ) -> Result<MessageType, CommandBusError> {
         if MessageType::exists(
             ctx.pool(),
-            MessageTypeQueryBuilder::default()
-                .code(Some(cmd.code.clone()))
-                .business_unit_id(Some(cmd.business_unit_id))
-                .build()
-                .unwrap(),
+            MessageTypeQuery::with_code_and_business_unit(cmd.code.clone(), cmd.business_unit_id),
         )
         .await?
         {
-            return Err(CreateMessageTypeError::CodeAlreadyExists(cmd.code().clone()).into());
+            return Err(Error::CodeAlreadyExists(cmd.code().clone()).into());
         }
 
         let message_type = MessageTypeBuilder::default()
@@ -71,7 +70,8 @@ impl CommandHandler for CreateMessageTypeCommandHandler {
             .build()
             .unwrap()
             .save(ctx.tx())
-            .await?;
+            .await
+            .tap_err(|e| tracing::error!("Failed to save message type: {e}"))?;
         Ok(message_type)
     }
 }

@@ -35,7 +35,7 @@ into_event!(
 impl_command!(DistributeMessageCommand, CommandType::DistributeMessage);
 
 #[derive(Debug, thiserror::Error)]
-pub enum DistributeMessageCommandHandlerError {
+pub enum Error {
     #[error("Message {0} not found")]
     MessageNotFound(Id),
 
@@ -62,9 +62,7 @@ impl CommandHandler for DistributeMessageCommandHandler {
 
         if Status::Pending != *message.status() {
             tracing::error!("To be distributed message must be in pending state");
-            return Err(
-                DistributeMessageCommandHandlerError::MessageNotFound(cmd.message_id).into(),
-            );
+            return Err(Error::MessageNotFound(cmd.message_id).into());
         }
 
         for route in fetch_routes(ctx.pool(), &message).await? {
@@ -125,5 +123,5 @@ async fn retrieve_message(pool: &PgPool, message_id: Id) -> Result<Message, Comm
     .await
     .tap_err(|e| tracing::error!("Failed to retrieve message from database: {e}"))?
     .tap_none(|| tracing::warn!("Message with id {} not found", message_id))
-    .ok_or_else(|| DistributeMessageCommandHandlerError::MessageNotFound(message_id).into())
+    .ok_or_else(|| Error::MessageNotFound(message_id).into())
 }

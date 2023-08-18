@@ -15,7 +15,7 @@ use perroute_storage::{
 use serde::Serialize;
 
 #[derive(Debug, thiserror::Error)]
-pub enum DeleteConnectionCommandHandlerError {}
+pub enum Error {}
 
 #[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
 pub struct DeleteConnectionCommand {

@@ -8,9 +8,16 @@ use crate::{
 };
 use perroute_commons::types::{actor::Actor, id::Id, vars::Vars};
 use perroute_storage::{
-    models::message_type::{MessageType, MessageTypeQueryBuilder},
+    models::message_type::{MessageType, MessageTypeQuery},
     query::FetchableModel,
 };
+use tap::TapFallible;
+
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    #[error("Message type with id {0} not found")]
+    MessageTypeNotFound(Id),
+}
 
 command!(
     UpdateMessageTypeCommand,
@@ -22,12 +29,6 @@ command!(
 
 );
 into_event!(UpdateMessageTypeCommand);
-
-#[derive(Debug, thiserror::Error)]
-pub enum UpdateMessageTypeError {
-    #[error("Message type with id {0} not found")]
-    MessageTypeNotFound(Id),
-}
 
 #[derive(Debug)]
 pub struct UpdateMessageTypeCommandHandler;
@@ -44,20 +45,17 @@ impl CommandHandler for UpdateMessageTypeCommandHandler {
         _: &Actor,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
-        MessageType::find(
-            ctx.tx(),
-            MessageTypeQueryBuilder::default()
-                .id(Some(cmd.id))
-                .build()
-                .unwrap(),
+        Ok(
+            MessageType::find(ctx.tx(), MessageTypeQuery::with_id(cmd.id))
+                .await
+                .tap_err(|e| tracing::error!("Failed to retrieve message type {}:{e}", cmd.id))?
+                .ok_or(Error::MessageTypeNotFound(cmd.id))?
+                .set_name(cmd.name)
+                .set_enabled(cmd.enabled)
+                .set_vars(cmd.vars)
+                .update(ctx.tx())
+                .await
+                .tap_err(|e| tracing::error!("Failed to update message type {}: {e}", cmd.id))?,
         )
-        .await?
-        .ok_or(UpdateMessageTypeError::MessageTypeNotFound(cmd.id))?
-        .set_name(cmd.name)
-        .set_enabled(cmd.enabled)
-        .set_vars(cmd.vars)
-        .update(ctx.tx())
-        .await
-        .map_err(CommandBusError::from)
     }
 }

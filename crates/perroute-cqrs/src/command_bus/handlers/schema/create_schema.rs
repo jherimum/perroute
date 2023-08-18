@@ -35,7 +35,7 @@ command!(
 into_event!(CreateSchemaCommand);
 
 #[derive(Debug, thiserror::Error)]
-pub enum CreateSchemaError {
+pub enum Error {
     #[error(transparent)]
     InvalidSchema(#[from] InvalidSchemaError),
 }

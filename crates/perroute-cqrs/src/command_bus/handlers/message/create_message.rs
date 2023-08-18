@@ -45,7 +45,7 @@ into_event!(
 );
 
 #[derive(Error, Debug)]
-pub enum CreateMessageCommandError {
+pub enum Error {
     #[error("Business unit not found: {0}")]
     BusinessUnitNotFound(Code),
 
@@ -92,7 +92,7 @@ impl CommandHandler for CreateMessageCommandHandler {
         )
         .await
         .tap_err(|e| tracing::error!("Failed to retrieve business unit:{e}"))?
-        .ok_or_else(|| CreateMessageCommandError::BusinessUnitNotFound(cmd.business_unit_code))?;
+        .ok_or_else(|| Error::BusinessUnitNotFound(cmd.business_unit_code))?;
 
         let message_type = MessageType::find(
             ctx.pool(),
@@ -104,13 +104,10 @@ impl CommandHandler for CreateMessageCommandHandler {
         )
         .await
         .tap_err(|e| tracing::error!("Failed to retrieve message type:{e}"))?
-        .ok_or_else(|| CreateMessageCommandError::MessageTypeNotFound(cmd.message_type_code))?;
+        .ok_or_else(|| Error::MessageTypeNotFound(cmd.message_type_code))?;
 
         if !message_type.enabled() {
-            return Err(CreateMessageCommandError::MessageTypeDisabled(
-                message_type.code().clone(),
-            )
-            .into());
+            return Err(Error::MessageTypeDisabled(message_type.code().clone()).into());
         }
 
         let schema = Schema::find(
@@ -123,21 +120,21 @@ impl CommandHandler for CreateMessageCommandHandler {
         )
         .await
         .tap_err(|e| tracing::error!("Failed to retrieve schema:{e}"))?
-        .ok_or_else(|| CreateMessageCommandError::SchemaNotFound(cmd.schema_version))?;
+        .ok_or_else(|| Error::SchemaNotFound(cmd.schema_version))?;
 
         if !schema.enabled() {
-            return Err(CreateMessageCommandError::SchemaDisabled(cmd.schema_version).into());
+            return Err(Error::SchemaDisabled(cmd.schema_version).into());
         }
 
         if !schema.published() {
-            return Err(CreateMessageCommandError::SchemaNotPublished(cmd.schema_version).into());
+            return Err(Error::SchemaNotPublished(cmd.schema_version).into());
         }
 
         schema
             .value()
             .validate(&cmd.payload)
             .tap_err(|e| tracing::error!("Invalid payload: {e}"))
-            .map_err(CreateMessageCommandError::from)?;
+            .map_err(Error::from)?;
 
         MessageBuilder::default()
             .id(cmd.id)

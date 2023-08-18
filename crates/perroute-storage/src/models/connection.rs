@@ -38,6 +38,15 @@ pub struct ConnectionQuery {
     plugin_id: Option<ConnectorPluginId>,
 }
 
+impl ConnectionQuery {
+    pub fn with_id(id: Id) -> Self {
+        Self {
+            id: Some(id),
+            ..Default::default()
+        }
+    }
+}
+
 impl ModelQueryBuilder<Connection> for ConnectionQuery {
     fn build(&self, projection: Projection) -> sqlx::QueryBuilder<'_, sqlx::Postgres> {
         let mut builder = projection.query_builder();
@@ -61,10 +70,6 @@ impl ModelQueryBuilder<Connection> for ConnectionQuery {
 impl DatabaseModel for Connection {}
 
 impl Connection {
-    pub fn plugin(&self, plugins: &Plugins) -> Option<Arc<dyn ConnectorPlugin>> {
-        plugins.get(self.plugin_id())
-    }
-
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
         sqlx::query_as(
             r#"

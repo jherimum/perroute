@@ -19,7 +19,7 @@ use perroute_storage::{
 use tap::TapFallible;
 
 #[derive(thiserror::Error, Debug, Clone)]
-pub enum DeleteBusinessUnitCommandHandlerError {
+pub enum Error {
     #[error("BusinessUnit with id {0} nor found")]
     BusinessUnitNotFound(Id),
 
@@ -47,34 +47,34 @@ impl CommandHandler for DeleteBusinessUnitCommandHandler {
         &self,
         ctx: &mut CommandBusContext<'ctx>,
         _: &Actor,
-        command: Self::Command,
+        cmd: Self::Command,
     ) -> Result<bool, CommandBusError> {
-        let bu = BusinessUnit::find(
-            ctx.tx(),
-            BusinessUnitQuery::with_id(command.business_unit_id),
-        )
-        .await
-        .tap_err(|e| tracing::error!("Failed to retrieve business unit: {e}"))?
-        .ok_or(DeleteBusinessUnitCommandHandlerError::BusinessUnitNotFound(
-            command.business_unit_id,
-        ))?;
+        let bu = BusinessUnit::find(ctx.tx(), BusinessUnitQuery::with_id(cmd.business_unit_id))
+            .await
+            .tap_err(|e| {
+                tracing::error!(
+                    "Failed to retrieve business unit {}: {e}",
+                    cmd.business_unit_id
+                )
+            })?
+            .ok_or(Error::BusinessUnitNotFound(cmd.business_unit_id))?;
 
-        if Channel::exists(ctx.pool(), ChannelQuery::from_business_unit(*bu.id()))
+        if Channel::exists(ctx.pool(), ChannelQuery::with_business_unit(*bu.id()))
             .await
             .tap_err(|e| tracing::error!("Failed to check exist channels: {e}"))?
         {
-            return Err(DeleteBusinessUnitCommandHandlerError::BusinessUnitDelete(
+            return Err(Error::BusinessUnitDelete(
                 *bu.id(),
-                "There are channles associated with this Business unit",
+                "There are channels associated with this Business unit",
             )
             .into());
         }
 
-        if MessageType::exists(ctx.pool(), MessageTypeQuery::from_business_unit(*bu.id()))
+        if MessageType::exists(ctx.pool(), MessageTypeQuery::with_business_unit(*bu.id()))
             .await
             .tap_err(|e| tracing::error!("Failed to check exist message types: {e}"))?
         {
-            return Err(DeleteBusinessUnitCommandHandlerError::BusinessUnitDelete(
+            return Err(Error::BusinessUnitDelete(
                 *bu.id(),
                 "There are message types associated with this Business unit",
             )
