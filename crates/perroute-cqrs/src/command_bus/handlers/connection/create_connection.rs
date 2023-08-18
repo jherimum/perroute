@@ -5,12 +5,27 @@ use crate::{
     },
     impl_command, into_event,
 };
+use anyhow::Context;
 use derive_builder::Builder;
 use derive_getters::Getters;
-use perroute_commons::types::{actor::Actor, id::Id, properties::Properties};
+use perroute_commons::types::{
+    actor::Actor,
+    id::Id,
+    properties::{Properties, PropertiesError},
+};
 use perroute_connectors::types::ConnectorPluginId;
 use perroute_storage::models::connection::{Connection, ConnectionBuilder};
 use serde::Serialize;
+use tap::TapFallible;
+
+#[derive(Debug, thiserror::Error)]
+pub enum CreateConnectionCommandHandlerError {
+    #[error("Plugin with id {0} not found")]
+    PluginNotFound(ConnectorPluginId),
+
+    #[error("Invalid properties: {0}")]
+    InvalidProperties(#[from] PropertiesError),
+}
 
 #[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
 pub struct CreateConnectionCommand {
@@ -37,11 +52,14 @@ impl CommandHandler for CreateConnectionCommandHandler {
         _: &Actor,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
-        let connector_plugin = ctx.plugins().get(cmd.plugin_id()).unwrap();
+        let connector_plugin = ctx.plugins().get(cmd.plugin_id()).ok_or(
+            CreateConnectionCommandHandlerError::PluginNotFound(cmd.plugin_id),
+        )?;
+
         connector_plugin
             .configuration()
             .validate(&cmd.properties)
-            .unwrap();
+            .map_err(CreateConnectionCommandHandlerError::from)?;
 
         Ok(ConnectionBuilder::default()
             .id(cmd.id)
@@ -50,9 +68,11 @@ impl CommandHandler for CreateConnectionCommandHandler {
             .properties(cmd.properties)
             .enabled(false)
             .build()
-            .unwrap()
+            .context("Failed to build connection")?
             .save(ctx.tx())
             .await
-            .unwrap())
+            .tap_err(|e| {
+                tracing::error!("Failed to save connection: {e}");
+            })?)
     }
 }

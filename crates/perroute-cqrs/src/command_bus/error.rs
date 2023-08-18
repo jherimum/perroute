@@ -11,6 +11,10 @@ use super::{
             delete_channel::DeleteChannelCommandHandlerError,
             update_channel::UpdateChannelCommandHandlerError,
         },
+        connection::{
+            create_connection::CreateConnectionCommandHandlerError,
+            delete_connection::DeleteConnectionCommandHandlerError,
+        },
         message::{
             create_message::CreateMessageCommandError,
             distribute_message::DistributeMessageCommandHandlerError,
@@ -73,4 +77,10 @@ pub enum CommandBusError {
 
     #[error(transparent)]
     DeleteChannel(#[from] DeleteChannelCommandHandlerError),
+
+    #[error(transparent)]
+    CreateConnection(#[from] CreateConnectionCommandHandlerError),
+
+    #[error(transparent)]
+    DeleteConnection(#[from] DeleteConnectionCommandHandlerError),
 }
