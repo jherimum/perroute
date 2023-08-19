@@ -30,7 +30,7 @@ pub fn routes() -> Scope {
                     web::resource("")
                         .name(TemplateRouter::TEMPLATE_RESOURCE_NAME)
                         .route(web::get().to(TemplateRouter::find_template))
-                        .route(web::put().to(TemplateRouter::update_template))
+                        .route(web::patch().to(TemplateRouter::update_template))
                         .route(web::delete().to(TemplateRouter::delete_template)),
                 )
                 .service(
@@ -55,7 +55,7 @@ pub fn routes() -> Scope {
                     web::resource("")
                         .name(SchemaRouter::SCHEMA_RESOURCE_NAME)
                         .route(web::get().to(SchemaRouter::find_schema))
-                        .route(web::put().to(SchemaRouter::update_schema))
+                        .route(web::patch().to(SchemaRouter::update_schema))
                         .route(web::delete().to(SchemaRouter::delete_schema)),
                 )
                 .service(
@@ -80,7 +80,7 @@ pub fn routes() -> Scope {
                     web::resource("")
                         .name(MessageTypeRouter::MESSAGE_TYPE_RESOURCE_NAME)
                         .route(web::get().to(MessageTypeRouter::find_message_type))
-                        .route(web::put().to(MessageTypeRouter::update_message_type))
+                        .route(web::patch().to(MessageTypeRouter::update_message_type))
                         .route(web::delete().to(MessageTypeRouter::delete_message_type)),
                 )
                 .service(schemas),
@@ -115,7 +115,7 @@ pub fn routes() -> Scope {
                 web::resource("")
                     .name(BusinessUnitRouter::BU_RESOURCE_NAME)
                     .route(web::get().to(BusinessUnitRouter::get))
-                    .route(web::put().to(BusinessUnitRouter::update))
+                    .route(web::patch().to(BusinessUnitRouter::update))
                     .route(web::delete().to(BusinessUnitRouter::delete)),
             ),
         );
@@ -152,7 +152,7 @@ pub fn routes() -> Scope {
                 web::resource("")
                     .name(ConnectionsRouter::CONN_RESOURCE_NAME)
                     .route(web::get().to(ConnectionsRouter::get))
-                    .route(web::put().to(ConnectionsRouter::update))
+                    .route(web::patch().to(ConnectionsRouter::update))
                     .route(web::delete().to(ConnectionsRouter::delete)),
             ),
         );
@@ -169,7 +169,7 @@ pub fn routes() -> Scope {
                 web::resource("")
                     .name(ChannelsRouter::CHANNEL_RESOURCE_NAME)
                     .route(web::get().to(ChannelsRouter::get))
-                    .route(web::put().to(ChannelsRouter::update))
+                    .route(web::patch().to(ChannelsRouter::update))
                     .route(web::delete().to(ChannelsRouter::delete)),
             ),
         );

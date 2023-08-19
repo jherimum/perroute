@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::api::response::CollectionResourceModel;
 use crate::api::response::Links;
 use crate::api::response::ResourceBuilder;
@@ -11,30 +13,30 @@ use validator::Validate;
 pub struct CreateTemplateRequest {
     #[validate(custom = "perroute_commons::types::name::validate")]
     pub name: String,
+    pub subject: Option<String>,
+    pub html: Option<String>,
+    pub text: Option<String>,
+    pub vars: HashMap<String, String>,
+
+    #[validate(custom = "perroute_connectors::types::DispatchType::validate")]
+    pub dispatch_type: String,
 
     #[validate(custom = "perroute_commons::types::id::Id::validate")]
     pub business_unit_id: String,
 
     #[validate(custom = "perroute_commons::types::id::Id::validate")]
     pub message_type_id: String,
-
-    pub subject: Option<String>,
-    pub html: Option<String>,
-    pub text: Option<String>,
-
-    #[validate(custom = "perroute_connectors::types::DispatchType::validate")]
-    pub dispatch_type: String,
 }
 
 #[derive(Debug, serde::Deserialize, Clone, Validate, Default)]
 #[serde(default)]
 pub struct UpdateTemplateRequest {
     #[validate(custom = "perroute_commons::types::name::validate")]
-    pub name: String,
-
-    pub subject: Option<String>,
-    pub html: Option<String>,
-    pub text: Option<String>,
+    pub name: Option<String>,
+    pub subject: Option<Option<String>>,
+    pub html: Option<Option<String>>,
+    pub text: Option<Option<String>>,
+    pub vars: Option<HashMap<String, String>>,
 }
 
 #[derive(Debug, Serialize, Clone)]
@@ -45,6 +47,7 @@ pub struct TemplateResource {
     pub html: Option<String>,
     pub text: Option<String>,
     pub dispatch_type: String,
+    pub active: bool,
 }
 
 impl From<Template> for TemplateResource {
@@ -56,6 +59,7 @@ impl From<Template> for TemplateResource {
             html: template.html().clone().map(Into::into),
             text: template.text().clone().map(Into::into),
             dispatch_type: template.dispatch_type().into(),
+            active: *template.active(),
         }
     }
 }

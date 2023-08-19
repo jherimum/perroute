@@ -3,35 +3,34 @@ use crate::{
     links::{Linkrelation, ResourceLink},
 };
 use actix_web::HttpRequest;
-use derive_getters::Getters;
 use perroute_storage::models::connection::Connection;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use validator::Validate;
 
-#[derive(Debug, Deserialize, Clone, Getters, Validate, Default)]
+#[derive(Debug, Deserialize, Clone, Validate, Default)]
 #[serde(default)]
 pub struct CreateConnectionRequest {
     #[validate(custom = "perroute_commons::types::name::validate")]
-    name: String,
+    pub name: String,
 
     #[validate(custom = "perroute_connectors::types::ConnectorPluginId::validate")]
-    plugin_id: String,
+    pub plugin_id: String,
 
     #[validate(custom = "perroute_commons::types::properties::Properties::validate")]
-    properties: Value,
+    pub properties: Value,
 }
 
-#[derive(Debug, Deserialize, Clone, Getters, Validate, Default)]
+#[derive(Debug, Deserialize, Clone, Validate, Default)]
 #[serde(default)]
 pub struct UpdateConnectionRequest {
     #[validate(custom = "perroute_commons::types::name::validate")]
-    name: String,
+    pub name: Option<String>,
 
     #[validate(custom = "perroute_commons::types::properties::Properties::validate")]
-    properties: Value,
+    pub properties: Option<Value>,
 
-    enabled: bool,
+    pub enabled: Option<bool>,
 }
 
 #[derive(Clone, Serialize, Debug, Deserialize, PartialEq, Eq)]

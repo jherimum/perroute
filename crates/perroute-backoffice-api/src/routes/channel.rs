@@ -41,12 +41,12 @@ impl ChannelsRouter {
                 &actor,
                 &CreateChannelCommandBuilder::default()
                     .id(new_id!())
-                    .business_unit_id(body.business_id().try_into().context("Invalid id")?)
-                    .connection_id(body.connection_id().try_into().context("Invalid id")?)
-                    .priority(body.priority().into())
-                    .dispatch_properties(body.properties().into())
+                    .business_unit_id(body.business_id.try_into().context("Invalid id")?)
+                    .connection_id(body.connection_id.try_into().context("Invalid id")?)
+                    .priority(body.priority.into())
+                    .dispatch_properties(body.properties.into())
                     .dispatch_type(
-                        body.dispatch_type()
+                        body.dispatch_type
                             .try_into()
                             .context("Invalid dispatch type")?,
                     )
@@ -70,9 +70,9 @@ impl ChannelsRouter {
                 &actor,
                 &UpdateChannelCommandBuilder::default()
                     .id(path.into_inner())
-                    .priority(body.priority().into())
-                    .dispatch_properties(body.properties().into())
-                    .enabled(*body.enabled())
+                    .priority(body.priority.map(Into::into))
+                    .dispatch_properties(body.properties.map(Into::into))
+                    .enabled(body.enabled)
                     .build()
                     .unwrap(),
             )

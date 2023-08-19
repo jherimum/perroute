@@ -9,7 +9,7 @@ use crate::{
 use async_trait::async_trait;
 use perroute_commons::types::{actor::Actor, id::Id, template::TemplateSnippet, vars::Vars};
 use perroute_storage::{
-    models::template::{Template, TemplatesQueryBuilder},
+    models::template::{Template, TemplatesQuery},
     query::FetchableModel,
 };
 
@@ -17,11 +17,11 @@ command!(
     UpdateTemplateCommand,
     CommandType::UpdateTemplate,
     id: Id,
-    name: String,
-    subject: Option<String>,
-    html: Option<TemplateSnippet>,
-    text: Option<TemplateSnippet>,
-    vars: Vars
+    name: Option<String>,
+    subject: Option<Option<String>>,
+    html: Option<Option<TemplateSnippet>>,
+    text: Option<Option<TemplateSnippet>>,
+    vars: Option<Vars>
 );
 into_event!(UpdateTemplateCommand);
 
@@ -40,25 +40,42 @@ impl CommandHandler for UpdateTemplateCommandHandler {
     async fn handle<'tx>(
         &self,
         ctx: &mut CommandBusContext<'tx>,
-        actor: &Actor,
+        _: &Actor,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
-        Template::find(
-            ctx.pool(),
-            TemplatesQueryBuilder::default()
-                .id(Some(cmd.id))
-                .build()
-                .unwrap(),
-        )
-        .await?
-        .unwrap()
-        .set_name(cmd.name)
-        .set_html(cmd.html)
-        .set_text(cmd.text)
-        .set_subject(cmd.subject)
-        .set_vars(cmd.vars)
-        .save(ctx.tx())
-        .await
-        .map_err(Into::into)
+        let mut template = Template::find(ctx.pool(), TemplatesQuery::with_id(cmd.id))
+            .await?
+            .unwrap();
+
+        if cmd.name.is_none()
+            & cmd.subject.is_none()
+            & cmd.html.is_none()
+            & cmd.text.is_none()
+            & cmd.vars.is_none()
+        {
+            return Ok(template);
+        }
+
+        if let Some(name) = cmd.name {
+            template = template.set_name(name);
+        }
+
+        if let Some(vars) = cmd.vars {
+            template = template.set_vars(vars);
+        }
+
+        if let Some(subject) = cmd.subject {
+            template = template.set_subject(subject);
+        }
+
+        if let Some(html) = cmd.html {
+            template = template.set_html(html);
+        }
+
+        if let Some(text) = cmd.text {
+            template = template.set_text(text);
+        }
+
+        Ok(template.save(ctx.tx()).await?)
     }
 }

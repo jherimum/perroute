@@ -23,9 +23,8 @@ pub struct CreateBusinessUnitRequest {
 #[derive(Debug, serde::Deserialize, Clone, Validate)]
 pub struct UpdateBusinessUnitRequest {
     #[validate(custom = "perroute_commons::types::name::validate")]
-    pub name: String,
-
-    pub vars: HashMap<String, String>,
+    pub name: Option<String>,
+    pub vars: Option<HashMap<String, String>>,
 }
 
 #[derive(Clone, Serialize, Debug, Deserialize, PartialEq, Eq)]

@@ -58,6 +58,7 @@ async-recursion = "1"
 derive_setters = "0.1"
 validator = "0.16"
 actix-web-validator = "5"
+serde_with = "3"
 
 [profile.release]
 strip = true

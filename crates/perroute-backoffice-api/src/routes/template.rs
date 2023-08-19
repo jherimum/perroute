@@ -13,7 +13,7 @@ use crate::{
 use actix_web::web::{Data, Json, Path};
 use perroute_commons::{
     new_id,
-    types::{actor::Actor, id::Id},
+    types::{actor::Actor, id::Id, template::TemplateSnippet},
 };
 use perroute_cqrs::{
     command_bus::handlers::template::{
@@ -97,9 +97,9 @@ impl TemplateRouter {
         let cmd = UpdateTemplateCommandBuilder::default()
             .id(*template.id())
             .name(body.name)
-            .html(body.html.map(Into::into))
-            .text(body.text.map(Into::into))
-            .subject(body.subject.map(Into::into))
+            .html(body.html.map(|s| s.map(TemplateSnippet::from)))
+            .text(body.text.map(|s| s.map(TemplateSnippet::from)))
+            .subject(body.subject.map(|s| s.map(Into::into)))
             .build()
             .unwrap();
 

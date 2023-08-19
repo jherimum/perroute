@@ -33,7 +33,7 @@ impl From<Arc<dyn ConnectorPlugin>> for ConnectorPluginResource {
                 .into_iter()
                 .cloned()
                 .collect(),
-            dispatcher_plugins: value.dispatchers().into_iter().map(|d| d.into()).collect(),
+            dispatcher_plugins: value.dispatchers().into_iter().map(Into::into).collect(),
         }
     }
 }

@@ -10,6 +10,7 @@ use serde_json::Value;
 use validator::Validate;
 
 #[derive(Debug, Deserialize, Validate, Default)]
+#[serde(default)]
 pub struct CreateSchemaRequest {
     #[validate(custom = "perroute_commons::types::json_schema::JsonSchema::validate")]
     pub value: Value,
@@ -17,12 +18,13 @@ pub struct CreateSchemaRequest {
     pub vars: HashMap<String, String>,
 }
 
-#[derive(Debug, Deserialize, Validate)]
+#[derive(Debug, Deserialize, Validate, Default)]
+#[serde(default)]
 pub struct UpdateSchemaRequest {
     #[validate(custom = "perroute_commons::types::json_schema::JsonSchema::validate")]
-    pub value: Value,
-    pub enabled: bool,
-    pub vars: HashMap<String, String>,
+    pub value: Option<Value>,
+    pub enabled: Option<bool>,
+    pub vars: Option<HashMap<String, String>>,
 }
 
 #[derive(Debug, Serialize, Clone)]

@@ -23,9 +23,9 @@ command!(
     UpdateMessageTypeCommand,
     CommandType::UpdateMessageType,
     id: Id,
-    name: String,
-    enabled: bool,
-    vars: Vars
+    name: Option<String>,
+    enabled: Option<bool>,
+    vars: Option<Vars>
 
 );
 into_event!(UpdateMessageTypeCommand);
@@ -45,17 +45,30 @@ impl CommandHandler for UpdateMessageTypeCommandHandler {
         _: &Actor,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
-        Ok(
-            MessageType::find(ctx.tx(), MessageTypeQuery::with_id(cmd.id))
-                .await
-                .tap_err(|e| tracing::error!("Failed to retrieve message type {}:{e}", cmd.id))?
-                .ok_or(Error::MessageTypeNotFound(cmd.id))?
-                .set_name(cmd.name)
-                .set_enabled(cmd.enabled)
-                .set_vars(cmd.vars)
-                .update(ctx.tx())
-                .await
-                .tap_err(|e| tracing::error!("Failed to update message type {}: {e}", cmd.id))?,
-        )
+        let mut message_type = MessageType::find(ctx.tx(), MessageTypeQuery::with_id(cmd.id))
+            .await
+            .tap_err(|e| tracing::error!("Failed to retrieve message type {}:{e}", cmd.id))?
+            .ok_or(Error::MessageTypeNotFound(cmd.id))?;
+
+        if cmd.name.is_none() & cmd.enabled.is_none() & cmd.vars.is_none() {
+            return Ok(message_type);
+        }
+
+        if let Some(name) = cmd.name {
+            message_type = message_type.set_name(name);
+        }
+
+        if let Some(enabled) = cmd.enabled {
+            message_type = message_type.set_enabled(enabled);
+        }
+
+        if let Some(vars) = cmd.vars {
+            message_type = message_type.set_vars(vars);
+        }
+
+        Ok(message_type
+            .update(ctx.tx())
+            .await
+            .tap_err(|e| tracing::error!("Failed to update message type {}: {e}", cmd.id))?)
     }
 }

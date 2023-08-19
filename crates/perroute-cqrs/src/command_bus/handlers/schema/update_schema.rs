@@ -26,9 +26,9 @@ command!(
     UpdateSchemaCommand,
     CommandType::UpdateSchema,
     id: Id,
-    value: JsonSchema,
-    enabled: bool,
-    vars: Vars
+    value: Option<JsonSchema>,
+    enabled: Option<bool>,
+    vars: Option<Vars>
 );
 into_event!(UpdateSchemaCommand);
 
@@ -47,17 +47,28 @@ impl CommandHandler for UpdateSchemaCommandHandler {
         _: &Actor,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
-        let schema = Schema::find(ctx.tx(), SchemasQuery::with_id(cmd.id))
+        let mut schema = Schema::find(ctx.tx(), SchemasQuery::with_id(cmd.id))
             .await
             .tap_err(|e| tracing::error!("Failed to retrieve schema {}:{e}", cmd.id))?
             .ok_or(Error::SchemaNotFound(cmd.id))?;
 
-        //todo: fazer validacoes de published para nao alterar o schema
+        if cmd.enabled.is_none() & cmd.vars.is_none() & cmd.value.is_none() {
+            return Ok(schema);
+        }
+
+        if let Some(cmd_value) = cmd.value {
+            schema = schema.set_value(cmd_value);
+        }
+
+        if let Some(enabled) = cmd.enabled {
+            schema = schema.set_enabled(enabled);
+        }
+
+        if let Some(vars) = cmd.vars {
+            schema = schema.set_vars(vars);
+        }
 
         Ok(schema
-            .set_value(cmd.value)
-            .set_enabled(cmd.enabled)
-            .set_vars(cmd.vars)
             .update(ctx.tx())
             .await
             .tap_err(|e| tracing::error!("Failed to update schema:{e}"))?)

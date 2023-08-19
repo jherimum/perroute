@@ -37,9 +37,9 @@ pub enum Error {
 #[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
 pub struct UpdateChannelCommand {
     id: Id,
-    dispatch_properties: Properties,
-    enabled: bool,
-    priority: Priority,
+    dispatch_properties: Option<Properties>,
+    enabled: Option<bool>,
+    priority: Option<Priority>,
 }
 impl_command!(UpdateChannelCommand, CommandType::UpdateChannel);
 into_event!(UpdateChannelCommand);
@@ -58,33 +58,44 @@ impl CommandHandler for UpdateChannelCommandHandler {
         _: &Actor,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
-        let channel = Channel::find(ctx.pool(), ChannelQuery::with_id(cmd.id))
+        let mut channel = Channel::find(ctx.pool(), ChannelQuery::with_id(cmd.id))
             .await
             .tap_err(|e| tracing::error!("Failed to retrieve channel: {e}"))?
             .ok_or_else(|| Error::ChannelNotFound(cmd.id))?;
 
-        let conn = channel
-            .connection(ctx.pool())
-            .await
-            .tap_err(|e| tracing::error!("Failed to retrieve connection: {e}"))?;
+        if cmd.dispatch_properties.is_none() && cmd.enabled.is_none() && cmd.priority.is_none() {
+            return Ok(channel);
+        }
 
-        let plugin = ctx
-            .plugins()
-            .get(conn.plugin_id())
-            .ok_or_else(|| anyhow!("Plugin not found"))?;
+        if let Some(props) = cmd.dispatch_properties {
+            let conn = channel
+                .connection(ctx.pool())
+                .await
+                .tap_err(|e| tracing::error!("Failed to retrieve connection: {e}"))?;
 
-        let disp = plugin
-            .dispatcher(channel.dispatch_type())
-            .ok_or_else(|| anyhow!("Dispatcher type not supported"))?;
+            let plugin = ctx
+                .plugins()
+                .get(conn.plugin_id())
+                .ok_or_else(|| anyhow!("Plugin not found"))?;
 
-        disp.configuration()
-            .validate(cmd.dispatch_properties())
-            .map_err(Error::from)?;
+            let disp = plugin
+                .dispatcher(channel.dispatch_type())
+                .ok_or_else(|| anyhow!("Dispatcher type not supported"))?;
+
+            disp.configuration().validate(&props).map_err(Error::from)?;
+
+            channel = channel.set_properties(props);
+        }
+
+        if let Some(enabled) = cmd.enabled {
+            channel = channel.set_enabled(enabled);
+        }
+
+        if let Some(priority) = cmd.priority {
+            channel = channel.set_priority(priority);
+        }
 
         Ok(channel
-            .set_enabled(cmd.enabled)
-            .set_priority(cmd.priority)
-            .set_properties(cmd.dispatch_properties)
             .update(ctx.tx())
             .await
             .tap_err(|e| tracing::error!("Failed to update channel: {e}"))?)

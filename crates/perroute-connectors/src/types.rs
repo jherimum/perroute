@@ -28,6 +28,13 @@ impl TryFrom<&String> for DispatchType {
     }
 }
 
+impl TryFrom<String> for DispatchType {
+    type Error = strum::ParseError;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        Self::from_str(&value)
+    }
+}
 impl DispatchType {
     pub fn validate(ty: &str) -> Result<(), ValidationError> {
         if DispatchType::from_str(ty).is_err() {

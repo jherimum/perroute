@@ -32,9 +32,9 @@ pub enum Error {
 #[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
 pub struct UpdateConnectionCommand {
     id: Id,
-    name: String,
-    properties: Properties,
-    enabled: bool,
+    name: Option<String>,
+    properties: Option<Properties>,
+    enabled: Option<bool>,
 }
 
 impl_command!(UpdateConnectionCommand, CommandType::UpdateConnection);
@@ -54,28 +54,38 @@ impl CommandHandler for UpdateConnectionCommandHandler {
         _: &Actor,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
-        let conn = Connection::find(ctx.pool(), ConnectionQuery::with_id(cmd.id))
+        let mut conn = Connection::find(ctx.pool(), ConnectionQuery::with_id(cmd.id))
             .await?
             .ok_or(Error::ConnectionNotFound(cmd.id))?;
 
-        let connector_plugin = ctx
-            .plugins()
-            .get(conn.plugin_id())
-            .context("Plugin with id not found")?;
+        if cmd.enabled.is_none() && cmd.name.is_none() && cmd.properties.is_none() {
+            return Ok(conn);
+        }
 
-        connector_plugin
-            .configuration()
-            .validate(&cmd.properties)
-            .map_err(Error::from)?;
+        if let Some(properties) = cmd.properties {
+            let connector_plugin = ctx
+                .plugins()
+                .get(conn.plugin_id())
+                .context("Plugin with id not found")?;
 
-        Ok(conn
-            .set_enabled(cmd.enabled)
-            .set_name(cmd.name)
-            .set_properties(cmd.properties)
-            .update(ctx.tx())
-            .await
-            .tap_err(|e| {
-                tracing::error!("Failed to update connection {}: {e}", cmd.id);
-            })?)
+            connector_plugin
+                .configuration()
+                .validate(&properties)
+                .map_err(Error::from)?;
+
+            conn = conn.set_properties(properties);
+        }
+
+        if let Some(name) = cmd.name.as_ref() {
+            conn = conn.set_name(name);
+        }
+
+        if let Some(enabled) = cmd.enabled.as_ref() {
+            conn = conn.set_enabled(*enabled);
+        }
+
+        Ok(conn.update(ctx.tx()).await.tap_err(|e| {
+            tracing::error!("Failed to update connection {}: {e}", cmd.id);
+        })?)
     }
 }

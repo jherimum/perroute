@@ -1,5 +1,10 @@
 use crate::{
-    api::models::connection::{CreateConnectionRequest, UpdateConnectionRequest},
+    api::{
+        models::connection::{
+            ConnectionResource, CreateConnectionRequest, UpdateConnectionRequest,
+        },
+        response::{ApiResponse, ApiResult, CollectionResourceModel, SingleResourceModel},
+    },
     app::AppState,
     extractors::actor::ActorExtractor,
 };
@@ -9,9 +14,13 @@ use actix_web::{
 };
 use anyhow::Context;
 use perroute_commons::{new_id, types::id::Id};
-use perroute_cqrs::command_bus::handlers::connection::create_connection::{
-    CreateConnectionCommandBuilder, CreateConnectionCommandHandler,
+use perroute_cqrs::command_bus::handlers::connection::{
+    create_connection::{CreateConnectionCommandBuilder, CreateConnectionCommandHandler},
+    update_connection::{UpdateConnectionCommandBuilder, UpdateConnectionCommandHandler},
 };
+
+pub type SingleResult = ApiResult<SingleResourceModel<ConnectionResource>>;
+pub type CollectionResult = ApiResult<CollectionResourceModel<ConnectionResource>>;
 
 pub struct ConnectionsRouter;
 
@@ -23,28 +32,23 @@ impl ConnectionsRouter {
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
         Json(body): Json<CreateConnectionRequest>,
-    ) -> HttpResponse {
+    ) -> SingleResult {
         let connection = state
             .command_bus()
             .execute::<_, CreateConnectionCommandHandler, _>(
                 &actor,
                 &CreateConnectionCommandBuilder::default()
                     .id(new_id!())
-                    .name(body.name().to_owned())
-                    .plugin_id(
-                        body.plugin_id()
-                            .try_into()
-                            .context("Invalid plugin id")
-                            .unwrap(),
-                    )
-                    .properties(body.properties().into())
+                    .name(body.name)
+                    .plugin_id(body.plugin_id.try_into().context("Invalid plugin id")?)
+                    .properties(body.properties.into())
                     .build()
-                    .unwrap(),
+                    .context("Failed to build command")?,
             )
             .await
             .unwrap();
 
-        HttpResponse::Ok().finish()
+        Ok(ApiResponse::ok(connection))
     }
 
     pub async fn update(
@@ -52,8 +56,22 @@ impl ConnectionsRouter {
         ActorExtractor(actor): ActorExtractor,
         Json(body): Json<UpdateConnectionRequest>,
         path: Path<Id>,
-    ) -> HttpResponse {
-        HttpResponse::Ok().finish()
+    ) -> SingleResult {
+        let conn = state
+            .command_bus()
+            .execute::<_, UpdateConnectionCommandHandler, _>(
+                &actor,
+                &UpdateConnectionCommandBuilder::default()
+                    .id(path.into_inner())
+                    .name(body.name)
+                    .properties(body.properties.map(Into::into))
+                    .enabled(body.enabled)
+                    .build()
+                    .context("Failed to build command")?,
+            )
+            .await?;
+
+        Ok(ApiResponse::ok(conn))
     }
 
     pub async fn delete(

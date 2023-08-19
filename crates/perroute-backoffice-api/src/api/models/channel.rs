@@ -3,41 +3,40 @@ use crate::{
     links::{Linkrelation, ResourceLink},
 };
 use actix_web::HttpRequest;
-use derive_getters::Getters;
 use perroute_storage::models::channel::Channel;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use validator::Validate;
 
-#[derive(Debug, Deserialize, Clone, Getters, Validate, Default)]
+#[derive(Debug, Deserialize, Clone, Validate, Default)]
 #[serde(default)]
 pub struct CreateChannelRequest {
     #[validate(custom = "perroute_commons::types::id::Id::validate")]
-    business_id: String,
+    pub business_id: String,
 
     #[validate(custom = "perroute_commons::types::id::Id::validate")]
-    connection_id: String,
+    pub connection_id: String,
 
     #[validate(custom = "perroute_connectors::types::DispatchType::validate")]
-    dispatch_type: String,
+    pub dispatch_type: String,
 
     #[validate(custom = "perroute_commons::types::properties::Properties::validate")]
-    properties: Value,
+    pub properties: Value,
 
     #[validate(custom = "perroute_commons::types::priority::Priority::validate")]
-    priority: i32,
+    pub priority: i32,
 }
 
-#[derive(Debug, Deserialize, Clone, Getters, Validate, Default)]
+#[derive(Debug, Deserialize, Clone, Validate, Default)]
 #[serde(default)]
 pub struct UpdateChannelRequest {
     #[validate(custom = "perroute_commons::types::properties::Properties::validate")]
-    properties: Value,
+    pub properties: Option<Value>,
 
     #[validate(custom = "perroute_commons::types::priority::Priority::validate")]
-    priority: i32,
+    pub priority: Option<i32>,
 
-    enabled: bool,
+    pub enabled: Option<bool>,
 }
 
 #[derive(Clone, Serialize, Debug, Deserialize, PartialEq, Eq)]

@@ -49,7 +49,7 @@ impl From<&ApiError> for RestError {
             | ApiError::SchemaNotFound(_)
             | ApiError::TemplateNotFound(_) => Self::NotFound(value.to_string()),
             ApiError::CommandBus(CommandBusError::ExpectedError(message)) => {
-                Self::UnprocessableEntity(message.to_string())
+                Self::UnprocessableEntity((*message).to_string())
             }
             ApiError::ValidationError(error) => match error {
                 actix_web_validator::Error::Validate(e) => {
@@ -84,7 +84,7 @@ fn validation_errors_to_hashmap(errors: &ValidationErrors) -> Option<HashMap<Str
 
     let mut map = HashMap::new();
     for (key, kind) in errors.errors() {
-        map.extend(build_kind(key.to_string(), kind));
+        map.extend(build_kind((*key).to_string(), kind));
     }
 
     Some(map)
@@ -106,14 +106,14 @@ fn build_kind(key: String, kind: &ValidationErrorsKind) -> Vec<(String, String)>
     if let ValidationErrorsKind::List(l) = kind {
         for (i, e) in l {
             for (k, e) in e.errors() {
-                errors.extend(build_kind(format!("{}[{}].{}", key, i, k), e));
+                errors.extend(build_kind(format!("{key}[{i}].{k}"), e));
             }
         }
     }
 
     if let ValidationErrorsKind::Struct(l) = kind {
         for (k, e) in l.as_ref().errors() {
-            errors.extend(build_kind(format!("{}.{}", key, k), e));
+            errors.extend(build_kind(format!("{key}.{k}"), e));
         }
     }
 

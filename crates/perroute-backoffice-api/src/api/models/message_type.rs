@@ -2,34 +2,33 @@ use crate::{
     api::response::{CollectionResourceModel, Links, ResourceBuilder, SingleResourceModel},
     links::{Linkrelation, ResourceLink},
 };
-use derive_getters::Getters;
 use perroute_storage::models::message_type::MessageType;
 use serde::Serialize;
 use std::collections::HashMap;
 use validator::Validate;
 
-#[derive(Debug, serde::Deserialize, Clone, Getters, Validate, Default)]
+#[derive(Debug, serde::Deserialize, Clone, Validate, Default)]
 #[serde(default)]
 pub struct CreateMessageTypeRequest {
     #[validate(custom = "perroute_commons::types::code::Code::validate")]
-    code: String,
+    pub code: String,
 
     #[validate(custom = "perroute_commons::types::name::validate")]
-    name: String,
+    pub name: String,
 
-    vars: HashMap<String, String>,
+    pub vars: HashMap<String, String>,
 
     #[validate(custom = "perroute_commons::types::id::Id::validate")]
-    business_unit_id: String,
+    pub business_unit_id: String,
 }
 
-#[derive(Debug, serde::Deserialize, Clone, Getters, Validate, Default)]
+#[derive(Debug, serde::Deserialize, Clone, Validate, Default)]
 #[serde(default)]
 pub struct UpdateMessageTypeRequest {
     #[validate(custom = "perroute_commons::types::name::validate")]
-    name: String,
-    enabled: bool,
-    vars: HashMap<String, String>,
+    pub name: Option<String>,
+    pub enabled: Option<bool>,
+    pub vars: Option<HashMap<String, String>>,
 }
 
 #[derive(Clone, Serialize, Debug, Validate)]

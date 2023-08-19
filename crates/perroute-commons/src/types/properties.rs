@@ -38,6 +38,12 @@ impl From<&Value> for Properties {
     }
 }
 
+impl From<Value> for Properties {
+    fn from(value: Value) -> Self {
+        Self(value)
+    }
+}
+
 impl Properties {
     pub fn validate(value: &Value) -> Result<(), ValidationError> {
         if value.is_object() {

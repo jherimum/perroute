@@ -25,8 +25,8 @@ command!(
     UpdateBusinessUnitCommand,
     CommandType::UpdateBusinessUnit,
     business_unit_id: Id,
-    name: String,
-    vars: Vars
+    name: Option<String>,
+    vars: Option<Vars>
 );
 into_event!(UpdateBusinessUnitCommand);
 
@@ -45,7 +45,7 @@ impl CommandHandler for UpdateBusinessUnitCommandHandler {
         _: &Actor,
         command: Self::Command,
     ) -> Result<BusinessUnit, CommandBusError> {
-        Ok(BusinessUnit::find(
+        let mut bu = BusinessUnit::find(
             ctx.tx(),
             BusinessUnitQuery::with_id(command.business_unit_id),
         )
@@ -56,15 +56,24 @@ impl CommandHandler for UpdateBusinessUnitCommandHandler {
                 command.business_unit_id
             );
         })?
-        .ok_or(Error::BusinessUnitNotFound(command.business_unit_id))?
-        .set_name(command.name.clone())
-        .set_vars(command.vars.clone())
-        .update(ctx.tx())
-        .await
-        .tap_err(|e| {
+        .ok_or(Error::BusinessUnitNotFound(command.business_unit_id))?;
+
+        if command.name.is_none() && command.vars.is_none() {
+            return Ok(bu);
+        }
+
+        if let Some(name) = command.name {
+            bu = bu.set_name(name);
+        }
+
+        if let Some(vars) = command.vars {
+            bu = bu.set_vars(vars);
+        }
+
+        Ok(bu.update(ctx.tx()).await.tap_err(|e| {
             tracing::error!(
                 "Failed to update business unit {}: {e}",
-                command.business_unit_id()
+                command.business_unit_id
             );
         })?)
     }

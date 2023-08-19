@@ -119,9 +119,9 @@ impl SchemaRouter {
 
         let cmd = UpdateSchemaCommandBuilder::default()
             .id(*schema.id())
-            .value(body.value.try_into().context("invalid schema")?)
+            .value(body.value.map(TryInto::try_into).transpose()?)
             .enabled(body.enabled)
-            .vars(body.vars.into())
+            .vars(body.vars.map(Into::into))
             .build()
             .unwrap();
 

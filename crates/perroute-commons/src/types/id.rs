@@ -94,3 +94,11 @@ impl TryFrom<&String> for Id {
         Id::from_str(value)
     }
 }
+
+impl TryFrom<String> for Id {
+    type Error = ParseError;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        Id::from_str(&value)
+    }
+}

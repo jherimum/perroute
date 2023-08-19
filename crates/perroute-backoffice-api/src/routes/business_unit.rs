@@ -120,7 +120,7 @@ impl BusinessUnitRouter {
         let cmd = UpdateBusinessUnitCommandBuilder::default()
             .business_unit_id(*business_unit.id())
             .name(body.name)
-            .vars(body.vars.into())
+            .vars(body.vars.map(Into::into))
             .build()
             .tap_err(|e| tracing::error!("Failed to build UpdateBusinessUnitCommand: {e}"))
             .map_err(anyhow::Error::from)?;
@@ -153,7 +153,7 @@ impl BusinessUnitRouter {
             .execute::<_, DeleteBusinessUnitCommandHandler, _>(&actor, &cmd)
             .await
             .tap_err(|e: &perroute_cqrs::command_bus::error::CommandBusError| {
-                tracing::error!("Failed to delete Business unit: {e}")
+                tracing::error!("Failed to delete Business unit: {e}");
             })
             .map(|_| ApiResponse::ok_empty())?)
     }

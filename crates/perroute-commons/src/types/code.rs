@@ -49,6 +49,14 @@ impl TryInto<Code> for &String {
     }
 }
 
+impl TryInto<Code> for String {
+    type Error = ParseError;
+
+    fn try_into(self) -> Result<Code, Self::Error> {
+        Code::from_str(&self)
+    }
+}
+
 #[derive(thiserror::Error, Debug, PartialEq, Eq)]
 #[error("Invalid code {0}")]
 pub struct ParseError(String);
