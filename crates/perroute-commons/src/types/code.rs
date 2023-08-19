@@ -17,7 +17,7 @@ pub struct Code(String);
 
 impl Code {
     pub fn validate(code: &str) -> Result<(), ValidationError> {
-        if let Err(_) = Self::from_str(code) {
+        if Self::from_str(code).is_err() {
             return Err(ValidationError {
                 code: Cow::Borrowed("code"),
                 message: Some(Cow::Borrowed("Invalid code")),
@@ -29,15 +29,15 @@ impl Code {
     }
 }
 
-impl Into<String> for Code {
-    fn into(self) -> String {
-        self.to_string()
+impl From<Code> for String {
+    fn from(value: Code) -> Self {
+        value.0
     }
 }
 
-impl Into<String> for &Code {
-    fn into(self) -> String {
-        self.to_string()
+impl From<&Code> for String {
+    fn from(value: &Code) -> Self {
+        value.0.clone()
     }
 }
 

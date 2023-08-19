@@ -94,14 +94,14 @@ fn build_kind(key: String, kind: &ValidationErrorsKind) -> Vec<(String, String)>
     if let ValidationErrorsKind::List(l) = kind {
         for (i, e) in l {
             for (k, e) in e.errors() {
-                errors.extend(build_kind(format!("{}[{}].{}", key, i, k), &e));
+                errors.extend(build_kind(format!("{}[{}].{}", key, i, k), e));
             }
         }
     }
 
     if let ValidationErrorsKind::Struct(l) = kind {
         for (k, e) in l.as_ref().errors() {
-            errors.extend(build_kind(format!("{}.{}", key, k), &e));
+            errors.extend(build_kind(format!("{}.{}", key, k), e));
         }
     }
 

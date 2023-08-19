@@ -23,7 +23,7 @@ pub struct Id(pub uuid::Uuid);
 
 impl Id {
     pub fn validate(code: &str) -> Result<(), ValidationError> {
-        if let Err(_) = Self::from_str(code) {
+        if Self::from_str(code).is_err() {
             return Err(ValidationError {
                 code: Cow::Borrowed("id"),
                 message: Some(Cow::Borrowed("Invalid id")),
@@ -35,15 +35,15 @@ impl Id {
     }
 }
 
-impl Into<String> for Id {
-    fn into(self) -> String {
-        self.to_string()
+impl From<Id> for String {
+    fn from(value: Id) -> Self {
+        value.to_string()
     }
 }
 
-impl Into<String> for &Id {
-    fn into(self) -> String {
-        self.to_string()
+impl From<&Id> for String {
+    fn from(value: &Id) -> Self {
+        value.to_string()
     }
 }
 
@@ -91,6 +91,6 @@ impl TryFrom<&String> for Id {
     type Error = ParseError;
 
     fn try_from(value: &String) -> Result<Self, Self::Error> {
-        Id::from_str(&value)
+        Id::from_str(value)
     }
 }

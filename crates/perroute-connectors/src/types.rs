@@ -14,9 +14,9 @@ pub enum DispatchType {
     Push,
 }
 
-impl Into<String> for &DispatchType {
-    fn into(self) -> String {
-        self.to_string()
+impl From<&DispatchType> for String {
+    fn from(value: &DispatchType) -> Self {
+        value.to_string()
     }
 }
 
@@ -30,7 +30,7 @@ impl TryFrom<&String> for DispatchType {
 
 impl DispatchType {
     pub fn validate(ty: &str) -> Result<(), ValidationError> {
-        if let Err(_) = DispatchType::from_str(ty) {
+        if DispatchType::from_str(ty).is_err() {
             return Err(ValidationError {
                 code: Cow::Borrowed("dispatch_type"),
                 message: Some(Cow::Borrowed("Invalid dispatch type")),
@@ -54,15 +54,15 @@ pub enum ConnectorPluginId {
     Sendgrid,
 }
 
-impl Into<String> for ConnectorPluginId {
-    fn into(self) -> String {
-        self.to_string()
+impl From<ConnectorPluginId> for String {
+    fn from(value: ConnectorPluginId) -> Self {
+        value.to_string()
     }
 }
 
-impl Into<String> for &ConnectorPluginId {
-    fn into(self) -> String {
-        self.to_string()
+impl From<&ConnectorPluginId> for String {
+    fn from(value: &ConnectorPluginId) -> Self {
+        value.to_string()
     }
 }
 
@@ -78,13 +78,13 @@ impl TryInto<ConnectorPluginId> for &String {
     type Error = strum::ParseError;
 
     fn try_into(self) -> Result<ConnectorPluginId, Self::Error> {
-        ConnectorPluginId::from_str(&self)
+        ConnectorPluginId::from_str(self)
     }
 }
 
 impl ConnectorPluginId {
     pub fn validate(ty: &str) -> Result<(), ValidationError> {
-        if let Err(_) = ConnectorPluginId::from_str(ty) {
+        if ConnectorPluginId::from_str(ty).is_err() {
             return Err(ValidationError {
                 code: Cow::Borrowed("plugin_id"),
                 message: Some(Cow::Borrowed("Invalid plugin id")),

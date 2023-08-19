@@ -14,14 +14,14 @@ impl Default for Version {
     }
 }
 
-impl Into<i32> for Version {
-    fn into(self) -> i32 {
-        self.0
+impl From<Version> for i32 {
+    fn from(value: Version) -> Self {
+        value.0
     }
 }
-impl Into<i32> for &Version {
-    fn into(self) -> i32 {
-        self.0
+impl From<&Version> for i32 {
+    fn from(value: &Version) -> Self {
+        value.0
     }
 }
 

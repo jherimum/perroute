@@ -1,7 +1,6 @@
-use std::collections::HashMap;
-
 use actix_web::{http::StatusCode, HttpResponse, ResponseError};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ErrorResponse {
@@ -42,15 +41,15 @@ pub enum RestError {
     BadRequest(Option<HashMap<String, String>>),
 }
 
-impl Into<StatusCode> for RestError {
-    fn into(self) -> StatusCode {
-        match self {
-            Self::NotFound(_) => StatusCode::NOT_FOUND,
-            Self::InternalServer => StatusCode::INTERNAL_SERVER_ERROR,
-            Self::UnprocessableEntity(_) => StatusCode::UNPROCESSABLE_ENTITY,
-            Self::Unauthorized => StatusCode::UNAUTHORIZED,
-            Self::Forbidden => StatusCode::FORBIDDEN,
-            Self::BadRequest(_) => StatusCode::BAD_REQUEST,
+impl From<RestError> for StatusCode {
+    fn from(value: RestError) -> Self {
+        match value {
+            RestError::NotFound(_) => StatusCode::NOT_FOUND,
+            RestError::InternalServer => StatusCode::INTERNAL_SERVER_ERROR,
+            RestError::UnprocessableEntity(_) => StatusCode::UNPROCESSABLE_ENTITY,
+            RestError::Unauthorized => StatusCode::UNAUTHORIZED,
+            RestError::Forbidden => StatusCode::FORBIDDEN,
+            RestError::BadRequest(_) => StatusCode::BAD_REQUEST,
         }
     }
 }
@@ -94,7 +93,7 @@ impl ErrorResponse {
             status: status.into(),
             message,
             detail,
-            errors: errors,
+            errors,
         }
     }
 }

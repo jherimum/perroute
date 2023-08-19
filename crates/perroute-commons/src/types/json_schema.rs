@@ -38,9 +38,9 @@ impl Default for JsonSchema {
     }
 }
 
-impl Into<Value> for &JsonSchema {
-    fn into(self) -> Value {
-        self.0.clone()
+impl From<&JsonSchema> for Value {
+    fn from(value: &JsonSchema) -> Self {
+        value.0.clone()
     }
 }
 
@@ -73,7 +73,7 @@ impl JsonSchema {
     }
 
     pub fn validate(value: &Value) -> Result<(), ValidationError> {
-        if let Err(_) = Self::try_from(value.clone()) {
+        if Self::try_from(value.clone()).is_err() {
             return Err(ValidationError {
                 code: Cow::Borrowed("schema"),
                 message: Some(Cow::Borrowed("Invalid schema")),

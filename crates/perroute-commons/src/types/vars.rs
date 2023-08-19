@@ -33,9 +33,9 @@ impl From<&HashMap<String, String>> for Vars {
     }
 }
 
-impl Into<HashMap<String, String>> for &Vars {
-    fn into(self) -> HashMap<String, String> {
-        self.0.deref().clone()
+impl From<&Vars> for HashMap<String, String> {
+    fn from(value: &Vars) -> Self {
+        value.0.deref().clone()
     }
 }
 

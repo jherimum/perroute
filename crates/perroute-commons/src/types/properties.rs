@@ -26,9 +26,9 @@ impl Deref for Properties {
     }
 }
 
-impl Into<Value> for &Properties {
-    fn into(self) -> Value {
-        self.0.clone()
+impl From<&Properties> for Value {
+    fn from(value: &Properties) -> Self {
+        value.0.clone()
     }
 }
 

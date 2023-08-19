@@ -34,14 +34,14 @@ impl From<&i32> for Priority {
     }
 }
 
-impl Into<i32> for Priority {
-    fn into(self) -> i32 {
-        self.0
+impl From<Priority> for i32 {
+    fn from(value: Priority) -> Self {
+        value.0
     }
 }
 
-impl Into<i32> for &Priority {
-    fn into(self) -> i32 {
-        self.0
+impl From<&Priority> for i32 {
+    fn from(value: &Priority) -> Self {
+        value.0
     }
 }
