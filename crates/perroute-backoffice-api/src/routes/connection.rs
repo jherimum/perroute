@@ -7,6 +7,7 @@ use actix_web::{
     web::{Data, Json, Path},
     HttpResponse,
 };
+use anyhow::Context;
 use perroute_commons::{new_id, types::id::Id};
 use perroute_cqrs::command_bus::handlers::connection::create_connection::{
     CreateConnectionCommandBuilder, CreateConnectionCommandHandler,
@@ -29,9 +30,14 @@ impl ConnectionsRouter {
                 &actor,
                 &CreateConnectionCommandBuilder::default()
                     .id(new_id!())
-                    .name(body.name().clone())
-                    .plugin_id(*body.plugin_id())
-                    .properties(body.properties().clone())
+                    .name(body.name().to_owned())
+                    .plugin_id(
+                        body.plugin_id()
+                            .try_into()
+                            .context("Invalid plugin id")
+                            .unwrap(),
+                    )
+                    .properties(body.properties().into())
                     .build()
                     .unwrap(),
             )

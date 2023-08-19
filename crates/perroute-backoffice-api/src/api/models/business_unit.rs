@@ -33,8 +33,8 @@ pub struct BusinessUnitResource {
 impl From<BusinessUnit> for BusinessUnitResource {
     fn from(value: BusinessUnit) -> Self {
         Self {
-            id: value.id().to_string(),
-            code: value.code().to_string(),
+            id: value.id().into(),
+            code: value.code().into(),
             name: value.name().clone(),
             vars: value.vars().into(),
         }

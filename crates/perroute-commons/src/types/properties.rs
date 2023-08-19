@@ -1,7 +1,9 @@
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_json::Value;
 use sqlx::Type;
-use validator::{Validate, ValidationErrors};
+use std::borrow::Cow;
+use std::ops::Deref;
+use validator::{Validate, ValidationError, ValidationErrors};
 
 #[derive(Debug, thiserror::Error)]
 pub enum PropertiesError {
@@ -16,7 +18,38 @@ pub enum PropertiesError {
 #[sqlx(transparent)]
 pub struct Properties(Value);
 
+impl Deref for Properties {
+    type Target = Value;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl Into<Value> for &Properties {
+    fn into(self) -> Value {
+        self.0.clone()
+    }
+}
+
+impl From<&Value> for Properties {
+    fn from(value: &Value) -> Self {
+        Self(value.clone())
+    }
+}
+
 impl Properties {
+    pub fn validate(value: &Value) -> Result<(), ValidationError> {
+        if value.is_object() {
+            return Ok(());
+        }
+        return Err(ValidationError {
+            code: Cow::Borrowed("properties"),
+            message: Some(Cow::Borrowed("Invalid properties")),
+            params: Default::default(),
+        });
+    }
+
     pub fn new(value: Value) -> Self {
         Self(value)
     }

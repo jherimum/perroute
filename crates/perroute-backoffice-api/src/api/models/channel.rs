@@ -4,44 +4,57 @@ use crate::{
 };
 use actix_web::HttpRequest;
 use derive_getters::Getters;
-use perroute_commons::types::{id::Id, priority::Priority, properties::Properties};
-use perroute_connectors::types::DispatchType;
 use perroute_storage::models::channel::Channel;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
+use validator::Validate;
 
-#[derive(Debug, Deserialize, Clone, Getters)]
+#[derive(Debug, Deserialize, Clone, Getters, Validate)]
 pub struct CreateChannelRequest {
-    business_id: Id,
-    connection_id: Id,
-    dispatch_type: DispatchType,
-    properties: Properties,
-    priority: Priority,
+    #[validate(custom = "perroute_commons::types::id::Id::validate")]
+    business_id: String,
+
+    #[validate(custom = "perroute_commons::types::id::Id::validate")]
+    connection_id: String,
+
+    #[validate(custom = "perroute_connectors::types::DispatchType::validate")]
+    dispatch_type: String,
+
+    #[validate(custom = "perroute_commons::types::properties::Properties::validate")]
+    properties: Value,
+
+    #[validate(custom = "perroute_commons::types::priority::Priority::validate")]
+    priority: i32,
 }
 
-#[derive(Debug, Deserialize, Clone, Getters)]
+#[derive(Debug, Deserialize, Clone, Getters, Validate)]
 pub struct UpdateChannelRequest {
-    properties: Properties,
-    priority: Priority,
+    #[validate(custom = "perroute_commons::types::properties::Properties::validate")]
+    properties: Value,
+
+    #[validate(custom = "perroute_commons::types::priority::Priority::validate")]
+    priority: i32,
+
     enabled: bool,
 }
 
 #[derive(Clone, Serialize, Debug, Deserialize, PartialEq, Eq)]
 pub struct ChannelResource {
-    id: Id,
-    dispatch_type: DispatchType,
-    properties: Properties,
+    id: String,
+    dispatch_type: String,
+    properties: Value,
     enabled: bool,
-    priority: Priority,
+    priority: i32,
 }
 
 impl From<Channel> for ChannelResource {
     fn from(value: Channel) -> Self {
         Self {
-            id: *value.id(),
-            dispatch_type: *value.dispatch_type(),
-            properties: value.properties().clone(),
+            id: value.id().into(),
+            dispatch_type: value.dispatch_type().into(),
+            properties: value.properties().into(),
             enabled: *value.enabled(),
-            priority: *value.priority(),
+            priority: value.priority().into(),
         }
     }
 }

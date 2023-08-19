@@ -132,7 +132,7 @@ impl CommandHandler for CreateMessageCommandHandler {
 
         schema
             .value()
-            .validate(&cmd.payload)
+            .validate_payload(&cmd.payload)
             .tap_err(|e| tracing::error!("Invalid payload: {e}"))
             .map_err(Error::from)?;
 

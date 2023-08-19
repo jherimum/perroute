@@ -12,6 +12,7 @@ use actix_web::{
     web::{Data, Json, Path},
     HttpResponse,
 };
+use anyhow::Context;
 use perroute_commons::{new_id, types::id::Id};
 use perroute_cqrs::command_bus::handlers::channel::{
     create_channel::{CreateChannelCommandBuilder, CreateChannelCommandHandler},
@@ -40,11 +41,15 @@ impl ChannelsRouter {
                 &actor,
                 &CreateChannelCommandBuilder::default()
                     .id(new_id!())
-                    .business_unit_id(*body.business_id())
-                    .connection_id(*body.connection_id())
-                    .priority(*body.priority())
-                    .dispatch_properties(body.properties().clone())
-                    .dispatch_type(*body.dispatch_type())
+                    .business_unit_id(body.business_id().try_into().context("Invalid id")?)
+                    .connection_id(body.connection_id().try_into().context("Invalid id")?)
+                    .priority(body.priority().into())
+                    .dispatch_properties(body.properties().into())
+                    .dispatch_type(
+                        body.dispatch_type()
+                            .try_into()
+                            .context("Invalid dispatch type")?,
+                    )
                     .build()
                     .unwrap(),
             )
@@ -65,8 +70,8 @@ impl ChannelsRouter {
                 &actor,
                 &UpdateChannelCommandBuilder::default()
                     .id(path.into_inner())
-                    .priority(*body.priority())
-                    .dispatch_properties(body.properties().clone())
+                    .priority(body.priority().into())
+                    .dispatch_properties(body.properties().into())
                     .enabled(*body.enabled())
                     .build()
                     .unwrap(),

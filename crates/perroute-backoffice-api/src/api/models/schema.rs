@@ -1,29 +1,34 @@
+use std::collections::HashMap;
+
 use crate::{
     api::response::{CollectionResourceModel, Links, ResourceBuilder, SingleResourceModel},
     links::{Linkrelation, ResourceLink},
 };
-use perroute_commons::types::{json_schema::JsonSchema, vars::Vars, version::Version};
 use perroute_storage::models::{message_type::MessageType, schema::Schema};
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
+use validator::Validate;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Validate)]
 pub struct CreateSchemaRequest {
-    pub value: JsonSchema,
+    #[validate(custom = "perroute_commons::types::json_schema::JsonSchema::validate")]
+    pub value: Value,
     pub enabled: bool,
-    pub vars: Vars,
+    pub vars: HashMap<String, String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Validate)]
 pub struct UpdateSchemaRequest {
-    pub value: JsonSchema,
+    #[validate(custom = "perroute_commons::types::json_schema::JsonSchema::validate")]
+    pub value: Value,
     pub enabled: bool,
-    pub vars: Vars,
+    pub vars: HashMap<String, String>,
 }
 
 #[derive(Debug, Serialize, Clone)]
 pub struct SchemaResource {
-    value: JsonSchema,
-    version: Version,
+    value: Value,
+    version: i32,
     published: bool,
     enabled: bool,
 }
@@ -31,8 +36,8 @@ pub struct SchemaResource {
 impl From<Schema> for SchemaResource {
     fn from(value: Schema) -> Self {
         Self {
-            value: value.value().clone(),
-            version: *value.version(),
+            value: value.value().into(),
+            version: value.version().into(),
             published: *value.published(),
             enabled: *value.enabled(),
         }

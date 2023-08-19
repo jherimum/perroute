@@ -13,6 +13,7 @@ use crate::{
     links::ResourceLink,
 };
 use actix_web::web::{Data, Json, Path};
+use anyhow::Context;
 use perroute_commons::types::{actor::Actor, id::Id};
 use perroute_cqrs::{
     command_bus::handlers::message_type::create_message_type::CreateMessageTypeCommandHandler,
@@ -76,10 +77,10 @@ impl MessageTypeRouter {
         Json(body): Json<CreateMessageTypeRequest>,
     ) -> SingleResult {
         let cmd = CreateMessageTypeCommandBuilder::default()
-            .code(body.code().clone())
-            .name(body.name().clone())
-            .vars(body.vars().clone())
-            .business_unit_id(*body.business_unit_id())
+            .code(body.code().try_into().context("Invalid code")?)
+            .name(body.name().to_owned())
+            .vars(body.vars().into())
+            .business_unit_id(body.business_unit_id().try_into().context("Invalid id")?)
             .build()
             .tap_err(|e| tracing::error!("Failed to build CreateMessageTypeCommand:{e}"))
             .map_err(anyhow::Error::from)?;
@@ -107,9 +108,9 @@ impl MessageTypeRouter {
 
         let cmd = UpdateMessageTypeCommandBuilder::default()
             .id(*message_type.id())
-            .name(body.name().clone())
+            .name(body.name().to_owned())
             .enabled(*body.enabled())
-            .vars(body.vars().clone())
+            .vars(body.vars().into())
             .build()
             .tap_err(|e| tracing::error!("Failed to build UpdateMessageTypeCommand: {e}"))
             .map_err(anyhow::Error::from)?;

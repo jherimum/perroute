@@ -1,7 +1,9 @@
 use serde::{Deserialize, Serialize};
 use sqlx::Type;
+use std::borrow::Cow;
 use std::ops::Deref;
 use std::{fmt::Display, str::FromStr};
+use validator::ValidationError;
 
 #[macro_export]
 macro_rules! new_id {
@@ -18,6 +20,32 @@ pub struct ParseError(#[from] uuid::Error);
 #[sqlx(transparent)]
 #[serde(transparent)]
 pub struct Id(pub uuid::Uuid);
+
+impl Id {
+    pub fn validate(code: &str) -> Result<(), ValidationError> {
+        if let Err(_) = Self::from_str(code) {
+            return Err(ValidationError {
+                code: Cow::Borrowed("id"),
+                message: Some(Cow::Borrowed("Invalid id")),
+                params: Default::default(),
+            });
+        }
+
+        Ok(())
+    }
+}
+
+impl Into<String> for Id {
+    fn into(self) -> String {
+        self.to_string()
+    }
+}
+
+impl Into<String> for &Id {
+    fn into(self) -> String {
+        self.to_string()
+    }
+}
 
 impl Deref for Id {
     type Target = uuid::Uuid;
@@ -56,5 +84,13 @@ impl From<uuid::Uuid> for Id {
 impl Display for Id {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0)
+    }
+}
+
+impl TryFrom<&String> for Id {
+    type Error = ParseError;
+
+    fn try_from(value: &String) -> Result<Self, Self::Error> {
+        Id::from_str(&value)
     }
 }

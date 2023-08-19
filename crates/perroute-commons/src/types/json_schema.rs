@@ -6,8 +6,9 @@ use jsonschema::{
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sqlx::Type;
-use std::{collections::VecDeque, fmt::Display, ops::Deref};
+use std::{borrow::Cow, collections::VecDeque, fmt::Display, ops::Deref};
 use tap::TapFallible;
+use validator::ValidationError;
 
 #[derive(thiserror::Error, Debug)]
 pub struct InvalidSchemaError(String);
@@ -37,6 +38,12 @@ impl Default for JsonSchema {
     }
 }
 
+impl Into<Value> for &JsonSchema {
+    fn into(self) -> Value {
+        self.0.clone()
+    }
+}
+
 impl TryFrom<Value> for JsonSchema {
     type Error = InvalidSchemaError;
 
@@ -57,12 +64,24 @@ impl Deref for JsonSchema {
 }
 
 impl JsonSchema {
-    pub fn validate(&self, payload: &Payload) -> Result<(), InvalidPayloadError> {
+    pub fn validate_payload(&self, payload: &Payload) -> Result<(), InvalidPayloadError> {
         let compiled = JSONSchema::compile(&self.0).unwrap();
         match compiled.apply(payload).basic() {
             jsonschema::output::BasicOutput::Valid(_) => Ok(()),
             jsonschema::output::BasicOutput::Invalid(e) => Err(InvalidPayloadError(e)),
         }
+    }
+
+    pub fn validate(value: &Value) -> Result<(), ValidationError> {
+        if let Err(_) = Self::try_from(value.clone()) {
+            return Err(ValidationError {
+                code: Cow::Borrowed("schema"),
+                message: Some(Cow::Borrowed("Invalid schema")),
+                params: Default::default(),
+            });
+        }
+
+        Ok(())
     }
 }
 

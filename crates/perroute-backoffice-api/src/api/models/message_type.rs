@@ -1,46 +1,48 @@
-use std::ops::Deref;
-
 use crate::{
     api::response::{CollectionResourceModel, Links, ResourceBuilder, SingleResourceModel},
     links::{Linkrelation, ResourceLink},
 };
 use derive_getters::Getters;
-use perroute_commons::types::{code::Code, id::Id, vars::Vars};
 use perroute_storage::models::message_type::MessageType;
 use serde::Serialize;
+use std::collections::HashMap;
+use validator::Validate;
 
-#[derive(Debug, serde::Deserialize, Clone, Getters)]
+#[derive(Debug, serde::Deserialize, Clone, Getters, Validate)]
 pub struct CreateMessageTypeRequest {
-    code: Code,
+    #[validate(custom = "perroute_commons::types::code::Code::validate")]
+    code: String,
     name: String,
-    vars: Vars,
-    business_unit_id: Id,
+    vars: HashMap<String, String>,
+
+    #[validate(custom = "perroute_commons::types::id::Id::validate")]
+    business_unit_id: String,
 }
 
-#[derive(Debug, serde::Deserialize, Clone, Getters)]
+#[derive(Debug, serde::Deserialize, Clone, Getters, Validate)]
 pub struct UpdateMessageTypeRequest {
     name: String,
     enabled: bool,
-    vars: Vars,
+    vars: HashMap<String, String>,
 }
 
-#[derive(Clone, Serialize, Debug)]
+#[derive(Clone, Serialize, Debug, Validate)]
 pub struct MessageTypeResource {
-    id: Id,
-    code: Code,
+    id: String,
+    code: String,
     name: String,
     enabled: bool,
-    vars: Vars,
+    vars: HashMap<String, String>,
 }
 
 impl From<MessageType> for MessageTypeResource {
     fn from(value: MessageType) -> Self {
         Self {
-            id: *value.id(),
-            code: value.code().clone(),
+            id: value.id().into(),
+            code: value.code().into(),
             name: value.name().clone(),
             enabled: *value.enabled(),
-            vars: value.vars().clone(),
+            vars: value.vars().into(),
         }
     }
 }

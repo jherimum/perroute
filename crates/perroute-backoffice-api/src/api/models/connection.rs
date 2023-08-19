@@ -4,42 +4,49 @@ use crate::{
 };
 use actix_web::HttpRequest;
 use derive_getters::Getters;
-use perroute_commons::types::{id::Id, properties::Properties};
-use perroute_connectors::types::ConnectorPluginId;
 use perroute_storage::models::connection::Connection;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
+use validator::Validate;
 
-#[derive(Debug, Deserialize, Clone, Getters)]
+#[derive(Debug, Deserialize, Clone, Getters, Validate)]
 pub struct CreateConnectionRequest {
     name: String,
-    plugin_id: ConnectorPluginId,
-    properties: Properties,
+
+    #[validate(custom = "perroute_connectors::types::ConnectorPluginId::validate")]
+    plugin_id: String,
+
+    #[validate(custom = "perroute_commons::types::properties::Properties::validate")]
+    properties: Value,
 }
 
-#[derive(Debug, Deserialize, Clone, Getters)]
+#[derive(Debug, Deserialize, Clone, Getters, Validate)]
 pub struct UpdateConnectionRequest {
     name: String,
-    properties: Properties,
+
+    #[validate(custom = "perroute_commons::types::properties::Properties::validate")]
+    properties: Value,
+
     enabled: bool,
 }
 
 #[derive(Clone, Serialize, Debug, Deserialize, PartialEq, Eq)]
 pub struct ConnectionResource {
-    pub id: Id,
+    pub id: String,
     pub name: String,
-    pub properties: Properties,
+    pub properties: Value,
     pub enabled: bool,
-    pub plugin_id: ConnectorPluginId,
+    pub plugin_id: String,
 }
 
 impl From<Connection> for ConnectionResource {
     fn from(value: Connection) -> Self {
         Self {
-            id: *value.id(),
-            name: value.name().clone(),
-            properties: value.properties().clone(),
+            id: value.id().into(),
+            name: value.name().into(),
+            properties: value.properties().into(),
             enabled: *value.enabled(),
-            plugin_id: *value.plugin_id(),
+            plugin_id: value.plugin_id().into(),
         }
     }
 }

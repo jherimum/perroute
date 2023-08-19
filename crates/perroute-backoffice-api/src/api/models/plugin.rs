@@ -6,28 +6,27 @@ use actix_web::HttpRequest;
 use perroute_connectors::{
     api::{ConnectorPlugin, DispatcherPlugin},
     configuration::ConfigurationProperty,
-    types::{ConnectorPluginId, DispatchType},
 };
 use serde::Serialize;
 use std::sync::Arc;
 
 #[derive(Clone, Serialize, Debug, PartialEq, Eq)]
 pub struct ConnectorPluginResource {
-    id: ConnectorPluginId,
+    id: String,
     configuration: Vec<ConfigurationProperty>,
     dispatcher_plugins: Vec<DispatcherPluginResource>,
 }
 
 #[derive(Clone, Serialize, Debug, PartialEq, Eq)]
 pub struct DispatcherPluginResource {
-    dispatch_type: DispatchType,
+    dispatch_type: String,
     configuration: Vec<ConfigurationProperty>,
 }
 
 impl From<Arc<dyn ConnectorPlugin>> for ConnectorPluginResource {
     fn from(value: Arc<dyn ConnectorPlugin>) -> Self {
         Self {
-            id: value.id(),
+            id: value.id().into(),
             configuration: value
                 .configuration()
                 .properties()
@@ -42,7 +41,7 @@ impl From<Arc<dyn ConnectorPlugin>> for ConnectorPluginResource {
 impl From<&dyn DispatcherPlugin> for DispatcherPluginResource {
     fn from(value: &dyn DispatcherPlugin) -> Self {
         Self {
-            dispatch_type: value.dispatch_type(),
+            dispatch_type: value.dispatch_type().to_string(),
             configuration: value
                 .configuration()
                 .properties()

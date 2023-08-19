@@ -2,22 +2,27 @@ use crate::api::response::CollectionResourceModel;
 use crate::api::response::Links;
 use crate::api::response::ResourceBuilder;
 use crate::api::response::SingleResourceModel;
-use perroute_commons::types::id::Id;
-use perroute_connectors::types::DispatchType;
 use perroute_storage::models::template::Template;
 use serde::Serialize;
+use validator::Validate;
 
-#[derive(Debug, serde::Deserialize, Clone)]
+#[derive(Debug, serde::Deserialize, Clone, Validate)]
 pub struct CreateTemplateRequest {
-    pub business_unit_id: Id,
-    pub message_type_id: Id,
+    #[validate(custom = "perroute_commons::types::id::Id::validate")]
+    pub business_unit_id: String,
+
+    #[validate(custom = "perroute_commons::types::id::Id::validate")]
+    pub message_type_id: String,
+
     pub subject: Option<String>,
     pub html: Option<String>,
     pub text: Option<String>,
-    pub dispatch_type: DispatchType,
+
+    #[validate(custom = "perroute_connectors::types::DispatchType::validate")]
+    pub dispatch_type: String,
 }
 
-#[derive(Debug, serde::Deserialize, Clone)]
+#[derive(Debug, serde::Deserialize, Clone, Validate)]
 pub struct UpdateTemplateRequest {
     pub subject: Option<String>,
     pub html: Option<String>,
@@ -26,21 +31,21 @@ pub struct UpdateTemplateRequest {
 
 #[derive(Debug, Serialize, Clone)]
 pub struct TemplateResource {
-    pub id: Id,
+    pub id: String,
     pub subject: Option<String>,
     pub html: Option<String>,
     pub text: Option<String>,
-    pub dispatch_type: DispatchType,
+    pub dispatch_type: String,
 }
 
 impl From<Template> for TemplateResource {
     fn from(template: Template) -> Self {
         Self {
-            id: *template.id(),
-            subject: template.subject().clone().map(Into::into),
+            id: template.id().into(),
+            subject: template.subject().clone(),
             html: template.html().clone().map(Into::into),
             text: template.text().clone().map(Into::into),
-            dispatch_type: *template.dispatch_type(),
+            dispatch_type: template.dispatch_type().into(),
         }
     }
 }

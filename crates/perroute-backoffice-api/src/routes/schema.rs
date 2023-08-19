@@ -11,6 +11,7 @@ use crate::{
     extractors::actor::ActorExtractor,
 };
 use actix_web::web::{Data, Json, Path};
+use anyhow::Context;
 use perroute_commons::new_id;
 use perroute_commons::types::actor::Actor;
 use perroute_commons::types::id::Id;
@@ -89,8 +90,8 @@ impl SchemaRouter {
         let cmd = CreateSchemaCommandBuilder::default()
             .id(new_id!())
             .message_type_id(*message_type.id())
-            .value(body.value)
-            .vars(body.vars)
+            .value(body.value.try_into().context("invalid schema")?)
+            .vars(body.vars.into())
             .build()
             .unwrap();
 
@@ -118,9 +119,9 @@ impl SchemaRouter {
 
         let cmd = UpdateSchemaCommandBuilder::default()
             .id(*schema.id())
-            .value(body.value)
+            .value(body.value.try_into().context("invalid schema")?)
             .enabled(body.enabled)
-            .vars(body.vars)
+            .vars(body.vars.into())
             .build()
             .unwrap();
 

@@ -29,6 +29,26 @@ impl Code {
     }
 }
 
+impl Into<String> for Code {
+    fn into(self) -> String {
+        self.to_string()
+    }
+}
+
+impl Into<String> for &Code {
+    fn into(self) -> String {
+        self.to_string()
+    }
+}
+
+impl TryInto<Code> for &String {
+    type Error = ParseError;
+
+    fn try_into(self) -> Result<Code, Self::Error> {
+        Code::from_str(self)
+    }
+}
+
 #[derive(thiserror::Error, Debug, PartialEq, Eq)]
 #[error("Invalid code {0}")]
 pub struct ParseError(String);
