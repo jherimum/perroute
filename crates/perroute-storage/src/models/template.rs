@@ -15,7 +15,7 @@ use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::types::{id::Id, template::TemplateSnippet, vars::Vars};
 use perroute_connectors::types::DispatchType;
-use sqlx::{types::Json, FromRow, PgExecutor, QueryBuilder};
+use sqlx::{FromRow, PgExecutor, QueryBuilder};
 use tap::TapFallible;
 
 #[derive(Debug, Builder, Default)]
@@ -89,13 +89,15 @@ pub struct Template {
     #[setters(skip)]
     id: Id,
 
+    name: String,
+
     #[setters(skip)]
     dispatch_type: DispatchType,
 
     subject: Option<String>,
     text: Option<TemplateSnippet>,
     html: Option<TemplateSnippet>,
-    vars: Json<Vars>,
+    vars: Vars,
     active: bool,
 
     #[setters(skip)]
@@ -151,7 +153,7 @@ impl Template {
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
         sqlx::query_as(
             r#"
-        INSERT INTO templates (id, dispatch_type, subject, text, html, vars, active, schema_id, message_type_id, business_unit_id) 
+        INSERT INTO templates (id, dispatch_type, subject, text, html, vars, active, schema_id, message_type_id, business_unit_id, name) 
         VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         RETURNING *"#,
         )
@@ -165,6 +167,7 @@ impl Template {
         .bind(self.schema_id)
         .bind(self.message_type_id)
         .bind(self.business_unit_id)
+        .bind(self.name)
         .fetch_one(exec)
         .await
         .tap_err(log_query_error!())
@@ -174,7 +177,7 @@ impl Template {
         sqlx::query_as(
             r#"
             UPDATE templates 
-            SET subject= $2, text=$3, html=$4, vars=$5, active=$6
+            SET subject= $2, text=$3, html=$4, vars=$5, active=$6, name=$7
             WHERE id=$1 
             RETURNING *"#,
         )
@@ -184,6 +187,7 @@ impl Template {
         .bind(self.html)
         .bind(self.vars)
         .bind(self.active)
+        .bind(self.name)
         .fetch_one(exec)
         .await
         .tap_err(log_query_error!())

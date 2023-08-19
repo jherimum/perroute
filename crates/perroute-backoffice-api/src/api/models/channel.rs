@@ -9,7 +9,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use validator::Validate;
 
-#[derive(Debug, Deserialize, Clone, Getters, Validate)]
+#[derive(Debug, Deserialize, Clone, Getters, Validate, Default)]
+#[serde(default)]
 pub struct CreateChannelRequest {
     #[validate(custom = "perroute_commons::types::id::Id::validate")]
     business_id: String,
@@ -27,7 +28,8 @@ pub struct CreateChannelRequest {
     priority: i32,
 }
 
-#[derive(Debug, Deserialize, Clone, Getters, Validate)]
+#[derive(Debug, Deserialize, Clone, Getters, Validate, Default)]
+#[serde(default)]
 pub struct UpdateChannelRequest {
     #[validate(custom = "perroute_commons::types::properties::Properties::validate")]
     properties: Value,

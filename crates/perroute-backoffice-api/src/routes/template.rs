@@ -66,6 +66,7 @@ impl TemplateRouter {
     ) -> SingleResult {
         let cmd = CreateTemplateCommandBuilder::default()
             .id(new_id!())
+            .name(body.name)
             .subject(body.subject)
             .html(body.html.map(Into::into))
             .text(body.text.map(Into::into))
@@ -95,6 +96,7 @@ impl TemplateRouter {
 
         let cmd = UpdateTemplateCommandBuilder::default()
             .id(*template.id())
+            .name(body.name)
             .html(body.html.map(Into::into))
             .text(body.text.map(Into::into))
             .subject(body.subject.map(Into::into))

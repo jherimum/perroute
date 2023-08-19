@@ -8,17 +8,23 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use validator::Validate;
 
-#[derive(Debug, serde::Deserialize, Clone, Validate)]
+#[derive(Debug, serde::Deserialize, Clone, Validate, Default)]
+#[serde(default)]
 pub struct CreateBusinessUnitRequest {
     #[validate(custom = "perroute_commons::types::code::Code::validate")]
     pub code: String,
+
+    #[validate(custom = "perroute_commons::types::name::validate")]
     pub name: String,
+
     pub vars: HashMap<String, String>,
 }
 
 #[derive(Debug, serde::Deserialize, Clone, Validate)]
 pub struct UpdateBusinessUnitRequest {
+    #[validate(custom = "perroute_commons::types::name::validate")]
     pub name: String,
+
     pub vars: HashMap<String, String>,
 }
 

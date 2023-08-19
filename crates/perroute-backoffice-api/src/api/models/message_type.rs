@@ -8,19 +8,25 @@ use serde::Serialize;
 use std::collections::HashMap;
 use validator::Validate;
 
-#[derive(Debug, serde::Deserialize, Clone, Getters, Validate)]
+#[derive(Debug, serde::Deserialize, Clone, Getters, Validate, Default)]
+#[serde(default)]
 pub struct CreateMessageTypeRequest {
     #[validate(custom = "perroute_commons::types::code::Code::validate")]
     code: String,
+
+    #[validate(custom = "perroute_commons::types::name::validate")]
     name: String,
+
     vars: HashMap<String, String>,
 
     #[validate(custom = "perroute_commons::types::id::Id::validate")]
     business_unit_id: String,
 }
 
-#[derive(Debug, serde::Deserialize, Clone, Getters, Validate)]
+#[derive(Debug, serde::Deserialize, Clone, Getters, Validate, Default)]
+#[serde(default)]
 pub struct UpdateMessageTypeRequest {
+    #[validate(custom = "perroute_commons::types::name::validate")]
     name: String,
     enabled: bool,
     vars: HashMap<String, String>,

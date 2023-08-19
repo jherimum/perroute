@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use validator::Validate;
 
-#[derive(Debug, Deserialize, Validate)]
+#[derive(Debug, Deserialize, Validate, Default)]
 pub struct CreateSchemaRequest {
     #[validate(custom = "perroute_commons::types::json_schema::JsonSchema::validate")]
     pub value: Value,

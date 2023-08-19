@@ -6,8 +6,12 @@ use perroute_storage::models::template::Template;
 use serde::Serialize;
 use validator::Validate;
 
-#[derive(Debug, serde::Deserialize, Clone, Validate)]
+#[derive(Debug, serde::Deserialize, Clone, Validate, Default)]
+#[serde(default)]
 pub struct CreateTemplateRequest {
+    #[validate(custom = "perroute_commons::types::name::validate")]
+    pub name: String,
+
     #[validate(custom = "perroute_commons::types::id::Id::validate")]
     pub business_unit_id: String,
 
@@ -22,8 +26,12 @@ pub struct CreateTemplateRequest {
     pub dispatch_type: String,
 }
 
-#[derive(Debug, serde::Deserialize, Clone, Validate)]
+#[derive(Debug, serde::Deserialize, Clone, Validate, Default)]
+#[serde(default)]
 pub struct UpdateTemplateRequest {
+    #[validate(custom = "perroute_commons::types::name::validate")]
+    pub name: String,
+
     pub subject: Option<String>,
     pub html: Option<String>,
     pub text: Option<String>,
@@ -32,6 +40,7 @@ pub struct UpdateTemplateRequest {
 #[derive(Debug, Serialize, Clone)]
 pub struct TemplateResource {
     pub id: String,
+    pub name: String,
     pub subject: Option<String>,
     pub html: Option<String>,
     pub text: Option<String>,
@@ -42,6 +51,7 @@ impl From<Template> for TemplateResource {
     fn from(template: Template) -> Self {
         Self {
             id: template.id().into(),
+            name: template.name().into(),
             subject: template.subject().clone(),
             html: template.html().clone().map(Into::into),
             text: template.text().clone().map(Into::into),

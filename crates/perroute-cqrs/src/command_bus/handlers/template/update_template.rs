@@ -12,12 +12,12 @@ use perroute_storage::{
     models::template::{Template, TemplatesQueryBuilder},
     query::FetchableModel,
 };
-use sqlx::types::Json;
 
 command!(
     UpdateTemplateCommand,
     CommandType::UpdateTemplate,
     id: Id,
+    name: String,
     subject: Option<String>,
     html: Option<TemplateSnippet>,
     text: Option<TemplateSnippet>,
@@ -52,10 +52,11 @@ impl CommandHandler for UpdateTemplateCommandHandler {
         )
         .await?
         .unwrap()
+        .set_name(cmd.name)
         .set_html(cmd.html)
         .set_text(cmd.text)
         .set_subject(cmd.subject)
-        .set_vars(Json(cmd.vars))
+        .set_vars(cmd.vars)
         .save(ctx.tx())
         .await
         .map_err(Into::into)

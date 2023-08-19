@@ -9,8 +9,10 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use validator::Validate;
 
-#[derive(Debug, Deserialize, Clone, Getters, Validate)]
+#[derive(Debug, Deserialize, Clone, Getters, Validate, Default)]
+#[serde(default)]
 pub struct CreateConnectionRequest {
+    #[validate(custom = "perroute_commons::types::name::validate")]
     name: String,
 
     #[validate(custom = "perroute_connectors::types::ConnectorPluginId::validate")]
@@ -20,8 +22,10 @@ pub struct CreateConnectionRequest {
     properties: Value,
 }
 
-#[derive(Debug, Deserialize, Clone, Getters, Validate)]
+#[derive(Debug, Deserialize, Clone, Getters, Validate, Default)]
+#[serde(default)]
 pub struct UpdateConnectionRequest {
+    #[validate(custom = "perroute_commons::types::name::validate")]
     name: String,
 
     #[validate(custom = "perroute_commons::types::properties::Properties::validate")]

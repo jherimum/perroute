@@ -55,10 +55,22 @@ impl From<&ApiError> for RestError {
                 actix_web_validator::Error::Validate(e) => {
                     RestError::BadRequest(validation_errors_to_hashmap(e))
                 }
-                actix_web_validator::Error::Deserialize(_) => todo!(),
-                actix_web_validator::Error::JsonPayloadError(_) => todo!(),
-                actix_web_validator::Error::UrlEncodedError(_) => todo!(),
-                actix_web_validator::Error::QsError(_) => todo!(),
+                actix_web_validator::Error::Deserialize(e) => {
+                    tracing::error!("xxxxxxxxxx{e:?}");
+                    todo!()
+                }
+                actix_web_validator::Error::JsonPayloadError(e) => {
+                    tracing::error!("xxxxxxxxxx{e:?}");
+                    todo!()
+                }
+                actix_web_validator::Error::UrlEncodedError(e) => {
+                    tracing::error!("xxxxxxxxxx{e:?}");
+                    todo!()
+                }
+                actix_web_validator::Error::QsError(e) => {
+                    tracing::error!("xxxxxxxxxx{e:?}");
+                    todo!()
+                }
             },
             _ => Self::InternalServer,
         }

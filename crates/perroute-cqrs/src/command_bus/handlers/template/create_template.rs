@@ -16,12 +16,12 @@ use perroute_storage::{
     },
     query::FetchableModel,
 };
-use sqlx::types::Json;
 
 command!(
     CreateTemplateCommand,
     CommandType::CreateTemplate,
     id: Id,
+    name: String,
     subject: Option<String>,
     html: Option<TemplateSnippet>,
     text: Option<TemplateSnippet>,
@@ -56,6 +56,7 @@ impl CommandHandler for CreateTemplateCommandHandler {
 
         TemplateBuilder::default()
             .id(cmd.id)
+            .name(cmd.name)
             .subject(cmd.subject)
             .text(cmd.text)
             .html(cmd.html)
@@ -63,7 +64,7 @@ impl CommandHandler for CreateTemplateCommandHandler {
             .business_unit_id(*schema.business_unit_id())
             .dispatch_type(cmd.dispatch_type)
             .message_type_id(*schema.message_type_id())
-            .vars(Json(cmd.vars))
+            .vars(cmd.vars)
             .build()
             .unwrap()
             .save(ctx.pool())
