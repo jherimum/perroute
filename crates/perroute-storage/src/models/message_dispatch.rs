@@ -26,6 +26,15 @@ pub struct MessageDispatchQuery {
 }
 
 impl MessageDispatchQuery {
+    pub fn with_id(id: Id) -> Self {
+        Self {
+            id: Some(id),
+            ..Default::default()
+        }
+    }
+}
+
+impl MessageDispatchQuery {
     pub fn with_route_id(route_id: Id) -> Self {
         Self {
             route_id: Some(route_id),
