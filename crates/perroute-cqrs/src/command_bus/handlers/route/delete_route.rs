@@ -52,10 +52,6 @@ impl CommandHandler for DeleteRouteCommandHandler {
             .tap_err(|e| tracing::error!("Failed to retrieve route {}: {e}", cmd.id))?
             .ok_or(Error::RouteNotFound(cmd.id))?;
 
-        if route.exists_message_dispatch(ctx.pool()).await? {
-            return Err(Error::RouteDelete(cmd.id, "Route has message dispatches").into());
-        }
-
         Ok(route
             .delete(ctx.tx())
             .await
