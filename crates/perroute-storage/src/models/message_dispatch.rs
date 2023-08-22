@@ -84,8 +84,6 @@ pub enum MessageDispatchStatus {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Type)]
 pub struct MessageDispatchResult {
     pub reference: Option<String>,
-    pub connection_properties: Json<Properties>,
-    pub dispatcher_properties: Json<Properties>,
     pub response_data: Option<Json<Value>>,
 }
 
