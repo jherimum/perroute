@@ -27,8 +27,12 @@ pub enum Linkrelation {
     MessageTypes,
     #[serde(rename = "routes")]
     Routes,
+
     #[serde(rename = "schemas")]
     Schemas,
+
+    #[serde(rename = "schema")]
+    Schema,
 
     #[serde(rename = "connections")]
     Connections,

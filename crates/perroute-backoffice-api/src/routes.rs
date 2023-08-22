@@ -17,6 +17,40 @@ pub mod schema;
 pub mod template;
 
 pub fn routes() -> Scope {
+    let business_units = web::scope("/business_units")
+        .service(
+            web::resource("")
+                .name(BusinessUnitRouter::BUS_RESOURCE_NAME)
+                .route(web::get().to(BusinessUnitRouter::query))
+                .route(web::post().to(BusinessUnitRouter::create)),
+        )
+        .service(
+            web::scope("/{business_unit_id}").service(
+                web::resource("")
+                    .name(BusinessUnitRouter::BU_RESOURCE_NAME)
+                    .route(web::get().to(BusinessUnitRouter::get))
+                    .route(web::patch().to(BusinessUnitRouter::update))
+                    .route(web::delete().to(BusinessUnitRouter::delete)),
+            ),
+        );
+
+    let connections = web::scope("/connections")
+        .service(
+            web::resource("")
+                .name(ConnectionsRouter::CONNS_RESOURCE_NAME)
+                .route(web::get().to(ConnectionsRouter::query))
+                .route(web::post().to(ConnectionsRouter::create)),
+        )
+        .service(
+            web::scope("/{conn_id}").service(
+                web::resource("")
+                    .name(ConnectionsRouter::CONN_RESOURCE_NAME)
+                    .route(web::get().to(ConnectionsRouter::get))
+                    .route(web::patch().to(ConnectionsRouter::update))
+                    .route(web::delete().to(ConnectionsRouter::delete)),
+            ),
+        );
+
     let templates = web::scope("/templates")
         .service(
             web::resource("")
@@ -103,23 +137,6 @@ pub fn routes() -> Scope {
             ),
         );
 
-    let business_units = web::scope("/business_units")
-        .service(
-            web::resource("")
-                .name(BusinessUnitRouter::BUS_RESOURCE_NAME)
-                .route(web::get().to(BusinessUnitRouter::query))
-                .route(web::post().to(BusinessUnitRouter::create)),
-        )
-        .service(
-            web::scope("/{business_unit_id}").service(
-                web::resource("")
-                    .name(BusinessUnitRouter::BU_RESOURCE_NAME)
-                    .route(web::get().to(BusinessUnitRouter::get))
-                    .route(web::patch().to(BusinessUnitRouter::update))
-                    .route(web::delete().to(BusinessUnitRouter::delete)),
-            ),
-        );
-
     let messages = web::scope("/messages").service(
         web::resource("")
             .name(MessageRouter::MESSAGES_RESOURCE_NAME)
@@ -137,23 +154,6 @@ pub fn routes() -> Scope {
                 web::resource("")
                     .name(PluginRouter::PLUGIN_RESOURCE_NAME)
                     .route(web::get().to(PluginRouter::find)),
-            ),
-        );
-
-    let connections = web::scope("/connections")
-        .service(
-            web::resource("")
-                .name(ConnectionsRouter::CONNS_RESOURCE_NAME)
-                .route(web::get().to(ConnectionsRouter::query))
-                .route(web::post().to(ConnectionsRouter::create)),
-        )
-        .service(
-            web::scope("/{conn_id}").service(
-                web::resource("")
-                    .name(ConnectionsRouter::CONN_RESOURCE_NAME)
-                    .route(web::get().to(ConnectionsRouter::get))
-                    .route(web::patch().to(ConnectionsRouter::update))
-                    .route(web::delete().to(ConnectionsRouter::delete)),
             ),
         );
 

@@ -33,7 +33,7 @@ pub enum Error {
 #[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
 pub struct UpdateRouteCommand {
     id: Id,
-    properties: Properties,
+    properties: Option<Properties>,
 }
 
 impl_command!(UpdateRouteCommand, CommandType::UpdateRoute);
@@ -54,38 +54,44 @@ impl CommandHandler for UpdateRouteCommandHandler {
         _: &Actor,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
-        let route = Route::find(ctx.pool(), RouteQuery::with_id(cmd.id))
+        let mut route = Route::find(ctx.pool(), RouteQuery::with_id(cmd.id))
             .await
             .tap_err(|e| tracing::error!("Failed to retrieve route {}: {e}", cmd.id))?
             .ok_or(Error::RouteNotFound(cmd.id))?;
 
-        let channel = route
-            .channel(ctx.pool())
-            .await
-            .context("Channel expected to exists")?;
+        if cmd.properties.is_none() {
+            return Ok(route);
+        }
 
-        let conn = route
-            .connection(ctx.pool())
-            .await
-            .context("Connection expected to exists")?;
+        if let Some(props) = cmd.properties {
+            let channel = route
+                .channel(ctx.pool())
+                .await
+                .context("Channel expected to exists")?;
 
-        let plugin = ctx
-            .plugins()
-            .get(conn.plugin_id())
-            .ok_or(anyhow!("Plugin {} not found", conn.plugin_id()))?;
+            let conn = route
+                .connection(ctx.pool())
+                .await
+                .context("Connection expected to exists")?;
 
-        let dispatcher = plugin.dispatcher(channel.dispatch_type()).ok_or(anyhow!(
-            "Dispatcher not found for channel dispatch type {}",
-            channel.dispatch_type()
-        ))?;
+            let plugin = ctx
+                .plugins()
+                .get(conn.plugin_id())
+                .ok_or(anyhow!("Plugin {} not found", conn.plugin_id()))?;
 
-        dispatcher
-            .configuration()
-            .validate(&channel.properties().merge(&cmd.properties))
-            .map_err(Error::from)?;
+            let dispatcher = plugin.dispatcher(channel.dispatch_type()).ok_or(anyhow!(
+                "Dispatcher not found for channel dispatch type {}",
+                channel.dispatch_type()
+            ))?;
 
+            dispatcher
+                .configuration()
+                .validate(&channel.properties().merge(&props))
+                .map_err(Error::from)?;
+
+            route = route.set_properties(props);
+        }
         Ok(route
-            .set_properties(cmd.properties)
             .update(ctx.tx())
             .await
             .tap_err(|e| tracing::error!("Failed to update route:{e}"))?)
