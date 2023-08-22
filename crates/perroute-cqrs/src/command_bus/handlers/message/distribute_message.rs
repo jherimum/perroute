@@ -88,7 +88,7 @@ async fn build_and_save_dispatch<'tx>(
     MessageDispatchBuilder::default()
         .id(Id::new())
         .message_id(*message.id())
-        .route_id(*route.id())
+        //.route_id(*route.id())
         .status(MessageDispatchStatus::Pending)
         .build()
         .unwrap()

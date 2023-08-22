@@ -118,14 +118,16 @@ create table messages(
 );
 
 create table message_dispatches(
-    id              uuid                    not null,
-    message_id      uuid                    not null,
-    route_id        uuid                    not null,    
-    status          message_dispatch_status not null,
-    result          jsonb                   not null,
+    id                      uuid                    not null,
+    message_id              uuid                    not null,
+    status                  message_dispatch_status not null,
+    result                  jsonb                   not null,
+    plugin_id               plugin_id               not null,
+    connection_properties   jsonb                   not null,
+    dispatcher_properties   jsonb                   not null,
+    dispatch_type           dispatch_type           not null,
 
     constraint message_dispatches_pk primary key (id),
-    constraint message_dispatches_route_fk foreign key (route_id) references routes(id),
     constraint message_dispatches_message_fk foreign key (message_id) references messages(id)
 );
 

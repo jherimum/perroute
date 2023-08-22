@@ -1,3 +1,7 @@
+use super::{
+    message::{Message, MessageQueryBuilder},
+    template::{Template, TemplatesQueryBuilder},
+};
 use crate::{
     query::{FetchableModel, ModelQueryBuilder},
     DatabaseModel,
@@ -5,15 +9,10 @@ use crate::{
 use derive_builder::Builder;
 use derive_getters::Getters;
 use perroute_commons::types::{id::Id, properties::Properties};
+use perroute_connectors::types::{ConnectorPluginId, DispatchType};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sqlx::{types::Json, FromRow, PgExecutor, QueryBuilder, Type};
-
-use super::{
-    message::{Message, MessageQueryBuilder},
-    route::{Route, RouteQueryBuilder},
-    template::{Template, TemplatesQueryBuilder},
-};
 
 impl DatabaseModel for MessageDispatch {}
 
@@ -87,9 +86,12 @@ pub struct MessageDispatch {
     id: Id,
     status: MessageDispatchStatus,
     result: Option<MessageDispatchResult>,
-    template_id: Id,
     message_id: Id,
-    route_id: Id,
+    template_id: Id,
+    dispatcher_properties: Properties,
+    dispatch_type: DispatchType,
+    connection_properties: Properties,
+    plugin_id: ConnectorPluginId,
 }
 
 impl MessageDispatch {
@@ -103,17 +105,6 @@ impl MessageDispatch {
         };
         self.result = Some(result.into());
         self
-    }
-
-    pub async fn route<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Route, sqlx::Error> {
-        Route::find_one(
-            exec,
-            RouteQueryBuilder::default()
-                .id(Some(self.route_id))
-                .build()
-                .unwrap(),
-        )
-        .await
     }
 
     pub async fn template<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Template, sqlx::Error> {
@@ -144,16 +135,19 @@ impl MessageDispatch {
     pub async fn save<'e, E: PgExecutor<'e>>(&self, executor: E) -> Result<Self, sqlx::Error> {
         sqlx::query_as(
             r#"
-            INSERT INTO message_dispatches (id, message_id, route_id, status, template_id)
+            INSERT INTO message_dispatches (id, message_id, status, template_id, plugin_id, connection_properties, dispatch_type, dispatcher_properties )
             VALUES ($1, $2, $3, $4, $5)
             RETURNING *
             "#,
         )
         .bind(self.id)
         .bind(self.message_id)
-        .bind(self.route_id)
         .bind(self.status)
         .bind(self.template_id)
+        .bind(self.plugin_id)
+        .bind(&self.connection_properties)
+        .bind(self.dispatch_type)
+        .bind(&self.dispatcher_properties)
         .fetch_one(executor)
         .await
     }

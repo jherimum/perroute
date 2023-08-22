@@ -117,7 +117,7 @@ impl Schema {
     pub async fn active_template<'e, E: PgExecutor<'e>>(
         &self,
         exec: E,
-        dispatch_type: DispatchType,
+        dispatch_type: &DispatchType,
     ) -> Result<Option<Template>, sqlx::Error> {
         todo!()
     }

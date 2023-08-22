@@ -53,15 +53,12 @@ async fn dispatch<'tr>(
     let business_unit = message.business_unit(pool).await?;
     let message_type = message.message_type(pool).await?;
     let schema = message.schema(pool).await?;
-    let route = message_dispatch.route(pool).await?;
-    let channel = route.channel(pool).await?;
-    let connection = route.connection(pool).await?;
-    let connector_plugin = plugins.get(connection.plugin_id()).unwrap();
+    let connector_plugin = plugins.get(message_dispatch.plugin_id()).unwrap();
     let dispatcher = connector_plugin
-        .dispatcher(channel.dispatch_type())
+        .dispatcher(message_dispatch.dispatch_type())
         .unwrap();
     let template = schema
-        .active_template(pool, *channel.dispatch_type())
+        .active_template(pool, message_dispatch.dispatch_type())
         .await
         .unwrap();
 
@@ -76,8 +73,8 @@ async fn dispatch<'tr>(
 
     let req = DispatchRequest {
         id: message_dispatch_id,
-        connection_properties: connection.properties(),
-        dispatch_properties: channel.properties(),
+        connection_properties: message_dispatch.connection_properties(),
+        dispatch_properties: message_dispatch.dispatcher_properties(),
         template,
         recipient: message.recipient(),
         payload: message.payload(),
