@@ -17,6 +17,7 @@ use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::types::{id::Id, properties::Properties};
+use perroute_connectors::types::DispatchType;
 use sqlx::{FromRow, PgExecutor, Postgres, QueryBuilder};
 use tap::TapFallible;
 
@@ -110,6 +111,25 @@ pub struct Route {
 }
 
 impl Route {
+    pub async fn dispatch_route_stack<'e, E: PgExecutor<'e>>(
+        exec: E,
+        schema_id: &Id,
+        dispatch_type: &DispatchType,
+    ) -> Result<Vec<Route>, sqlx::Error> {
+        let query = r#"
+            SELECT r.* 
+            FROM routes r
+            INNER JOIN channels c
+            ON c.id = r.channel_id
+            WHERE c.dispatch_type = $1 
+            AND r.schema_id = $2
+            AND c.enabled = true
+            ORDER by c.priority DESC
+        "#;
+
+        todo!()
+    }
+
     pub async fn batch_delete<'e, E: PgExecutor<'e>>(
         ids: Vec<Id>,
         exec: E,

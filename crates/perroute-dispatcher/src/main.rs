@@ -45,45 +45,6 @@ async fn dispatch<'tr>(
     message_dispatch_id: Id,
     template_render: &'tr dyn TemplateRender<TemplateData>,
 ) -> Result<(), anyhow::Error> {
-    let message_dispatch = fetch_message_dispatch(pool, message_dispatch_id).await?;
-    if *message_dispatch.status() != MessageDispatchStatus::Pending {
-        bail!("Message dispatch is not pending");
-    }
-    let message = message_dispatch.message(pool).await?;
-    let business_unit = message.business_unit(pool).await?;
-    let message_type = message.message_type(pool).await?;
-    let schema = message.schema(pool).await?;
-    let connector_plugin = plugins.get(message_dispatch.plugin_id()).unwrap();
-    let dispatcher = connector_plugin
-        .dispatcher(message_dispatch.dispatch_type())
-        .unwrap();
-    let template = schema
-        .active_template(pool, message_dispatch.dispatch_type())
-        .await
-        .unwrap();
-
-    let vars = business_unit
-        .vars()
-        .merge(message_type.vars())
-        .merge(schema.vars());
-    //.merge(template.map(|t| t.vars().deref()).unwrap_or_default());
-
-    let template = template.map(|t| DefaultDispatchTemplate::new(t, template_render));
-    let template = template.as_ref().map(|t| t as &dyn DispatchTemplate);
-
-    let req = DispatchRequest {
-        id: message_dispatch_id,
-        connection_properties: message_dispatch.connection_properties(),
-        dispatch_properties: message_dispatch.dispatcher_properties(),
-        template,
-        recipient: message.recipient(),
-        payload: message.payload(),
-        vars: &vars,
-        subject: None,
-    };
-
-    let result = dispatcher.dispatch(&req).await;
-
     Ok(())
 
     //message_dispatch.commit(success, result)
@@ -99,35 +60,4 @@ impl<'tr> DefaultDispatchTemplate<'tr> {
     pub fn new(template: Template, render: &'tr dyn TemplateRender<TemplateData>) -> Self {
         Self { template, render }
     }
-}
-
-impl<'tr> DispatchTemplate for DefaultDispatchTemplate<'tr> {
-    fn render_text(&self, data: &TemplateData) -> Result<Option<String>, TemplateError> {
-        self.template
-            .text()
-            .as_ref()
-            .map(|s| self.render.render(s.as_ref(), data))
-            .transpose()
-    }
-
-    fn render_html(&self, data: &TemplateData) -> Result<Option<String>, TemplateError> {
-        self.template
-            .html()
-            .as_ref()
-            .map(|s| self.render.render(s.as_ref(), data))
-            .transpose()
-    }
-}
-
-async fn fetch_message_dispatch(pool: &PgPool, id: Id) -> Result<MessageDispatch, anyhow::Error> {
-    Ok(MessageDispatch::find(
-        pool,
-        MessageDispatchQueryBuilder::default()
-            .id(Some(id))
-            .build()
-            .unwrap(),
-    )
-    .await
-    .unwrap()
-    .unwrap())
 }

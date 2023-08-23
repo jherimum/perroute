@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Json, Type};
-use std::{borrow::Cow, collections::HashSet, str::FromStr};
+use std::{borrow::Cow, collections::HashSet, ops::Deref, str::FromStr};
 use strum::{Display, EnumString};
 use validator::ValidationError;
 
@@ -50,6 +50,14 @@ impl DispatchType {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Type, Default)]
 pub struct DispatchTypes(Json<HashSet<DispatchType>>);
+
+impl Deref for DispatchTypes {
+    type Target = HashSet<DispatchType>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 #[derive(
     Debug, Clone, Copy, Hash, PartialEq, Eq, Deserialize, Serialize, Type, Display, EnumString,

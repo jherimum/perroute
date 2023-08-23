@@ -60,4 +60,6 @@ pub enum CommandType {
     CreateRoute,
     DeleteRoute,
     UpdateRoute,
+
+    ExecuteMessageDispatch,
 }

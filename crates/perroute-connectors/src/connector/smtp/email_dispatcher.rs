@@ -57,7 +57,10 @@ pub async fn dispatch<'r>(req: &DispatchRequest<'r>) -> Result<DispatchResponse,
     transport
         .send(&Message::try_from(req)?)
         .map_err(|e| DispatchError::Unrecoverable(Box::new(e)))
-        .map(|response| DispatchResponse::new(None, Some(Box::new(EmailResponse(response)))))
+        .map(|response| DispatchResponse {
+            reference: None,
+            data: Some(Box::new(EmailResponse(response))),
+        })
 }
 
 pub fn properties() -> ConfigurationProperties {
@@ -133,14 +136,12 @@ impl TryFrom<&DispatchRequest<'_>> for Message {
 
         let html = req
             .template()
-            .and_then(|e| Some(e.render_html(&req.into())))
-            .unwrap_or(Ok(None))
+            .render_html(&req.into())
             .map_err(DispatchError::from)?;
 
         let text = req
             .template()
-            .and_then(|e| Some(e.render_text(&req.into())))
-            .unwrap_or(Ok(None))
+            .render_text(&req.into())
             .map_err(DispatchError::from)?;
 
         let recipient_mail_box: Mailbox = req.recipient().into();
@@ -149,7 +150,8 @@ impl TryFrom<&DispatchRequest<'_>> for Message {
             .to(recipient_mail_box.into())
             .from(disp_properties.from.deref().clone())
             .date_now()
-            .subject(req.subject().clone().unwrap_or_default());
+            //.subject(req.subject().clone().unwrap_or_default())
+            ;
 
         for m in disp_properties.bcc {
             message = message.bcc(m.into());

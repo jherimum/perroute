@@ -90,7 +90,10 @@ pub async fn dispatch<'r>(req: &DispatchRequest<'r>) -> Result<DispatchResponse,
         }
     }
 
-    Ok(DispatchResponse::new(None, None))
+    Ok(DispatchResponse {
+        reference: None,
+        data: None,
+    })
 }
 
 //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
@@ -106,10 +109,11 @@ fn build_message(req: &DispatchRequest) -> SendgridResult<Message> {
         message = message.set_template_id(disp_properties.template_id.as_ref().unwrap());
     }
 
-    Ok(message
-        .add_personalization(personalization_from_request(req)?)
-        .add_categories(&disp_properties.categories)
-        .set_subject(&req.subject().as_ref().cloned().unwrap_or_default()))
+    Ok(
+        message
+            .add_personalization(personalization_from_request(req)?)
+            .add_categories(&disp_properties.categories), //    .set_subject(&req.subject().as_ref().cloned().unwrap_or_default())
+    )
 }
 
 fn personalization_from_request(req: &DispatchRequest) -> SendgridResult<Personalization> {

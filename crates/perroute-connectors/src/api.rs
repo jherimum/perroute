@@ -97,11 +97,10 @@ pub struct DispatchRequest<'r> {
     pub id: Id,
     pub connection_properties: &'r Properties,
     pub dispatch_properties: &'r Properties,
-    pub template: Option<&'r dyn DispatchTemplate>,
+    pub template: &'r dyn DispatchTemplate,
     pub recipient: &'r Recipient,
     pub payload: &'r Payload,
     pub vars: &'r Vars,
-    pub subject: Option<String>,
 }
 
 impl<'r> From<&DispatchRequest<'r>> for TemplateData {
@@ -116,32 +115,26 @@ impl<'r> From<&DispatchRequest<'r>> for TemplateData {
 
 #[derive(Serialize, Debug)]
 pub struct DispatchResponse {
-    reference: Option<String>,
-    data: Option<Box<dyn ResponseData>>,
+    pub reference: Option<String>,
+    pub data: Option<Box<dyn ResponseData>>,
 }
 
-impl DispatchResponse {
-    pub fn new(reference: Option<String>, data: Option<Box<dyn ResponseData>>) -> Self {
-        Self { reference, data }
-    }
-}
-
-pub trait ResponseData: Debug + erased_serde::Serialize {}
+pub trait ResponseData: Debug + erased_serde::Serialize + Send + Sync {}
 serialize_trait_object!(ResponseData);
 
 #[derive(Debug, thiserror::Error)]
 pub enum DispatchError {
     #[error(transparent)]
-    Recoverable(Box<dyn Error>),
+    Recoverable(Box<dyn Error + Send + Sync>),
     #[error(transparent)]
-    Unrecoverable(Box<dyn Error>),
+    Unrecoverable(Box<dyn Error + Send + Sync>),
 }
 
 impl DispatchError {
-    pub fn unrecoverable<E: Error + 'static>(e: E) -> Self {
+    pub fn unrecoverable<E: Error + Send + Sync + 'static>(e: E) -> Self {
         Self::Unrecoverable(Box::new(e))
     }
-    pub fn recoverable<E: Error + 'static>(e: E) -> Self {
+    pub fn recoverable<E: Error + Send + Sync + 'static>(e: E) -> Self {
         Self::Recoverable(Box::new(e))
     }
 }

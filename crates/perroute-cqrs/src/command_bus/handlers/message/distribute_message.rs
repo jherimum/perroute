@@ -1,18 +1,26 @@
 use async_trait::async_trait;
+use chrono::Utc;
 use derive_builder::Builder;
 use derive_getters::Getters;
-use perroute_commons::types::{actor::Actor, id::Id};
+use perroute_commons::{
+    new_id,
+    types::{actor::Actor, id::Id},
+};
+use perroute_connectors::{
+    api::{DispatchError, DispatchRequest, DispatchResponse, ResponseData},
+    types::{ConnectorPluginId, DispatchType},
+};
 use perroute_messaging::events::EventType;
 use perroute_storage::{
     models::{
         message::{Message, MessageQueryBuilder, Status},
-        message_dispatch::{MessageDispatch, MessageDispatchBuilder, MessageDispatchStatus},
-        route::{Route, RouteQueryBuilder},
+        message_dispatch::{MessageDispatch, MessageDispatchBuilder, MessageDispatchResult},
+        route::Route,
     },
     query::FetchableModel,
 };
 use serde::Serialize;
-use sqlx::{PgPool, Postgres, Transaction};
+use sqlx::PgPool;
 use tap::{TapFallible, TapOptional};
 
 use crate::{
@@ -39,8 +47,11 @@ pub enum Error {
     #[error("Message {0} not found")]
     MessageNotFound(Id),
 
-    #[error("Invalid message state")]
-    InvalidMessageState,
+    #[error("Invalid message {0} state")]
+    InvalidMessageState(Id),
+
+    #[error("Schema {0} is disabled")]
+    SchemaDisabeld(Id),
 }
 
 #[derive(Debug)]
@@ -62,12 +73,32 @@ impl CommandHandler for DistributeMessageCommandHandler {
 
         if Status::Pending != *message.status() {
             tracing::error!("To be distributed message must be in pending state");
-            return Err(Error::MessageNotFound(cmd.message_id).into());
+            return Err(Error::InvalidMessageState(cmd.message_id).into());
         }
 
-        for route in fetch_routes(ctx.pool(), &message).await? {
-            let dispatch = build_and_save_dispatch(ctx.tx(), &route, &message).await?;
-            tracing::info!("Dispatch created: {:?}", dispatch);
+        let schema = message.schema(ctx.pool()).await?;
+
+        if !*schema.enabled() {
+            tracing::warn!("Schema {} is disabled", schema.id());
+            return Err(Error::SchemaDisabeld(*schema.id()).into());
+        }
+
+        for dispatch_type in message.dispatcher_types().iter() {
+            for route in Route::dispatch_route_stack(ctx.pool(), schema.id(), dispatch_type).await?
+            {
+                let conn = route.connection(ctx.pool()).await?;
+                let plugin = ctx.plugins().get(&conn.plugin_id()).unwrap();
+                let dispatcher = plugin.dispatcher(dispatch_type).unwrap();
+                let request = build_request();
+
+                let result = dispatcher.dispatch(&request).await;
+
+                let message_dispatch =
+                    register_message_dispatch(ctx, &message, &plugin.id(), dispatch_type, &result)
+                        .await?;
+
+                result.is_err();
+            }
         }
 
         let message = message
@@ -80,35 +111,32 @@ impl CommandHandler for DistributeMessageCommandHandler {
     }
 }
 
-async fn build_and_save_dispatch<'tx>(
-    tx: &mut Transaction<'tx, Postgres>,
-    route: &Route,
+async fn register_message_dispatch(
+    ctx: &mut CommandBusContext<'_>,
     message: &Message,
-) -> Result<MessageDispatch, CommandBusError> {
+    plugin_id: &ConnectorPluginId,
+    dispatch_type: &DispatchType,
+    result: &Result<DispatchResponse, DispatchError>,
+) -> Result<MessageDispatch, sqlx::Error> {
     MessageDispatchBuilder::default()
-        .id(Id::new())
+        .id(new_id!())
         .message_id(*message.id())
-        //.route_id(*route.id())
-        .status(MessageDispatchStatus::Pending)
+        .dispatch_type(*dispatch_type)
+        .plugin_id(*plugin_id)
+        .success(result.is_ok())
+        .created_at(Utc::now().naive_utc())
+        .result(match result {
+            Ok(response) => Some(MessageDispatchResult::new(response.reference.clone(), None)),
+            Err(e) => None,
+        })
         .build()
         .unwrap()
-        .save(tx)
+        .save(ctx.tx())
         .await
-        .tap_err(|e| tracing::error!("Failed to save message dispatch: {e}"))
-        .map_err(CommandBusError::from)
 }
 
-async fn fetch_routes(pool: &PgPool, message: &Message) -> Result<Vec<Route>, CommandBusError> {
-    Route::query(
-        pool,
-        RouteQueryBuilder::default()
-            .schema_id(Some(*message.schema_id()))
-            .build()
-            .unwrap(),
-    )
-    .await
-    .tap_err(|e| tracing::error!("Failed to retrieve routes from database: {e}"))
-    .map_err(CommandBusError::from)
+fn build_request<'r>() -> DispatchRequest<'r> {
+    todo!()
 }
 
 async fn retrieve_message(pool: &PgPool, message_id: Id) -> Result<Message, CommandBusError> {

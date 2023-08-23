@@ -35,5 +35,8 @@ pub fn log_connector_plugin() -> impl ConnectorPlugin {
 }
 
 pub async fn dispatch<'r>(_: &DispatchRequest<'r>) -> Result<DispatchResponse, DispatchError> {
-    Ok(DispatchResponse::new(None, None))
+    Ok(DispatchResponse {
+        reference: None,
+        data: None,
+    })
 }
