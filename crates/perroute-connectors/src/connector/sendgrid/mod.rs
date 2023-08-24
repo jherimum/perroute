@@ -4,7 +4,7 @@ use crate::{
         DispatchResponse,
     },
     configuration::{ConfigurationProperties, DefaultConfiguration},
-    types::{dispatch_type::DispatchType, plugin_id::ConnectorPluginId, TemplateSupport},
+    types::{dispatch_type::DispatchType, plugin_id::ConnectorPluginId},
 };
 use perroute_commons::types::{email::Mailbox, recipient::Recipient};
 use sendgrid::{
@@ -24,7 +24,6 @@ pub fn sendgrid_connector_plugin() -> impl ConnectorPlugin {
         )),
         vec![Box::new(BaseDispatcherPlugin::new(
             DispatchType::Email,
-            TemplateSupport::Mandatory,
             Box::new(DefaultConfiguration::new(
                 dispatcher_properties(),
                 PhantomData::<EmailDispatcherProperties>,

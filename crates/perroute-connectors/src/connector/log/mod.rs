@@ -4,7 +4,7 @@ use crate::{
         DispatchResponse,
     },
     configuration::{DefaultConfiguration, NilConfiguration},
-    types::{dispatch_type::DispatchType, plugin_id::ConnectorPluginId, TemplateSupport},
+    types::{dispatch_type::DispatchType, plugin_id::ConnectorPluginId},
 };
 
 pub fn log_connector_plugin() -> impl ConnectorPlugin {
@@ -14,19 +14,16 @@ pub fn log_connector_plugin() -> impl ConnectorPlugin {
         vec![
             Box::new(BaseDispatcherPlugin::new(
                 DispatchType::Email,
-                TemplateSupport::None,
                 Box::<DefaultConfiguration<NilConfiguration>>::default(),
                 |req| Box::pin(dispatch(req)),
             )),
             Box::new(BaseDispatcherPlugin::new(
                 DispatchType::Sms,
-                TemplateSupport::None,
                 Box::<DefaultConfiguration<NilConfiguration>>::default(),
                 |req| Box::pin(dispatch(req)),
             )),
             Box::new(BaseDispatcherPlugin::new(
                 DispatchType::Push,
-                TemplateSupport::None,
                 Box::<DefaultConfiguration<NilConfiguration>>::default(),
                 |req| Box::pin(dispatch(req)),
             )),

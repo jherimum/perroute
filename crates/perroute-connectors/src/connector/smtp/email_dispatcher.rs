@@ -8,7 +8,7 @@ use crate::{
         ConfigurationProperties, ConfigurationPropertyBuilder, ConfigurationPropertyType,
         DefaultConfiguration,
     },
-    types::{dispatch_type::DispatchType, TemplateSupport},
+    types::dispatch_type::DispatchType,
 };
 use derive_builder::Builder;
 use lettre::{
@@ -25,7 +25,6 @@ use validator::Validate;
 pub fn email_dispatcher() -> impl DispatcherPlugin {
     BaseDispatcherPlugin::new(
         DispatchType::Email,
-        TemplateSupport::Mandatory,
         Box::new(DefaultConfiguration::new(
             properties(),
             std::marker::PhantomData::<EmailDispatcherProperties>,
