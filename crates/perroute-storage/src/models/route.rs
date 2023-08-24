@@ -17,7 +17,7 @@ use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::types::{id::Id, properties::Properties};
-use perroute_connectors::types::DispatchType;
+use perroute_connectors::types::dispatch_type::DispatchType;
 use sqlx::{FromRow, PgExecutor, Postgres, QueryBuilder};
 use tap::TapFallible;
 

@@ -6,10 +6,10 @@ use crate::{
 use derive_builder::Builder;
 use derive_getters::Getters;
 use perroute_commons::types::id::Id;
-use perroute_connectors::types::{ConnectorPluginId, DispatchType};
+use perroute_connectors::types::{delivery::Delivery, plugin_id::ConnectorPluginId};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use sqlx::{FromRow, PgExecutor, QueryBuilder, Type};
+use sqlx::{types::Json, FromRow, PgExecutor, QueryBuilder, Type};
 
 impl DatabaseModel for MessageDispatch {}
 
@@ -100,9 +100,9 @@ pub struct MessageDispatch {
     success: bool,
     result: Option<MessageDispatchResult>,
     message_id: Id,
-    dispatch_type: DispatchType,
     plugin_id: ConnectorPluginId,
     created_at: chrono::NaiveDateTime,
+    delivery: Json<Delivery>,
 }
 
 impl MessageDispatch {
@@ -123,7 +123,7 @@ impl MessageDispatch {
     pub async fn save<'e, E: PgExecutor<'e>>(&self, executor: E) -> Result<Self, sqlx::Error> {
         sqlx::query_as(
             r#"
-            INSERT INTO message_dispatches (id, message_id, success, plugin_id, dispatch_type, created_at)
+            INSERT INTO message_dispatches (id, message_id, success, plugin_id, delivery, created_at)
             VALUES ($1, $2, $3, $4, $5)
             RETURNING *
             "#,
@@ -132,7 +132,7 @@ impl MessageDispatch {
         .bind(self.message_id)
         .bind(self.success)
         .bind(self.plugin_id)
-        .bind(self.dispatch_type)
+        .bind(self.delivery.clone())
         .bind(self.created_at)
         .fetch_one(executor)
         .await

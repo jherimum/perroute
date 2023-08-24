@@ -8,7 +8,7 @@ use crate::{
         ConfigurationProperties, ConfigurationPropertyBuilder, ConfigurationPropertyType,
         DefaultConfiguration,
     },
-    types::{DispatchType, TemplateSupport},
+    types::{dispatch_type::DispatchType, TemplateSupport},
 };
 use derive_builder::Builder;
 use lettre::{

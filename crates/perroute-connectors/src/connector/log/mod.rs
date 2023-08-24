@@ -4,7 +4,7 @@ use crate::{
         DispatchResponse,
     },
     configuration::{DefaultConfiguration, NilConfiguration},
-    types::{ConnectorPluginId, DispatchType, TemplateSupport},
+    types::{dispatch_type::DispatchType, plugin_id::ConnectorPluginId, TemplateSupport},
 };
 
 pub fn log_connector_plugin() -> impl ConnectorPlugin {

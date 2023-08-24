@@ -104,8 +104,7 @@ create table routes(
 create table messages(
     id                  uuid            not null,
     payload             jsonb           not null,
-    recipient           jsonb           not null,
-    dispatch_types      jsonb           not null,
+    deliveries          jsonb           not null,
     status              message_status  not null,
     schema_id           uuid            not null,
     message_type_id     uuid            not null,
@@ -125,7 +124,7 @@ create table message_dispatches(
     plugin_id               plugin_id               not null,
     connection_properties   jsonb                   not null,
     dispatcher_properties   jsonb                   not null,
-    dispatch_type           dispatch_type           not null,
+    delivery                jsonb                   not null,
 
     constraint message_dispatches_pk primary key (id),
     constraint message_dispatches_message_fk foreign key (message_id) references messages(id)

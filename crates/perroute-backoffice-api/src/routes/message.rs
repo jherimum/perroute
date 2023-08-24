@@ -8,6 +8,7 @@ use crate::{
     extractors::actor::ActorExtractor,
 };
 use actix_web::web::{Data, Json};
+
 use perroute_commons::types::actor::Actor;
 use perroute_cqrs::command_bus::handlers::message::create_message::{
     CreateMessageCommandBuilder, CreateMessageCommandHandler,
@@ -43,7 +44,7 @@ async fn create_message(
         .message_type_code(body.message_type_code)
         .schema_version(body.schema_version)
         .recipient(body.recipient)
-        .dispatcher_types(body.dispatcher_types)
+        //.deliveries(body.deliveries.into())
         .build()
         .unwrap();
     state

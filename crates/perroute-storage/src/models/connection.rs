@@ -8,7 +8,7 @@ use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::types::{id::Id, properties::Properties};
-use perroute_connectors::types::ConnectorPluginId;
+use perroute_connectors::types::plugin_id::ConnectorPluginId;
 use sqlx::{FromRow, PgExecutor};
 use tap::TapFallible;
 

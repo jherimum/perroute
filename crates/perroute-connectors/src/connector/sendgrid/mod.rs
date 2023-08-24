@@ -4,7 +4,7 @@ use crate::{
         DispatchResponse,
     },
     configuration::{ConfigurationProperties, DefaultConfiguration},
-    types::{ConnectorPluginId, DispatchType, TemplateSupport},
+    types::{dispatch_type::DispatchType, plugin_id::ConnectorPluginId, TemplateSupport},
 };
 use perroute_commons::types::{email::Mailbox, recipient::Recipient};
 use sendgrid::{

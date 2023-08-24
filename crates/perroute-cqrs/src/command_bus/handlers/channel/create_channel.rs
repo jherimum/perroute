@@ -14,7 +14,7 @@ use perroute_commons::types::{
     priority::Priority,
     properties::{Properties, PropertiesError},
 };
-use perroute_connectors::types::{ConnectorPluginId, DispatchType};
+use perroute_connectors::types::{dispatch_type::DispatchType, plugin_id::ConnectorPluginId};
 use perroute_storage::{
     models::{
         business_unit::{BusinessUnit, BusinessUnitQuery},

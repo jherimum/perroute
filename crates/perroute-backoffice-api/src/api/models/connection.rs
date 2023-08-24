@@ -14,7 +14,7 @@ pub struct CreateConnectionRequest {
     #[validate(custom = "perroute_commons::types::name::validate")]
     pub name: String,
 
-    #[validate(custom = "perroute_connectors::types::ConnectorPluginId::validate")]
+    #[validate(custom = "perroute_connectors::types::plugin_id::ConnectorPluginId::validate")]
     pub plugin_id: String,
 
     #[validate(custom = "perroute_commons::types::properties::Properties::validate")]

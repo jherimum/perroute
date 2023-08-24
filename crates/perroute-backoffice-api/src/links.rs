@@ -8,7 +8,7 @@ use crate::{
 };
 use actix_web::HttpRequest;
 use perroute_commons::types::id::Id;
-use perroute_connectors::types::ConnectorPluginId;
+use perroute_connectors::types::plugin_id::ConnectorPluginId;
 use serde::Serialize;
 use std::string::ToString;
 use tap::TapFallible;

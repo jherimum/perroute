@@ -12,7 +12,7 @@ use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::types::{id::Id, json_schema::JsonSchema, vars::Vars, version::Version};
-use perroute_connectors::types::DispatchType;
+use perroute_connectors::types::dispatch_type::DispatchType;
 use sqlx::{FromRow, PgExecutor};
 
 impl DatabaseModel for Schema {}

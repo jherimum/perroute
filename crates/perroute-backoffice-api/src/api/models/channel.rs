@@ -17,7 +17,7 @@ pub struct CreateChannelRequest {
     #[validate(custom = "perroute_commons::types::id::Id::validate")]
     pub connection_id: String,
 
-    #[validate(custom = "perroute_connectors::types::DispatchType::validate")]
+    #[validate(custom = "perroute_connectors::types::dispatch_type::DispatchType::validate")]
     pub dispatch_type: String,
 
     #[validate(custom = "perroute_commons::types::properties::Properties::validate")]

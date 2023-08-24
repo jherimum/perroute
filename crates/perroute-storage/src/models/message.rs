@@ -1,3 +1,5 @@
+use std::{collections::HashSet, ops::Deref};
+
 use super::{business_unit::BusinessUnit, message_type::MessageType, schema::Schema};
 use crate::{log_query_error, query::ModelQueryBuilder, DatabaseModel};
 use chrono::NaiveDateTime;
@@ -5,10 +7,23 @@ use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::types::{id::Id, payload::Payload, recipient::Recipient};
-use perroute_connectors::types::DispatchTypes;
+
+use perroute_connectors::types::delivery::Delivery;
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, PgExecutor};
+use sqlx::{types::Json, FromRow, PgExecutor};
 use tap::TapFallible;
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default, sqlx::Type)]
+#[sqlx(transparent)]
+pub struct Deliveries(Json<HashSet<Delivery>>);
+
+impl Deref for Deliveries {
+    type Target = HashSet<Delivery>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, sqlx::Type, Copy)]
 #[sqlx(type_name = "message_status", rename_all = "snake_case")]
@@ -138,7 +153,7 @@ pub struct Message {
 
     #[setters(skip)]
     #[builder(default)]
-    dispatcher_types: DispatchTypes,
+    deliveries: Deliveries,
 
     status: Status,
 
@@ -174,12 +189,12 @@ impl Message {
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
         sqlx::query_as(
             r#"
-                INSERT INTO messages (id, payload, recipient, dispatcher_types, status, schema_id, message_type_id, business_unit_id) 
+                INSERT INTO messages (id, payload, recipient, deliveries, status, schema_id, message_type_id, business_unit_id) 
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *"#,
             ).bind(self.id)
             .bind(self.payload)
             .bind(self.recipient)
-            .bind(self.dispatcher_types)
+            .bind(self.deliveries)
             .bind(self.status)
             .bind(self.schema_id)
             .bind(self.message_type_id)

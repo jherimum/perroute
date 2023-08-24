@@ -18,7 +18,7 @@ pub struct CreateTemplateRequest {
     pub text: Option<String>,
     pub vars: HashMap<String, String>,
 
-    #[validate(custom = "perroute_connectors::types::DispatchType::validate")]
+    #[validate(custom = "perroute_connectors::types::dispatch_type::DispatchType::validate")]
     pub dispatch_type: String,
 
     #[validate(custom = "perroute_commons::types::id::Id::validate")]

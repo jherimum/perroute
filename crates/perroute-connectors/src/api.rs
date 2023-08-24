@@ -1,7 +1,7 @@
 use crate::{
     configuration::Configuration,
     template::DispatchTemplate,
-    types::{ConnectorPluginId, DispatchType, TemplateSupport},
+    types::{dispatch_type::DispatchType, plugin_id::ConnectorPluginId, TemplateSupport},
 };
 use derive_getters::Getters;
 use erased_serde::serialize_trait_object;

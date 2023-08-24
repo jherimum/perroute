@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use crate::{
     api::{
         models::plugin::ConnectorPluginResource,
@@ -7,8 +9,7 @@ use crate::{
 };
 use actix_web::web::Data;
 use actix_web::web::Path;
-use perroute_connectors::types::ConnectorPluginId;
-use std::str::FromStr;
+use perroute_connectors::types::plugin_id::ConnectorPluginId;
 
 pub type SingleResult = ApiResult<SingleResourceModel<ConnectorPluginResource>>;
 pub type CollectionResult = ApiResult<CollectionResourceModel<ConnectorPluginResource>>;

@@ -3,7 +3,7 @@ use connector::{
     log::log_connector_plugin, sendgrid::sendgrid_connector_plugin, smtp::smtp_connector_plugin,
 };
 use std::{fmt::Debug, sync::Arc};
-use types::ConnectorPluginId;
+use types::plugin_id::ConnectorPluginId;
 
 pub mod api;
 pub mod configuration;

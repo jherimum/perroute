@@ -1,13 +1,29 @@
-use lettre::Address;
+use lettre::{address::AddressError, Address};
 use serde::{Deserialize, Serialize};
 use std::{ops::Deref, str::FromStr};
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Mailbox(lettre::message::Mailbox);
 
 impl Mailbox {
     pub fn new(email: Email, name: Option<String>) -> Self {
         Self(lettre::message::Mailbox::new(name, email.into()))
+    }
+}
+
+impl FromStr for Mailbox {
+    type Err = AddressError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(Mailbox(lettre::message::Mailbox::from_str(s)?))
+    }
+}
+
+impl TryFrom<(String, Option<String>)> for Mailbox {
+    type Error = lettre::address::AddressError;
+
+    fn try_from(value: (String, Option<String>)) -> Result<Self, Self::Error> {
+        Ok(Mailbox::new(Email::from_str(&value.0)?, value.1))
     }
 }
 

@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use crate::{
     command_bus::{
         bus::CommandBusContext, commands::CommandType, error::CommandBusError,
@@ -11,7 +13,7 @@ use perroute_commons::types::{
     actor::Actor, code::Code, id::Id, json_schema::InvalidPayloadError, payload::Payload,
     recipient::Recipient, version::Version,
 };
-use perroute_connectors::types::DispatchTypes;
+use perroute_connectors::types::delivery::Delivery;
 use perroute_messaging::events::EventType;
 use perroute_storage::{
     models::{
@@ -23,6 +25,7 @@ use perroute_storage::{
     query::FetchableModel,
 };
 use serde::Serialize;
+use sqlx::types::Json;
 use tap::TapFallible;
 use thiserror::Error;
 
@@ -34,7 +37,7 @@ pub struct CreateMessageCommand {
     business_unit_code: Code,
     message_type_code: Code,
     schema_version: Version,
-    dispatcher_types: DispatchTypes,
+    deliveries: HashSet<Delivery>,
 }
 
 impl_command!(CreateMessageCommand, CommandType::CreateMessage);
@@ -143,7 +146,7 @@ impl CommandHandler for CreateMessageCommandHandler {
             .schema_id(*schema.id())
             .message_type_id(*schema.message_type_id())
             .business_unit_id(*schema.business_unit_id())
-            .dispatcher_types(cmd.dispatcher_types)
+            //.deliveries(Json(cmd.deliveries))
             .recipient(cmd.recipient)
             .build()
             .unwrap()

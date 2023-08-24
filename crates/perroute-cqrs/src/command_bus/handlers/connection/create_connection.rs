@@ -13,7 +13,7 @@ use perroute_commons::types::{
     id::Id,
     properties::{Properties, PropertiesError},
 };
-use perroute_connectors::types::ConnectorPluginId;
+use perroute_connectors::types::plugin_id::ConnectorPluginId;
 use perroute_storage::models::connection::{Connection, ConnectionBuilder};
 use serde::Serialize;
 use tap::TapFallible;

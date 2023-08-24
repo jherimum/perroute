@@ -5,6 +5,7 @@ use crate::{
         ConfigurationProperties, ConfigurationPropertyBuilder, ConfigurationPropertyType,
         DefaultConfiguration,
     },
+    types::plugin_id::ConnectorPluginId,
 };
 use derive_builder::Builder;
 use derive_getters::Getters;
@@ -16,7 +17,7 @@ mod email_dispatcher;
 
 pub fn smtp_connector_plugin() -> impl ConnectorPlugin {
     BaseConnectorPlugin::new(
-        crate::types::ConnectorPluginId::Smtp,
+        ConnectorPluginId::Smtp,
         Box::new(DefaultConfiguration::new(
             smtp_conn_properties(),
             PhantomData::<SmtpConnectorProperties>,

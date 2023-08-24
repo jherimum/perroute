@@ -14,7 +14,7 @@ use perroute_commons::types::{
     priority::Priority,
     properties::{Properties, PropertiesError},
 };
-use perroute_connectors::types::DispatchType;
+use perroute_connectors::types::dispatch_type::DispatchType;
 use perroute_storage::{
     models::channel::{Channel, ChannelQuery},
     query::FetchableModel,

@@ -6,9 +6,10 @@ use perroute_commons::{
     new_id,
     types::{actor::Actor, id::Id},
 };
+use perroute_connectors::types::delivery::Delivery;
 use perroute_connectors::{
-    api::{DispatchError, DispatchRequest, DispatchResponse, ResponseData},
-    types::{ConnectorPluginId, DispatchType},
+    api::{DispatchError, DispatchRequest, DispatchResponse},
+    types::plugin_id::ConnectorPluginId,
 };
 use perroute_messaging::events::EventType;
 use perroute_storage::{
@@ -20,7 +21,7 @@ use perroute_storage::{
     query::FetchableModel,
 };
 use serde::Serialize;
-use sqlx::PgPool;
+use sqlx::{types::Json, PgPool};
 use tap::{TapFallible, TapOptional};
 
 use crate::{
@@ -83,18 +84,20 @@ impl CommandHandler for DistributeMessageCommandHandler {
             return Err(Error::SchemaDisabeld(*schema.id()).into());
         }
 
-        for dispatch_type in message.dispatcher_types().iter() {
-            for route in Route::dispatch_route_stack(ctx.pool(), schema.id(), dispatch_type).await?
+        for delivery in message.deliveries().iter() {
+            for route in
+                Route::dispatch_route_stack(ctx.pool(), schema.id(), &delivery.dispatch_type())
+                    .await?
             {
                 let conn = route.connection(ctx.pool()).await?;
                 let plugin = ctx.plugins().get(&conn.plugin_id()).unwrap();
-                let dispatcher = plugin.dispatcher(dispatch_type).unwrap();
+                let dispatcher = plugin.dispatcher(&delivery.dispatch_type()).unwrap();
                 let request = build_request();
 
                 let result = dispatcher.dispatch(&request).await;
 
                 let message_dispatch =
-                    register_message_dispatch(ctx, &message, &plugin.id(), dispatch_type, &result)
+                    register_message_dispatch(ctx, &message, &plugin.id(), &delivery, &result)
                         .await?;
 
                 result.is_err();
@@ -115,13 +118,13 @@ async fn register_message_dispatch(
     ctx: &mut CommandBusContext<'_>,
     message: &Message,
     plugin_id: &ConnectorPluginId,
-    dispatch_type: &DispatchType,
+    delivery: &Delivery,
     result: &Result<DispatchResponse, DispatchError>,
 ) -> Result<MessageDispatch, sqlx::Error> {
     MessageDispatchBuilder::default()
         .id(new_id!())
         .message_id(*message.id())
-        .dispatch_type(*dispatch_type)
+        .delivery(Json(delivery.clone()))
         .plugin_id(*plugin_id)
         .success(result.is_ok())
         .created_at(Utc::now().naive_utc())
