@@ -8,7 +8,6 @@ pub mod payload;
 pub mod phonenumber;
 pub mod priority;
 pub mod properties;
-pub mod recipient;
 pub mod template;
 pub mod vars;
 pub mod version;

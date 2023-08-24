@@ -6,7 +6,7 @@ use crate::{
     configuration::{ConfigurationProperties, DefaultConfiguration},
     types::{dispatch_type::DispatchType, plugin_id::ConnectorPluginId},
 };
-use perroute_commons::types::{email::Mailbox, recipient::Recipient};
+use perroute_commons::types::email::Mailbox;
 use sendgrid::{
     v3::{Email, Message, Personalization, Sender},
     SendgridResult,
@@ -51,7 +51,6 @@ fn connection_properties() -> ConfigurationProperties {
 #[derive(Debug, Deserialize)]
 pub struct EmailDispatcherProperties {
     from: Mailbox,
-    template_id: Option<String>,
     categories: Vec<String>,
 }
 
@@ -73,7 +72,6 @@ pub async fn dispatch<'r>(req: &DispatchRequest<'r>) -> Result<DispatchResponse,
 
     let sender = Sender::new(conn_properties.api_key);
     let message = build_message(req).unwrap();
-    println!("{}", serde_json::to_string_pretty(&message).unwrap());
     let r = sender.send(&message).await;
 
     if r.is_err() {
@@ -103,21 +101,18 @@ fn build_message(req: &DispatchRequest) -> SendgridResult<Message> {
         .from_value::<EmailDispatcherProperties>()
         .unwrap();
 
-    let mut message = Message::new(SendGridEmail::from(disp_properties.from).into());
-    if disp_properties.template_id.is_some() {
-        message = message.set_template_id(disp_properties.template_id.as_ref().unwrap());
-    }
+    let mut message = Message::new(SendGridEmail::from(&disp_properties.from).into());
 
     Ok(
         message
-            .add_personalization(personalization_from_request(req)?)
+            .add_personalization(personalization_from_request(req))
             .add_categories(&disp_properties.categories), //    .set_subject(&req.subject().as_ref().cloned().unwrap_or_default())
     )
 }
 
-fn personalization_from_request(req: &DispatchRequest) -> SendgridResult<Personalization> {
-    let email: SendGridEmail = req.recipient().into();
-    Personalization::new(email.into()).add_dynamic_template_data_json(req.payload())
+fn personalization_from_request(req: &DispatchRequest) -> Personalization {
+    let email: SendGridEmail = req.delivery().email_data().unwrap().mailbox().into();
+    Personalization::new(email.into())
 }
 
 pub struct SendGridEmail(Email);
@@ -136,8 +131,8 @@ impl Deref for SendGridEmail {
     }
 }
 
-impl From<Mailbox> for SendGridEmail {
-    fn from(mail_box: Mailbox) -> Self {
+impl From<&Mailbox> for SendGridEmail {
+    fn from(mail_box: &Mailbox) -> Self {
         let mut email = Email::new(mail_box.deref().email.to_string());
 
         if mail_box.deref().name.is_some() {
@@ -145,13 +140,6 @@ impl From<Mailbox> for SendGridEmail {
         }
 
         Self(email)
-    }
-}
-
-impl From<&Recipient> for SendGridEmail {
-    fn from(value: &Recipient) -> Self {
-        let email: Mailbox = value.into();
-        email.into()
     }
 }
 

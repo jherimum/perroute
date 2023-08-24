@@ -1,7 +1,7 @@
 use crate::{
     configuration::Configuration,
     template::DispatchTemplate,
-    types::{dispatch_type::DispatchType, plugin_id::ConnectorPluginId},
+    types::{delivery::Delivery, dispatch_type::DispatchType, plugin_id::ConnectorPluginId},
 };
 use derive_getters::Getters;
 use erased_serde::serialize_trait_object;
@@ -10,7 +10,6 @@ use perroute_commons::types::{
     id::Id,
     payload::Payload,
     properties::Properties,
-    recipient::Recipient,
     template::{TemplateData, TemplateError},
     vars::Vars,
 };
@@ -89,16 +88,15 @@ pub struct DispatchRequest<'r> {
     pub connection_properties: &'r Properties,
     pub dispatch_properties: &'r Properties,
     pub template: &'r dyn DispatchTemplate,
-    pub recipient: &'r Recipient,
     pub payload: &'r Payload,
     pub vars: &'r Vars,
+    pub delivery: Delivery,
 }
 
 impl<'r> From<&DispatchRequest<'r>> for TemplateData {
     fn from(value: &DispatchRequest) -> Self {
         Self {
             payload: value.payload.clone(),
-            recipient: value.recipient.clone(),
             vars: value.vars.clone(),
         }
     }

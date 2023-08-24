@@ -43,7 +43,6 @@ async fn create_message(
         .business_unit_code(body.bu_code)
         .message_type_code(body.message_type_code)
         .schema_version(body.schema_version)
-        .recipient(body.recipient)
         //.deliveries(body.deliveries.into())
         .build()
         .unwrap();

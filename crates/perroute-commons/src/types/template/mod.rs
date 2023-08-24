@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use super::{payload::Payload, recipient::Recipient, vars::Vars};
+use super::{payload::Payload, vars::Vars};
 use serde::Serialize;
 use sqlx::Type;
 
@@ -51,6 +51,5 @@ pub trait TemplateRender<D: Serialize>: Debug + Send + Sync {
 #[derive(Debug, Serialize)]
 pub struct TemplateData {
     pub payload: Payload,
-    pub recipient: Recipient,
     pub vars: Vars,
 }

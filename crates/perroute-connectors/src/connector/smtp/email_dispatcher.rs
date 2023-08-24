@@ -16,7 +16,7 @@ use lettre::{
     transport::smtp::{authentication::Credentials, response::Response},
     Message, SmtpTransport, Transport,
 };
-use perroute_commons::types::{email::Mailbox, recipient::Recipient};
+use perroute_commons::types::email::Mailbox;
 use serde::{Deserialize, Serialize};
 use std::{ops::Deref, time::Duration};
 use tap::TapFallible;
@@ -143,10 +143,14 @@ impl TryFrom<&DispatchRequest<'_>> for Message {
             .render_text(&req.into())
             .map_err(DispatchError::from)?;
 
-        let recipient_mail_box: Mailbox = req.recipient().into();
+        let recipient_mail_box = req
+            .delivery()
+            .email_data()
+            .map(|d| d.mailbox())
+            .ok_or_else(|| EmailDispatcherError::EmailNotSupplied)?;
 
         let mut message = Self::builder()
-            .to(recipient_mail_box.into())
+            .to(recipient_mail_box.deref().clone())
             .from(disp_properties.from.deref().clone())
             .date_now()
             //.subject(req.subject().clone().unwrap_or_default())
@@ -175,16 +179,6 @@ impl TryFrom<&DispatchRequest<'_>> for Message {
             }
         }
         .map_err(DispatchError::unrecoverable)
-    }
-}
-
-pub struct RecipientMailbox<'r>(&'r Recipient);
-
-impl Deref for RecipientMailbox<'_> {
-    type Target = Recipient;
-
-    fn deref(&self) -> &Self::Target {
-        self.0
     }
 }
 

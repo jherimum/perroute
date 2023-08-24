@@ -12,6 +12,27 @@ pub enum Delivery {
 }
 
 impl Delivery {
+    pub fn email_data(&self) -> Option<&EmailData> {
+        match self {
+            Delivery::Email(d) => Some(&d.data),
+            _ => None,
+        }
+    }
+
+    pub fn sms_data(&self) -> Option<&SmsData> {
+        match self {
+            Delivery::Sms(d) => Some(&d.data),
+            _ => None,
+        }
+    }
+
+    pub fn push_data(&self) -> Option<&PushData> {
+        match self {
+            Delivery::Push(d) => Some(&d.data),
+            _ => None,
+        }
+    }
+
     pub fn email(mailbox: Mailbox) -> Self {
         Self::Email(DeliveryData::<EmailData>::email(mailbox))
     }

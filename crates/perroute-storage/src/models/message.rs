@@ -6,7 +6,7 @@ use chrono::NaiveDateTime;
 use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
-use perroute_commons::types::{id::Id, payload::Payload, recipient::Recipient};
+use perroute_commons::types::{id::Id, payload::Payload};
 
 use perroute_connectors::types::delivery::Delivery;
 use serde::{Deserialize, Serialize};
@@ -149,9 +149,6 @@ pub struct Message {
     payload: Payload,
 
     #[setters(skip)]
-    recipient: Recipient,
-
-    #[setters(skip)]
     #[builder(default)]
     deliveries: Deliveries,
 
@@ -189,11 +186,10 @@ impl Message {
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
         sqlx::query_as(
             r#"
-                INSERT INTO messages (id, payload, recipient, deliveries, status, schema_id, message_type_id, business_unit_id) 
+                INSERT INTO messages (id, payload, deliveries, status, schema_id, message_type_id, business_unit_id) 
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *"#,
             ).bind(self.id)
             .bind(self.payload)
-            .bind(self.recipient)
             .bind(self.deliveries)
             .bind(self.status)
             .bind(self.schema_id)

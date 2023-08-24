@@ -11,14 +11,14 @@ use derive_builder::Builder;
 use derive_getters::Getters;
 use perroute_commons::types::{
     actor::Actor, code::Code, id::Id, json_schema::InvalidPayloadError, payload::Payload,
-    recipient::Recipient, version::Version,
+    version::Version,
 };
 use perroute_connectors::types::delivery::Delivery;
 use perroute_messaging::events::EventType;
 use perroute_storage::{
     models::{
         business_unit::{BusinessUnit, BusinessUnitQueryBuilder},
-        message::{Message, MessageBuilder, Status},
+        message::{Deliveries, Message, MessageBuilder, Status},
         message_type::{MessageType, MessageTypeQueryBuilder},
         schema::{Schema, SchemasQueryBuilder},
     },
@@ -33,11 +33,10 @@ use thiserror::Error;
 pub struct CreateMessageCommand {
     id: Id,
     payload: Payload,
-    recipient: Recipient,
     business_unit_code: Code,
     message_type_code: Code,
     schema_version: Version,
-    deliveries: HashSet<Delivery>,
+    deliveries: Deliveries,
 }
 
 impl_command!(CreateMessageCommand, CommandType::CreateMessage);
@@ -146,8 +145,7 @@ impl CommandHandler for CreateMessageCommandHandler {
             .schema_id(*schema.id())
             .message_type_id(*schema.message_type_id())
             .business_unit_id(*schema.business_unit_id())
-            //.deliveries(Json(cmd.deliveries))
-            .recipient(cmd.recipient)
+            .deliveries(cmd.deliveries)
             .build()
             .unwrap()
             .save(ctx.tx())

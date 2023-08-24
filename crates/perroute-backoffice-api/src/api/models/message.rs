@@ -1,13 +1,9 @@
-use std::{collections::HashSet, str::FromStr};
-
 use crate::api::response::{Links, ResourceBuilder, SingleResourceModel};
-use perroute_commons::types::{
-    code::Code, email::Mailbox, id::Id, payload::Payload, phonenumber::PhoneNumber,
-    recipient::Recipient, version::Version,
-};
+use perroute_commons::types::{code::Code, id::Id, payload::Payload, version::Version};
 use perroute_connectors::types::delivery::Delivery;
-use perroute_storage::models::message::{Deliveries, Message, Status};
+use perroute_storage::models::message::{Message, Status};
 use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct CreateMessageRequest {
@@ -16,13 +12,11 @@ pub struct CreateMessageRequest {
     pub message_type_code: Code,
     pub schema_version: Version,
     pub deliveries: HashSet<DeliveryRest>,
-    pub recipient: Recipient,
 }
 
 #[derive(Serialize, Debug, Clone)]
 pub struct MessageResource {
     id: Id,
-    recipient: Recipient,
     status: Status,
     payload: Payload,
     deliveries: HashSet<DeliveryRest>,
@@ -33,7 +27,6 @@ impl From<&Message> for MessageResource {
         Self {
             id: *value.id(),
             payload: value.payload().clone(),
-            recipient: value.recipient().clone(),
             deliveries: value.deliveries().iter().map(Into::into).collect(),
             status: *value.status(),
         }
