@@ -21,7 +21,7 @@ impl TestContext {
     pub async fn new(settings: &DatabaseSettings) -> Self {
         let db_name = uuid::Uuid::new_v4().to_string();
         let mut master = ConnectionManager::new_connection(settings).await.unwrap();
-        Self::create_database(&mut master, db_name.to_owned()).await;
+        Self::create_database(&mut master, db_name.clone()).await;
         let pool = Self::build_pool(settings, db_name.to_owned()).await;
         ConnectionManager::migrate(&pool).await.unwrap();
         Self {
