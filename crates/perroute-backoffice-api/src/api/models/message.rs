@@ -119,5 +119,5 @@ pub struct SmsData {
 pub struct PushData;
 
 pub fn rest_to_delivery(input: HashSet<DeliveryRest>) -> Result<HashSet<Delivery>, anyhow::Error> {
-    input.into_iter().map(|d| Delivery::try_from(d)).collect()
+    input.into_iter().map(Delivery::try_from).collect()
 }

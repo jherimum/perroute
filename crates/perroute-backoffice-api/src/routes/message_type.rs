@@ -174,11 +174,10 @@ impl MessageTypeRouter {
             .tap_err(|e| tracing::error!("Failed to build FindMessageTypeQuery: {e}"))
             .map_err(anyhow::Error::from)?;
 
-        query_bus
+        Ok(query_bus
             .execute::<_, FindMessageTypeQueryHandler, _>(actor, &query)
             .await
-            .tap_err(|e| tracing::error!("Faled to retrieve message type:{e}"))?
-            .ok_or_else(|| ApiError::MessageTypeNotFound(path))
-            .map(map)
+            .tap_err(|e| tracing::error!("Faled to retrieve message type:{e}"))
+            .map(map)?)
     }
 }

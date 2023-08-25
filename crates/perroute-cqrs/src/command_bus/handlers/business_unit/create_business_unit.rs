@@ -18,7 +18,7 @@ use serde::Serialize;
 use tap::TapFallible;
 
 #[derive(thiserror::Error, Debug, Clone)]
-pub enum Error {
+pub enum CreateBusinessUnitCommandHandlerError {
     #[error("A BusinessUnit with code {0} already exists")]
     CodeAlreadyExists(Code),
 }
@@ -59,7 +59,7 @@ impl CommandHandler for CreateBusinessUnitCommandHandler {
                 })?;
 
         if code_exists {
-            return Err(Error::CodeAlreadyExists(cmd.code).into());
+            return Err(CreateBusinessUnitCommandHandlerError::CodeAlreadyExists(cmd.code).into());
         }
 
         Ok(BusinessUnitBuilder::default()

@@ -14,39 +14,88 @@ use crate::{
     error::ApiError,
     extractors::actor::ActorExtractor,
     links::ResourceLink,
+    W,
 };
 use actix_web::web::Data;
 use actix_web_validator::{Json, Path};
 use anyhow::Context;
-use perroute_commons::types::{actor::Actor, code::Code, id::Id};
+use perroute_commons::types::{code::Code, id::Id};
 use perroute_cqrs::{
     command_bus::handlers::business_unit::{
         create_business_unit::{
-            CreateBusinessUnitCommandBuilder, CreateBusinessUnitCommandHandler,
+            CreateBusinessUnitCommand, CreateBusinessUnitCommandBuilder,
+            CreateBusinessUnitCommandHandler,
         },
         delete_business_unit::{
-            DeleteBusinessUnitCommandBuilder, DeleteBusinessUnitCommandHandler,
+            DeleteBusinessUnitCommand, DeleteBusinessUnitCommandBuilder,
+            DeleteBusinessUnitCommandHandler,
         },
         update_business_unit::{
-            UpdateBusinessUnitCommandBuilder, UpdateBusinessUnitCommandHandler,
+            UpdateBusinessUnitCommand, UpdateBusinessUnitCommandBuilder,
+            UpdateBusinessUnitCommandHandler,
         },
     },
-    query_bus::{
-        bus::QueryBus,
-        handlers::business_unit::{
-            find_business_unit::{FindBusinessUnitQueryBuilder, FindBusinessUnitQueryHandler},
-            query_business_units::{
-                QueryBusinessUnitsQueryBuilder, QueryBusinessUnitsQueryHandler,
-            },
+    query_bus::handlers::business_unit::{
+        find_business_unit::{
+            FindBusinessUnitQuery, FindBusinessUnitQueryBuilder, FindBusinessUnitQueryHandler,
         },
+        query_business_units::{QueryBusinessUnitsQueryBuilder, QueryBusinessUnitsQueryHandler},
     },
 };
-use perroute_storage::models::business_unit::BusinessUnit;
-use std::{convert::identity, str::FromStr};
+use std::str::FromStr;
 use tap::TapFallible;
 
 pub type SingleResult = ApiResult<SingleResourceModel<BusinessUnitResource>>;
 pub type CollectionResult = ApiResult<CollectionResourceModel<BusinessUnitResource>>;
+
+impl TryInto<CreateBusinessUnitCommand> for CreateBusinessUnitRequest {
+    type Error = anyhow::Error;
+
+    fn try_into(self) -> Result<CreateBusinessUnitCommand, Self::Error> {
+        Ok(CreateBusinessUnitCommandBuilder::default()
+            .id(Id::new())
+            .code(Code::from_str(&self.code.context("Missing code")?).context("Invalid code")?)
+            .name(self.name.context("Misssing name")?)
+            .vars(self.vars.into())
+            .build()
+            .tap_err(|e| tracing::error!("Failed to build CreateBusinessUnitCommand: {e}"))?)
+    }
+}
+
+impl TryInto<UpdateBusinessUnitCommand> for W<(SingleIdPath, UpdateBusinessUnitRequest)> {
+    type Error = anyhow::Error;
+
+    fn try_into(self) -> Result<UpdateBusinessUnitCommand, Self::Error> {
+        Ok(UpdateBusinessUnitCommandBuilder::default()
+            .business_unit_id(self.0 .0.try_into().context("Invalid id")?)
+            .name(self.0 .1.name)
+            .vars(self.0 .1.vars.map(Into::into))
+            .build()
+            .tap_err(|e| tracing::error!("Failed to build UpdateBusinessUnitCommand: {e}"))?)
+    }
+}
+
+impl TryInto<FindBusinessUnitQuery> for SingleIdPath {
+    type Error = anyhow::Error;
+
+    fn try_into(self) -> Result<FindBusinessUnitQuery, Self::Error> {
+        Ok(FindBusinessUnitQueryBuilder::default()
+            .id(self.try_into().context("Invalid id")?)
+            .build()
+            .tap_err(|e| tracing::error!("Failed to build FindBusinessUnitByCodeQuery: {e}"))?)
+    }
+}
+
+impl TryInto<DeleteBusinessUnitCommand> for SingleIdPath {
+    type Error = anyhow::Error;
+
+    fn try_into(self) -> Result<DeleteBusinessUnitCommand, Self::Error> {
+        Ok(DeleteBusinessUnitCommandBuilder::default()
+            .business_unit_id(self.try_into().context("Invalid id")?)
+            .build()
+            .tap_err(|e| tracing::error!("Failed to build DeleteBusinessUnitCommand: {e}"))?)
+    }
+}
 
 pub struct BusinessUnitRouter;
 
@@ -60,18 +109,9 @@ impl BusinessUnitRouter {
         ActorExtractor(actor): ActorExtractor,
         Json(body): Json<CreateBusinessUnitRequest>,
     ) -> SingleResult {
-        let cmd = CreateBusinessUnitCommandBuilder::default()
-            .id(Id::new())
-            .code(Code::from_str(&body.code.context("Missing code")?).context("Invalid code")?)
-            .name(body.name.context("Misssing name")?)
-            .vars(body.vars.into())
-            .build()
-            .tap_err(|e| tracing::error!("Failed to build CreateBusinessUnitCommand: {e}"))
-            .map_err(anyhow::Error::from)?;
-
         Ok(state
             .command_bus()
-            .execute::<_, CreateBusinessUnitCommandHandler, _>(&actor, &cmd)
+            .execute::<_, CreateBusinessUnitCommandHandler, _>(&actor, &body.try_into()?)
             .await
             .tap_err(|e| tracing::error!("Failed to create bu: {e}"))
             .map(|bu| ApiResponse::created(ResourceLink::BusinessUnit(*bu.id()), bu))?)
@@ -83,13 +123,12 @@ impl BusinessUnitRouter {
         ActorExtractor(actor): ActorExtractor,
         path: Path<SingleIdPath>,
     ) -> SingleResult {
-        Self::retrieve_bu(
-            state.query_bus(),
-            &actor,
-            path.into_inner().try_into().context("Invalid id")?,
-            ApiResponse::ok,
-        )
-        .await
+        Ok(state
+            .query_bus()
+            .execute::<_, FindBusinessUnitQueryHandler, _>(&actor, &path.into_inner().try_into()?)
+            .await
+            .tap_err(|e| tracing::error!("Failed to retrieve business unit: {e}"))
+            .map(ApiResponse::ok)?)
     }
 
     #[tracing::instrument(skip(state))]
@@ -117,25 +156,12 @@ impl BusinessUnitRouter {
         path: Path<SingleIdPath>,
         Json(body): Json<UpdateBusinessUnitRequest>,
     ) -> SingleResult {
-        let business_unit = Self::retrieve_bu(
-            state.query_bus(),
-            &actor,
-            path.into_inner().try_into().context("Invalid id")?,
-            identity,
-        )
-        .await?;
-
-        let cmd = UpdateBusinessUnitCommandBuilder::default()
-            .business_unit_id(*business_unit.id())
-            .name(body.name)
-            .vars(body.vars.map(Into::into))
-            .build()
-            .tap_err(|e| tracing::error!("Failed to build UpdateBusinessUnitCommand: {e}"))
-            .map_err(anyhow::Error::from)?;
-
         Ok(state
             .command_bus()
-            .execute::<_, UpdateBusinessUnitCommandHandler, _>(&actor, &cmd)
+            .execute::<_, UpdateBusinessUnitCommandHandler, _>(
+                &actor,
+                &W((path.into_inner(), body)).try_into()?,
+            )
             .await
             .tap_err(|e| tracing::error!("Failed to update BusinessUnit: {e}"))
             .map(ApiResponse::ok)?)
@@ -147,47 +173,16 @@ impl BusinessUnitRouter {
         ActorExtractor(actor): ActorExtractor,
         path: Path<SingleIdPath>,
     ) -> EmptyApiResult {
-        let business_unit = Self::retrieve_bu(
-            state.query_bus(),
-            &actor,
-            path.into_inner().try_into().context("Invalid id")?,
-            identity,
-        )
-        .await?;
-
-        let cmd = DeleteBusinessUnitCommandBuilder::default()
-            .business_unit_id(*business_unit.id())
-            .build()
-            .tap_err(|e| tracing::error!("Failed to build DeleteBusinessUnitCommand: {e}"))
-            .map_err(anyhow::Error::from)?;
-
         Ok(state
             .command_bus()
-            .execute::<_, DeleteBusinessUnitCommandHandler, _>(&actor, &cmd)
+            .execute::<_, DeleteBusinessUnitCommandHandler, _>(
+                &actor,
+                &path.into_inner().try_into()?,
+            )
             .await
             .tap_err(|e: &perroute_cqrs::command_bus::error::CommandBusError| {
                 tracing::error!("Failed to delete Business unit: {e}");
             })
             .map(|_| ApiResponse::ok_empty())?)
-    }
-
-    async fn retrieve_bu<R>(
-        query_bus: &QueryBus,
-        actor: &Actor,
-        id: Id,
-        map: impl FnOnce(BusinessUnit) -> R + Send + Sync,
-    ) -> Result<R, ApiError> {
-        let query = FindBusinessUnitQueryBuilder::default()
-            .business_unit_id(Some(id))
-            .build()
-            .tap_err(|e| tracing::error!("Failed to build FindBusinessUnitByCodeQuery: {e}"))
-            .map_err(anyhow::Error::from)?;
-
-        query_bus
-            .execute::<_, FindBusinessUnitQueryHandler, _>(actor, &query)
-            .await
-            .tap_err(|e| tracing::error!("Failed to retrieve business unit: {e}"))?
-            .ok_or_else(|| ApiError::BusinessUnitNotFound(id))
-            .map(map)
     }
 }

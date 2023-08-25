@@ -29,7 +29,7 @@ pub struct FindMessageTypeQueryHandler;
 #[async_trait]
 impl QueryHandler for FindMessageTypeQueryHandler {
     type Query = FindMessageTypeQuery;
-    type Output = Option<MessageType>;
+    type Output = MessageType;
 
     #[tracing::instrument(name = "find_message_type_handler", skip(self, ctx))]
     async fn handle(
@@ -45,7 +45,7 @@ impl QueryHandler for FindMessageTypeQueryHandler {
                 .build()
                 .unwrap(),
         )
-        .await
-        .map_err(Into::into)
+        .await?
+        .ok_or(QueryBusError::EntityNotFound("MessageType".to_owned()))
     }
 }

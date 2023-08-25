@@ -19,10 +19,14 @@ pub enum CommandBusError {
 
     //business_unit
     #[error(transparent)]
-    CreateBusinessUnit(#[from] business_unit::create_business_unit::Error),
+    CreateBusinessUnit(
+        #[from] business_unit::create_business_unit::CreateBusinessUnitCommandHandlerError,
+    ),
 
     #[error(transparent)]
-    UpdateBusinessUnit(#[from] business_unit::update_business_unit::Error),
+    UpdateBusinessUnit(
+        #[from] business_unit::update_business_unit::UpdateBusinessUnitCommandHandlerError,
+    ),
 
     #[error(transparent)]
     DeleteBusinessUnit(#[from] business_unit::delete_business_unit::Error),

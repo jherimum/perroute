@@ -147,7 +147,7 @@ impl TryFrom<&DispatchRequest<'_>> for Message {
             .delivery()
             .email_data()
             .map(|d| d.mailbox())
-            .ok_or_else(|| EmailDispatcherError::EmailNotSupplied)?;
+            .ok_or(EmailDispatcherError::EmailNotSupplied)?;
 
         let mut message = Self::builder()
             .to(recipient_mail_box.deref().clone())

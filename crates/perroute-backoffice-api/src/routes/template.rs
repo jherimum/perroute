@@ -173,10 +173,9 @@ impl TemplateRouter {
             .build()
             .unwrap();
 
-        query_bus
+        Ok(query_bus
             .execute::<_, FindTemplateQueryHandler, _>(actor, &query)
-            .await?
-            .ok_or_else(|| ApiError::TemplateNotFound(path))
-            .map(map)
+            .await
+            .map(map)?)
     }
 }

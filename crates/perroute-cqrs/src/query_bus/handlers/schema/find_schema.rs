@@ -37,7 +37,7 @@ pub struct FindSchemaQueryHandler;
 #[async_trait]
 impl QueryHandler for FindSchemaQueryHandler {
     type Query = FindSchemaQuery;
-    type Output = Option<Schema>;
+    type Output = Schema;
 
     #[tracing::instrument(name = "find_schema_handler", skip(self, ctx))]
     async fn handle(
@@ -53,6 +53,8 @@ impl QueryHandler for FindSchemaQueryHandler {
             .build()
             .unwrap();
 
-        Schema::find(ctx.pool(), query).await.map_err(Into::into)
+        Schema::find(ctx.pool(), query)
+            .await?
+            .ok_or(QueryBusError::EntityNotFound("".to_owned()))
     }
 }

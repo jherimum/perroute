@@ -14,6 +14,7 @@ pub mod schema;
 pub mod template;
 
 #[derive(Debug, serde::Deserialize, Clone, Validate, Default)]
+#[serde(transparent)]
 pub struct SingleIdPath {
     #[validate(custom = "perroute_commons::types::id::Id::validate")]
     id: String,

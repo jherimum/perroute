@@ -3,7 +3,16 @@ use perroute_commons::{
     rest::RestError,
     types::{id::Id, json_schema::InvalidSchemaError},
 };
-use perroute_cqrs::{command_bus::error::CommandBusError, query_bus::error::QueryBusError};
+use perroute_cqrs::{
+    command_bus::{
+        error::CommandBusError,
+        handlers::business_unit::{
+            create_business_unit::CreateBusinessUnitCommandHandlerError,
+            update_business_unit::UpdateBusinessUnitCommandHandlerError,
+        },
+    },
+    query_bus::error::QueryBusError,
+};
 use std::collections::HashMap;
 use thiserror::Error;
 use validator::{ValidationError, ValidationErrors, ValidationErrorsKind};
@@ -16,21 +25,6 @@ pub enum ApiError {
     #[error(transparent)]
     InvalidSchema(#[from] InvalidSchemaError),
 
-    #[error("Business unit {0} not found")]
-    BusinessUnitNotFound(Id),
-
-    #[error("ApiKey {0} not found")]
-    ApiKeyNotFound(Id),
-
-    #[error("Message type {0} not found")]
-    MessageTypeNotFound(Id),
-
-    #[error("Schema {0} not found")]
-    SchemaNotFound(Id),
-
-    #[error("Template {0} not found")]
-    TemplateNotFound(Id),
-
     #[error(transparent)]
     CommandBus(#[from] CommandBusError),
 
@@ -39,18 +33,14 @@ pub enum ApiError {
 
     #[error(transparent)]
     Unexpected(#[from] anyhow::Error),
+
+    #[error(transparent)]
+    Rest(#[from] RestError),
 }
 
 impl From<&ApiError> for RestError {
     fn from(value: &ApiError) -> Self {
         match value {
-            ApiError::BusinessUnitNotFound(_)
-            | ApiError::MessageTypeNotFound(_)
-            | ApiError::SchemaNotFound(_)
-            | ApiError::TemplateNotFound(_) => Self::NotFound(value.to_string()),
-            ApiError::CommandBus(CommandBusError::ExpectedError(message)) => {
-                Self::UnprocessableEntity((*message).to_string())
-            }
             ApiError::ValidationError(error) => match error {
                 actix_web_validator::Error::Validate(e) => RestError::BadRequest(
                     Some("Invalid params".to_owned()),
@@ -70,6 +60,24 @@ impl From<&ApiError> for RestError {
                     RestError::BadRequest(Some("QsError error".to_owned()), None)
                 }
             },
+            ApiError::CommandBus(CommandBusError::ExpectedError(message)) => {
+                Self::UnprocessableEntity((*message).to_string())
+            }
+            ApiError::CommandBus(CommandBusError::CreateBusinessUnit(e)) => match e {
+                CreateBusinessUnitCommandHandlerError::CodeAlreadyExists(_) => {
+                    RestError::UnprocessableEntity(e.to_string())
+                }
+            },
+
+            ApiError::CommandBus(CommandBusError::UpdateBusinessUnit(e)) => match e {
+                UpdateBusinessUnitCommandHandlerError::BusinessUnitNotFound(_) => {
+                    RestError::NotFound("Business unit not found".to_string())
+                }
+            },
+            ApiError::QueryBus(QueryBusError::EntityNotFound(e)) => {
+                RestError::NotFound(e.to_string())
+            }
+            ApiError::Rest(e) => e.clone(),
             _ => Self::InternalServer,
         }
     }

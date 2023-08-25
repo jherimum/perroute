@@ -71,9 +71,7 @@ impl<D> DeliveryData<D> {
     pub fn sms(phone_number: PhoneNumber) -> DeliveryData<SmsData> {
         DeliveryData {
             dispatch_type: DispatchType::Sms,
-            data: SmsData {
-                phone_number: phone_number,
-            },
+            data: SmsData { phone_number },
         }
     }
 

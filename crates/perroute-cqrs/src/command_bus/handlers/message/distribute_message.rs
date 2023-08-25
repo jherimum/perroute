@@ -90,14 +90,14 @@ impl CommandHandler for DistributeMessageCommandHandler {
                     .await?
             {
                 let conn = route.connection(ctx.pool()).await?;
-                let plugin = ctx.plugins().get(&conn.plugin_id()).unwrap();
+                let plugin = ctx.plugins().get(conn.plugin_id()).unwrap();
                 let dispatcher = plugin.dispatcher(&delivery.dispatch_type()).unwrap();
                 let request = build_request();
 
                 let result = dispatcher.dispatch(&request).await;
 
                 let message_dispatch =
-                    register_message_dispatch(ctx, &message, &plugin.id(), &delivery, &result)
+                    register_message_dispatch(ctx, &message, &plugin.id(), delivery, &result)
                         .await?;
 
                 result.is_err();

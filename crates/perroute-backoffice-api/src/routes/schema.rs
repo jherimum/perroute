@@ -174,11 +174,9 @@ impl SchemaRouter {
             .build()
             .unwrap();
 
-        query_bus
+        Ok(query_bus
             .execute::<_, FindSchemaQueryHandler, _>(actor, &query)
             .await
-            .unwrap()
-            .ok_or_else(|| ApiError::SchemaNotFound(path.1))
-            .map(map)
+            .map(map)?)
     }
 }

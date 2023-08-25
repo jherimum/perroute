@@ -27,7 +27,7 @@ pub struct FindTemplateQueryHandler;
 #[async_trait]
 impl QueryHandler for FindTemplateQueryHandler {
     type Query = FindTemplateQuery;
-    type Output = Option<Template>;
+    type Output = Template;
 
     #[tracing::instrument(name = "find_template_handler", skip(self, ctx))]
     async fn handle(
@@ -44,7 +44,7 @@ impl QueryHandler for FindTemplateQueryHandler {
                 .build()
                 .unwrap(),
         )
-        .await
-        .map_err(Into::into)
+        .await?
+        .ok_or(QueryBusError::EntityNotFound("Template".to_owned()))
     }
 }

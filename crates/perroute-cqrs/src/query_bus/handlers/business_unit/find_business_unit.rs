@@ -16,14 +16,14 @@ use perroute_storage::{
 query!(
     FindBusinessUnitQuery,
     QueryType::FindBusinessUnit,
-    business_unit_id: Option<Id>
+    id: Id
 );
 pub struct FindBusinessUnitQueryHandler;
 
 #[async_trait]
 impl QueryHandler for FindBusinessUnitQueryHandler {
     type Query = FindBusinessUnitQuery;
-    type Output = Option<BusinessUnit>;
+    type Output = BusinessUnit;
 
     #[tracing::instrument(name = "find_business_unit_handler", skip(self, ctx))]
     async fn handle(
@@ -35,11 +35,11 @@ impl QueryHandler for FindBusinessUnitQueryHandler {
         BusinessUnit::find(
             ctx.pool(),
             BusinessUnitQueryBuilder::default()
-                .id(*query.business_unit_id())
+                .id(Some(query.id))
                 .build()
                 .unwrap(),
         )
-        .await
-        .map_err(Into::into)
+        .await?
+        .ok_or(QueryBusError::EntityNotFound("BusinessUnit".to_owned()))
     }
 }

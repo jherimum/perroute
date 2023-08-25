@@ -10,4 +10,7 @@ pub enum QueryBusError {
 
     #[error(transparent)]
     DatabaseError(#[from] sqlx::Error),
+
+    #[error("{0}")]
+    EntityNotFound(String),
 }
