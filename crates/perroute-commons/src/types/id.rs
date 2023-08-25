@@ -3,7 +3,7 @@ use sqlx::Type;
 use std::borrow::Cow;
 use std::ops::Deref;
 use std::{fmt::Display, str::FromStr};
-use validator::ValidationError;
+use validator::{Validate, ValidationError};
 
 #[macro_export]
 macro_rules! new_id {

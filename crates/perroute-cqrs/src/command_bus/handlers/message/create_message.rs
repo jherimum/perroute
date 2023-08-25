@@ -18,7 +18,7 @@ use perroute_messaging::events::EventType;
 use perroute_storage::{
     models::{
         business_unit::{BusinessUnit, BusinessUnitQueryBuilder},
-        message::{Deliveries, Message, MessageBuilder, Status},
+        message::{Message, MessageBuilder, Status},
         message_type::{MessageType, MessageTypeQueryBuilder},
         schema::{Schema, SchemasQueryBuilder},
     },
@@ -36,7 +36,7 @@ pub struct CreateMessageCommand {
     business_unit_code: Code,
     message_type_code: Code,
     schema_version: Version,
-    deliveries: Deliveries,
+    deliveries: HashSet<Delivery>,
 }
 
 impl_command!(CreateMessageCommand, CommandType::CreateMessage);
@@ -145,7 +145,7 @@ impl CommandHandler for CreateMessageCommandHandler {
             .schema_id(*schema.id())
             .message_type_id(*schema.message_type_id())
             .business_unit_id(*schema.business_unit_id())
-            .deliveries(cmd.deliveries)
+            .deliveries(Json(cmd.deliveries))
             .build()
             .unwrap()
             .save(ctx.tx())

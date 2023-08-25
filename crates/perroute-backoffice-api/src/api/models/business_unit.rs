@@ -11,11 +11,13 @@ use validator::Validate;
 #[derive(Debug, serde::Deserialize, Clone, Validate, Default)]
 #[serde(default)]
 pub struct CreateBusinessUnitRequest {
+    #[validate(required)]
     #[validate(custom = "perroute_commons::types::code::Code::validate")]
-    pub code: String,
+    pub code: Option<String>,
 
+    #[validate(required)]
     #[validate(custom = "perroute_commons::types::name::validate")]
-    pub name: String,
+    pub name: Option<String>,
 
     pub vars: HashMap<String, String>,
 }
@@ -39,7 +41,7 @@ impl From<BusinessUnit> for BusinessUnitResource {
     fn from(value: BusinessUnit) -> Self {
         Self {
             id: value.id().into(),
-            code: value.code().into(),
+            code: value.code().to_string(),
             name: value.name().clone(),
             vars: value.vars().into(),
         }

@@ -1,6 +1,7 @@
 use lettre::{address::AddressError, Address};
 use serde::{Deserialize, Serialize};
-use std::{ops::Deref, str::FromStr};
+use std::{borrow::Cow, ops::Deref, str::FromStr};
+use validator::ValidationError;
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Mailbox(lettre::message::Mailbox);
@@ -8,6 +9,17 @@ pub struct Mailbox(lettre::message::Mailbox);
 impl Mailbox {
     pub fn new(email: Email, name: Option<String>) -> Self {
         Self(lettre::message::Mailbox::new(name, email.into()))
+    }
+
+    pub fn validate(str: &str) -> Result<(), validator::ValidationError> {
+        match Mailbox::from_str(str) {
+            Ok(_) => Ok(()),
+            Err(_) => Err(ValidationError {
+                code: Cow::Borrowed("mailbox"),
+                message: Some(Cow::Borrowed("Invalid mailbox")),
+                params: Default::default(),
+            }),
+        }
     }
 }
 

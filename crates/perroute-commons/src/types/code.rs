@@ -1,5 +1,5 @@
 use regex::Regex;
-use serde::{de::Visitor, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use sqlx::Type;
 use std::{borrow::Cow, fmt::Display, str::FromStr};
 use validator::ValidationError;
@@ -11,7 +11,7 @@ macro_rules! code {
     };
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Type)]
+#[derive(Debug, Clone, PartialEq, Eq, Type, Serialize, Deserialize)]
 #[sqlx(transparent)]
 pub struct Code(String);
 
@@ -26,18 +26,6 @@ impl Code {
         }
 
         Ok(())
-    }
-}
-
-impl From<Code> for String {
-    fn from(value: Code) -> Self {
-        value.0
-    }
-}
-
-impl From<&Code> for String {
-    fn from(value: &Code) -> Self {
-        value.0.clone()
     }
 }
 
@@ -72,48 +60,6 @@ impl FromStr for Code {
             .is_match(s)
             .then(|| Self(s.to_string().to_uppercase()))
             .ok_or_else(|| ParseError(s.to_string()))
-    }
-}
-
-impl Serialize for Code {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        serializer.serialize_str(self.0.as_str())
-    }
-}
-
-impl<'de> Deserialize<'de> for Code {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        struct CodeVisitor;
-
-        impl<'de> Visitor<'de> for CodeVisitor {
-            type Value = Code;
-
-            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-                write!(formatter, "")
-            }
-
-            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-            where
-                E: serde::de::Error,
-            {
-                Code::from_str(v).map_err(|e| serde::de::Error::custom(e.to_string()))
-            }
-
-            fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
-            where
-                E: serde::de::Error,
-            {
-                self.visit_str(&v)
-            }
-        }
-
-        deserializer.deserialize_string(CodeVisitor)
     }
 }
 

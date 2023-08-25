@@ -10,7 +10,6 @@ use async_trait::async_trait;
 use derive_builder::Builder;
 use derive_getters::Getters;
 use perroute_commons::types::{actor::Actor, code::Code, id::Id, vars::Vars};
-use perroute_messaging::events::EventType;
 use perroute_storage::{
     models::business_unit::{BusinessUnit, BusinessUnitBuilder, BusinessUnitQuery},
     query::FetchableModel,
@@ -32,11 +31,7 @@ pub struct CreateBusinessUnitCommand {
     vars: Vars,
 }
 impl_command!(CreateBusinessUnitCommand, CommandType::CreateBusinessUnit);
-into_event!(
-    CreateBusinessUnitCommand,
-    EventType::BusinessUnitCreated,
-    |cmd: &CreateBusinessUnitCommand| { cmd.id }
-);
+into_event!(CreateBusinessUnitCommand);
 
 #[derive(Debug)]
 pub struct CreateBusinessUnitCommandHandler;

@@ -39,9 +39,14 @@ impl ConnectionsRouter {
                 &actor,
                 &CreateConnectionCommandBuilder::default()
                     .id(new_id!())
-                    .name(body.name)
-                    .plugin_id(body.plugin_id.try_into().context("Invalid plugin id")?)
-                    .properties(body.properties.into())
+                    .name(body.name.unwrap())
+                    .plugin_id(
+                        body.plugin_id
+                            .unwrap()
+                            .try_into()
+                            .context("Invalid plugin id")?,
+                    )
+                    .properties(body.properties.unwrap().into())
                     .build()
                     .context("Failed to build command")?,
             )

@@ -1,4 +1,4 @@
-use std::{collections::HashSet, ops::Deref};
+use std::collections::HashSet;
 
 use super::{business_unit::BusinessUnit, message_type::MessageType, schema::Schema};
 use crate::{log_query_error, query::ModelQueryBuilder, DatabaseModel};
@@ -7,23 +7,10 @@ use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::types::{id::Id, payload::Payload};
-
 use perroute_connectors::types::delivery::Delivery;
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Json, FromRow, PgExecutor};
 use tap::TapFallible;
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default, sqlx::Type)]
-#[sqlx(transparent)]
-pub struct Deliveries(Json<HashSet<Delivery>>);
-
-impl Deref for Deliveries {
-    type Target = HashSet<Delivery>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, sqlx::Type, Copy)]
 #[sqlx(type_name = "message_status", rename_all = "snake_case")]
@@ -150,7 +137,7 @@ pub struct Message {
 
     #[setters(skip)]
     #[builder(default)]
-    deliveries: Deliveries,
+    deliveries: Json<HashSet<Delivery>>,
 
     status: Status,
 

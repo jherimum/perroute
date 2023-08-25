@@ -1,4 +1,4 @@
-use perroute_commons::types::{email::Mailbox, phonenumber::PhoneNumber};
+use perroute_commons::types::{email::Mailbox, phone_number::PhoneNumber};
 use serde::{Deserialize, Serialize};
 use strum::Display;
 

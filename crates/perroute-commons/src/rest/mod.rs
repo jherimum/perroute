@@ -38,7 +38,7 @@ pub enum RestError {
     Forbidden,
 
     #[error("BadRequest")]
-    BadRequest(Option<HashMap<String, String>>),
+    BadRequest(Option<String>, Option<HashMap<String, String>>),
 }
 
 impl From<RestError> for StatusCode {
@@ -49,7 +49,7 @@ impl From<RestError> for StatusCode {
             RestError::UnprocessableEntity(_) => StatusCode::UNPROCESSABLE_ENTITY,
             RestError::Unauthorized => StatusCode::UNAUTHORIZED,
             RestError::Forbidden => StatusCode::FORBIDDEN,
-            RestError::BadRequest(_) => StatusCode::BAD_REQUEST,
+            RestError::BadRequest(_, _) => StatusCode::BAD_REQUEST,
         }
     }
 }
@@ -72,12 +72,9 @@ impl From<RestError> for ErrorResponse {
             ),
             RestError::Unauthorized => Self::new(StatusCode::UNAUTHORIZED, message, None, None),
             RestError::Forbidden => Self::new(StatusCode::FORBIDDEN, message, None, None),
-            RestError::BadRequest(e) => Self::new(
-                StatusCode::BAD_REQUEST,
-                message,
-                Some("Invalid params".to_owned()),
-                e,
-            ),
+            RestError::BadRequest(detail, errors) => {
+                Self::new(StatusCode::BAD_REQUEST, message, detail, errors)
+            }
         }
     }
 }

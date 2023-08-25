@@ -1,7 +1,10 @@
 use crate::{
     api::{
-        models::business_unit::{
-            BusinessUnitResource, CreateBusinessUnitRequest, UpdateBusinessUnitRequest,
+        models::{
+            business_unit::{
+                BusinessUnitResource, CreateBusinessUnitRequest, UpdateBusinessUnitRequest,
+            },
+            SingleIdPath,
         },
         response::{
             ApiResponse, ApiResult, CollectionResourceModel, EmptyApiResult, SingleResourceModel,
@@ -12,13 +15,10 @@ use crate::{
     extractors::actor::ActorExtractor,
     links::ResourceLink,
 };
-use actix_web::web::{Data, Path};
-use actix_web_validator::Json;
+use actix_web::web::Data;
+use actix_web_validator::{Json, Path};
 use anyhow::Context;
-use perroute_commons::{
-    new_id,
-    types::{actor::Actor, code::Code, id::Id},
-};
+use perroute_commons::types::{actor::Actor, code::Code, id::Id};
 use perroute_cqrs::{
     command_bus::handlers::business_unit::{
         create_business_unit::{
@@ -61,9 +61,9 @@ impl BusinessUnitRouter {
         Json(body): Json<CreateBusinessUnitRequest>,
     ) -> SingleResult {
         let cmd = CreateBusinessUnitCommandBuilder::default()
-            .id(new_id!())
-            .code(Code::from_str(&body.code).context("Invalid code")?)
-            .name(body.name)
+            .id(Id::new())
+            .code(Code::from_str(&body.code.context("Missing code")?).context("Invalid code")?)
+            .name(body.name.context("Misssing name")?)
             .vars(body.vars.into())
             .build()
             .tap_err(|e| tracing::error!("Failed to build CreateBusinessUnitCommand: {e}"))
@@ -81,11 +81,14 @@ impl BusinessUnitRouter {
     pub async fn get(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
-        path: Path<Id>,
+        path: Path<SingleIdPath>,
     ) -> SingleResult {
-        Self::retrieve_bu(state.query_bus(), &actor, path.into_inner(), {
-            ApiResponse::ok
-        })
+        Self::retrieve_bu(
+            state.query_bus(),
+            &actor,
+            path.into_inner().try_into().context("Invalid id")?,
+            ApiResponse::ok,
+        )
         .await
     }
 
@@ -111,11 +114,16 @@ impl BusinessUnitRouter {
     pub async fn update(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
-        path: Path<Id>,
+        path: Path<SingleIdPath>,
         Json(body): Json<UpdateBusinessUnitRequest>,
     ) -> SingleResult {
-        let business_unit =
-            Self::retrieve_bu(state.query_bus(), &actor, path.into_inner(), identity).await?;
+        let business_unit = Self::retrieve_bu(
+            state.query_bus(),
+            &actor,
+            path.into_inner().try_into().context("Invalid id")?,
+            identity,
+        )
+        .await?;
 
         let cmd = UpdateBusinessUnitCommandBuilder::default()
             .business_unit_id(*business_unit.id())
@@ -137,10 +145,15 @@ impl BusinessUnitRouter {
     pub async fn delete(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
-        path: Path<Id>,
+        path: Path<SingleIdPath>,
     ) -> EmptyApiResult {
-        let business_unit =
-            Self::retrieve_bu(state.query_bus(), &actor, path.into_inner(), identity).await?;
+        let business_unit = Self::retrieve_bu(
+            state.query_bus(),
+            &actor,
+            path.into_inner().try_into().context("Invalid id")?,
+            identity,
+        )
+        .await?;
 
         let cmd = DeleteBusinessUnitCommandBuilder::default()
             .business_unit_id(*business_unit.id())

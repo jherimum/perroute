@@ -1,6 +1,6 @@
 use crate::{error::ApiError, routes::routes};
-use actix_web::{dev::Server, error::InternalError, web::Data, App, HttpServer};
-use actix_web_validator::JsonConfig;
+use actix_web::{dev::Server, web::Data, App, HttpServer};
+use actix_web_validator::{JsonConfig, PathConfig};
 use anyhow::Result;
 use derive_getters::Getters;
 use perroute_commons::configuration::settings::{ServerSettings, Settings};
@@ -68,9 +68,13 @@ pub fn server(listener: TcpListener, pool: PgPool) -> Result<Server, std::io::Er
         .limit(4096)
         .error_handler(|err, _| actix_web::Error::from(ApiError::from(err)));
 
+    let path_config =
+        PathConfig::default().error_handler(|err, _| actix_web::Error::from(ApiError::from(err)));
+
     let server = HttpServer::new(move || {
         App::new()
             .app_data(json_config.clone())
+            .app_data(path_config.clone())
             .wrap(TracingLogger::default())
             .service(routes().app_data(Data::<AppState>::new(pool.clone().into())))
     })

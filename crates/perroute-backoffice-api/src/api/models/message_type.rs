@@ -10,16 +10,19 @@ use validator::Validate;
 #[derive(Debug, serde::Deserialize, Clone, Validate, Default)]
 #[serde(default)]
 pub struct CreateMessageTypeRequest {
+    #[validate(required)]
     #[validate(custom = "perroute_commons::types::code::Code::validate")]
-    pub code: String,
+    pub code: Option<String>,
 
+    #[validate(required)]
     #[validate(custom = "perroute_commons::types::name::validate")]
-    pub name: String,
+    pub name: Option<String>,
 
     pub vars: HashMap<String, String>,
 
+    #[validate(required)]
     #[validate(custom = "perroute_commons::types::id::Id::validate")]
-    pub business_unit_id: String,
+    pub business_unit_id: Option<String>,
 }
 
 #[derive(Debug, serde::Deserialize, Clone, Validate, Default)]
@@ -44,7 +47,7 @@ impl From<MessageType> for MessageTypeResource {
     fn from(value: MessageType) -> Self {
         Self {
             id: value.id().into(),
-            code: value.code().into(),
+            code: value.code().to_string(),
             name: value.name().clone(),
             enabled: *value.enabled(),
             vars: value.vars().into(),

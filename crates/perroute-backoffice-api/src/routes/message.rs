@@ -1,15 +1,17 @@
 use crate::{
     api::{
-        models::message::{CreateMessageRequest, MessageResource},
+        models::message::{rest_to_delivery, CreateMessageRequest, MessageResource},
         response::{ApiResponse, ApiResult, SingleResourceModel},
     },
     app::AppState,
     error::ApiError,
     extractors::actor::ActorExtractor,
 };
-use actix_web::web::{Data, Json};
-
-use perroute_commons::types::actor::Actor;
+use actix_web::{web::Data, HttpResponse};
+use actix_web_validator::Json;
+use anyhow::Context;
+use perroute_commons::types::{actor::Actor, version::Version};
+use perroute_connectors::types::delivery::Delivery;
 use perroute_cqrs::command_bus::handlers::message::create_message::{
     CreateMessageCommandBuilder, CreateMessageCommandHandler,
 };
@@ -28,8 +30,8 @@ impl MessageRouter {
         state: Data<AppState>,
         Json(body): Json<CreateMessageRequest>,
     ) -> SingleResult {
-        let message = create_message(&state, &actor, body).await?;
-        Ok(ApiResponse::ok(message))
+        let m = create_message(&state, &actor, body).await?;
+        Ok(ApiResponse::ok(m))
     }
 }
 
@@ -40,10 +42,15 @@ async fn create_message(
 ) -> Result<Message, ApiError> {
     let cmd = CreateMessageCommandBuilder::default()
         .payload(body.payload.into())
-        .business_unit_code(body.bu_code)
-        .message_type_code(body.message_type_code)
-        .schema_version(body.schema_version)
-        //.deliveries(body.deliveries.into())
+        .business_unit_code(body.bu_code.unwrap().try_into().context("context")?)
+        .message_type_code(
+            body.message_type_code
+                .unwrap()
+                .try_into()
+                .context("context")?,
+        )
+        .schema_version(body.schema_version.unwrap().into())
+        .deliveries(rest_to_delivery(body.deliveries)?)
         .build()
         .unwrap();
     state

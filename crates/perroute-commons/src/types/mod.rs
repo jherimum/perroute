@@ -5,7 +5,7 @@ pub mod id;
 pub mod json_schema;
 pub mod name;
 pub mod payload;
-pub mod phonenumber;
+pub mod phone_number;
 pub mod priority;
 pub mod properties;
 pub mod template;

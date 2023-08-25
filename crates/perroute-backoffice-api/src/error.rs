@@ -52,24 +52,22 @@ impl From<&ApiError> for RestError {
                 Self::UnprocessableEntity((*message).to_string())
             }
             ApiError::ValidationError(error) => match error {
-                actix_web_validator::Error::Validate(e) => {
-                    RestError::BadRequest(validation_errors_to_hashmap(e))
-                }
-                actix_web_validator::Error::Deserialize(e) => {
-                    tracing::error!("xxxxxxxxxx{e:?}");
-                    todo!()
+                actix_web_validator::Error::Validate(e) => RestError::BadRequest(
+                    Some("Invalid params".to_owned()),
+                    validation_errors_to_hashmap(e),
+                ),
+                actix_web_validator::Error::Deserialize(_) => {
+                    RestError::BadRequest(Some("Deserialization error".to_owned()), None)
                 }
                 actix_web_validator::Error::JsonPayloadError(e) => {
-                    tracing::error!("xxxxxxxxxx{e:?}");
-                    todo!()
+                    tracing::error!("Error that occur during reading payload: {e}");
+                    RestError::BadRequest(Some("JsonPayloadError error".to_owned()), None)
                 }
                 actix_web_validator::Error::UrlEncodedError(e) => {
-                    tracing::error!("xxxxxxxxxx{e:?}");
-                    todo!()
+                    RestError::BadRequest(Some("UrlEncodedError error".to_owned()), None)
                 }
                 actix_web_validator::Error::QsError(e) => {
-                    tracing::error!("xxxxxxxxxx{e:?}");
-                    todo!()
+                    RestError::BadRequest(Some("QsError error".to_owned()), None)
                 }
             },
             _ => Self::InternalServer,

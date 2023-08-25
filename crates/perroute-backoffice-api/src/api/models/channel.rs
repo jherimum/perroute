@@ -11,20 +11,25 @@ use validator::Validate;
 #[derive(Debug, Deserialize, Clone, Validate, Default)]
 #[serde(default)]
 pub struct CreateChannelRequest {
+    #[validate(required)]
     #[validate(custom = "perroute_commons::types::id::Id::validate")]
-    pub business_id: String,
+    pub business_id: Option<String>,
 
+    #[validate(required)]
     #[validate(custom = "perroute_commons::types::id::Id::validate")]
-    pub connection_id: String,
+    pub connection_id: Option<String>,
 
+    #[validate(required)]
     #[validate(custom = "perroute_connectors::types::dispatch_type::DispatchType::validate")]
-    pub dispatch_type: String,
+    pub dispatch_type: Option<String>,
 
+    #[validate(required)]
     #[validate(custom = "perroute_commons::types::properties::Properties::validate")]
-    pub properties: Value,
+    pub properties: Option<Value>,
 
+    #[validate(required)]
     #[validate(custom = "perroute_commons::types::priority::Priority::validate")]
-    pub priority: i32,
+    pub priority: Option<i32>,
 }
 
 #[derive(Debug, Deserialize, Clone, Validate, Default)]

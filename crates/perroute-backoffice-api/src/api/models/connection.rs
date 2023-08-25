@@ -11,14 +11,17 @@ use validator::Validate;
 #[derive(Debug, Deserialize, Clone, Validate, Default)]
 #[serde(default)]
 pub struct CreateConnectionRequest {
+    #[validate(required)]
     #[validate(custom = "perroute_commons::types::name::validate")]
-    pub name: String,
+    pub name: Option<String>,
 
+    #[validate(required)]
     #[validate(custom = "perroute_connectors::types::plugin_id::ConnectorPluginId::validate")]
-    pub plugin_id: String,
+    pub plugin_id: Option<String>,
 
+    #[validate(required)]
     #[validate(custom = "perroute_commons::types::properties::Properties::validate")]
-    pub properties: Value,
+    pub properties: Option<Value>,
 }
 
 #[derive(Debug, Deserialize, Clone, Validate, Default)]
