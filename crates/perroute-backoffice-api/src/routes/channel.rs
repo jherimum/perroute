@@ -107,17 +107,14 @@ impl ChannelsRouter {
     }
 
     pub async fn get(
-        state: Data<AppState>,
-        ActorExtractor(actor): ActorExtractor,
-        path: Path<Id>,
+        _: Data<AppState>,
+        ActorExtractor(_): ActorExtractor,
+        _: Path<Id>,
     ) -> HttpResponse {
         HttpResponse::Ok().finish()
     }
 
-    pub async fn query(
-        state: Data<AppState>,
-        ActorExtractor(actor): ActorExtractor,
-    ) -> HttpResponse {
+    pub async fn query(_: Data<AppState>, ActorExtractor(_): ActorExtractor) -> HttpResponse {
         HttpResponse::Ok().finish()
     }
 }

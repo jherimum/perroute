@@ -56,10 +56,10 @@ impl From<&ApiError> for RestError {
                     tracing::error!("Error that occur during reading payload: {e}");
                     RestError::BadRequest(Some("JsonPayloadError error".to_owned()), None)
                 }
-                actix_web_validator::Error::UrlEncodedError(e) => {
+                actix_web_validator::Error::UrlEncodedError(_) => {
                     RestError::BadRequest(Some("UrlEncodedError error".to_owned()), None)
                 }
-                actix_web_validator::Error::QsError(e) => {
+                actix_web_validator::Error::QsError(_) => {
                     RestError::BadRequest(Some("QsError error".to_owned()), None)
                 }
             },

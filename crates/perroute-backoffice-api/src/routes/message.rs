@@ -7,11 +7,10 @@ use crate::{
     error::ApiError,
     extractors::actor::ActorExtractor,
 };
-use actix_web::{web::Data, HttpResponse};
+use actix_web::web::Data;
 use actix_web_validator::Json;
 use anyhow::Context;
-use perroute_commons::types::{actor::Actor, version::Version};
-use perroute_connectors::types::delivery::Delivery;
+use perroute_commons::types::actor::Actor;
 use perroute_cqrs::command_bus::handlers::message::create_message::{
     CreateMessageCommandBuilder, CreateMessageCommandHandler,
 };
