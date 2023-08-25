@@ -13,9 +13,13 @@ use perroute_storage::{
     query::FetchableModel,
 };
 use serde::Serialize;
+use tap::TapFallible;
 
 #[derive(Debug, thiserror::Error)]
-pub enum Error {}
+pub enum DeleteConnectionCommandHandlerError {
+    #[error("Connection with id {0} not found")]
+    ConnectionNotFound(Id),
+}
 
 #[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
 pub struct DeleteConnectionCommand {
@@ -36,10 +40,10 @@ impl CommandHandler for DeleteConnectionCommandHandler {
     async fn handle<'tx>(
         &self,
         ctx: &mut CommandBusContext<'tx>,
-        actor: &Actor,
+        _: &Actor,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
-        let conn = Connection::find(
+        Ok(Connection::find(
             ctx.pool(),
             ConnectionQueryBuilder::default()
                 .id(Some(cmd.id))
@@ -47,10 +51,13 @@ impl CommandHandler for DeleteConnectionCommandHandler {
                 .unwrap(),
         )
         .await
-        .unwrap()
-        .unwrap();
-
-        conn.delete(ctx.tx()).await.unwrap();
-        Ok(())
+        .tap_err(|e| tracing::error!("Failed to retrieve connection: {e}"))?
+        .ok_or(DeleteConnectionCommandHandlerError::ConnectionNotFound(
+            cmd.id,
+        ))?
+        .delete(ctx.tx())
+        .await
+        .tap_err(|e| tracing::error!("Failed to delete connection: {e}"))
+        .map(|_| ())?)
     }
 }

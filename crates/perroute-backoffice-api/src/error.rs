@@ -1,14 +1,17 @@
 use actix_web::ResponseError;
-use perroute_commons::{
-    rest::RestError,
-    types::{id::Id, json_schema::InvalidSchemaError},
-};
+use perroute_commons::{rest::RestError, types::json_schema::InvalidSchemaError};
 use perroute_cqrs::{
     command_bus::{
         error::CommandBusError,
-        handlers::business_unit::{
-            create_business_unit::CreateBusinessUnitCommandHandlerError,
-            update_business_unit::UpdateBusinessUnitCommandHandlerError,
+        handlers::{
+            business_unit::{
+                create_business_unit::CreateBusinessUnitCommandHandlerError,
+                update_business_unit::UpdateBusinessUnitCommandHandlerError,
+            },
+            connection::{
+                delete_connection::DeleteConnectionCommandHandlerError,
+                update_connection::UpdateConnectionCommandHandlerError,
+            },
         },
     },
     query_bus::error::QueryBusError,
@@ -74,6 +77,30 @@ impl From<&ApiError> for RestError {
                     RestError::NotFound("Business unit not found".to_string())
                 }
             },
+            //connection
+            ApiError::CommandBus(CommandBusError::UpdateConnection(e)) => match e {
+                UpdateConnectionCommandHandlerError::ConnectionNotFound(_) => {
+                    RestError::NotFound("Business unit not found".to_string())
+                }
+                UpdateConnectionCommandHandlerError::InvalidProperties(e) => {
+                    RestError::UnprocessableEntity(e.to_string())
+                }
+            },
+
+            ApiError::CommandBus(CommandBusError::CreateConnection(e)) => match e {
+                perroute_cqrs::command_bus::handlers::connection::create_connection::Error::PluginNotFound(_) => {
+                    RestError::BadRequest(Some("Plugin do not exists".to_owned()), None)
+                },
+                perroute_cqrs::command_bus::handlers::connection::create_connection::Error::InvalidProperties(_) => {
+                    RestError::BadRequest(Some("Invalid properties".to_owned()), None)
+                },
+            },
+
+            ApiError::CommandBus(CommandBusError::DeleteConnection(e)) => match e {
+                DeleteConnectionCommandHandlerError::ConnectionNotFound(_) => RestError::NotFound(e.to_string()),
+            },
+
+            //query bus
             ApiError::QueryBus(QueryBusError::EntityNotFound(e)) => {
                 RestError::NotFound(e.to_string())
             }

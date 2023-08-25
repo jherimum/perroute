@@ -76,10 +76,10 @@ pub enum CommandBusError {
     CreateConnection(#[from] connection::create_connection::Error),
 
     #[error(transparent)]
-    UpdateConnection(#[from] connection::update_connection::Error),
+    UpdateConnection(#[from] connection::update_connection::UpdateConnectionCommandHandlerError),
 
     #[error(transparent)]
-    DeleteConnection(#[from] connection::delete_connection::Error),
+    DeleteConnection(#[from] connection::delete_connection::DeleteConnectionCommandHandlerError),
 
     //route
     #[error(transparent)]

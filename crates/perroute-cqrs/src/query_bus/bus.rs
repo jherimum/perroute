@@ -5,6 +5,10 @@ use super::{
             find_business_unit::FindBusinessUnitQueryHandler,
             query_business_units::QueryBusinessUnitsQueryHandler,
         },
+        connection::{
+            find_connection::FindConnectionQueryHandler,
+            query_connections::QueryConnectionsQueryHandler,
+        },
         message_type::{
             find_message_type::FindMessageTypeQueryHandler,
             query_message_types::QueryMessageTypesHandler,
@@ -71,6 +75,8 @@ impl QueryBus {
             .with_handler(QuerySchemasQueryHandler)
             .with_handler(FindTemplateQueryHandler)
             .with_handler(QueryTemplatesQueryHandler)
+            .with_handler(FindConnectionQueryHandler)
+            .with_handler(QueryConnectionsQueryHandler)
             .build()
     }
 

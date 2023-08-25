@@ -10,6 +10,9 @@ pub enum QueryType {
     FindBusinessUnit,
     QueryBusinessUnits,
 
+    FindConnection,
+    QueryConnections,
+
     FindMessageTypeQuery,
     QueryMessageTypes,
 
