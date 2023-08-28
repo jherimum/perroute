@@ -3,6 +3,7 @@ use super::{
     schema::{Schema, SchemasQuery, SchemasQueryBuilder},
 };
 use crate::{
+    error::StorageError,
     log_query_error,
     query::{FetchableModel, ModelQueryBuilder, Projection},
     DatabaseModel,
@@ -96,7 +97,7 @@ impl MessageType {
     pub async fn business_unit<'e, E: PgExecutor<'e>>(
         &self,
         exec: E,
-    ) -> Result<BusinessUnit, sqlx::Error> {
+    ) -> Result<BusinessUnit, StorageError> {
         BusinessUnit::find_one(
             exec,
             BusinessUnitQueryBuilder::default()
@@ -110,11 +111,14 @@ impl MessageType {
     pub async fn exists_schemas<'e, E: PgExecutor<'e>>(
         &self,
         exec: E,
-    ) -> Result<bool, sqlx::Error> {
+    ) -> Result<bool, StorageError> {
         Schema::exists(exec, SchemasQuery::with_message_type_id(self.id)).await
     }
 
-    pub async fn schemas<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Vec<Schema>, sqlx::Error> {
+    pub async fn schemas<'e, E: PgExecutor<'e>>(
+        self,
+        exec: E,
+    ) -> Result<Vec<Schema>, StorageError> {
         Schema::query(
             exec,
             SchemasQueryBuilder::default()
@@ -125,8 +129,8 @@ impl MessageType {
         .await
     }
 
-    pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
-        sqlx::query_as(
+    pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, StorageError> {
+        Ok(sqlx::query_as(
             r#"
                     INSERT INTO message_types (id, code, name, enabled, vars, business_unit_id) 
                     VALUES($1, $2, $3, $4, $5, $6) RETURNING *
@@ -140,11 +144,11 @@ impl MessageType {
         .bind(self.business_unit_id)
         .fetch_one(exec)
         .await
-        .tap_err(log_query_error!())
+        .tap_err(log_query_error!())?)
     }
 
-    pub async fn update<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
-        sqlx::query_as(
+    pub async fn update<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, StorageError> {
+        Ok(sqlx::query_as(
             r#"
                     UPDATE message_types 
                     SET name= $2, enabled= $3, vars= $4
@@ -157,15 +161,15 @@ impl MessageType {
         .bind(self.vars)
         .fetch_one(exec)
         .await
-        .tap_err(log_query_error!())
+        .tap_err(log_query_error!())?)
     }
 
-    pub async fn delete<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<bool, sqlx::Error> {
-        sqlx::query("DELETE FROM message_types WHERE id= $1")
+    pub async fn delete<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<bool, StorageError> {
+        Ok(sqlx::query("DELETE FROM message_types WHERE id= $1")
             .bind(self.id)
             .execute(exec)
             .await
             .tap_err(log_query_error!())
-            .map(|result| result.rows_affected() > 0)
+            .map(|result| result.rows_affected() > 0)?)
     }
 }

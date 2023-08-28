@@ -6,7 +6,7 @@ use serde::Serialize;
 use sqlx::{FromRow, PgExecutor};
 use tap::TapFallible;
 
-use crate::log_query_error;
+use crate::{error::StorageError, log_query_error};
 
 #[derive(Debug, FromRow, PartialEq, Eq, Clone, Getters, Builder, Serialize)]
 #[builder(setter(into))]
@@ -21,8 +21,8 @@ pub struct CommandLog {
 }
 
 impl CommandLog {
-    pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
-        sqlx::query_as(
+    pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, StorageError> {
+        Ok(sqlx::query_as(
             r#"
                     INSERT INTO command_logs (id, command_type, payload, actor_type, actor_id, created_at, error ) 
                     VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING *
@@ -37,6 +37,6 @@ impl CommandLog {
         .bind(self.error)
         .fetch_one(exec)
         .await
-        .tap_err(log_query_error!())
+        .tap_err(log_query_error!())?)
     }
 }

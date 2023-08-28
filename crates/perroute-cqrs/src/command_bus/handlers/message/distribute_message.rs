@@ -13,6 +13,7 @@ use perroute_connectors::{
 };
 use perroute_messaging::events::EventType;
 use perroute_storage::{
+    error::StorageError,
     models::{
         message::{Message, MessageQueryBuilder, Status},
         message_dispatch::{MessageDispatch, MessageDispatchBuilder, MessageDispatchResult},
@@ -120,7 +121,7 @@ async fn register_message_dispatch(
     plugin_id: &ConnectorPluginId,
     delivery: &Delivery,
     result: &Result<DispatchResponse, DispatchError>,
-) -> Result<MessageDispatch, sqlx::Error> {
+) -> Result<MessageDispatch, StorageError> {
     MessageDispatchBuilder::default()
         .id(new_id!())
         .message_id(*message.id())

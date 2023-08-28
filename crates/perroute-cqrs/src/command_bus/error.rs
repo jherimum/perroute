@@ -1,3 +1,5 @@
+use perroute_storage::error::StorageError;
+
 use super::{
     commands::CommandType,
     handlers::{business_unit, channel, connection, message, message_type, route, schema},
@@ -15,7 +17,7 @@ pub enum CommandBusError {
     UnexpectedError(#[from] anyhow::Error),
 
     #[error(transparent)]
-    DatabaseError(#[from] sqlx::Error),
+    StorageError(#[from] StorageError),
 
     //business_unit
     #[error(transparent)]

@@ -1,5 +1,6 @@
 use super::channel::{Channel, ChannelQueryBuilder};
 use crate::{
+    error::StorageError,
     log_query_error,
     query::{FetchableModel, ModelQueryBuilder, Projection},
     DatabaseModel,
@@ -69,8 +70,8 @@ impl ModelQueryBuilder<Connection> for ConnectionQuery {
 impl DatabaseModel for Connection {}
 
 impl Connection {
-    pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
-        sqlx::query_as(
+    pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, StorageError> {
+        Ok(sqlx::query_as(
             r#"
             INSERT INTO connections (id, name, plugin_id, enabled, properties ) 
             VALUES($1, $2, $3, $4, $5) RETURNING *
@@ -83,11 +84,11 @@ impl Connection {
         .bind(self.properties)
         .fetch_one(exec)
         .await
-        .tap_err(log_query_error!())
+        .tap_err(log_query_error!())?)
     }
 
-    pub async fn update<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
-        sqlx::query_as(
+    pub async fn update<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, StorageError> {
+        Ok(sqlx::query_as(
             r#"
             UPDATE connections 
             SET name= $2, enabled=$3, properties=$4 
@@ -100,11 +101,11 @@ impl Connection {
         .bind(self.properties)
         .fetch_one(exec)
         .await
-        .tap_err(log_query_error!())
+        .tap_err(log_query_error!())?)
     }
 
-    pub async fn delete<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<bool, sqlx::Error> {
-        sqlx::query(
+    pub async fn delete<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<bool, StorageError> {
+        Ok(sqlx::query(
             r#"
                 DELETE FROM connections 
                 WHERE id= $1
@@ -114,20 +115,20 @@ impl Connection {
         .execute(exec)
         .await
         .tap_err(log_query_error!())
-        .map(|result| result.rows_affected() > 0)
+        .map(|result| result.rows_affected() > 0)?)
     }
 
     pub async fn channels<'e, E: PgExecutor<'e>>(
         self,
         exec: E,
-    ) -> Result<Vec<Channel>, sqlx::Error> {
-        Channel::query(
+    ) -> Result<Vec<Channel>, StorageError> {
+        Ok(Channel::query(
             exec,
             ChannelQueryBuilder::default()
                 .connection_id(Some(self.id))
                 .build()
                 .unwrap(),
         )
-        .await
+        .await?)
     }
 }

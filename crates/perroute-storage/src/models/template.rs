@@ -6,6 +6,7 @@ use super::{
     schema::{Schema, SchemasQueryBuilder},
 };
 use crate::{
+    error::StorageError,
     log_query_error,
     query::{FetchableModel, ModelQueryBuilder, Projection},
     DatabaseModel,
@@ -114,7 +115,7 @@ impl Template {
     pub async fn message_type<'e, E: PgExecutor<'e>>(
         &self,
         exec: E,
-    ) -> Result<MessageType, sqlx::Error> {
+    ) -> Result<MessageType, StorageError> {
         MessageType::find_one(
             exec,
             MessageTypeQueryBuilder::default()
@@ -125,7 +126,7 @@ impl Template {
         .await
     }
 
-    pub async fn schema<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Schema, sqlx::Error> {
+    pub async fn schema<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Schema, StorageError> {
         Schema::find_one(
             exec,
             SchemasQueryBuilder::default()
@@ -139,7 +140,7 @@ impl Template {
     pub async fn business_unit<'e, E: PgExecutor<'e>>(
         &self,
         exec: E,
-    ) -> Result<BusinessUnit, sqlx::Error> {
+    ) -> Result<BusinessUnit, StorageError> {
         BusinessUnit::find_one(
             exec,
             BusinessUnitQueryBuilder::default()
@@ -150,8 +151,8 @@ impl Template {
         .await
     }
 
-    pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
-        sqlx::query_as(
+    pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, StorageError> {
+        Ok(sqlx::query_as(
             r#"
         INSERT INTO templates (id, dispatch_type, subject, text, html, vars, active, schema_id, message_type_id, business_unit_id, name) 
         VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
@@ -170,11 +171,11 @@ impl Template {
         .bind(self.name)
         .fetch_one(exec)
         .await
-        .tap_err(log_query_error!())
+        .tap_err(log_query_error!())?)
     }
 
-    pub async fn update<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
-        sqlx::query_as(
+    pub async fn update<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, StorageError> {
+        Ok(sqlx::query_as(
             r#"
             UPDATE templates 
             SET subject= $2, text=$3, html=$4, vars=$5, active=$6, name=$7
@@ -190,28 +191,28 @@ impl Template {
         .bind(self.name)
         .fetch_one(exec)
         .await
-        .tap_err(log_query_error!())
+        .tap_err(log_query_error!())?)
     }
 
-    pub async fn delete<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<bool, sqlx::Error> {
-        sqlx::query("DELETE FROM templates WHERE id= $1")
+    pub async fn delete<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<bool, StorageError> {
+        Ok(sqlx::query("DELETE FROM templates WHERE id= $1")
             .bind(self.id)
             .execute(exec)
             .await
             .tap_err(log_query_error!())
-            .map(|result| result.rows_affected() > 0)
+            .map(|result| result.rows_affected() > 0)?)
     }
 
     pub async fn batch_delete<'e, E: PgExecutor<'e>>(
         ids: Vec<Id>,
         exec: E,
-    ) -> Result<u64, sqlx::Error> {
+    ) -> Result<u64, StorageError> {
         let uuids = ids.iter().map(|id| *id.deref()).collect::<Vec<_>>();
-        sqlx::query("DELETE FROM templates WHERE id= ANY($1)")
+        Ok(sqlx::query("DELETE FROM templates WHERE id= ANY($1)")
             .bind(uuids)
             .execute(exec)
             .await
             .tap_err(log_query_error!())
-            .map(|result| result.rows_affected())
+            .map(|result| result.rows_affected())?)
     }
 }

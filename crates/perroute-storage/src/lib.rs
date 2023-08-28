@@ -1,9 +1,8 @@
 pub mod connection_manager;
+pub mod error;
 pub mod models;
 pub mod query;
 pub mod utils;
-
-pub struct W<T>(T);
 
 #[macro_use]
 mod macros {

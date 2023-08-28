@@ -1,3 +1,5 @@
+use perroute_storage::error::StorageError;
+
 use super::queries::QueryType;
 
 #[derive(thiserror::Error, Debug)]
@@ -9,7 +11,7 @@ pub enum QueryBusError {
     UnexpectedError(#[from] anyhow::Error),
 
     #[error(transparent)]
-    DatabaseError(#[from] sqlx::Error),
+    StorageError(#[from] StorageError),
 
     #[error("{0}")]
     EntityNotFound(String),

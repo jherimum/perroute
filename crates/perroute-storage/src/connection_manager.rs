@@ -1,4 +1,4 @@
-use anyhow::Result;
+use crate::error::StorageError;
 use perroute_commons::configuration::settings::DatabaseSettings;
 use secrecy::ExposeSecret;
 use sqlx::{
@@ -16,7 +16,7 @@ pub static MIGRATOR: sqlx::migrate::Migrator = sqlx::migrate!();
 pub struct ConnectionManager;
 
 impl ConnectionManager {
-    pub async fn build_pool(settings: &DatabaseSettings) -> Result<ConnectionPool> {
+    pub async fn build_pool(settings: &DatabaseSettings) -> Result<ConnectionPool, StorageError> {
         let options = Self::connection_options(settings);
         let pool = PgPoolOptions::new()
             .max_connections(settings.pool.max_connection)
@@ -31,7 +31,8 @@ impl ConnectionManager {
                     "Failed to initialize database with options:{:?}. {e}",
                     &options
                 )
-            })?;
+            })
+            .map_err(|e| StorageError::Connection(e))?;
         if settings.migration.enabled {
             Self::migrate(&pool).await?;
         }
@@ -39,12 +40,13 @@ impl ConnectionManager {
         Ok(pool)
     }
 
-    pub async fn migrate(pool: &PgPool) -> Result<()> {
+    pub async fn migrate(pool: &PgPool) -> Result<(), StorageError> {
         tracing::info!("Migration started");
         sqlx::migrate!()
             .run(pool)
             .await
-            .tap_err(|e| tracing::error!("Failed to run migrations: {e}"))?;
+            .tap_err(|e| tracing::error!("Failed to run migrations: {e}"))
+            .map_err(|e| StorageError::Migration(e))?;
         tracing::info!("Migrations finished");
 
         Ok(())
@@ -52,9 +54,11 @@ impl ConnectionManager {
 
     pub async fn new_connection(
         database_settings: &DatabaseSettings,
-    ) -> Result<PgConnection, sqlx::Error> {
+    ) -> Result<PgConnection, StorageError> {
         let options = Self::connection_options(database_settings);
-        PgConnection::connect_with(&options).await
+        PgConnection::connect_with(&options)
+            .await
+            .map_err(|e| StorageError::Connection(e))
     }
 
     pub fn connection_options(database_settings: &DatabaseSettings) -> PgConnectOptions {

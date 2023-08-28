@@ -4,6 +4,7 @@ use super::{
     route::{Route, RouteQueryBuilder},
 };
 use crate::{
+    error::StorageError,
     log_query_error,
     query::{FetchableModel, ModelQueryBuilder, Projection},
     DatabaseModel,
@@ -89,8 +90,8 @@ pub struct Channel {
 }
 
 impl Channel {
-    pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
-        sqlx::query_as(
+    pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, StorageError> {
+        Ok(sqlx::query_as(
             r#"
             INSERT INTO channels (id, dispatch_type, properties, enabled, priority, connection_id, business_unit_id ) 
             VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING *
@@ -105,11 +106,11 @@ impl Channel {
         .bind(self.business_unit_id)
         .fetch_one(exec)
         .await
-        .tap_err(log_query_error!())
+        .tap_err(log_query_error!())?)
     }
 
-    pub async fn update<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
-        sqlx::query_as(
+    pub async fn update<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, StorageError> {
+        Ok(sqlx::query_as(
             r#"
             UPDATE channels 
             SET properties= $2, priority=$3, enabled=$4 
@@ -122,11 +123,11 @@ impl Channel {
         .bind(self.enabled)
         .fetch_one(exec)
         .await
-        .tap_err(log_query_error!())
+        .tap_err(log_query_error!())?)
     }
 
-    pub async fn delete<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<bool, sqlx::Error> {
-        sqlx::query(
+    pub async fn delete<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<bool, StorageError> {
+        Ok(sqlx::query(
             r#"
                 DELETE FROM channels 
                 WHERE id= $1
@@ -136,13 +137,13 @@ impl Channel {
         .execute(exec)
         .await
         .tap_err(log_query_error!())
-        .map(|result| result.rows_affected() > 0)
+        .map(|result| result.rows_affected() > 0)?)
     }
 
     pub async fn connection<'e, E: PgExecutor<'e>>(
         &self,
         exec: E,
-    ) -> Result<Connection, sqlx::Error> {
+    ) -> Result<Connection, StorageError> {
         Connection::find_one(
             exec,
             ConnectionQueryBuilder::default()
@@ -156,18 +157,18 @@ impl Channel {
     pub async fn business_unit<'e, E: PgExecutor<'e>>(
         &self,
         exec: E,
-    ) -> Result<BusinessUnit, sqlx::Error> {
-        BusinessUnit::find_one(
+    ) -> Result<BusinessUnit, StorageError> {
+        Ok(BusinessUnit::find_one(
             exec,
             BusinessUnitQueryBuilder::default()
                 .id(Some(self.business_unit_id))
                 .build()
                 .unwrap(),
         )
-        .await
+        .await?)
     }
 
-    pub async fn routes<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Vec<Route>, sqlx::Error> {
+    pub async fn routes<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Vec<Route>, StorageError> {
         Route::query(
             exec,
             RouteQueryBuilder::default()

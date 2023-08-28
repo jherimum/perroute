@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use super::{business_unit::BusinessUnit, message_type::MessageType, schema::Schema};
-use crate::{log_query_error, query::ModelQueryBuilder, DatabaseModel};
+use crate::{error::StorageError, log_query_error, query::ModelQueryBuilder, DatabaseModel};
 use chrono::NaiveDateTime;
 use derive_builder::Builder;
 use derive_getters::Getters;
@@ -155,23 +155,23 @@ impl Message {
     pub async fn message_type<'e, E: PgExecutor<'e>>(
         &self,
         exec: E,
-    ) -> Result<MessageType, sqlx::Error> {
+    ) -> Result<MessageType, StorageError> {
         todo!()
     }
 
     pub async fn business_unit<'e, E: PgExecutor<'e>>(
         &self,
         exec: E,
-    ) -> Result<BusinessUnit, sqlx::Error> {
+    ) -> Result<BusinessUnit, StorageError> {
         todo!()
     }
 
-    pub async fn schema<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Schema, sqlx::Error> {
+    pub async fn schema<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Schema, StorageError> {
         todo!()
     }
 
-    pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
-        sqlx::query_as(
+    pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, StorageError> {
+        Ok(sqlx::query_as(
             r#"
                 INSERT INTO messages (id, payload, deliveries, status, schema_id, message_type_id, business_unit_id) 
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *"#,
@@ -184,11 +184,11 @@ impl Message {
             .bind(self.business_unit_id)
         .fetch_one(exec)
         .await
-        .tap_err(log_query_error!())
+        .tap_err(log_query_error!())?)
     }
 
-    pub async fn update<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
-        sqlx::query_as(
+    pub async fn update<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, StorageError> {
+        Ok(sqlx::query_as(
             r#"
                 UPDATE messages 
                 SET status = $2
@@ -199,6 +199,6 @@ impl Message {
         .bind(self.status)
         .fetch_one(exec)
         .await
-        .tap_err(log_query_error!())
+        .tap_err(log_query_error!())?)
     }
 }

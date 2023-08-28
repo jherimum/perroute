@@ -7,6 +7,7 @@ use super::message_dispatch::{MessageDispatch, MessageDispatchQuery};
 use super::message_type::{MessageType, MessageTypeQueryBuilder};
 use super::schema::{Schema, SchemasQueryBuilder};
 use super::{business_unit::BusinessUnit, channel::Channel};
+use crate::error::StorageError;
 use crate::log_query_error;
 use crate::query::FetchableModel;
 use crate::{
@@ -115,7 +116,7 @@ impl Route {
         exec: E,
         schema_id: &Id,
         dispatch_type: &DispatchType,
-    ) -> Result<Vec<Route>, sqlx::Error> {
+    ) -> Result<Vec<Route>, StorageError> {
         let query = r#"
             SELECT r.* 
             FROM routes r
@@ -133,18 +134,18 @@ impl Route {
     pub async fn batch_delete<'e, E: PgExecutor<'e>>(
         ids: Vec<Id>,
         exec: E,
-    ) -> Result<u64, sqlx::Error> {
+    ) -> Result<u64, StorageError> {
         let uuids = ids.iter().map(|id| *id.deref()).collect::<Vec<_>>();
-        sqlx::query("DELETE FROM routes WHERE id= ANY($1)")
+        Ok(sqlx::query("DELETE FROM routes WHERE id= ANY($1)")
             .bind(uuids)
             .execute(exec)
             .await
             .tap_err(log_query_error!())
-            .map(|result| result.rows_affected())
+            .map(|result| result.rows_affected())?)
     }
 
-    pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
-        sqlx::query_as(
+    pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, StorageError> {
+        Ok(sqlx::query_as(
             r#"
             INSERT INTO routes (id, schema_id, channel_id, business_unit_id, message_type_id, connection_id, properties ) 
             VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING *
@@ -159,11 +160,11 @@ impl Route {
         .bind(self.properties)
         .fetch_one(exec)
         .await
-        .tap_err(log_query_error!())
+        .tap_err(log_query_error!())?)
     }
 
-    pub async fn update<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
-        sqlx::query_as(
+    pub async fn update<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, StorageError> {
+        Ok(sqlx::query_as(
             r#"
             UPDATE routes 
             SET properties= $2
@@ -174,11 +175,11 @@ impl Route {
         .bind(self.properties)
         .fetch_one(exec)
         .await
-        .tap_err(log_query_error!())
+        .tap_err(log_query_error!())?)
     }
 
-    pub async fn delete<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<bool, sqlx::Error> {
-        sqlx::query(
+    pub async fn delete<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<bool, StorageError> {
+        Ok(sqlx::query(
             r#"
                 DELETE FROM routes 
                 WHERE id= $1
@@ -188,10 +189,10 @@ impl Route {
         .execute(exec)
         .await
         .tap_err(log_query_error!())
-        .map(|result| result.rows_affected() > 0)
+        .map(|result| result.rows_affected() > 0)?)
     }
 
-    pub async fn schema<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Schema, sqlx::Error> {
+    pub async fn schema<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Schema, StorageError> {
         Schema::find_one(
             exec,
             SchemasQueryBuilder::default()
@@ -202,7 +203,7 @@ impl Route {
         .await
     }
 
-    pub async fn channel<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Channel, sqlx::Error> {
+    pub async fn channel<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Channel, StorageError> {
         Channel::find_one(
             exec,
             ChannelQueryBuilder::default()
@@ -216,7 +217,7 @@ impl Route {
     pub async fn connection<'e, E: PgExecutor<'e>>(
         &self,
         exec: E,
-    ) -> Result<Connection, sqlx::Error> {
+    ) -> Result<Connection, StorageError> {
         Connection::find_one(
             exec,
             ConnectionQueryBuilder::default()
@@ -230,7 +231,7 @@ impl Route {
     pub async fn business_unit<'e, E: PgExecutor<'e>>(
         &self,
         exec: E,
-    ) -> Result<BusinessUnit, sqlx::Error> {
+    ) -> Result<BusinessUnit, StorageError> {
         BusinessUnit::find_one(
             exec,
             BusinessUnitQueryBuilder::default()
@@ -244,7 +245,7 @@ impl Route {
     pub async fn message_type<'e, E: PgExecutor<'e>>(
         &self,
         exec: E,
-    ) -> Result<MessageType, sqlx::Error> {
+    ) -> Result<MessageType, StorageError> {
         MessageType::find_one(
             exec,
             MessageTypeQueryBuilder::default()
@@ -258,7 +259,7 @@ impl Route {
     pub async fn exists_message_dispatch<'e, E: PgExecutor<'e>>(
         &self,
         exec: E,
-    ) -> Result<bool, sqlx::Error> {
+    ) -> Result<bool, StorageError> {
         MessageDispatch::exists(exec, MessageDispatchQuery::with_route_id(self.id)).await
     }
 }

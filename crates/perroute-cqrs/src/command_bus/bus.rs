@@ -42,7 +42,7 @@ use super::{
 };
 use perroute_commons::types::actor::Actor;
 use perroute_connectors::Plugins;
-use perroute_storage::models::db_event::DbEvent;
+use perroute_storage::{error::StorageError, models::db_event::DbEvent};
 use sqlx::{Acquire, PgConnection, PgPool, Postgres, Transaction};
 use std::{
     any::{Any, TypeId},
@@ -67,7 +67,8 @@ impl<'tx> CommandBusContext<'tx> {
         let tx = pool
             .begin()
             .await
-            .tap_err(|e| tracing::error!("Failed to begin transaction: {e}"))?;
+            .tap_err(|e| tracing::error!("Failed to begin transaction: {e}"))
+            .map_err(|e| StorageError::Tx(e))?;
         Ok(Self { plugins, pool, tx })
     }
 
@@ -88,11 +89,12 @@ impl<'tx> CommandBusContext<'tx> {
     }
 
     async fn commit(self) -> Result<(), CommandBusError> {
-        self.tx
+        Ok(self
+            .tx
             .commit()
             .await
             .tap_err(|e| tracing::error!("Failed to commit transaction: {e}"))
-            .map_err(Into::into)
+            .map_err(|e| StorageError::Tx(e))?)
     }
 }
 

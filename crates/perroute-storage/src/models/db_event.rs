@@ -6,6 +6,8 @@ use perroute_commons::types::id::Id;
 use perroute_messaging::events::{Event, EventType};
 use sqlx::{FromRow, PgExecutor};
 
+use crate::error::StorageError;
+
 impl From<&DbEvent> for Event {
     fn from(value: &DbEvent) -> Self {
         Self::new(value.entity_id, value.event_type.clone())
@@ -43,8 +45,8 @@ impl DbEvent {
     pub async fn fetch_unconsumed<'e, E: PgExecutor<'e>>(
         exec: E,
         limit: i64,
-    ) -> Result<Vec<Self>, sqlx::Error> {
-        sqlx::query_as(
+    ) -> Result<Vec<Self>, StorageError> {
+        Ok(sqlx::query_as(
             r#"
                     select * 
                     from events 
@@ -55,11 +57,11 @@ impl DbEvent {
         )
         .bind(limit)
         .fetch_all(exec)
-        .await
+        .await?)
     }
 
-    pub async fn save<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Self, sqlx::Error> {
-        sqlx::query_as(
+    pub async fn save<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Self, StorageError> {
+        Ok(sqlx::query_as(
             r#"
             INSERT INTO events (id, entity_id, event_type, created_at, scheduled_to)
             VALUES ($1, $2, $3, $4, $5)
@@ -72,11 +74,11 @@ impl DbEvent {
         .bind(self.created_at)
         .bind(self.scheduled_to)
         .fetch_one(exec)
-        .await
+        .await?)
     }
 
-    pub async fn update<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Self, sqlx::Error> {
-        sqlx::query_as(
+    pub async fn update<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Self, StorageError> {
+        Ok(sqlx::query_as(
             r#"
             UPDATE events
             SET consumed_at = $1
@@ -87,6 +89,6 @@ impl DbEvent {
         .bind(self.consumed_at)
         .bind(self.id)
         .fetch_one(exec)
-        .await
+        .await?)
     }
 }

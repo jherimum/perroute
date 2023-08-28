@@ -1,5 +1,6 @@
 use super::message::{Message, MessageQueryBuilder};
 use crate::{
+    error::StorageError,
     query::{FetchableModel, ModelQueryBuilder},
     DatabaseModel,
 };
@@ -109,7 +110,7 @@ impl MessageDispatch {
     pub async fn message<'e, E: PgExecutor<'e>>(
         &self,
         executor: E,
-    ) -> Result<Message, sqlx::Error> {
+    ) -> Result<Message, StorageError> {
         Message::find_one(
             executor,
             MessageQueryBuilder::default()
@@ -120,8 +121,8 @@ impl MessageDispatch {
         .await
     }
 
-    pub async fn save<'e, E: PgExecutor<'e>>(&self, executor: E) -> Result<Self, sqlx::Error> {
-        sqlx::query_as(
+    pub async fn save<'e, E: PgExecutor<'e>>(&self, executor: E) -> Result<Self, StorageError> {
+        Ok(sqlx::query_as(
             r#"
             INSERT INTO message_dispatches (id, message_id, success, plugin_id, delivery, created_at)
             VALUES ($1, $2, $3, $4, $5)
@@ -135,6 +136,6 @@ impl MessageDispatch {
         .bind(self.delivery.clone())
         .bind(self.created_at)
         .fetch_one(executor)
-        .await
+        .await?)
     }
 }

@@ -3,6 +3,7 @@ use super::{
     message_type::{MessageType, MessageTypeQueryBuilder},
 };
 use crate::{
+    error::StorageError,
     log_query_error,
     query::{FetchableModel, ModelQueryBuilder, Projection},
     DatabaseModel,
@@ -73,8 +74,8 @@ pub struct BusinessUnit {
 
 impl BusinessUnit {
     #[tracing::instrument(name = "business_unit.save", skip(exec))]
-    pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
-        sqlx::query_as(
+    pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, StorageError> {
+        Ok(sqlx::query_as(
             r#"
             INSERT INTO business_units (id, code, name, vars) 
             VALUES($1, $2, $3, $4) RETURNING *
@@ -86,12 +87,12 @@ impl BusinessUnit {
         .bind(self.vars)
         .fetch_one(exec)
         .await
-        .tap_err(log_query_error!())
+        .tap_err(log_query_error!())?)
     }
 
     #[tracing::instrument(name = "business_unit.update", skip(exec))]
-    pub async fn update<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, sqlx::Error> {
-        sqlx::query_as(
+    pub async fn update<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, StorageError> {
+        Ok(sqlx::query_as(
             r#"
             UPDATE business_units 
             SET name= $2, vars=$3 
@@ -103,12 +104,12 @@ impl BusinessUnit {
         .bind(self.vars)
         .fetch_one(exec)
         .await
-        .tap_err(log_query_error!())
+        .tap_err(log_query_error!())?)
     }
 
     #[tracing::instrument(name = "business_unit.delete", skip(exec))]
-    pub async fn delete<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<bool, sqlx::Error> {
-        sqlx::query(
+    pub async fn delete<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<bool, StorageError> {
+        Ok(sqlx::query(
             r#"
             DELETE FROM business_units 
             WHERE id= $1
@@ -118,34 +119,34 @@ impl BusinessUnit {
         .execute(exec)
         .await
         .tap_err(log_query_error!())
-        .map(|result| result.rows_affected() > 0)
+        .map(|result| result.rows_affected() > 0)?)
     }
 
     pub async fn message_types<'e, E: PgExecutor<'e>>(
         self,
         exec: E,
-    ) -> Result<Vec<MessageType>, sqlx::Error> {
-        MessageType::query(
+    ) -> Result<Vec<MessageType>, StorageError> {
+        Ok(MessageType::query(
             exec,
             MessageTypeQueryBuilder::default()
                 .business_unit_id(Some(self.id))
                 .build()
                 .unwrap(),
         )
-        .await
+        .await?)
     }
 
     pub async fn channels<'e, E: PgExecutor<'e>>(
         self,
         exec: E,
-    ) -> Result<Vec<Channel>, sqlx::Error> {
-        Channel::query(
+    ) -> Result<Vec<Channel>, StorageError> {
+        Ok(Channel::query(
             exec,
             ChannelQueryBuilder::default()
                 .business_unit_id(Some(self.id))
                 .build()
                 .unwrap(),
         )
-        .await
+        .await?)
     }
 }
