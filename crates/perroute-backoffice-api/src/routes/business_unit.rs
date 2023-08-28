@@ -56,7 +56,7 @@ impl TryInto<CreateBusinessUnitCommand> for CreateBusinessUnitRequest {
             .id(Id::new())
             .code(Code::from_str(&self.code.context("Missing code")?).context("Invalid code")?)
             .name(self.name.context("Misssing name")?)
-            .vars(self.vars.into())
+            .vars(self.vars.unwrap_or_default().into())
             .build()
             .tap_err(|e| tracing::error!("Failed to build CreateBusinessUnitCommand: {e}"))?)
     }

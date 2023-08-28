@@ -18,7 +18,7 @@ pub struct CreateRouteRequest {
     pub schema_id: String,
 
     #[validate(custom = "perroute_commons::types::properties::Properties::validate")]
-    pub properties: Value,
+    pub properties: Option<Value>,
 }
 
 #[derive(Debug, serde::Deserialize, Clone, Validate, Default)]

@@ -19,7 +19,7 @@ pub struct CreateBusinessUnitRequest {
     #[validate(custom = "perroute_commons::types::name::validate")]
     pub name: Option<String>,
 
-    pub vars: HashMap<String, String>,
+    pub vars: Option<HashMap<String, String>>,
 }
 
 #[derive(Debug, serde::Deserialize, Clone, Validate)]

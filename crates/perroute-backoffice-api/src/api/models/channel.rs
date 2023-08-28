@@ -35,6 +35,7 @@ pub struct CreateChannelRequest {
 #[derive(Debug, Deserialize, Clone, Validate, Default)]
 #[serde(default)]
 pub struct UpdateChannelRequest {
+    #[validate(required)]
     #[validate(custom = "perroute_commons::types::properties::Properties::validate")]
     pub properties: Option<Value>,
 

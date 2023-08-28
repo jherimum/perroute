@@ -18,7 +18,7 @@ pub struct CreateMessageTypeRequest {
     #[validate(custom = "perroute_commons::types::name::validate")]
     pub name: Option<String>,
 
-    pub vars: HashMap<String, String>,
+    pub vars: Option<HashMap<String, String>>,
 
     #[validate(required)]
     #[validate(custom = "perroute_commons::types::id::Id::validate")]
@@ -30,7 +30,9 @@ pub struct CreateMessageTypeRequest {
 pub struct UpdateMessageTypeRequest {
     #[validate(custom = "perroute_commons::types::name::validate")]
     pub name: Option<String>,
+
     pub enabled: Option<bool>,
+
     pub vars: Option<HashMap<String, String>>,
 }
 

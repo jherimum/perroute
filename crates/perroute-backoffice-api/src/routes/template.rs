@@ -50,12 +50,11 @@ impl TemplateRouter {
     ) -> CollectionResult {
         let query = QueryTemplatesQueryBuilder::default().build().unwrap();
 
-        state
+        Ok(state
             .query_bus()
             .execute::<_, QueryTemplatesQueryHandler, _>(&actor, &query)
             .await
-            .map(ApiResponse::ok)
-            .map_err(ApiError::from)
+            .map(ApiResponse::ok)?)
     }
 
     #[tracing::instrument]
@@ -65,7 +64,7 @@ impl TemplateRouter {
         Json(body): Json<CreateTemplateRequest>,
     ) -> SingleResult {
         let cmd = CreateTemplateCommandBuilder::default()
-            .id(new_id!())
+            .id(Id::new())
             .name(body.name)
             .subject(body.subject)
             .html(body.html.map(Into::into))

@@ -4,6 +4,8 @@ use crate::api::response::CollectionResourceModel;
 use crate::api::response::Links;
 use crate::api::response::ResourceBuilder;
 use crate::api::response::SingleResourceModel;
+use crate::links::Linkrelation;
+use crate::links::ResourceLink;
 use perroute_storage::models::template::Template;
 use serde::Serialize;
 use validator::Validate;
@@ -22,10 +24,7 @@ pub struct CreateTemplateRequest {
     pub dispatch_type: String,
 
     #[validate(custom = "perroute_commons::types::id::Id::validate")]
-    pub business_unit_id: String,
-
-    #[validate(custom = "perroute_commons::types::id::Id::validate")]
-    pub message_type_id: String,
+    pub schema_id: String,
 }
 
 #[derive(Debug, serde::Deserialize, Clone, Validate, Default)]
@@ -37,6 +36,7 @@ pub struct UpdateTemplateRequest {
     pub html: Option<Option<String>>,
     pub text: Option<Option<String>>,
     pub vars: Option<HashMap<String, String>>,
+    pub active: Option<bool>,
 }
 
 #[derive(Debug, Serialize, Clone)]
@@ -68,7 +68,12 @@ impl ResourceBuilder<SingleResourceModel<TemplateResource>> for Template {
     fn build(&self, req: &actix_web::HttpRequest) -> SingleResourceModel<TemplateResource> {
         SingleResourceModel {
             data: Some(TemplateResource::from(self.clone())),
-            links: Links::default().as_url_map(req),
+            links: Links::default()
+                .add(
+                    Linkrelation::Schema,
+                    ResourceLink::Schema(*self.message_type_id(), *self.schema_id()),
+                )
+                .as_url_map(req),
         }
     }
 }
@@ -77,7 +82,9 @@ impl ResourceBuilder<CollectionResourceModel<TemplateResource>> for Vec<Template
     fn build(&self, req: &actix_web::HttpRequest) -> CollectionResourceModel<TemplateResource> {
         CollectionResourceModel {
             data: self.iter().map(|c| c.build(req)).collect(),
-            links: Links::default().as_url_map(req),
+            links: Links::default()
+                .add(Linkrelation::Self_, ResourceLink::Templates)
+                .as_url_map(req),
         }
     }
 }

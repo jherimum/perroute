@@ -45,7 +45,7 @@ impl RouteRouter {
             .id(new_id!())
             .channel_id(body.channel_id.try_into().context("Invalid id")?)
             .schema_id(body.schema_id.try_into().context("Invalid id")?)
-            .properties(body.properties.into())
+            .properties(body.properties.unwrap_or_default().into())
             .build()
             .context("Failed to build CreateRouteCommand")?;
 

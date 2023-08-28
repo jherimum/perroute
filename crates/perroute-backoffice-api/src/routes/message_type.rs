@@ -79,7 +79,7 @@ impl MessageTypeRouter {
         let cmd = CreateMessageTypeCommandBuilder::default()
             .code(body.code.unwrap().try_into().context("Invalid code")?)
             .name(body.name.unwrap())
-            .vars(body.vars.into())
+            .vars(body.vars.unwrap_or_default().into())
             .business_unit_id(
                 body.business_unit_id
                     .unwrap()
