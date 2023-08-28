@@ -158,14 +158,14 @@ impl Channel {
         &self,
         exec: E,
     ) -> Result<BusinessUnit, StorageError> {
-        Ok(BusinessUnit::find_one(
+        BusinessUnit::find_one(
             exec,
             BusinessUnitQueryBuilder::default()
                 .id(Some(self.business_unit_id))
                 .build()
                 .unwrap(),
         )
-        .await?)
+        .await
     }
 
     pub async fn routes<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Vec<Route>, StorageError> {

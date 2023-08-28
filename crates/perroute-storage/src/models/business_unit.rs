@@ -126,27 +126,27 @@ impl BusinessUnit {
         self,
         exec: E,
     ) -> Result<Vec<MessageType>, StorageError> {
-        Ok(MessageType::query(
+        MessageType::query(
             exec,
             MessageTypeQueryBuilder::default()
                 .business_unit_id(Some(self.id))
                 .build()
                 .unwrap(),
         )
-        .await?)
+        .await
     }
 
     pub async fn channels<'e, E: PgExecutor<'e>>(
         self,
         exec: E,
     ) -> Result<Vec<Channel>, StorageError> {
-        Ok(Channel::query(
+        Channel::query(
             exec,
             ChannelQueryBuilder::default()
                 .business_unit_id(Some(self.id))
                 .build()
                 .unwrap(),
         )
-        .await?)
+        .await
     }
 }

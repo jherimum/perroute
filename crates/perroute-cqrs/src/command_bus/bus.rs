@@ -68,7 +68,7 @@ impl<'tx> CommandBusContext<'tx> {
             .begin()
             .await
             .tap_err(|e| tracing::error!("Failed to begin transaction: {e}"))
-            .map_err(|e| StorageError::Tx(e))?;
+            .map_err(StorageError::Tx)?;
         Ok(Self { plugins, pool, tx })
     }
 
@@ -94,7 +94,7 @@ impl<'tx> CommandBusContext<'tx> {
             .commit()
             .await
             .tap_err(|e| tracing::error!("Failed to commit transaction: {e}"))
-            .map_err(|e| StorageError::Tx(e))?)
+            .map_err(StorageError::Tx)?)
     }
 }
 

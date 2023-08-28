@@ -122,13 +122,13 @@ impl Connection {
         self,
         exec: E,
     ) -> Result<Vec<Channel>, StorageError> {
-        Ok(Channel::query(
+        Channel::query(
             exec,
             ChannelQueryBuilder::default()
                 .connection_id(Some(self.id))
                 .build()
                 .unwrap(),
         )
-        .await?)
+        .await
     }
 }

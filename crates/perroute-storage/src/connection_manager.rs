@@ -32,7 +32,7 @@ impl ConnectionManager {
                     &options
                 )
             })
-            .map_err(|e| StorageError::Connection(e))?;
+            .map_err(StorageError::Connection)?;
         if settings.migration.enabled {
             Self::migrate(&pool).await?;
         }
@@ -46,7 +46,7 @@ impl ConnectionManager {
             .run(pool)
             .await
             .tap_err(|e| tracing::error!("Failed to run migrations: {e}"))
-            .map_err(|e| StorageError::Migration(e))?;
+            .map_err(StorageError::Migration)?;
         tracing::info!("Migrations finished");
 
         Ok(())
@@ -58,7 +58,7 @@ impl ConnectionManager {
         let options = Self::connection_options(database_settings);
         PgConnection::connect_with(&options)
             .await
-            .map_err(|e| StorageError::Connection(e))
+            .map_err(StorageError::Connection)
     }
 
     pub fn connection_options(database_settings: &DatabaseSettings) -> PgConnectOptions {
