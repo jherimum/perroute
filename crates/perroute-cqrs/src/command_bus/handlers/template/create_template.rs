@@ -21,7 +21,7 @@ command!(
     CommandType::CreateTemplate,
     id: Id,
     name: String,
-    subject: Option<String>,
+    subject: Option<TemplateSnippet>,
     html: Option<TemplateSnippet>,
     text: Option<TemplateSnippet>,
     dispatch_type: DispatchType,

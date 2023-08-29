@@ -1,10 +1,10 @@
-use std::fmt::Debug;
-
 use super::{payload::Payload, vars::Vars};
 use serde::Serialize;
 use sqlx::Type;
+use std::fmt::Debug;
+use validator::ValidationError;
 
-pub mod template_handlebars;
+pub mod handlebars;
 
 #[derive(Debug, Clone, PartialEq, Eq, Type, serde::Serialize)]
 #[sqlx(transparent)]
@@ -46,6 +46,10 @@ pub enum TemplateError {
 
 pub trait TemplateRender<D: Serialize>: Debug + Send + Sync {
     fn render(&self, template: &str, data: &D) -> Result<String, TemplateError>;
+}
+
+pub trait TemplateValidator {
+    fn validate(template: &str) -> Result<(), ValidationError>;
 }
 
 #[derive(Debug, Serialize)]

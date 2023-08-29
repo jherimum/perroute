@@ -12,13 +12,9 @@ use crate::{
 };
 use actix_web::web::{Data, Json, Path};
 use anyhow::Context;
-use perroute_commons::{
-    new_id,
-    types::{actor::Actor, id::Id, template::TemplateSnippet},
-};
+use perroute_commons::types::{actor::Actor, id::Id};
 use perroute_cqrs::{
     command_bus::handlers::template::{
-        activate_template::{ActivateTemplateCommandBuilder, ActivateTemplateCommandHandler},
         create_template::{CreateTemplateCommandBuilder, CreateTemplateCommandHandler},
         delete_template::{DeleteTemplateCommandBuilder, DeleteTemplateCommandHandler},
         update_template::{UpdateTemplateCommandBuilder, UpdateTemplateCommandHandler},
@@ -67,7 +63,7 @@ impl TemplateRouter {
         let cmd = CreateTemplateCommandBuilder::default()
             .id(Id::new())
             .name(body.name.context("missing name")?)
-            .subject(body.subject)
+            .subject(body.subject.map(Into::into))
             .html(body.html.map(Into::into))
             .text(body.text.map(Into::into))
             .build()
@@ -130,27 +126,6 @@ impl TemplateRouter {
             .await?;
 
         Ok(ApiResponse::ok_empty())
-    }
-
-    #[tracing::instrument]
-    pub async fn activate(
-        state: Data<AppState>,
-        ActorExtractor(actor): ActorExtractor,
-        path: Path<Id>,
-    ) -> SingleResult {
-        let template = Self::retrieve_template(state.query_bus(), &actor, *path.as_ref(), identity)
-            .await
-            .unwrap();
-        let cmd = ActivateTemplateCommandBuilder::default()
-            .id(*template.id())
-            .build()
-            .unwrap();
-        state
-            .command_bus()
-            .execute::<_, ActivateTemplateCommandHandler, _>(&actor, &cmd)
-            .await
-            .map(ApiResponse::ok)
-            .map_err(ApiError::from)
     }
 
     #[tracing::instrument]

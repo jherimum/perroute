@@ -59,21 +59,13 @@ pub fn routes() -> Scope {
                 .route(web::post().to(TemplateRouter::create_template)),
         )
         .service(
-            web::scope("/{template_id}")
-                .service(
-                    web::resource("")
-                        .name(TemplateRouter::TEMPLATE_RESOURCE_NAME)
-                        .route(web::get().to(TemplateRouter::find_template))
-                        .route(web::patch().to(TemplateRouter::update_template))
-                        .route(web::delete().to(TemplateRouter::delete_template)),
-                )
-                .service(
-                    web::scope("/activation").service(
-                        web::resource("")
-                            .name(TemplateRouter::TEMPLATE_ACTIVATION_RESOURCE_NAME)
-                            .route(web::post().to(TemplateRouter::activate)),
-                    ),
-                ),
+            web::scope("/{template_id}").service(
+                web::resource("")
+                    .name(TemplateRouter::TEMPLATE_RESOURCE_NAME)
+                    .route(web::get().to(TemplateRouter::find_template))
+                    .route(web::patch().to(TemplateRouter::update_template))
+                    .route(web::delete().to(TemplateRouter::delete_template)),
+            ),
         );
 
     let schemas = web::scope("/schemas")

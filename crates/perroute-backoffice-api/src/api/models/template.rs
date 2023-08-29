@@ -6,6 +6,7 @@ use crate::api::response::ResourceBuilder;
 use crate::api::response::SingleResourceModel;
 use crate::links::Linkrelation;
 use crate::links::ResourceLink;
+use perroute_commons::types::template::TemplateValidator;
 use perroute_storage::models::template::Template;
 use serde::Serialize;
 use validator::Validate;
@@ -17,8 +18,13 @@ pub struct CreateTemplateRequest {
     #[validate(custom = "perroute_commons::types::name::validate")]
     pub name: Option<String>,
 
+    #[validate(custom = "perroute_commons::types::template::handlebars::Handlebars::validate")]
     pub subject: Option<String>,
+
+    #[validate(custom = "perroute_commons::types::template::handlebars::Handlebars::validate")]
     pub html: Option<String>,
+
+    #[validate(custom = "perroute_commons::types::template::handlebars::Handlebars::validate")]
     pub text: Option<String>,
 
     pub vars: Option<HashMap<String, String>>,
@@ -76,7 +82,7 @@ impl From<Template> for TemplateResource {
         Self {
             id: template.id().into(),
             name: template.name().into(),
-            subject: template.subject().clone(),
+            subject: template.subject().clone().map(Into::into),
             html: template.html().clone().map(Into::into),
             text: template.text().clone().map(Into::into),
             dispatch_type: template.dispatch_type().into(),

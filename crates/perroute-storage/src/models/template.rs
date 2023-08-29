@@ -93,7 +93,7 @@ pub struct Template {
     #[setters(skip)]
     dispatch_type: DispatchType,
 
-    subject: Option<String>,
+    subject: Option<TemplateSnippet>,
     text: Option<TemplateSnippet>,
     html: Option<TemplateSnippet>,
     vars: Vars,
