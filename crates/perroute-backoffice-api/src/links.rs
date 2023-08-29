@@ -23,8 +23,12 @@ pub enum Linkrelation {
     BusinessUnits,
     #[serde(rename = "business_unit")]
     BusinessUnit,
+
     #[serde(rename = "message_types")]
     MessageTypes,
+    #[serde(rename = "message_type")]
+    MessageType,
+
     #[serde(rename = "routes")]
     Routes,
 
@@ -60,8 +64,8 @@ pub enum ResourceLink {
     MessageTypes,
     MessageType(Id),
 
-    Schemas(Id),
-    Schema(Id, Id),
+    Schemas,
+    Schema(Id),
 
     Templates,
     Template(Id),
@@ -95,14 +99,10 @@ impl AsUrl for ResourceLink {
                 [message_type_id.to_string()],
             ),
 
-            Self::Schemas(message_type_id) => req.url_for(
-                SchemaRouter::SCHEMAS_RESOURCE_NAME,
-                [message_type_id.to_string()],
-            ),
-            Self::Schema(message_type_id, schema_id) => req.url_for(
-                SchemaRouter::SCHEMA_RESOURCE_NAME,
-                [message_type_id.to_string(), schema_id.to_string()],
-            ),
+            Self::Schemas => req.url_for_static(SchemaRouter::SCHEMAS_RESOURCE_NAME),
+            Self::Schema(schema_id) => {
+                req.url_for(SchemaRouter::SCHEMA_RESOURCE_NAME, [schema_id.to_string()])
+            }
 
             Self::Templates => req.url_for_static(TemplateRouter::TEMPLATES_RESOURCE_NAME),
 

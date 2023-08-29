@@ -59,7 +59,7 @@ impl ResourceBuilder<SingleResourceModel<RouteResource>> for Route {
                 )
                 .add(
                     Linkrelation::Schema,
-                    ResourceLink::Schema(*self.message_type_id(), *self.schema_id()),
+                    ResourceLink::Schema(*self.schema_id()),
                 )
                 .as_url_map(req),
         }

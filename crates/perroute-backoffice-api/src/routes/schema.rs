@@ -46,29 +46,17 @@ impl SchemaRouter {
     }
 
     #[tracing::instrument(skip(state))]
-    pub async fn query_schemas(
+    pub async fn query(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
-        path: Path<Id>,
     ) -> CollectionResult {
-        let message_type = MessageTypeRouter::retrieve_message_type(
-            state.query_bus(),
-            &actor,
-            *path.as_ref(),
-            identity,
-        )
-        .await?;
-
-        let query = QuerySchemasQueryBuilder::default()
-            .message_type_id(*message_type.id())
-            .build()
-            .unwrap();
+        let query = QuerySchemasQueryBuilder::default().build().unwrap();
 
         state
             .query_bus()
             .execute::<_, QuerySchemasQueryHandler, _>(&actor, &query)
             .await
-            .map(|schemas| ApiResponse::ok((message_type, schemas)))
+            .map(|schemas| ApiResponse::ok(schemas))
             .map_err(ApiError::from)
     }
 
@@ -76,20 +64,16 @@ impl SchemaRouter {
     pub async fn create_schema(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
-        path: Path<Id>,
         Json(body): Json<CreateSchemaRequest>,
     ) -> SingleResult {
-        let message_type = MessageTypeRouter::retrieve_message_type(
-            state.query_bus(),
-            &actor,
-            *path.as_ref(),
-            identity,
-        )
-        .await?;
-
         let cmd = CreateSchemaCommandBuilder::default()
             .id(new_id!())
-            .message_type_id(*message_type.id())
+            .message_type_id(
+                body.message_type_id
+                    .context("missing message type id")?
+                    .try_into()
+                    .context("invalid id")?,
+            )
             .value(
                 body.value
                     .context("value required")?
@@ -104,12 +88,7 @@ impl SchemaRouter {
             .command_bus()
             .execute::<_, CreateSchemaCommandHandler, _>(&actor, &cmd)
             .await
-            .map(|schema| {
-                ApiResponse::created(
-                    ResourceLink::Schema(*message_type.id(), *schema.id()),
-                    schema,
-                )
-            })?)
+            .map(|schema| ApiResponse::created(ResourceLink::Schema(*schema.id()), schema))?)
     }
 
     #[tracing::instrument(skip(state))]

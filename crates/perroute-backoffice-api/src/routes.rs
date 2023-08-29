@@ -80,7 +80,7 @@ pub fn routes() -> Scope {
         .service(
             web::resource("")
                 .name(SchemaRouter::SCHEMAS_RESOURCE_NAME)
-                .route(web::get().to(SchemaRouter::query_schemas))
+                .route(web::get().to(SchemaRouter::query))
                 .route(web::post().to(SchemaRouter::create_schema)),
         )
         .service(
@@ -109,15 +109,13 @@ pub fn routes() -> Scope {
                 .route(web::post().to(MessageTypeRouter::create_message_type)),
         )
         .service(
-            web::scope("/{message_type_id}")
-                .service(
-                    web::resource("")
-                        .name(MessageTypeRouter::MESSAGE_TYPE_RESOURCE_NAME)
-                        .route(web::get().to(MessageTypeRouter::find_message_type))
-                        .route(web::patch().to(MessageTypeRouter::update_message_type))
-                        .route(web::delete().to(MessageTypeRouter::delete_message_type)),
-                )
-                .service(schemas),
+            web::scope("/{message_type_id}").service(
+                web::resource("")
+                    .name(MessageTypeRouter::MESSAGE_TYPE_RESOURCE_NAME)
+                    .route(web::get().to(MessageTypeRouter::find_message_type))
+                    .route(web::patch().to(MessageTypeRouter::update_message_type))
+                    .route(web::delete().to(MessageTypeRouter::delete_message_type)),
+            ),
         );
 
     let routes = web::scope("/routes")
@@ -189,7 +187,8 @@ pub fn routes() -> Scope {
                     .service(routes)
                     .service(connections)
                     .service(plugins)
-                    .service(channels),
+                    .service(channels)
+                    .service(schemas),
             ),
         )
 }

@@ -4,7 +4,7 @@ use crate::{
     api::response::{CollectionResourceModel, Links, ResourceBuilder, SingleResourceModel},
     links::{Linkrelation, ResourceLink},
 };
-use perroute_storage::models::{message_type::MessageType, schema::Schema};
+use perroute_storage::models::schema::Schema;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use validator::Validate;
@@ -12,6 +12,10 @@ use validator::Validate;
 #[derive(Debug, Deserialize, Validate, Default)]
 #[serde(default)]
 pub struct CreateSchemaRequest {
+    #[validate(required)]
+    #[validate(custom = "perroute_commons::types::id::Id::validate")]
+    pub message_type_id: Option<String>,
+
     #[validate(required)]
     #[validate(custom = "perroute_commons::types::json_schema::JsonSchema::validate")]
     pub value: Option<Value>,
@@ -52,25 +56,23 @@ impl ResourceBuilder<SingleResourceModel<SchemaResource>> for Schema {
         SingleResourceModel {
             data: Some(self.clone().into()),
             links: Links::default()
+                .add(Linkrelation::Self_, ResourceLink::Schema(*self.id()))
+                .add(Linkrelation::Schemas, ResourceLink::Schemas)
                 .add(
-                    Linkrelation::Self_,
-                    ResourceLink::Schema(*self.message_type_id(), *self.id()),
-                )
-                .add(
-                    Linkrelation::Schemas,
-                    ResourceLink::Schemas(*self.message_type_id()),
+                    Linkrelation::MessageType,
+                    ResourceLink::MessageType(*self.message_type_id()),
                 )
                 .as_url_map(req),
         }
     }
 }
 
-impl ResourceBuilder<CollectionResourceModel<SchemaResource>> for (MessageType, Vec<Schema>) {
+impl ResourceBuilder<CollectionResourceModel<SchemaResource>> for Vec<Schema> {
     fn build(&self, req: &actix_web::HttpRequest) -> CollectionResourceModel<SchemaResource> {
         CollectionResourceModel {
-            data: self.1.iter().map(|s| s.build(req)).collect(),
+            data: self.iter().map(|s| s.build(req)).collect(),
             links: Links::default()
-                .add(Linkrelation::Self_, ResourceLink::Schemas(*self.0.id()))
+                .add(Linkrelation::Self_, ResourceLink::Schemas)
                 .as_url_map(req),
         }
     }

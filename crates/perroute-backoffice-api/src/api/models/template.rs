@@ -92,7 +92,7 @@ impl ResourceBuilder<SingleResourceModel<TemplateResource>> for Template {
             links: Links::default()
                 .add(
                     Linkrelation::Schema,
-                    ResourceLink::Schema(*self.message_type_id(), *self.schema_id()),
+                    ResourceLink::Schema(*self.schema_id()),
                 )
                 .as_url_map(req),
         }
