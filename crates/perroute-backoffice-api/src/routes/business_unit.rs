@@ -66,10 +66,11 @@ impl TryInto<UpdateBusinessUnitCommand> for W<(SingleIdPath, UpdateBusinessUnitR
     type Error = anyhow::Error;
 
     fn try_into(self) -> Result<UpdateBusinessUnitCommand, Self::Error> {
+        let w = self.into_inner();
         Ok(UpdateBusinessUnitCommandBuilder::default()
-            .business_unit_id(self.0 .0.try_into().context("Invalid id")?)
-            .name(self.0 .1.name)
-            .vars(self.0 .1.vars.map(Into::into))
+            .business_unit_id(w.0.try_into().context("Invalid id")?)
+            .name(w.1.name)
+            .vars(w.1.vars.map(Into::into))
             .build()
             .tap_err(|e| tracing::error!("Failed to build UpdateBusinessUnitCommand: {e}"))?)
     }

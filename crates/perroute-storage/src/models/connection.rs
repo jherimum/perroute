@@ -1,9 +1,8 @@
 use super::channel::{Channel, ChannelQueryBuilder};
 use crate::{
-    error::StorageError,
     log_query_error,
     query::{FetchableModel, ModelQueryBuilder, Projection},
-    DatabaseModel,
+    DatabaseModel, Result,
 };
 use derive_builder::Builder;
 use derive_getters::Getters;
@@ -70,7 +69,7 @@ impl ModelQueryBuilder<Connection> for ConnectionQuery {
 impl DatabaseModel for Connection {}
 
 impl Connection {
-    pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, StorageError> {
+    pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self> {
         Ok(sqlx::query_as(
             r#"
             INSERT INTO connections (id, name, plugin_id, enabled, properties ) 
@@ -87,7 +86,7 @@ impl Connection {
         .tap_err(log_query_error!())?)
     }
 
-    pub async fn update<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, StorageError> {
+    pub async fn update<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self> {
         Ok(sqlx::query_as(
             r#"
             UPDATE connections 
@@ -104,7 +103,7 @@ impl Connection {
         .tap_err(log_query_error!())?)
     }
 
-    pub async fn delete<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<bool, StorageError> {
+    pub async fn delete<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<bool> {
         Ok(sqlx::query(
             r#"
                 DELETE FROM connections 
@@ -118,10 +117,7 @@ impl Connection {
         .map(|result| result.rows_affected() > 0)?)
     }
 
-    pub async fn channels<'e, E: PgExecutor<'e>>(
-        self,
-        exec: E,
-    ) -> Result<Vec<Channel>, StorageError> {
+    pub async fn channels<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Vec<Channel>> {
         Channel::query(
             exec,
             ChannelQueryBuilder::default()

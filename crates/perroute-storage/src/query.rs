@@ -1,15 +1,15 @@
-use crate::{error::StorageError, DatabaseModel};
+use crate::{DatabaseModel, Result};
 use perroute_commons::types::id::Id;
 use sqlx::{postgres::PgRow, FromRow, PgExecutor, Postgres, QueryBuilder, Row};
 
 #[async_trait::async_trait]
 pub trait FetchableModel<Q: ModelQueryBuilder<M>, M> {
-    async fn count<'e, E: PgExecutor<'e>>(exec: E, query: Q) -> Result<i64, StorageError>;
-    async fn query<'e, E: PgExecutor<'e>>(exec: E, query: Q) -> Result<Vec<M>, StorageError>;
-    async fn find<'e, E: PgExecutor<'e>>(exec: E, query: Q) -> Result<Option<M>, StorageError>;
-    async fn find_one<'e, E: PgExecutor<'e>>(exec: E, query: Q) -> Result<M, StorageError>;
-    async fn exists<'e, E: PgExecutor<'e>>(exec: E, query: Q) -> Result<bool, StorageError>;
-    async fn ids<'e, E: PgExecutor<'e>>(exec: E, query: Q) -> Result<Vec<Id>, StorageError>;
+    async fn count<'e, E: PgExecutor<'e>>(exec: E, query: Q) -> Result<i64>;
+    async fn query<'e, E: PgExecutor<'e>>(exec: E, query: Q) -> Result<Vec<M>>;
+    async fn find<'e, E: PgExecutor<'e>>(exec: E, query: Q) -> Result<Option<M>>;
+    async fn find_one<'e, E: PgExecutor<'e>>(exec: E, query: Q) -> Result<M>;
+    async fn exists<'e, E: PgExecutor<'e>>(exec: E, query: Q) -> Result<bool>;
+    async fn ids<'e, E: PgExecutor<'e>>(exec: E, query: Q) -> Result<Vec<Id>>;
 }
 
 #[async_trait::async_trait]
@@ -18,7 +18,7 @@ where
     Q: ModelQueryBuilder<M> + Send + Sync + 'static,
     M: DatabaseModel + Unpin + Sync + Send + for<'a> FromRow<'a, PgRow>,
 {
-    async fn count<'e, E: PgExecutor<'e>>(exec: E, query: Q) -> Result<i64, StorageError> {
+    async fn count<'e, E: PgExecutor<'e>>(exec: E, query: Q) -> Result<i64> {
         Ok(query
             .build(Projection::Count)
             .build()
@@ -26,7 +26,7 @@ where
             .await
             .map(|r| r.get(0))?)
     }
-    async fn query<'e, E: PgExecutor<'e>>(exec: E, query: Q) -> Result<Vec<M>, StorageError> {
+    async fn query<'e, E: PgExecutor<'e>>(exec: E, query: Q) -> Result<Vec<M>> {
         Ok(query
             .build(Projection::Row)
             .build_query_as::<M>()
@@ -34,7 +34,7 @@ where
             .await?)
     }
 
-    async fn ids<'e, E: PgExecutor<'e>>(exec: E, query: Q) -> Result<Vec<Id>, StorageError> {
+    async fn ids<'e, E: PgExecutor<'e>>(exec: E, query: Q) -> Result<Vec<Id>> {
         Ok(query
             .build(Projection::Id)
             .build()
@@ -45,7 +45,7 @@ where
             .collect::<Vec<Id>>())
     }
 
-    async fn find<'e, E: PgExecutor<'e>>(exec: E, query: Q) -> Result<Option<M>, StorageError> {
+    async fn find<'e, E: PgExecutor<'e>>(exec: E, query: Q) -> Result<Option<M>> {
         Ok(query
             .build(Projection::Row)
             .build_query_as::<M>()
@@ -53,7 +53,7 @@ where
             .await?)
     }
 
-    async fn find_one<'e, E: PgExecutor<'e>>(exec: E, query: Q) -> Result<M, StorageError> {
+    async fn find_one<'e, E: PgExecutor<'e>>(exec: E, query: Q) -> Result<M> {
         Ok(query
             .build(Projection::Row)
             .build_query_as::<M>()
@@ -61,7 +61,7 @@ where
             .await?)
     }
 
-    async fn exists<'e, E: PgExecutor<'e>>(exec: E, query: Q) -> Result<bool, StorageError> {
+    async fn exists<'e, E: PgExecutor<'e>>(exec: E, query: Q) -> Result<bool> {
         Ok(query
             .build(Projection::Count)
             .build()

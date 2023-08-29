@@ -5,9 +5,8 @@ use super::{
     template::{Template, TemplatesQueryBuilder},
 };
 use crate::{
-    error::StorageError,
     query::{FetchableModel, ModelQueryBuilder, Projection},
-    DatabaseModel,
+    DatabaseModel, Result,
 };
 use derive_builder::Builder;
 use derive_getters::Getters;
@@ -119,14 +118,11 @@ impl Schema {
         &self,
         exec: E,
         dispatch_type: &DispatchType,
-    ) -> Result<Option<Template>, StorageError> {
+    ) -> Result<Option<Template>> {
         todo!()
     }
 
-    pub async fn templates<'e, E: PgExecutor<'e>>(
-        &self,
-        exec: E,
-    ) -> Result<Vec<Template>, StorageError> {
+    pub async fn templates<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Vec<Template>> {
         Template::query(
             exec,
             TemplatesQueryBuilder::default()
@@ -137,10 +133,7 @@ impl Schema {
         .await
     }
 
-    pub async fn message_type<'e, E: PgExecutor<'e>>(
-        &self,
-        exec: E,
-    ) -> Result<MessageType, StorageError> {
+    pub async fn message_type<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<MessageType> {
         MessageType::find_one(
             exec,
             MessageTypeQueryBuilder::default()
@@ -151,10 +144,7 @@ impl Schema {
         .await
     }
 
-    pub async fn business_unit<'e, E: PgExecutor<'e>>(
-        &self,
-        exec: E,
-    ) -> Result<BusinessUnit, StorageError> {
+    pub async fn business_unit<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<BusinessUnit> {
         BusinessUnit::find_one(
             exec,
             BusinessUnitQueryBuilder::default()
@@ -165,14 +155,11 @@ impl Schema {
         .await
     }
 
-    pub async fn exists_messages<'e, E: PgExecutor<'e>>(
-        &self,
-        exec: E,
-    ) -> Result<bool, StorageError> {
+    pub async fn exists_messages<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<bool> {
         Message::exists(exec, MessageQuery::with_id(self.id)).await
     }
 
-    pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, StorageError> {
+    pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self> {
         Ok(sqlx::query_as(
             r#"
                 INSERT INTO schemas (id, value, version, published, message_type_id, enabled, vars, business_unit_id) 
@@ -191,7 +178,7 @@ impl Schema {
         .await?)
     }
 
-    pub async fn update<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, StorageError> {
+    pub async fn update<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self> {
         Ok(sqlx::query_as(
             r#"
             UPDATE schemas 
@@ -212,7 +199,7 @@ impl Schema {
         .await?)
     }
 
-    pub async fn delete<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<bool, StorageError> {
+    pub async fn delete<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<bool> {
         Ok(sqlx::query("DELETE FROM schemas WHERE id= $1")
             .bind(self.id)
             .execute(exec)
@@ -223,7 +210,7 @@ impl Schema {
     pub async fn next_version(
         exec: &mut sqlx::PgConnection,
         message_type_id: &Id,
-    ) -> Result<Version, StorageError> {
+    ) -> Result<Version> {
         Ok(sqlx::query_scalar::<_, Version>(
             r#"
             SELECT coalesce(MAX(version),0) as version

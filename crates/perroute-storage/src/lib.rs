@@ -14,4 +14,6 @@ mod macros {
     }
 }
 
+pub type Result<T> = std::result::Result<T, error::StorageError>;
+
 pub trait DatabaseModel {}

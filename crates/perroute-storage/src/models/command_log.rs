@@ -1,3 +1,4 @@
+use crate::{log_query_error, Result};
 use chrono::NaiveDateTime;
 use derive_builder::Builder;
 use derive_getters::Getters;
@@ -5,8 +6,6 @@ use perroute_commons::types::{actor::ActorType, id::Id};
 use serde::Serialize;
 use sqlx::{FromRow, PgExecutor};
 use tap::TapFallible;
-
-use crate::{error::StorageError, log_query_error};
 
 #[derive(Debug, FromRow, PartialEq, Eq, Clone, Getters, Builder, Serialize)]
 #[builder(setter(into))]
@@ -21,7 +20,7 @@ pub struct CommandLog {
 }
 
 impl CommandLog {
-    pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, StorageError> {
+    pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self> {
         Ok(sqlx::query_as(
             r#"
                     INSERT INTO command_logs (id, command_type, payload, actor_type, actor_id, created_at, error ) 

@@ -6,7 +6,7 @@ use perroute_commons::types::id::Id;
 use perroute_messaging::events::{Event, EventType};
 use sqlx::{FromRow, PgExecutor};
 
-use crate::error::StorageError;
+use crate::Result;
 
 impl From<&DbEvent> for Event {
     fn from(value: &DbEvent) -> Self {
@@ -42,10 +42,7 @@ pub struct DbEvent {
 }
 
 impl DbEvent {
-    pub async fn fetch_unconsumed<'e, E: PgExecutor<'e>>(
-        exec: E,
-        limit: i64,
-    ) -> Result<Vec<Self>, StorageError> {
+    pub async fn fetch_unconsumed<'e, E: PgExecutor<'e>>(exec: E, limit: i64) -> Result<Vec<Self>> {
         Ok(sqlx::query_as(
             r#"
                     select * 
@@ -60,7 +57,7 @@ impl DbEvent {
         .await?)
     }
 
-    pub async fn save<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Self, StorageError> {
+    pub async fn save<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Self> {
         Ok(sqlx::query_as(
             r#"
             INSERT INTO events (id, entity_id, event_type, created_at, scheduled_to)
@@ -77,7 +74,7 @@ impl DbEvent {
         .await?)
     }
 
-    pub async fn update<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Self, StorageError> {
+    pub async fn update<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Self> {
         Ok(sqlx::query_as(
             r#"
             UPDATE events

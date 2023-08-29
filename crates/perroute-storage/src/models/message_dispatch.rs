@@ -1,8 +1,7 @@
 use super::message::{Message, MessageQueryBuilder};
 use crate::{
-    error::StorageError,
     query::{FetchableModel, ModelQueryBuilder},
-    DatabaseModel,
+    DatabaseModel, Result,
 };
 use derive_builder::Builder;
 use derive_getters::Getters;
@@ -107,10 +106,7 @@ pub struct MessageDispatch {
 }
 
 impl MessageDispatch {
-    pub async fn message<'e, E: PgExecutor<'e>>(
-        &self,
-        executor: E,
-    ) -> Result<Message, StorageError> {
+    pub async fn message<'e, E: PgExecutor<'e>>(&self, executor: E) -> Result<Message> {
         Message::find_one(
             executor,
             MessageQueryBuilder::default()
@@ -121,7 +117,7 @@ impl MessageDispatch {
         .await
     }
 
-    pub async fn save<'e, E: PgExecutor<'e>>(&self, executor: E) -> Result<Self, StorageError> {
+    pub async fn save<'e, E: PgExecutor<'e>>(&self, executor: E) -> Result<Self> {
         Ok(sqlx::query_as(
             r#"
             INSERT INTO message_dispatches (id, message_id, success, plugin_id, delivery, created_at)

@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use super::{business_unit::BusinessUnit, message_type::MessageType, schema::Schema};
-use crate::{error::StorageError, log_query_error, query::ModelQueryBuilder, DatabaseModel};
+use crate::{log_query_error, query::ModelQueryBuilder, DatabaseModel, Result};
 use chrono::NaiveDateTime;
 use derive_builder::Builder;
 use derive_getters::Getters;
@@ -152,25 +152,19 @@ pub struct Message {
 }
 
 impl Message {
-    pub async fn message_type<'e, E: PgExecutor<'e>>(
-        &self,
-        exec: E,
-    ) -> Result<MessageType, StorageError> {
+    pub async fn message_type<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<MessageType> {
         todo!()
     }
 
-    pub async fn business_unit<'e, E: PgExecutor<'e>>(
-        &self,
-        exec: E,
-    ) -> Result<BusinessUnit, StorageError> {
+    pub async fn business_unit<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<BusinessUnit> {
         todo!()
     }
 
-    pub async fn schema<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Schema, StorageError> {
+    pub async fn schema<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Schema> {
         todo!()
     }
 
-    pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, StorageError> {
+    pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self> {
         Ok(sqlx::query_as(
             r#"
                 INSERT INTO messages (id, payload, deliveries, status, schema_id, message_type_id, business_unit_id) 
@@ -187,7 +181,7 @@ impl Message {
         .tap_err(log_query_error!())?)
     }
 
-    pub async fn update<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, StorageError> {
+    pub async fn update<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self> {
         Ok(sqlx::query_as(
             r#"
                 UPDATE messages 

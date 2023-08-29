@@ -1,4 +1,3 @@
-use crate::error::StorageError;
 use perroute_commons::configuration::settings::DatabaseSettings;
 use secrecy::ExposeSecret;
 use sqlx::{
@@ -8,6 +7,8 @@ use sqlx::{
 use std::time::Duration;
 use tap::TapFallible;
 
+use crate::{error::StorageError, Result};
+
 pub type ConnectionPool = PgPool;
 pub type Connection = PgConnection;
 
@@ -16,7 +17,7 @@ pub static MIGRATOR: sqlx::migrate::Migrator = sqlx::migrate!();
 pub struct ConnectionManager;
 
 impl ConnectionManager {
-    pub async fn build_pool(settings: &DatabaseSettings) -> Result<ConnectionPool, StorageError> {
+    pub async fn build_pool(settings: &DatabaseSettings) -> Result<ConnectionPool> {
         let options = Self::connection_options(settings);
         let pool = PgPoolOptions::new()
             .max_connections(settings.pool.max_connection)
@@ -40,7 +41,7 @@ impl ConnectionManager {
         Ok(pool)
     }
 
-    pub async fn migrate(pool: &PgPool) -> Result<(), StorageError> {
+    pub async fn migrate(pool: &PgPool) -> Result<()> {
         tracing::info!("Migration started");
         sqlx::migrate!()
             .run(pool)
@@ -52,9 +53,7 @@ impl ConnectionManager {
         Ok(())
     }
 
-    pub async fn new_connection(
-        database_settings: &DatabaseSettings,
-    ) -> Result<PgConnection, StorageError> {
+    pub async fn new_connection(database_settings: &DatabaseSettings) -> Result<PgConnection> {
         let options = Self::connection_options(database_settings);
         PgConnection::connect_with(&options)
             .await

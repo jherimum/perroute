@@ -3,10 +3,9 @@ use super::{
     message_type::{MessageType, MessageTypeQueryBuilder},
 };
 use crate::{
-    error::StorageError,
     log_query_error,
     query::{FetchableModel, ModelQueryBuilder, Projection},
-    DatabaseModel,
+    DatabaseModel, Result,
 };
 use derive_builder::Builder;
 use derive_getters::Getters;
@@ -74,7 +73,7 @@ pub struct BusinessUnit {
 
 impl BusinessUnit {
     #[tracing::instrument(name = "business_unit.save", skip(exec))]
-    pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, StorageError> {
+    pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self> {
         Ok(sqlx::query_as(
             r#"
             INSERT INTO business_units (id, code, name, vars) 
@@ -91,7 +90,7 @@ impl BusinessUnit {
     }
 
     #[tracing::instrument(name = "business_unit.update", skip(exec))]
-    pub async fn update<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self, StorageError> {
+    pub async fn update<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self> {
         Ok(sqlx::query_as(
             r#"
             UPDATE business_units 
@@ -108,7 +107,7 @@ impl BusinessUnit {
     }
 
     #[tracing::instrument(name = "business_unit.delete", skip(exec))]
-    pub async fn delete<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<bool, StorageError> {
+    pub async fn delete<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<bool> {
         Ok(sqlx::query(
             r#"
             DELETE FROM business_units 
@@ -122,10 +121,7 @@ impl BusinessUnit {
         .map(|result| result.rows_affected() > 0)?)
     }
 
-    pub async fn message_types<'e, E: PgExecutor<'e>>(
-        self,
-        exec: E,
-    ) -> Result<Vec<MessageType>, StorageError> {
+    pub async fn message_types<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Vec<MessageType>> {
         MessageType::query(
             exec,
             MessageTypeQueryBuilder::default()
@@ -136,10 +132,7 @@ impl BusinessUnit {
         .await
     }
 
-    pub async fn channels<'e, E: PgExecutor<'e>>(
-        self,
-        exec: E,
-    ) -> Result<Vec<Channel>, StorageError> {
+    pub async fn channels<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Vec<Channel>> {
         Channel::query(
             exec,
             ChannelQueryBuilder::default()
