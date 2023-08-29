@@ -101,7 +101,7 @@ fn build_message(req: &DispatchRequest) -> SendgridResult<Message> {
         .from_value::<EmailDispatcherProperties>()
         .unwrap();
 
-    let mut message = Message::new(SendGridEmail::from(&disp_properties.from).into());
+    let message = Message::new(SendGridEmail::from(&disp_properties.from).into());
 
     Ok(
         message
