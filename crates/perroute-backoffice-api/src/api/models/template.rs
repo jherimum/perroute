@@ -13,18 +13,23 @@ use validator::Validate;
 #[derive(Debug, serde::Deserialize, Clone, Validate, Default)]
 #[serde(default)]
 pub struct CreateTemplateRequest {
+    #[validate(required)]
     #[validate(custom = "perroute_commons::types::name::validate")]
-    pub name: String,
+    pub name: Option<String>,
+
     pub subject: Option<String>,
     pub html: Option<String>,
     pub text: Option<String>,
-    pub vars: HashMap<String, String>,
 
+    pub vars: Option<HashMap<String, String>>,
+
+    #[validate(required)]
     #[validate(custom = "perroute_connectors::types::dispatch_type::DispatchType::validate")]
-    pub dispatch_type: String,
+    pub dispatch_type: Option<String>,
 
+    #[validate(required)]
     #[validate(custom = "perroute_commons::types::id::Id::validate")]
-    pub schema_id: String,
+    pub schema_id: Option<String>,
 }
 
 #[derive(Debug, serde::Deserialize, Clone, Validate, Default)]
@@ -32,9 +37,25 @@ pub struct CreateTemplateRequest {
 pub struct UpdateTemplateRequest {
     #[validate(custom = "perroute_commons::types::name::validate")]
     pub name: Option<String>,
+
+    #[serde(
+        default,                                    // <- important for deserialization
+        with = "::serde_with::rust::double_option",
+    )]
     pub subject: Option<Option<String>>,
+
+    #[serde(
+        default,                                    // <- important for deserialization
+        with = "::serde_with::rust::double_option",
+    )]
     pub html: Option<Option<String>>,
+
+    #[serde(
+        default,                                    // <- important for deserialization
+        with = "::serde_with::rust::double_option",
+    )]
     pub text: Option<Option<String>>,
+
     pub vars: Option<HashMap<String, String>>,
     pub active: Option<bool>,
 }

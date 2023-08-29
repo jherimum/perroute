@@ -11,12 +11,15 @@ use validator::Validate;
 #[derive(Debug, serde::Deserialize, Clone, Validate, Default)]
 #[serde(default)]
 pub struct CreateRouteRequest {
+    #[validate(required)]
     #[validate(custom = "perroute_commons::types::id::Id::validate")]
-    pub channel_id: String,
+    pub channel_id: Option<String>,
 
+    #[validate(required)]
     #[validate(custom = "perroute_commons::types::id::Id::validate")]
-    pub schema_id: String,
+    pub schema_id: Option<String>,
 
+    #[validate(required)]
     #[validate(custom = "perroute_commons::types::properties::Properties::validate")]
     pub properties: Option<Value>,
 }

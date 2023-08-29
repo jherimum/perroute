@@ -11,6 +11,7 @@ use crate::{
     links::ResourceLink,
 };
 use actix_web::web::{Data, Json, Path};
+use anyhow::Context;
 use perroute_commons::{
     new_id,
     types::{actor::Actor, id::Id, template::TemplateSnippet},
@@ -65,7 +66,7 @@ impl TemplateRouter {
     ) -> SingleResult {
         let cmd = CreateTemplateCommandBuilder::default()
             .id(Id::new())
-            .name(body.name)
+            .name(body.name.context("missing name")?)
             .subject(body.subject)
             .html(body.html.map(Into::into))
             .text(body.text.map(Into::into))
@@ -96,8 +97,8 @@ impl TemplateRouter {
         let cmd = UpdateTemplateCommandBuilder::default()
             .id(*template.id())
             .name(body.name)
-            .html(body.html.map(|s| s.map(TemplateSnippet::from)))
-            .text(body.text.map(|s| s.map(TemplateSnippet::from)))
+            .html(body.html.map(|s| s.map(Into::into)))
+            .text(body.text.map(|s| s.map(Into::into)))
             .subject(body.subject.map(|s| s.map(Into::into)))
             .build()
             .unwrap();

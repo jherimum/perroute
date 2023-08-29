@@ -90,8 +90,13 @@ impl SchemaRouter {
         let cmd = CreateSchemaCommandBuilder::default()
             .id(new_id!())
             .message_type_id(*message_type.id())
-            .value(body.value.try_into().context("invalid schema")?)
-            .vars(body.vars.into())
+            .value(
+                body.value
+                    .context("value required")?
+                    .try_into()
+                    .context("invalid schema")?,
+            )
+            .vars(body.vars.unwrap_or_default().into())
             .build()
             .unwrap();
 
