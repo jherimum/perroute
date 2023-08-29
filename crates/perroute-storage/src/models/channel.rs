@@ -38,6 +38,13 @@ impl ChannelQuery {
             ..Default::default()
         }
     }
+
+    pub fn with_connection(conn_id: Id) -> Self {
+        Self {
+            connection_id: Some(conn_id),
+            ..Default::default()
+        }
+    }
 }
 
 impl ModelQueryBuilder<Channel> for ChannelQuery {

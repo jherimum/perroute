@@ -53,7 +53,7 @@ impl CommandHandler for CreateBusinessUnitCommandHandler {
                 .await
                 .tap_err(|e| {
                     tracing::error!(
-                        "Failed to check if business Unit with code {} exists:{e}",
+                        "Failed to check if business Unit with code {} exists: {e}",
                         cmd.code
                     );
                 })?;

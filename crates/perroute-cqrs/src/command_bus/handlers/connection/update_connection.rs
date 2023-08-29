@@ -55,7 +55,8 @@ impl CommandHandler for UpdateConnectionCommandHandler {
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
         let mut conn = Connection::find(ctx.pool(), ConnectionQuery::with_id(cmd.id))
-            .await?
+            .await
+            .tap_err(|e| tracing::error!("Failed to retrieve connection:{e}"))?
             .ok_or(UpdateConnectionCommandHandlerError::ConnectionNotFound(
                 cmd.id,
             ))?;
@@ -78,12 +79,12 @@ impl CommandHandler for UpdateConnectionCommandHandler {
             conn = conn.set_properties(properties);
         }
 
-        if let Some(name) = cmd.name.as_ref() {
+        if let Some(name) = cmd.name {
             conn = conn.set_name(name);
         }
 
-        if let Some(enabled) = cmd.enabled.as_ref() {
-            conn = conn.set_enabled(*enabled);
+        if let Some(enabled) = cmd.enabled {
+            conn = conn.set_enabled(enabled);
         }
 
         Ok(conn.update(ctx.tx()).await.tap_err(|e| {

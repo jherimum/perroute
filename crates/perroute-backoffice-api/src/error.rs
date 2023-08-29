@@ -98,6 +98,7 @@ impl From<&ApiError> for RestError {
 
             ApiError::CommandBus(CommandBusError::DeleteConnection(e)) => match e {
                 DeleteConnectionCommandHandlerError::ConnectionNotFound(_) => RestError::NotFound(e.to_string()),
+                DeleteConnectionCommandHandlerError::DeleteError(_, _) => RestError::UnprocessableEntity(e.to_string()),
             },
 
             //query bus

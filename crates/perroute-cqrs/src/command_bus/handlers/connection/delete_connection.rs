@@ -9,7 +9,10 @@ use derive_builder::Builder;
 use derive_getters::Getters;
 use perroute_commons::types::{actor::Actor, id::Id};
 use perroute_storage::{
-    models::connection::{Connection, ConnectionQueryBuilder},
+    models::{
+        channel::{Channel, ChannelQuery},
+        connection::{Connection, ConnectionQueryBuilder},
+    },
     query::FetchableModel,
 };
 use serde::Serialize;
@@ -19,6 +22,9 @@ use tap::TapFallible;
 pub enum DeleteConnectionCommandHandlerError {
     #[error("Connection with id {0} not found")]
     ConnectionNotFound(Id),
+
+    #[error("Connection {0} could not be deleted: {1}")]
+    DeleteError(Id, String),
 }
 
 #[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
@@ -43,7 +49,7 @@ impl CommandHandler for DeleteConnectionCommandHandler {
         _: &Actor,
         cmd: Self::Command,
     ) -> Result<Self::Output, CommandBusError> {
-        Ok(Connection::find(
+        let conn = Connection::find(
             ctx.pool(),
             ConnectionQueryBuilder::default()
                 .id(Some(cmd.id))
@@ -54,10 +60,23 @@ impl CommandHandler for DeleteConnectionCommandHandler {
         .tap_err(|e| tracing::error!("Failed to retrieve connection: {e}"))?
         .ok_or(DeleteConnectionCommandHandlerError::ConnectionNotFound(
             cmd.id,
-        ))?
-        .delete(ctx.tx())
-        .await
-        .tap_err(|e| tracing::error!("Failed to delete connection: {e}"))
-        .map(|_| ())?)
+        ))?;
+
+        if Channel::exists(ctx.pool(), ChannelQuery::with_connection(*conn.id()))
+            .await
+            .tap_err(|e| tracing::error!("Faled to check if channel exists: {e}"))?
+        {
+            return Err(DeleteConnectionCommandHandlerError::DeleteError(
+                cmd.id,
+                "Connection is still in use by channels".to_string(),
+            )
+            .into());
+        }
+
+        Ok(conn
+            .delete(ctx.tx())
+            .await
+            .tap_err(|e| tracing::error!("Failed to delete connection: {e}"))
+            .map(|_| ())?)
     }
 }
