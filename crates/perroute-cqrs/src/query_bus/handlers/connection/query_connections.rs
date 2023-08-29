@@ -2,8 +2,8 @@ use crate::{
     query,
     query_bus::{
         bus::{QueryBusContext, QueryHandler},
-        error::QueryBusError,
         queries::QueryType,
+        Result,
     },
 };
 use async_trait::async_trait;
@@ -28,7 +28,7 @@ impl QueryHandler for QueryConnectionsQueryHandler {
         ctx: &QueryBusContext,
         actor: &Actor,
         _: &Self::Query,
-    ) -> Result<Self::Output, QueryBusError> {
+    ) -> Result<Self::Output> {
         Ok(Connection::query(
             ctx.pool(),
             ConnectionQueryBuilder::default().build().unwrap(),

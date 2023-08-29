@@ -1,7 +1,6 @@
 use crate::{
     command_bus::{
-        bus::CommandBusContext, commands::CommandType, error::CommandBusError,
-        handlers::CommandHandler,
+        bus::CommandBusContext, commands::CommandType, handlers::CommandHandler, Result,
     },
     impl_command, into_event,
 };
@@ -61,7 +60,7 @@ impl CommandHandler for CreateRouteCommandHandler {
         ctx: &mut CommandBusContext<'tx>,
         _: &Actor,
         cmd: Self::Command,
-    ) -> Result<Self::Output, CommandBusError> {
+    ) -> Result<Self::Output> {
         let channel = Channel::find(ctx.pool(), ChannelQuery::with_id(cmd.channel_id))
             .await
             .tap_err(|e| tracing::error!("Failed to retrieve channel {}: {e}", cmd.channel_id))?

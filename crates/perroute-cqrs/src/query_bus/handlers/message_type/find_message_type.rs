@@ -14,6 +14,7 @@ use crate::{
         bus::{QueryBusContext, QueryHandler},
         error::QueryBusError,
         queries::QueryType,
+        Result,
     },
 };
 
@@ -37,7 +38,7 @@ impl QueryHandler for FindMessageTypeQueryHandler {
         ctx: &QueryBusContext,
         _: &Actor,
         query: &Self::Query,
-    ) -> Result<Self::Output, QueryBusError> {
+    ) -> Result<Self::Output> {
         MessageType::find(
             ctx.pool(),
             MessageTypeQueryBuilder::default()

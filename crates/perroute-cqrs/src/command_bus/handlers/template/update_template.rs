@@ -1,8 +1,7 @@
 use crate::{
     command,
     command_bus::{
-        bus::CommandBusContext, commands::CommandType, error::CommandBusError,
-        handlers::CommandHandler,
+        bus::CommandBusContext, commands::CommandType, handlers::CommandHandler, Result,
     },
     into_event,
 };
@@ -42,7 +41,7 @@ impl CommandHandler for UpdateTemplateCommandHandler {
         ctx: &mut CommandBusContext<'tx>,
         _: &Actor,
         cmd: Self::Command,
-    ) -> Result<Self::Output, CommandBusError> {
+    ) -> Result<Self::Output> {
         let mut template = Template::find(ctx.pool(), TemplatesQuery::with_id(cmd.id))
             .await?
             .unwrap();

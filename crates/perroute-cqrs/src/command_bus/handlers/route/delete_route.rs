@@ -1,7 +1,6 @@
 use crate::{
     command_bus::{
-        bus::CommandBusContext, commands::CommandType, error::CommandBusError,
-        handlers::CommandHandler,
+        bus::CommandBusContext, commands::CommandType, handlers::CommandHandler, Result,
     },
     impl_command, into_event,
 };
@@ -46,7 +45,7 @@ impl CommandHandler for DeleteRouteCommandHandler {
         ctx: &mut CommandBusContext<'tx>,
         _: &Actor,
         cmd: Self::Command,
-    ) -> Result<Self::Output, CommandBusError> {
+    ) -> Result<Self::Output> {
         let route = Route::find(ctx.pool(), RouteQuery::with_id(cmd.id))
             .await
             .tap_err(|e| tracing::error!("Failed to retrieve route {}: {e}", cmd.id))?

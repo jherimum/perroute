@@ -1,7 +1,6 @@
 use crate::{
     command_bus::{
-        bus::CommandBusContext, commands::CommandType, error::CommandBusError,
-        handlers::CommandHandler,
+        bus::CommandBusContext, commands::CommandType, handlers::CommandHandler, Result,
     },
     impl_command, into_event,
 };
@@ -9,9 +8,7 @@ use derive_builder::Builder;
 use derive_getters::Getters;
 use perroute_commons::types::{actor::Actor, code::Code, id::Id, vars::Vars};
 use perroute_storage::{
-    models::message_type::{
-        MessageType, MessageTypeBuilder, MessageTypeQuery, MessageTypeQueryBuilder,
-    },
+    models::message_type::{MessageType, MessageTypeBuilder, MessageTypeQuery},
     query::FetchableModel,
 };
 use serde::Serialize;
@@ -50,7 +47,7 @@ impl CommandHandler for CreateMessageTypeCommandHandler {
         ctx: &mut CommandBusContext<'tx>,
         _: &Actor,
         cmd: Self::Command,
-    ) -> Result<MessageType, CommandBusError> {
+    ) -> Result<MessageType> {
         if MessageType::exists(
             ctx.pool(),
             MessageTypeQuery::with_code_and_business_unit(cmd.code.clone(), cmd.business_unit_id),

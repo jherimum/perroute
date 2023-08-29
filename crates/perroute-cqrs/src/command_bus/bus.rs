@@ -39,6 +39,7 @@ use super::{
         },
         CommandHandler,
     },
+    Result,
 };
 use perroute_commons::types::actor::Actor;
 use perroute_connectors::Plugins;
@@ -60,10 +61,7 @@ pub struct CommandBusContext<'tx> {
 }
 
 impl<'tx> CommandBusContext<'tx> {
-    pub async fn begin(
-        pool: PgPool,
-        plugins: Plugins,
-    ) -> Result<CommandBusContext<'tx>, CommandBusError> {
+    pub async fn begin(pool: PgPool, plugins: Plugins) -> Result<CommandBusContext<'tx>> {
         let tx = pool
             .begin()
             .await
@@ -88,7 +86,7 @@ impl<'tx> CommandBusContext<'tx> {
         self.tx.acquire().await.unwrap()
     }
 
-    async fn commit(self) -> Result<(), CommandBusError> {
+    async fn commit(self) -> Result<()> {
         Ok(self
             .tx
             .commit()
@@ -195,7 +193,7 @@ impl CommandBus {
         handler.and_then(|h| h.downcast_ref::<H>())
     }
 
-    pub async fn execute<C, H, O>(&self, actor: &Actor, cmd: &C) -> Result<O, CommandBusError>
+    pub async fn execute<C, H, O>(&self, actor: &Actor, cmd: &C) -> Result<O>
     where
         C: Command + 'static,
         H: CommandHandler<Command = C, Output = O> + 'static + Sync + Send,

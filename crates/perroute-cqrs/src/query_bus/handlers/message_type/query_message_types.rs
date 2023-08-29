@@ -2,8 +2,8 @@ use crate::{
     impl_query,
     query_bus::{
         bus::{QueryBusContext, QueryHandler},
-        error::QueryBusError,
         queries::QueryType,
+        Result,
     },
 };
 use async_trait::async_trait;
@@ -34,7 +34,7 @@ impl QueryHandler for QueryMessageTypesHandler {
         ctx: &QueryBusContext,
         _: &Actor,
         query: &Self::Query,
-    ) -> Result<Self::Output, QueryBusError> {
+    ) -> Result<Self::Output> {
         MessageType::query(
             ctx.pool(),
             MessageTypeQueryBuilder::default().build().unwrap(),

@@ -1,8 +1,7 @@
 use crate::{
     command,
     command_bus::{
-        bus::CommandBusContext, commands::CommandType, error::CommandBusError,
-        handlers::CommandHandler,
+        bus::CommandBusContext, commands::CommandType, handlers::CommandHandler, Result,
     },
     into_event,
 };
@@ -58,7 +57,7 @@ impl CommandHandler for CreateSchemaCommandHandler {
         ctx: &mut CommandBusContext<'tx>,
         _: &Actor,
         cmd: Self::Command,
-    ) -> Result<Self::Output, CommandBusError> {
+    ) -> Result<Self::Output> {
         let mt = MessageType::find(ctx.tx(), MessageTypeQuery::with_id(cmd.message_type_id))
             .await
             .tap_err(|e| tracing::error!("Failed to retrieve message type: {e}"))?

@@ -1,4 +1,4 @@
-use super::{bus::CommandBusContext, commands::Command, error::CommandBusError};
+use super::{bus::CommandBusContext, commands::Command, Result};
 use perroute_commons::types::actor::Actor;
 use std::fmt::Debug;
 
@@ -21,5 +21,5 @@ pub trait CommandHandler: Send + Sync + Debug {
         ctx: &mut CommandBusContext<'tx>,
         actor: &Actor,
         cmd: Self::Command,
-    ) -> Result<Self::Output, CommandBusError>;
+    ) -> Result<Self::Output>;
 }

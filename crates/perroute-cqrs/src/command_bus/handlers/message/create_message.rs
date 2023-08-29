@@ -2,8 +2,7 @@ use std::collections::HashSet;
 
 use crate::{
     command_bus::{
-        bus::CommandBusContext, commands::CommandType, error::CommandBusError,
-        handlers::CommandHandler,
+        bus::CommandBusContext, commands::CommandType, handlers::CommandHandler, Result,
     },
     impl_command, into_event,
 };
@@ -84,7 +83,7 @@ impl CommandHandler for CreateMessageCommandHandler {
         ctx: &mut CommandBusContext<'tx>,
         actor: &Actor,
         cmd: Self::Command,
-    ) -> Result<Self::Output, CommandBusError> {
+    ) -> Result<Self::Output> {
         let bu = BusinessUnit::find(
             ctx.pool(),
             BusinessUnitQueryBuilder::default()
@@ -138,7 +137,7 @@ impl CommandHandler for CreateMessageCommandHandler {
             .tap_err(|e| tracing::error!("Invalid payload: {e}"))
             .map_err(Error::from)?;
 
-        MessageBuilder::default()
+        Ok(MessageBuilder::default()
             .id(cmd.id)
             .status(Status::Pending)
             .payload(cmd.payload)
@@ -149,7 +148,6 @@ impl CommandHandler for CreateMessageCommandHandler {
             .build()
             .unwrap()
             .save(ctx.tx())
-            .await
-            .map_err(CommandBusError::from)
+            .await?)
     }
 }

@@ -1,8 +1,7 @@
 use crate::{
     command,
     command_bus::{
-        bus::CommandBusContext, commands::CommandType, error::CommandBusError,
-        handlers::CommandHandler,
+        bus::CommandBusContext, commands::CommandType, handlers::CommandHandler, Result,
     },
     into_event,
 };
@@ -48,7 +47,7 @@ impl CommandHandler for DeleteBusinessUnitCommandHandler {
         ctx: &mut CommandBusContext<'ctx>,
         _: &Actor,
         cmd: Self::Command,
-    ) -> Result<bool, CommandBusError> {
+    ) -> Result<bool> {
         let bu = BusinessUnit::find(ctx.tx(), BusinessUnitQuery::with_id(cmd.business_unit_id))
             .await
             .tap_err(|e| {

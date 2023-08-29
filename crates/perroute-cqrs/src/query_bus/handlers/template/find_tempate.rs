@@ -4,6 +4,7 @@ use crate::{
         bus::{QueryBusContext, QueryHandler},
         error::QueryBusError,
         queries::QueryType,
+        Result,
     },
 };
 use async_trait::async_trait;
@@ -35,7 +36,7 @@ impl QueryHandler for FindTemplateQueryHandler {
         ctx: &QueryBusContext,
         _: &Actor,
         query: &Self::Query,
-    ) -> Result<Self::Output, QueryBusError> {
+    ) -> Result<Self::Output> {
         Template::find(
             ctx.pool(),
             TemplatesQueryBuilder::default()

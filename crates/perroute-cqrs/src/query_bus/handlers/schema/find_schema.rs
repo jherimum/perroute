@@ -4,6 +4,7 @@ use crate::{
         bus::{QueryBusContext, QueryHandler},
         error::QueryBusError,
         queries::QueryType,
+        Result,
     },
 };
 use async_trait::async_trait;
@@ -45,7 +46,7 @@ impl QueryHandler for FindSchemaQueryHandler {
         ctx: &QueryBusContext,
         _: &Actor,
         query: &Self::Query,
-    ) -> Result<Self::Output, QueryBusError> {
+    ) -> Result<Self::Output> {
         let query = SchemasQueryBuilder::default()
             .id(*query.schema_id())
             .message_type_id(*query.message_type_id())

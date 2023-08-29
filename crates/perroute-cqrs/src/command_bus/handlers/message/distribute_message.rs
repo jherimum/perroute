@@ -26,8 +26,7 @@ use tap::{TapFallible, TapOptional};
 
 use crate::{
     command_bus::{
-        bus::CommandBusContext, commands::CommandType, error::CommandBusError,
-        handlers::CommandHandler,
+        bus::CommandBusContext, commands::CommandType, handlers::CommandHandler, Result,
     },
     impl_command, into_event,
 };
@@ -69,7 +68,7 @@ impl CommandHandler for DistributeMessageCommandHandler {
         ctx: &mut CommandBusContext<'tx>,
         actor: &Actor,
         cmd: Self::Command,
-    ) -> Result<Self::Output, CommandBusError> {
+    ) -> Result<Self::Output> {
         let message = retrieve_message(ctx.pool(), cmd.message_id).await?;
 
         if Status::Pending != *message.status() {
@@ -119,7 +118,7 @@ async fn register_message_dispatch(
     message: &Message,
     plugin_id: &ConnectorPluginId,
     delivery: &Delivery,
-    result: &Result<DispatchResponse, DispatchError>,
+    result: &std::result::Result<DispatchResponse, DispatchError>,
 ) -> perroute_storage::Result<MessageDispatch> {
     MessageDispatchBuilder::default()
         .id(new_id!())
@@ -142,7 +141,7 @@ fn build_request<'r>() -> DispatchRequest<'r> {
     todo!()
 }
 
-async fn retrieve_message(pool: &PgPool, message_id: Id) -> Result<Message, CommandBusError> {
+async fn retrieve_message(pool: &PgPool, message_id: Id) -> Result<Message> {
     Message::find(
         pool,
         MessageQueryBuilder::default()

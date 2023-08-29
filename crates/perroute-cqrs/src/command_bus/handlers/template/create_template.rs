@@ -1,8 +1,7 @@
 use crate::{
     command,
     command_bus::{
-        bus::CommandBusContext, commands::CommandType, error::CommandBusError,
-        handlers::CommandHandler,
+        bus::CommandBusContext, commands::CommandType, handlers::CommandHandler, Result,
     },
     into_event,
 };
@@ -48,7 +47,7 @@ impl CommandHandler for CreateTemplateCommandHandler {
         ctx: &mut CommandBusContext<'tx>,
         actor: &Actor,
         cmd: Self::Command,
-    ) -> Result<Self::Output, CommandBusError> {
+    ) -> Result<Self::Output> {
         let schema = Schema::find(ctx.pool(), SchemasQueryBuilder::default().build().unwrap())
             .await
             .unwrap()

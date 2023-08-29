@@ -4,6 +4,7 @@ use crate::{
         bus::{QueryBusContext, QueryHandler},
         error::QueryBusError,
         queries::QueryType,
+        Result,
     },
 };
 use async_trait::async_trait;
@@ -28,7 +29,7 @@ impl QueryHandler for QueryBusinessUnitsQueryHandler {
         ctx: &QueryBusContext,
         actor: &Actor,
         _: &Self::Query,
-    ) -> Result<Self::Output, QueryBusError> {
+    ) -> Result<Self::Output> {
         BusinessUnit::query(
             ctx.pool(),
             BusinessUnitQueryBuilder::default().build().unwrap(),

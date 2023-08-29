@@ -11,6 +11,7 @@ use crate::{
         bus::{QueryBusContext, QueryHandler},
         error::QueryBusError,
         queries::QueryType,
+        Result,
     },
 };
 
@@ -29,7 +30,7 @@ impl QueryHandler for QueryTemplatesQueryHandler {
         ctx: &QueryBusContext,
         _: &Actor,
         query: &Self::Query,
-    ) -> Result<Self::Output, QueryBusError> {
+    ) -> Result<Self::Output> {
         Template::query(
             ctx.pool(),
             TemplatesQueryBuilder::default().build().unwrap(),

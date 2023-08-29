@@ -1,8 +1,7 @@
 use crate::{
     command,
     command_bus::{
-        bus::CommandBusContext, commands::CommandType, error::CommandBusError,
-        handlers::CommandHandler,
+        bus::CommandBusContext, commands::CommandType, handlers::CommandHandler, Result,
     },
     into_event,
 };
@@ -44,7 +43,7 @@ impl CommandHandler for UpdateBusinessUnitCommandHandler {
         ctx: &mut CommandBusContext<'ctx>,
         _: &Actor,
         command: Self::Command,
-    ) -> Result<BusinessUnit, CommandBusError> {
+    ) -> Result<BusinessUnit> {
         let mut bu = BusinessUnit::find(
             ctx.tx(),
             BusinessUnitQuery::with_id(command.business_unit_id),

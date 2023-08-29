@@ -2,8 +2,8 @@ use crate::{
     query,
     query_bus::{
         bus::{QueryBusContext, QueryHandler},
-        error::QueryBusError,
         queries::QueryType,
+        Result,
     },
 };
 use async_trait::async_trait;
@@ -33,7 +33,7 @@ impl QueryHandler for QuerySchemasQueryHandler {
         ctx: &QueryBusContext,
         _: &Actor,
         query: &Self::Query,
-    ) -> Result<Self::Output, QueryBusError> {
+    ) -> Result<Self::Output> {
         Schema::query(
             ctx.pool(),
             SchemasQueryBuilder::default()
