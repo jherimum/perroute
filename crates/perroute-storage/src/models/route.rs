@@ -110,6 +110,15 @@ pub struct Route {
 }
 
 impl Route {
+    pub async fn delete_by_channel<'e, E: PgExecutor<'e>>(exec: E, channel_id: &Id) -> Result<u64> {
+        Ok(sqlx::query("DELETE FROM routes WHERE channel_id= $1")
+            .bind(channel_id)
+            .execute(exec)
+            .await
+            .tap_err(log_query_error!())
+            .map(|result| result.rows_affected())?)
+    }
+
     pub async fn dispatch_route_stack<'e, E: PgExecutor<'e>>(
         exec: E,
         schema_id: &Id,
@@ -240,9 +249,5 @@ impl Route {
                 .unwrap(),
         )
         .await
-    }
-
-    pub async fn exists_message_dispatch<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<bool> {
-        MessageDispatch::exists(exec, MessageDispatchQuery::with_route_id(self.id)).await
     }
 }
