@@ -1,7 +1,7 @@
 use super::{
     business_unit::{BusinessUnit, BusinessUnitQueryBuilder},
     message_type::{MessageType, MessageTypeQueryBuilder},
-    schema::{Schema, SchemasQueryBuilder},
+    schema::{self, Schema, SchemasQueryBuilder},
 };
 use crate::{
     log_query_error,
@@ -12,7 +12,7 @@ use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::types::{id::Id, template::TemplateSnippet, vars::Vars};
-use perroute_connectors::types::dispatch_type::DispatchType;
+use perroute_connectors::types::dispatch_type::{self, DispatchType};
 use sqlx::{FromRow, PgExecutor, QueryBuilder};
 use std::ops::Deref;
 use tap::TapFallible;
@@ -38,6 +38,14 @@ impl TemplatesQuery {
     pub fn with_schema_id(schema_id: Id) -> Self {
         Self {
             schema_id: Some(schema_id),
+            ..Default::default()
+        }
+    }
+
+    pub fn with_schema_id_and_dispatch_type(schema_id: Id, dispatch_type: DispatchType) -> Self {
+        Self {
+            schema_id: Some(schema_id),
+            dispatch_type: Some(dispatch_type),
             ..Default::default()
         }
     }
@@ -203,5 +211,21 @@ impl Template {
             .await
             .tap_err(log_query_error!())
             .map(|result| result.rows_affected())?)
+    }
+
+    pub async fn inactivate_all<'e, E: PgExecutor<'e>>(
+        exec: E,
+        schema_id: Id,
+        dispatch_type: DispatchType,
+    ) -> Result<u64> {
+        Ok(sqlx::query(
+            "UPDATE templates SET active = false WHERE schema_id = $1 AND dispatch_type = $2",
+        )
+        .bind(schema_id)
+        .bind(dispatch_type)
+        .execute(exec)
+        .await
+        .tap_err(log_query_error!())
+        .map(|result| result.rows_affected())?)
     }
 }

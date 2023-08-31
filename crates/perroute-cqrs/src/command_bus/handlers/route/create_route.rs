@@ -24,7 +24,7 @@ use serde::Serialize;
 use tap::TapFallible;
 
 #[derive(Debug, thiserror::Error)]
-pub enum Error {
+pub enum CreateRouteError {
     #[error("Channel with id {0} not found")]
     ChannelNotFound(Id),
 
@@ -64,7 +64,7 @@ impl CommandHandler for CreateRouteCommandHandler {
         let channel = Channel::find(ctx.pool(), ChannelQuery::with_id(cmd.channel_id))
             .await
             .tap_err(|e| tracing::error!("Failed to retrieve channel {}: {e}", cmd.channel_id))?
-            .ok_or(Error::ChannelNotFound(cmd.channel_id))?;
+            .ok_or(CreateRouteError::ChannelNotFound(cmd.channel_id))?;
 
         let schema = Schema::find(
             ctx.pool(),
@@ -72,12 +72,9 @@ impl CommandHandler for CreateRouteCommandHandler {
         )
         .await
         .tap_err(|e| tracing::error!("Failed to retrieve schema {}: {e}", cmd.schema_id))?
-        .ok_or(Error::SchemaNotFound(cmd.schema_id))?;
+        .ok_or(CreateRouteError::SchemaNotFound(cmd.schema_id))?;
 
-        let conn = channel
-            .connection(ctx.pool())
-            .await
-            .context("Connection expected to be found")?;
+        let conn = channel.connection(ctx.pool()).await?;
 
         let plugin = ctx
             .plugins()
@@ -89,7 +86,9 @@ impl CommandHandler for CreateRouteCommandHandler {
             .context("Dispatcher plugin expected to be found")?;
 
         let props = channel.properties().merge(&cmd.properties);
-        disp.configuration().validate(&props).map_err(Error::from)?;
+        disp.configuration()
+            .validate(&props)
+            .map_err(CreateRouteError::from)?;
 
         Ok(RouteBuilder::default()
             .id(cmd.id)

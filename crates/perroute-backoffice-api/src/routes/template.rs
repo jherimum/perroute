@@ -11,7 +11,6 @@ use crate::{
     links::ResourceLink,
 };
 use actix_web::web::{Data, Json, Path};
-use anyhow::Context;
 use perroute_commons::types::{actor::Actor, id::Id};
 use perroute_cqrs::{
     command_bus::handlers::template::{
@@ -62,10 +61,10 @@ impl TemplateRouter {
     ) -> SingleResult {
         let cmd = CreateTemplateCommandBuilder::default()
             .id(Id::new())
-            .name(body.name.context("missing name")?)
-            .subject(body.subject.map(Into::into))
-            .html(body.html.map(Into::into))
-            .text(body.text.map(Into::into))
+            .name(body.name()?)
+            .subject(body.subject()?)
+            .html(body.html()?)
+            .text(body.text()?)
             .build()
             .unwrap();
         let template = state
@@ -92,10 +91,10 @@ impl TemplateRouter {
 
         let cmd = UpdateTemplateCommandBuilder::default()
             .id(*template.id())
-            .name(body.name)
-            .html(body.html.map(|s| s.map(Into::into)))
-            .text(body.text.map(|s| s.map(Into::into)))
-            .subject(body.subject.map(|s| s.map(Into::into)))
+            .name(body.name()?)
+            .html(body.html()?)
+            .text(body.text()?)
+            .subject(body.subject()?)
             .build()
             .unwrap();
 
@@ -117,7 +116,7 @@ impl TemplateRouter {
             .await
             .unwrap();
         let cmd = DeleteTemplateCommandBuilder::default()
-            .template_id(*template.id())
+            .id(*template.id())
             .build()
             .unwrap();
         state

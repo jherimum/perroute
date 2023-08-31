@@ -25,7 +25,7 @@ use perroute_storage::{
 use tap::TapFallible;
 
 #[derive(Debug, thiserror::Error)]
-pub enum Error {
+pub enum CreateChannelError {
     #[error("Business unit {0} not found")]
     BusinessUnitNotFound(Id),
 
@@ -77,27 +77,27 @@ impl CommandHandler for CreateChannelCommandHandler {
                     cmd.business_unit_id
                 )
             })?
-            .ok_or_else(|| Error::BusinessUnitNotFound(cmd.business_unit_id))?;
+            .ok_or_else(|| CreateChannelError::BusinessUnitNotFound(cmd.business_unit_id))?;
 
         let conn = Connection::find(ctx.pool(), ConnectionQuery::with_id(cmd.connection_id))
             .await
             .tap_err(|e| {
                 tracing::error!("Failed to retrieve connection {}: {e}", cmd.connection_id)
             })?
-            .ok_or_else(|| Error::ConnectionNotFound(cmd.connection_id))?;
+            .ok_or_else(|| CreateChannelError::ConnectionNotFound(cmd.connection_id))?;
 
         let plugin = ctx
             .plugins()
             .get(conn.plugin_id())
-            .ok_or_else(|| Error::PluginNotFound(*conn.plugin_id()))?;
+            .ok_or_else(|| CreateChannelError::PluginNotFound(*conn.plugin_id()))?;
 
         let disp = plugin
             .dispatcher(cmd.dispatch_type())
-            .ok_or_else(|| Error::DispatchTypeNotSupported(cmd.dispatch_type))?;
+            .ok_or_else(|| CreateChannelError::DispatchTypeNotSupported(cmd.dispatch_type))?;
 
         disp.configuration()
             .validate(cmd.dispatch_properties())
-            .map_err(Error::from)?;
+            .map_err(CreateChannelError::from)?;
 
         Ok(ChannelBuilder::default()
             .id(cmd.id)

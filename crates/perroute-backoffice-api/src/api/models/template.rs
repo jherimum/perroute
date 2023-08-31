@@ -6,7 +6,12 @@ use crate::api::response::ResourceBuilder;
 use crate::api::response::SingleResourceModel;
 use crate::links::Linkrelation;
 use crate::links::ResourceLink;
+use anyhow::Context;
+use anyhow::Result;
+use perroute_commons::types::id::Id;
+use perroute_commons::types::template::TemplateSnippet;
 use perroute_commons::types::template::TemplateValidator;
+use perroute_connectors::types::dispatch_type::DispatchType;
 use perroute_storage::models::template::Template;
 use serde::Serialize;
 use validator::Validate;
@@ -15,55 +20,113 @@ use validator::Validate;
 #[serde(default)]
 pub struct CreateTemplateRequest {
     #[validate(required)]
+    #[validate(custom = "Id::validate")]
+    schema_id: Option<String>,
+
+    #[validate(required)]
+    #[validate(custom = "DispatchType::validate")]
+    dispatch_type: Option<String>,
+
+    #[validate(required)]
     #[validate(custom = "perroute_commons::types::name::validate")]
-    pub name: Option<String>,
+    name: Option<String>,
 
     #[validate(custom = "perroute_commons::types::template::handlebars::Handlebars::validate")]
-    pub subject: Option<String>,
+    subject: Option<String>,
 
     #[validate(custom = "perroute_commons::types::template::handlebars::Handlebars::validate")]
-    pub html: Option<String>,
+    html: Option<String>,
 
     #[validate(custom = "perroute_commons::types::template::handlebars::Handlebars::validate")]
-    pub text: Option<String>,
+    text: Option<String>,
 
-    pub vars: Option<HashMap<String, String>>,
+    vars: Option<HashMap<String, String>>,
+}
 
-    #[validate(required)]
-    #[validate(custom = "perroute_connectors::types::dispatch_type::DispatchType::validate")]
-    pub dispatch_type: Option<String>,
+impl CreateTemplateRequest {
+    pub fn schema_id(&self) -> Result<Id> {
+        Ok(self
+            .schema_id
+            .clone()
+            .context("missing schema id")?
+            .try_into()
+            .context("invalid schema id")?)
+    }
 
-    #[validate(required)]
-    #[validate(custom = "perroute_commons::types::id::Id::validate")]
-    pub schema_id: Option<String>,
+    pub fn dispatch_type(&self) -> Result<DispatchType> {
+        Ok(self
+            .dispatch_type
+            .clone()
+            .context("missing dispatch type")?
+            .try_into()
+            .context("invalid dispatch type")?)
+    }
+
+    pub fn name(&self) -> Result<String> {
+        Ok(self.name.clone().context("missing name")?)
+    }
+
+    pub fn subject(&self) -> Result<Option<TemplateSnippet>> {
+        Ok(self.subject.clone().map(Into::into))
+    }
+
+    pub fn html(&self) -> Result<Option<TemplateSnippet>> {
+        Ok(self.html.clone().map(Into::into))
+    }
+
+    pub fn text(&self) -> Result<Option<TemplateSnippet>> {
+        Ok(self.text.clone().map(Into::into))
+    }
 }
 
 #[derive(Debug, serde::Deserialize, Clone, Validate, Default)]
 #[serde(default)]
 pub struct UpdateTemplateRequest {
     #[validate(custom = "perroute_commons::types::name::validate")]
-    pub name: Option<String>,
+    name: Option<String>,
 
     #[serde(
         default,                                    // <- important for deserialization
         with = "::serde_with::rust::double_option",
     )]
-    pub subject: Option<Option<String>>,
+    subject: Option<Option<String>>,
 
     #[serde(
         default,                                    // <- important for deserialization
         with = "::serde_with::rust::double_option",
     )]
-    pub html: Option<Option<String>>,
+    html: Option<Option<String>>,
 
     #[serde(
         default,                                    // <- important for deserialization
         with = "::serde_with::rust::double_option",
     )]
-    pub text: Option<Option<String>>,
+    text: Option<Option<String>>,
 
-    pub vars: Option<HashMap<String, String>>,
-    pub active: Option<bool>,
+    vars: Option<HashMap<String, String>>,
+    active: Option<bool>,
+}
+
+impl UpdateTemplateRequest {
+    pub fn name(&self) -> Result<Option<String>> {
+        Ok(self.name.clone())
+    }
+
+    pub fn subject(&self) -> Result<Option<Option<TemplateSnippet>>> {
+        Ok(self.subject.clone().map(|s| s.map(Into::into)))
+    }
+
+    pub fn html(&self) -> Result<Option<Option<TemplateSnippet>>> {
+        Ok(self.html.clone().map(|s| s.map(Into::into)))
+    }
+
+    pub fn text(&self) -> Result<Option<Option<TemplateSnippet>>> {
+        Ok(self.text.clone().map(|s| s.map(Into::into)))
+    }
+
+    pub fn active(&self) -> Result<Option<bool>> {
+        Ok(self.active.clone())
+    }
 }
 
 #[derive(Debug, Serialize, Clone)]

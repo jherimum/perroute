@@ -18,7 +18,7 @@ use perroute_storage::{
 use tap::TapFallible;
 
 #[derive(thiserror::Error, Debug, Clone)]
-pub enum Error {
+pub enum DeleteBusinessUnitError {
     #[error("BusinessUnit with id {0} nor found")]
     BusinessUnitNotFound(Id),
 
@@ -56,13 +56,15 @@ impl CommandHandler for DeleteBusinessUnitCommandHandler {
                     cmd.business_unit_id
                 )
             })?
-            .ok_or(Error::BusinessUnitNotFound(cmd.business_unit_id))?;
+            .ok_or(DeleteBusinessUnitError::BusinessUnitNotFound(
+                cmd.business_unit_id,
+            ))?;
 
         if Channel::exists(ctx.pool(), ChannelQuery::with_business_unit(*bu.id()))
             .await
             .tap_err(|e| tracing::error!("Failed to check exist channels: {e}"))?
         {
-            return Err(Error::BusinessUnitDelete(
+            return Err(DeleteBusinessUnitError::BusinessUnitDelete(
                 *bu.id(),
                 "There are channels associated with this Business unit",
             )
@@ -73,7 +75,7 @@ impl CommandHandler for DeleteBusinessUnitCommandHandler {
             .await
             .tap_err(|e| tracing::error!("Failed to check exist message types: {e}"))?
         {
-            return Err(Error::BusinessUnitDelete(
+            return Err(DeleteBusinessUnitError::BusinessUnitDelete(
                 *bu.id(),
                 "There are message types associated with this Business unit",
             )

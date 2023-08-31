@@ -13,7 +13,7 @@ use perroute_storage::{
 use tap::TapFallible;
 
 #[derive(Debug, thiserror::Error)]
-pub enum Error {
+pub enum UpdateSchemaError {
     #[error("Schema with id {0} not found")]
     SchemaNotFound(Id),
 
@@ -49,7 +49,7 @@ impl CommandHandler for UpdateSchemaCommandHandler {
         let mut schema = Schema::find(ctx.tx(), SchemasQuery::with_id(cmd.id))
             .await
             .tap_err(|e| tracing::error!("Failed to retrieve schema {}:{e}", cmd.id))?
-            .ok_or(Error::SchemaNotFound(cmd.id))?;
+            .ok_or(UpdateSchemaError::SchemaNotFound(cmd.id))?;
 
         if cmd.enabled.is_none() & cmd.vars.is_none() & cmd.value.is_none() {
             return Ok(schema);

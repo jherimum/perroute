@@ -8,14 +8,15 @@ use crate::{
 use async_trait::async_trait;
 use perroute_commons::types::{actor::Actor, id::Id};
 use perroute_storage::{
-    models::template::{Template, TemplatesQueryBuilder},
+    models::template::{Template, TemplatesQuery},
     query::FetchableModel,
 };
+use tap::TapFallible;
 
 command!(
     DeleteTemplateCommand,
     CommandType::DeleteTemplate,
-    template_id: Id
+    id: Id
 );
 into_event!(DeleteTemplateCommand);
 
@@ -23,7 +24,10 @@ into_event!(DeleteTemplateCommand);
 pub struct DeleteTemplateCommandHandler;
 
 #[derive(thiserror::Error, Debug, Clone)]
-pub enum CreateTemplatelError {}
+pub enum DeleteTemplateError {
+    #[error("Template not found: {0}")]
+    TemplateNotFound(Id),
+}
 
 #[async_trait]
 impl CommandHandler for DeleteTemplateCommandHandler {
@@ -37,17 +41,35 @@ impl CommandHandler for DeleteTemplateCommandHandler {
         actor: &Actor,
         cmd: Self::Command,
     ) -> Result<Self::Output> {
-        Template::find(
-            ctx.pool(),
-            TemplatesQueryBuilder::default()
-                .id(Some(*cmd.template_id()))
-                .build()
-                .unwrap(),
-        )
-        .await?
-        .unwrap()
-        .delete(ctx.tx())
-        .await
-        .map_err(Into::into)
+        let template = Template::find(ctx.pool(), TemplatesQuery::with_id(cmd.id))
+            .await
+            .tap_err(|e| tracing::error!("Failed to retrieve template:{e}"))?
+            .ok_or(DeleteTemplateError::TemplateNotFound(cmd.id))?;
+
+        let deleted = template
+            .clone()
+            .delete(ctx.tx())
+            .await
+            .tap_err(|e| tracing::error!("Failed to delete template:{e}"))?;
+
+        if *template.active() {
+            let first_left_template = Template::find(
+                ctx.tx(),
+                TemplatesQuery::with_schema_id_and_dispatch_type(
+                    *template.schema_id(),
+                    *template.dispatch_type(),
+                ),
+            )
+            .await
+            .tap_err(|e| tracing::error!("Failed to retrieve template: {e}"))?;
+
+            if let Some(temp) = first_left_template {
+                temp.set_active(true)
+                    .update(ctx.tx())
+                    .await
+                    .tap_err(|e| tracing::error!("Failed to update template: {e}"))?;
+            };
+        }
+        Ok(deleted)
     }
 }

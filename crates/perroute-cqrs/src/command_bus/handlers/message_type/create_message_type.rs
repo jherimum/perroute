@@ -15,7 +15,7 @@ use serde::Serialize;
 use tap::TapFallible;
 
 #[derive(Debug, thiserror::Error)]
-pub enum Error {
+pub enum CreateMessageTypeError {
     #[error("Code {0} already exists")]
     CodeAlreadyExists(Code),
 }
@@ -54,7 +54,7 @@ impl CommandHandler for CreateMessageTypeCommandHandler {
         )
         .await?
         {
-            return Err(Error::CodeAlreadyExists(cmd.code().clone()).into());
+            return Err(CreateMessageTypeError::CodeAlreadyExists(cmd.code().clone()).into());
         }
 
         let message_type = MessageTypeBuilder::default()

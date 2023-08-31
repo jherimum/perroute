@@ -1,3 +1,4 @@
+use anyhow::Result;
 use perroute_commons::types::id::{Id, ParseError};
 use std::str::FromStr;
 use tap::TapFallible;

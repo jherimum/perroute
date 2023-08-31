@@ -20,7 +20,7 @@ command!(
 into_event!(DeleteMessageTypeCommand);
 
 #[derive(thiserror::Error, Debug, Clone)]
-pub enum Error {
+pub enum DeleteMessageTypeError {
     #[error("Message type with id {0} not found")]
     MessageTypeNotFound(Id),
 
@@ -46,7 +46,7 @@ impl CommandHandler for DeleteMessageTypeCommandHandler {
         let message_type = MessageType::find(ctx.tx(), MessageTypeQuery::with_id(cmd.id))
             .await
             .tap_err(|e| tracing::error!("Failed to retrive message type {}: {e}", cmd.id))?
-            .ok_or(Error::MessageTypeNotFound(cmd.id))?;
+            .ok_or(DeleteMessageTypeError::MessageTypeNotFound(cmd.id))?;
 
         if message_type.exists_schemas(ctx.pool()).await.tap_err(|e| {
             tracing::error!(
@@ -54,7 +54,7 @@ impl CommandHandler for DeleteMessageTypeCommandHandler {
                 cmd.id
             )
         })? {
-            return Err(Error::MessageTypeDelete(
+            return Err(DeleteMessageTypeError::MessageTypeDelete(
                 cmd.id,
                 "Threre are schemas associated with message type",
             )

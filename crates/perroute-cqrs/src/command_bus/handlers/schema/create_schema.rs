@@ -25,7 +25,7 @@ use perroute_storage::{
 use tap::TapFallible;
 
 #[derive(Debug, thiserror::Error)]
-pub enum Error {
+pub enum CreateSchemaError {
     #[error(transparent)]
     InvalidSchema(#[from] InvalidSchemaError),
 
@@ -61,7 +61,7 @@ impl CommandHandler for CreateSchemaCommandHandler {
         let mt = MessageType::find(ctx.tx(), MessageTypeQuery::with_id(cmd.message_type_id))
             .await
             .tap_err(|e| tracing::error!("Failed to retrieve message type: {e}"))?
-            .ok_or(Error::MessageTypeNotFound(cmd.message_type_id))?;
+            .ok_or(CreateSchemaError::MessageTypeNotFound(cmd.message_type_id))?;
 
         let next_version = Schema::next_version(ctx.tx(), mt.id())
             .await

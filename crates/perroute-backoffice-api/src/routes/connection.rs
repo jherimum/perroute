@@ -48,14 +48,9 @@ impl TryInto<CreateConnectionCommand> for CreateConnectionRequest {
     fn try_into(self) -> Result<CreateConnectionCommand, Self::Error> {
         Ok(CreateConnectionCommandBuilder::default()
             .id(Id::new())
-            .name(self.name.context("Missing name")?)
-            .plugin_id(
-                self.plugin_id
-                    .context("Missing plugin id")?
-                    .try_into()
-                    .context("Invalid plugin id")?,
-            )
-            .properties(self.properties.context("Missing properties")?.into())
+            .name(self.name()?)
+            .plugin_id(self.plugin_id()?)
+            .properties(self.properties()?)
             .build()?)
     }
 }
@@ -66,9 +61,9 @@ impl TryInto<UpdateConnectionCommand> for W<(SingleIdPath, UpdateConnectionReque
     fn try_into(self) -> Result<UpdateConnectionCommand, Self::Error> {
         UpdateConnectionCommandBuilder::default()
             .id(self.0 .0.try_into()?)
-            .name(self.0 .1.name)
-            .properties(self.0 .1.properties.map(Into::into))
-            .enabled(self.0 .1.enabled)
+            .name(self.0 .1.name())
+            .properties(self.0 .1.properties()?)
+            .enabled(self.0 .1.enabled())
             .build()
             .context("Failed to build command")
     }

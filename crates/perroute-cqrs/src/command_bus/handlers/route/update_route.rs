@@ -21,7 +21,7 @@ use serde::Serialize;
 use tap::TapFallible;
 
 #[derive(Debug, thiserror::Error)]
-pub enum Error {
+pub enum UpdateRouteError {
     #[error("Route with id {0} not found")]
     RouteNotFound(Id),
 
@@ -56,7 +56,7 @@ impl CommandHandler for UpdateRouteCommandHandler {
         let mut route = Route::find(ctx.pool(), RouteQuery::with_id(cmd.id))
             .await
             .tap_err(|e| tracing::error!("Failed to retrieve route {}: {e}", cmd.id))?
-            .ok_or(Error::RouteNotFound(cmd.id))?;
+            .ok_or(UpdateRouteError::RouteNotFound(cmd.id))?;
 
         if cmd.properties.is_none() {
             return Ok(route);
@@ -86,7 +86,7 @@ impl CommandHandler for UpdateRouteCommandHandler {
             dispatcher
                 .configuration()
                 .validate(&channel.properties().merge(&props))
-                .map_err(Error::from)?;
+                .map_err(UpdateRouteError::from)?;
 
             route = route.set_properties(props);
         }

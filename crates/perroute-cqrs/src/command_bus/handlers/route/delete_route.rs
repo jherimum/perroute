@@ -15,7 +15,7 @@ use serde::Serialize;
 use tap::TapFallible;
 
 #[derive(Debug, thiserror::Error)]
-pub enum Error {
+pub enum DeleteRouteError {
     #[error("Route with id {0} not found")]
     RouteNotFound(Id),
 
@@ -49,7 +49,7 @@ impl CommandHandler for DeleteRouteCommandHandler {
         let route = Route::find(ctx.pool(), RouteQuery::with_id(cmd.id))
             .await
             .tap_err(|e| tracing::error!("Failed to retrieve route {}: {e}", cmd.id))?
-            .ok_or(Error::RouteNotFound(cmd.id))?;
+            .ok_or(DeleteRouteError::RouteNotFound(cmd.id))?;
 
         Ok(route
             .delete(ctx.tx())

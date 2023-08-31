@@ -5,12 +5,11 @@ use perroute_cqrs::{
         error::CommandBusError,
         handlers::{
             business_unit::{
-                create_business_unit::CreateBusinessUnitCommandHandlerError,
-                update_business_unit::UpdateBusinessUnitCommandHandlerError,
+                create_business_unit::CreateBusinessUnitError,
+                update_business_unit::UpdateBusinessUnitError,
             },
             connection::{
-                delete_connection::DeleteConnectionCommandHandlerError,
-                update_connection::UpdateConnectionCommandHandlerError,
+                delete_connection::DeleteConnectionError, update_connection::UpdateConnectionError,
             },
         },
     },
@@ -63,42 +62,39 @@ impl From<&ApiError> for RestError {
                     RestError::BadRequest(Some("QsError error".to_owned()), None)
                 }
             },
-            ApiError::CommandBus(CommandBusError::ExpectedError(message)) => {
-                Self::UnprocessableEntity((*message).to_string())
-            }
             ApiError::CommandBus(CommandBusError::CreateBusinessUnit(e)) => match e {
-                CreateBusinessUnitCommandHandlerError::CodeAlreadyExists(_) => {
+                CreateBusinessUnitError::CodeAlreadyExists(_) => {
                     RestError::UnprocessableEntity(e.to_string())
                 }
             },
 
             ApiError::CommandBus(CommandBusError::UpdateBusinessUnit(e)) => match e {
-                UpdateBusinessUnitCommandHandlerError::BusinessUnitNotFound(_) => {
+                UpdateBusinessUnitError::BusinessUnitNotFound(_) => {
                     RestError::NotFound("Business unit not found".to_string())
                 }
             },
             //connection
             ApiError::CommandBus(CommandBusError::UpdateConnection(e)) => match e {
-                UpdateConnectionCommandHandlerError::ConnectionNotFound(_) => {
+                UpdateConnectionError::ConnectionNotFound(_) => {
                     RestError::NotFound("Business unit not found".to_string())
                 }
-                UpdateConnectionCommandHandlerError::InvalidProperties(e) => {
+                UpdateConnectionError::InvalidProperties(e) => {
                     RestError::UnprocessableEntity(e.to_string())
                 }
             },
 
             ApiError::CommandBus(CommandBusError::CreateConnection(e)) => match e {
-                perroute_cqrs::command_bus::handlers::connection::create_connection::Error::PluginNotFound(_) => {
+                perroute_cqrs::command_bus::handlers::connection::create_connection::CreateConnectionError::PluginNotFound(_) => {
                     RestError::BadRequest(Some("Plugin do not exists".to_owned()), None)
                 },
-                perroute_cqrs::command_bus::handlers::connection::create_connection::Error::InvalidProperties(_) => {
+                perroute_cqrs::command_bus::handlers::connection::create_connection::CreateConnectionError::InvalidProperties(_) => {
                     RestError::BadRequest(Some("Invalid properties".to_owned()), None)
                 },
             },
 
             ApiError::CommandBus(CommandBusError::DeleteConnection(e)) => match e {
-                DeleteConnectionCommandHandlerError::ConnectionNotFound(_) => RestError::NotFound(e.to_string()),
-                DeleteConnectionCommandHandlerError::DeleteError(_, _) => RestError::UnprocessableEntity(e.to_string()),
+                DeleteConnectionError::ConnectionNotFound(_) => RestError::NotFound(e.to_string()),
+                DeleteConnectionError::DeleteError(_, _) => RestError::UnprocessableEntity(e.to_string()),
             },
 
             //query bus

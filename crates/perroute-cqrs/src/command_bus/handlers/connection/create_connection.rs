@@ -18,7 +18,7 @@ use serde::Serialize;
 use tap::TapFallible;
 
 #[derive(Debug, thiserror::Error)]
-pub enum Error {
+pub enum CreateConnectionError {
     #[error("Plugin with id {0} not found")]
     PluginNotFound(ConnectorPluginId),
 
@@ -54,12 +54,12 @@ impl CommandHandler for CreateConnectionCommandHandler {
         let connector_plugin = ctx
             .plugins()
             .get(cmd.plugin_id())
-            .ok_or(Error::PluginNotFound(cmd.plugin_id))?;
+            .ok_or(CreateConnectionError::PluginNotFound(cmd.plugin_id))?;
 
         connector_plugin
             .configuration()
             .validate(&cmd.properties)
-            .map_err(Error::from)?;
+            .map_err(CreateConnectionError::from)?;
 
         Ok(ConnectionBuilder::default()
             .id(cmd.id)

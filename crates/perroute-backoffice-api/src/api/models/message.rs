@@ -1,6 +1,8 @@
 use crate::api::response::{Links, ResourceBuilder, SingleResourceModel};
+use anyhow::{Context, Result};
 use perroute_commons::types::{
-    email::Mailbox, id::Id, payload::Payload, phone_number::PhoneNumber,
+    code::Code, email::Mailbox, id::Id, payload::Payload, phone_number::PhoneNumber,
+    version::Version,
 };
 use perroute_connectors::types::delivery::Delivery;
 use perroute_storage::models::message::{Message, Status};
@@ -10,23 +12,70 @@ use validator::Validate;
 
 #[derive(Deserialize, Debug, Clone, validator::Validate)]
 pub struct CreateMessageRequest {
-    pub payload: serde_json::Value,
+    #[validate(required)]
+    payload: Option<serde_json::Value>,
 
     #[validate(required)]
-    #[validate(custom = "perroute_commons::types::code::Code::validate")]
-    pub bu_code: Option<String>,
+    #[validate(custom = "Code::validate")]
+    business_unit_code: Option<String>,
 
     #[validate(required)]
-    #[validate(custom = "perroute_commons::types::code::Code::validate")]
-    pub message_type_code: Option<String>,
+    #[validate(custom = "Code::validate")]
+    message_type_code: Option<String>,
 
     #[validate(required)]
-    #[validate(custom = "perroute_commons::types::version::Version::validate")]
-    pub schema_version: Option<i32>,
+    #[validate(custom = "Version::validate")]
+    schema_version: Option<i32>,
 
     #[validate]
     #[validate(length(min = 1))]
-    pub deliveries: HashSet<DeliveryRest>,
+    deliveries: HashSet<DeliveryRest>,
+}
+
+impl CreateMessageRequest {
+    pub fn payload(&self) -> Result<Payload> {
+        Ok(self
+            .payload
+            .clone()
+            .context("missing payload")?
+            .clone()
+            .into())
+    }
+
+    pub fn business_unit_code(&self) -> Result<Code> {
+        Ok(self
+            .business_unit_code
+            .clone()
+            .context("missing business unit code")?
+            .try_into()
+            .context("invalid business unit code")?)
+    }
+
+    pub fn message_type_code(&self) -> Result<Code> {
+        Ok(self
+            .message_type_code
+            .clone()
+            .context("missing message type code")?
+            .try_into()
+            .context("invalid message type code ")?)
+    }
+
+    pub fn schema_version(&self) -> Result<Version> {
+        Ok(self
+            .schema_version
+            .clone()
+            .context("missing schema version")?
+            .try_into()
+            .context("invalid schema version")?)
+    }
+
+    pub fn deliveries(&self) -> Result<HashSet<Delivery>> {
+        self.deliveries
+            .clone()
+            .into_iter()
+            .map(Delivery::try_from)
+            .collect()
+    }
 }
 
 #[derive(Serialize, Debug, Clone)]
@@ -117,7 +166,3 @@ pub struct SmsData {
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Serialize, Deserialize, Validate)]
 pub struct PushData;
-
-pub fn rest_to_delivery(input: HashSet<DeliveryRest>) -> Result<HashSet<Delivery>, anyhow::Error> {
-    input.into_iter().map(Delivery::try_from).collect()
-}

@@ -17,7 +17,7 @@ use perroute_storage::{
 use tap::TapFallible;
 
 #[derive(Debug, thiserror::Error)]
-pub enum Error {
+pub enum DeleteSchemaError {
     #[error("Schema with id {0} not found")]
     SchemaNotFound(Id),
 
@@ -50,12 +50,14 @@ impl CommandHandler for DeleteSchemaCommandHandler {
         let schema = Schema::find(ctx.pool(), SchemasQuery::with_id(cmd.id))
             .await
             .tap_err(|e| tracing::info!("Faled to retrieve schema: {e}"))?
-            .ok_or(Error::SchemaNotFound(cmd.id))?;
+            .ok_or(DeleteSchemaError::SchemaNotFound(cmd.id))?;
 
         if schema.exists_messages(ctx.pool()).await? {
-            return Err(
-                Error::SchemaDelete(cmd.id, "There are messages associated with message").into(),
-            );
+            return Err(DeleteSchemaError::SchemaDelete(
+                cmd.id,
+                "There are messages associated with message",
+            )
+            .into());
         }
 
         let template_ids = Template::ids(ctx.pool(), TemplatesQuery::with_schema_id(cmd.id))

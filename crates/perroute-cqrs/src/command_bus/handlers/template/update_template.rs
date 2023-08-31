@@ -8,9 +8,10 @@ use crate::{
 use async_trait::async_trait;
 use perroute_commons::types::{actor::Actor, id::Id, template::TemplateSnippet, vars::Vars};
 use perroute_storage::{
-    models::template::{Template, TemplatesQuery, TemplatesQueryBuilder},
+    models::template::{Template, TemplatesQuery},
     query::FetchableModel,
 };
+use tap::TapFallible;
 
 command!(
     UpdateTemplateCommand,
@@ -29,7 +30,10 @@ into_event!(UpdateTemplateCommand);
 pub struct UpdateTemplateCommandHandler;
 
 #[derive(thiserror::Error, Debug, Clone)]
-pub enum CreateTemplatelError {}
+pub enum UpdateTemplatelError {
+    #[error("Template not found: {0}")]
+    TemplateNotFound(Id),
+}
 
 #[async_trait]
 impl CommandHandler for UpdateTemplateCommandHandler {
@@ -44,8 +48,9 @@ impl CommandHandler for UpdateTemplateCommandHandler {
         cmd: Self::Command,
     ) -> Result<Self::Output> {
         let mut actual_template = Template::find(ctx.pool(), TemplatesQuery::with_id(cmd.id))
-            .await?
-            .unwrap();
+            .await
+            .tap_err(|e| tracing::error!("Failed to retrieve template:{e}"))?
+            .ok_or(UpdateTemplatelError::TemplateNotFound(cmd.id))?;
 
         if cmd.name.is_none()
             & cmd.subject.is_none()
@@ -59,18 +64,13 @@ impl CommandHandler for UpdateTemplateCommandHandler {
 
         if let Some(active) = cmd.active {
             if active {
-                for template in Template::query(
-                    ctx.pool(),
-                    TemplatesQueryBuilder::default()
-                        .dispatch_type(Some(*actual_template.dispatch_type()))
-                        .schema_id(Some(*actual_template.schema_id()))
-                        .build()
-                        .unwrap(),
+                Template::inactivate_all(
+                    ctx.tx(),
+                    *actual_template.schema_id(),
+                    *actual_template.dispatch_type(),
                 )
-                .await?
-                {
-                    template.set_active(false).update(ctx.tx()).await?;
-                }
+                .await
+                .tap_err(|e| tracing::error!("Failed to inactivate all templates:{e}"))?;
             }
 
             actual_template = actual_template.set_active(active);
@@ -96,6 +96,9 @@ impl CommandHandler for UpdateTemplateCommandHandler {
             actual_template = actual_template.set_text(text);
         }
 
-        Ok(actual_template.save(ctx.tx()).await?)
+        Ok(actual_template
+            .update(ctx.tx())
+            .await
+            .tap_err(|e| tracing::error!("Failed to update template:{e}"))?)
     }
 }

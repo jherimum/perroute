@@ -24,7 +24,7 @@ impl_command!(DeleteChannelCommand, CommandType::DeleteChannel);
 into_event!(DeleteChannelCommand);
 
 #[derive(Debug, thiserror::Error)]
-pub enum Error {
+pub enum DeleteChannelError {
     #[error("Channel {0} not found")]
     ChannelNotFound(Id),
 }
@@ -46,7 +46,7 @@ impl CommandHandler for DeleteChannelCommandHandler {
         let channel = Channel::find(ctx.pool(), ChannelQuery::with_id(cmd.id))
             .await
             .tap_err(|e| tracing::error!("Failed to retrieve channel {}: {e}", cmd.id))?
-            .ok_or(Error::ChannelNotFound(cmd.id))?;
+            .ok_or(DeleteChannelError::ChannelNotFound(cmd.id))?;
 
         Route::delete_by_channel(ctx.tx(), channel.id()).await?;
 

@@ -1,4 +1,3 @@
-use super::message_type::MessageTypeRouter;
 use crate::api::models::schema::UpdateSchemaRequest;
 use crate::api::response::{
     ApiResponse, ApiResult, CollectionResourceModel, EmptyApiResult, SingleResourceModel,
@@ -11,7 +10,6 @@ use crate::{
     extractors::actor::ActorExtractor,
 };
 use actix_web::web::{Data, Json, Path};
-use anyhow::Context;
 use perroute_commons::new_id;
 use perroute_commons::types::actor::Actor;
 use perroute_commons::types::id::Id;
@@ -68,19 +66,9 @@ impl SchemaRouter {
     ) -> SingleResult {
         let cmd = CreateSchemaCommandBuilder::default()
             .id(new_id!())
-            .message_type_id(
-                body.message_type_id
-                    .context("missing message type id")?
-                    .try_into()
-                    .context("invalid id")?,
-            )
-            .value(
-                body.value
-                    .context("value required")?
-                    .try_into()
-                    .context("invalid schema")?,
-            )
-            .vars(body.vars.unwrap_or_default().into())
+            .message_type_id(body.message_type_id()?)
+            .value(body.value()?)
+            .vars(body.vars()?)
             .build()
             .unwrap();
 
@@ -103,9 +91,9 @@ impl SchemaRouter {
 
         let cmd = UpdateSchemaCommandBuilder::default()
             .id(*schema.id())
-            .value(body.value.map(TryInto::try_into).transpose()?)
-            .enabled(body.enabled)
-            .vars(body.vars.map(Into::into))
+            .value(body.value()?)
+            .enabled(body.enabled()?)
+            .vars(body.vars())
             .build()
             .unwrap();
 

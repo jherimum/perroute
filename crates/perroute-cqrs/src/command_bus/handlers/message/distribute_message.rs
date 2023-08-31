@@ -43,7 +43,7 @@ into_event!(
 impl_command!(DistributeMessageCommand, CommandType::DistributeMessage);
 
 #[derive(Debug, thiserror::Error)]
-pub enum Error {
+pub enum DistributeMessageError {
     #[error("Message {0} not found")]
     MessageNotFound(Id),
 
@@ -73,14 +73,14 @@ impl CommandHandler for DistributeMessageCommandHandler {
 
         if Status::Pending != *message.status() {
             tracing::error!("To be distributed message must be in pending state");
-            return Err(Error::InvalidMessageState(cmd.message_id).into());
+            return Err(DistributeMessageError::InvalidMessageState(cmd.message_id).into());
         }
 
         let schema = message.schema(ctx.pool()).await?;
 
         if !*schema.enabled() {
             tracing::warn!("Schema {} is disabled", schema.id());
-            return Err(Error::SchemaDisabeld(*schema.id()).into());
+            return Err(DistributeMessageError::SchemaDisabeld(*schema.id()).into());
         }
 
         for delivery in message.deliveries().iter() {
@@ -153,5 +153,5 @@ async fn retrieve_message(pool: &PgPool, message_id: Id) -> Result<Message> {
     .await
     .tap_err(|e| tracing::error!("Failed to retrieve message from database: {e}"))?
     .tap_none(|| tracing::warn!("Message with id {} not found", message_id))
-    .ok_or_else(|| Error::MessageNotFound(message_id).into())
+    .ok_or_else(|| DistributeMessageError::MessageNotFound(message_id).into())
 }

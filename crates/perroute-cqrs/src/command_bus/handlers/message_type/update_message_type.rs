@@ -13,7 +13,7 @@ use perroute_storage::{
 use tap::TapFallible;
 
 #[derive(Debug, thiserror::Error)]
-pub enum Error {
+pub enum UpdateMessageTypeError {
     #[error("Message type with id {0} not found")]
     MessageTypeNotFound(Id),
 }
@@ -47,7 +47,7 @@ impl CommandHandler for UpdateMessageTypeCommandHandler {
         let mut message_type = MessageType::find(ctx.tx(), MessageTypeQuery::with_id(cmd.id))
             .await
             .tap_err(|e| tracing::error!("Failed to retrieve message type {}:{e}", cmd.id))?
-            .ok_or(Error::MessageTypeNotFound(cmd.id))?;
+            .ok_or(UpdateMessageTypeError::MessageTypeNotFound(cmd.id))?;
 
         if cmd.name.is_none() & cmd.enabled.is_none() & cmd.vars.is_none() {
             return Ok(message_type);

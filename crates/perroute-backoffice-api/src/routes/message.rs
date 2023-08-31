@@ -1,6 +1,6 @@
 use crate::{
     api::{
-        models::message::{rest_to_delivery, CreateMessageRequest, MessageResource},
+        models::message::{CreateMessageRequest, MessageResource},
         response::{ApiResponse, ApiResult, SingleResourceModel},
     },
     app::AppState,
@@ -9,7 +9,6 @@ use crate::{
 };
 use actix_web::web::Data;
 use actix_web_validator::Json;
-use anyhow::Context;
 use perroute_commons::types::actor::Actor;
 use perroute_cqrs::command_bus::handlers::message::create_message::{
     CreateMessageCommandBuilder, CreateMessageCommandHandler,
@@ -40,16 +39,11 @@ async fn create_message(
     body: CreateMessageRequest,
 ) -> Result<Message, ApiError> {
     let cmd = CreateMessageCommandBuilder::default()
-        .payload(body.payload.into())
-        .business_unit_code(body.bu_code.unwrap().try_into().context("context")?)
-        .message_type_code(
-            body.message_type_code
-                .unwrap()
-                .try_into()
-                .context("context")?,
-        )
-        .schema_version(body.schema_version.unwrap().into())
-        .deliveries(rest_to_delivery(body.deliveries)?)
+        .payload(body.payload()?)
+        .business_unit_code(body.business_unit_code()?)
+        .message_type_code(body.message_type_code()?)
+        .schema_version(body.schema_version()?)
+        .deliveries(body.deliveries()?)
         .build()
         .unwrap();
     state

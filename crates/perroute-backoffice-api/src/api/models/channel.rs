@@ -3,6 +3,9 @@ use crate::{
     links::{Linkrelation, ResourceLink},
 };
 use actix_web::HttpRequest;
+use anyhow::{Context, Result};
+use perroute_commons::types::{id::Id, priority::Priority, properties::Properties};
+use perroute_connectors::types::dispatch_type::DispatchType;
 use perroute_storage::models::channel::Channel;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -12,24 +15,71 @@ use validator::Validate;
 #[serde(default)]
 pub struct CreateChannelRequest {
     #[validate(required)]
-    #[validate(custom = "perroute_commons::types::id::Id::validate")]
-    pub business_id: Option<String>,
+    #[validate(custom = "Id::validate")]
+    business_id: Option<String>,
 
     #[validate(required)]
-    #[validate(custom = "perroute_commons::types::id::Id::validate")]
-    pub connection_id: Option<String>,
+    #[validate(custom = "Id::validate")]
+    connection_id: Option<String>,
 
     #[validate(required)]
-    #[validate(custom = "perroute_connectors::types::dispatch_type::DispatchType::validate")]
-    pub dispatch_type: Option<String>,
+    #[validate(custom = "DispatchType::validate")]
+    dispatch_type: Option<String>,
 
     #[validate(required)]
-    #[validate(custom = "perroute_commons::types::properties::Properties::validate")]
-    pub properties: Option<Value>,
+    #[validate(custom = "Properties::validate")]
+    properties: Option<Value>,
 
     #[validate(required)]
-    #[validate(custom = "perroute_commons::types::priority::Priority::validate")]
-    pub priority: Option<i32>,
+    #[validate(custom = "Priority::validate")]
+    priority: Option<i32>,
+}
+
+impl CreateChannelRequest {
+    pub fn into_business_id(&self) -> Result<Id> {
+        Ok(self
+            .business_id
+            .clone()
+            .context("Missing business id")?
+            .try_into()
+            .context("Invalid Id")?)
+    }
+
+    pub fn into_connection_id(&self) -> Result<Id> {
+        Ok(self
+            .connection_id
+            .clone()
+            .context("Missing connection id")?
+            .try_into()
+            .context("Invalid Id")?)
+    }
+
+    pub fn into_dispatch_type(&self) -> Result<DispatchType> {
+        Ok(self
+            .dispatch_type
+            .clone()
+            .context("Missing dispatch type")?
+            .try_into()
+            .context("Invalid dispatch type")?)
+    }
+
+    pub fn into_properties(&self) -> Result<Properties> {
+        Ok(self
+            .properties
+            .clone()
+            .context("Missing properties")?
+            .try_into()
+            .context("Invalid properties")?)
+    }
+
+    pub fn into_priority(&self) -> Result<Priority> {
+        Ok(self
+            .priority
+            .clone()
+            .context("Missing priority")?
+            .try_into()
+            .context("Invalid priority")?)
+    }
 }
 
 #[derive(Debug, Deserialize, Clone, Validate, Default)]
@@ -37,12 +87,26 @@ pub struct CreateChannelRequest {
 pub struct UpdateChannelRequest {
     #[validate(required)]
     #[validate(custom = "perroute_commons::types::properties::Properties::validate")]
-    pub properties: Option<Value>,
+    properties: Option<Value>,
 
     #[validate(custom = "perroute_commons::types::priority::Priority::validate")]
-    pub priority: Option<i32>,
+    priority: Option<i32>,
 
-    pub enabled: Option<bool>,
+    enabled: Option<bool>,
+}
+
+impl UpdateChannelRequest {
+    pub fn into_properties(&self) -> Result<Option<Properties>> {
+        Ok(self.properties.clone().map(|p| p.try_into()).transpose()?)
+    }
+
+    pub fn into_priority(&self) -> Result<Option<Priority>> {
+        Ok(self.priority.clone().map(|p| p.try_into()).transpose()?)
+    }
+
+    pub fn into_enabled(&self) -> Option<bool> {
+        self.enabled
+    }
 }
 
 #[derive(Clone, Serialize, Debug, Deserialize, PartialEq, Eq)]
@@ -54,8 +118,8 @@ pub struct ChannelResource {
     priority: i32,
 }
 
-impl From<Channel> for ChannelResource {
-    fn from(value: Channel) -> Self {
+impl From<&Channel> for ChannelResource {
+    fn from(value: &Channel) -> Self {
         Self {
             id: value.id().into(),
             dispatch_type: value.dispatch_type().into(),
@@ -69,7 +133,7 @@ impl From<Channel> for ChannelResource {
 impl ResourceBuilder<SingleResourceModel<ChannelResource>> for Channel {
     fn build(&self, req: &HttpRequest) -> SingleResourceModel<ChannelResource> {
         SingleResourceModel {
-            data: Some(ChannelResource::from(self.clone())),
+            data: Some(self.into()),
             links: Links::default()
                 .add(Linkrelation::Self_, ResourceLink::Channel(*self.id()))
                 .add(Linkrelation::Channels, ResourceLink::Channels)

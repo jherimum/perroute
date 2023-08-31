@@ -15,7 +15,7 @@ use perroute_storage::{
 use tap::TapFallible;
 
 #[derive(thiserror::Error, Debug, Clone)]
-pub enum UpdateBusinessUnitCommandHandlerError {
+pub enum UpdateBusinessUnitError {
     #[error("BusinessUnit with id {0} nor found")]
     BusinessUnitNotFound(Id),
 }
@@ -55,7 +55,7 @@ impl CommandHandler for UpdateBusinessUnitCommandHandler {
                 command.business_unit_id
             );
         })?
-        .ok_or(UpdateBusinessUnitCommandHandlerError::BusinessUnitNotFound(
+        .ok_or(UpdateBusinessUnitError::BusinessUnitNotFound(
             command.business_unit_id,
         ))?;
 

@@ -48,7 +48,7 @@ fn test_channels_empty(pool: PgPool) {
     assert!(data.len() == 1);
 
     let model: SingleResourceModel<BusinessUnitResource> = SingleResourceModel {
-        data: Some(BusinessUnitResource::from(channel)),
+        data: Some(BusinessUnitResource::from(&channel)),
         links: Default::default(),
     };
 

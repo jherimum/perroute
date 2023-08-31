@@ -18,8 +18,7 @@ use crate::{
 };
 use actix_web::web::Data;
 use actix_web_validator::{Json, Path};
-use anyhow::Context;
-use perroute_commons::types::{code::Code, id::Id};
+use perroute_commons::types::id::Id;
 use perroute_cqrs::{
     command_bus::handlers::business_unit::{
         create_business_unit::{
@@ -42,7 +41,6 @@ use perroute_cqrs::{
         query_business_units::{QueryBusinessUnitsQueryBuilder, QueryBusinessUnitsQueryHandler},
     },
 };
-use std::str::FromStr;
 use tap::TapFallible;
 
 pub type SingleResult = ApiResult<SingleResourceModel<BusinessUnitResource>>;
@@ -54,9 +52,9 @@ impl TryInto<CreateBusinessUnitCommand> for CreateBusinessUnitRequest {
     fn try_into(self) -> Result<CreateBusinessUnitCommand, Self::Error> {
         Ok(CreateBusinessUnitCommandBuilder::default()
             .id(Id::new())
-            .code(Code::from_str(&self.code.context("Missing code")?).context("Invalid code")?)
-            .name(self.name.context("Misssing name")?)
-            .vars(self.vars.unwrap_or_default().into())
+            .code(self.code()?)
+            .name(self.name()?)
+            .vars(self.vars()?)
             .build()
             .tap_err(|e| tracing::error!("Failed to build CreateBusinessUnitCommand: {e}"))?)
     }
@@ -68,9 +66,9 @@ impl TryInto<UpdateBusinessUnitCommand> for W<(SingleIdPath, UpdateBusinessUnitR
     fn try_into(self) -> Result<UpdateBusinessUnitCommand, Self::Error> {
         let w = self.into_inner();
         Ok(UpdateBusinessUnitCommandBuilder::default()
-            .business_unit_id(w.0.try_into().context("Invalid id")?)
-            .name(w.1.name)
-            .vars(w.1.vars.map(Into::into))
+            .business_unit_id(w.0.try_into()?)
+            .name(w.1.name())
+            .vars(w.1.vars().map(Into::into))
             .build()
             .tap_err(|e| tracing::error!("Failed to build UpdateBusinessUnitCommand: {e}"))?)
     }
@@ -81,7 +79,7 @@ impl TryInto<FindBusinessUnitQuery> for SingleIdPath {
 
     fn try_into(self) -> Result<FindBusinessUnitQuery, Self::Error> {
         Ok(FindBusinessUnitQueryBuilder::default()
-            .id(self.try_into().context("Invalid id")?)
+            .id(self.try_into()?)
             .build()
             .tap_err(|e| tracing::error!("Failed to build FindBusinessUnitByCodeQuery: {e}"))?)
     }
@@ -92,7 +90,7 @@ impl TryInto<DeleteBusinessUnitCommand> for SingleIdPath {
 
     fn try_into(self) -> Result<DeleteBusinessUnitCommand, Self::Error> {
         Ok(DeleteBusinessUnitCommandBuilder::default()
-            .business_unit_id(self.try_into().context("Invalid id")?)
+            .business_unit_id(self.try_into()?)
             .build()
             .tap_err(|e| tracing::error!("Failed to build DeleteBusinessUnitCommand: {e}"))?)
     }

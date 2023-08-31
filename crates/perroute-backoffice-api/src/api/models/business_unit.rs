@@ -3,30 +3,55 @@ use crate::{
     links::{Linkrelation, ResourceLink},
 };
 use actix_web::HttpRequest;
+use anyhow::{Context, Result};
+use perroute_commons::types::{code::Code, vars::Vars};
 use perroute_storage::models::business_unit::BusinessUnit;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::{collections::HashMap, str::FromStr};
 use validator::Validate;
 
 #[derive(Debug, serde::Deserialize, Clone, Validate, Default)]
 #[serde(default)]
 pub struct CreateBusinessUnitRequest {
     #[validate(required)]
-    #[validate(custom = "perroute_commons::types::code::Code::validate")]
-    pub code: Option<String>,
+    #[validate(custom = "Code::validate")]
+    code: Option<String>,
 
     #[validate(required)]
     #[validate(custom = "perroute_commons::types::name::validate")]
-    pub name: Option<String>,
+    name: Option<String>,
 
-    pub vars: Option<HashMap<String, String>>,
+    vars: Option<HashMap<String, String>>,
+}
+impl CreateBusinessUnitRequest {
+    pub fn code(&self) -> Result<Code> {
+        Ok(Code::from_str(self.code.as_ref().context("Missing code")?).context("Invalid code")?)
+    }
+
+    pub fn name(&self) -> Result<String> {
+        Ok(self.name.clone().context("missing name")?)
+    }
+
+    pub fn vars(&self) -> Result<Vars> {
+        Ok(self.vars.clone().unwrap_or_default().into())
+    }
 }
 
 #[derive(Debug, serde::Deserialize, Clone, Validate)]
 pub struct UpdateBusinessUnitRequest {
     #[validate(custom = "perroute_commons::types::name::validate")]
-    pub name: Option<String>,
-    pub vars: Option<HashMap<String, String>>,
+    name: Option<String>,
+    vars: Option<HashMap<String, String>>,
+}
+
+impl UpdateBusinessUnitRequest {
+    pub fn name(&self) -> Option<String> {
+        self.name.clone()
+    }
+
+    pub fn vars(&self) -> Option<Vars> {
+        self.vars.clone().map(|v| v.into())
+    }
 }
 
 #[derive(Clone, Serialize, Debug, Deserialize, PartialEq, Eq)]
@@ -37,8 +62,8 @@ pub struct BusinessUnitResource {
     vars: HashMap<String, String>,
 }
 
-impl From<BusinessUnit> for BusinessUnitResource {
-    fn from(value: BusinessUnit) -> Self {
+impl From<&BusinessUnit> for BusinessUnitResource {
+    fn from(value: &BusinessUnit) -> Self {
         Self {
             id: value.id().into(),
             code: value.code().to_string(),
@@ -51,7 +76,7 @@ impl From<BusinessUnit> for BusinessUnitResource {
 impl ResourceBuilder<SingleResourceModel<BusinessUnitResource>> for BusinessUnit {
     fn build(&self, req: &HttpRequest) -> SingleResourceModel<BusinessUnitResource> {
         SingleResourceModel {
-            data: Some(BusinessUnitResource::from(self.clone())),
+            data: Some(self.into()),
             links: Links::default()
                 .add(Linkrelation::Self_, ResourceLink::BusinessUnit(*self.id()))
                 .add(Linkrelation::BusinessUnits, ResourceLink::BusinessUnits)

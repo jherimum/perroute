@@ -22,7 +22,7 @@ use serde::Serialize;
 use tap::TapFallible;
 
 #[derive(Debug, thiserror::Error)]
-pub enum Error {
+pub enum UpdateChannelError {
     #[error("Channel {0} nor found")]
     ChannelNotFound(Id),
 
@@ -60,7 +60,7 @@ impl CommandHandler for UpdateChannelCommandHandler {
         let mut channel = Channel::find(ctx.pool(), ChannelQuery::with_id(cmd.id))
             .await
             .tap_err(|e| tracing::error!("Failed to retrieve channel: {e}"))?
-            .ok_or_else(|| Error::ChannelNotFound(cmd.id))?;
+            .ok_or_else(|| UpdateChannelError::ChannelNotFound(cmd.id))?;
 
         if cmd.dispatch_properties.is_none() && cmd.enabled.is_none() && cmd.priority.is_none() {
             return Ok(channel);
@@ -81,7 +81,9 @@ impl CommandHandler for UpdateChannelCommandHandler {
                 .dispatcher(channel.dispatch_type())
                 .ok_or_else(|| anyhow!("Dispatcher type not supported"))?;
 
-            disp.configuration().validate(&props).map_err(Error::from)?;
+            disp.configuration()
+                .validate(&props)
+                .map_err(UpdateChannelError::from)?;
 
             channel = channel.set_properties(props);
         }

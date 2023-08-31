@@ -40,29 +40,11 @@ impl TryFrom<CreateChannelRequest> for CreateChannelCommand {
     fn try_from(value: CreateChannelRequest) -> Result<Self, Self::Error> {
         Ok(CreateChannelCommandBuilder::default()
             .id(new_id!())
-            .business_unit_id(
-                value
-                    .business_id
-                    .context("business id required")?
-                    .try_into()
-                    .context("Invalid id")?,
-            )
-            .connection_id(
-                value
-                    .connection_id
-                    .context("connection id required")?
-                    .try_into()
-                    .context("Invalid id")?,
-            )
-            .priority(value.priority.context("priority required")?.into())
-            .dispatch_properties(value.properties.context("properties required")?.into())
-            .dispatch_type(
-                value
-                    .dispatch_type
-                    .context("dispatch type required")?
-                    .try_into()
-                    .context("Invalid dispatch type")?,
-            )
+            .business_unit_id(value.into_business_id()?)
+            .connection_id(value.into_connection_id()?)
+            .priority(value.into_priority()?)
+            .dispatch_properties(value.into_properties()?)
+            .dispatch_type(value.into_dispatch_type()?)
             .build()?)
     }
 }
@@ -72,9 +54,9 @@ impl TryFrom<W<(SingleIdPath, UpdateChannelRequest)>> for UpdateChannelCommand {
     fn try_from(value: W<(SingleIdPath, UpdateChannelRequest)>) -> Result<Self, Self::Error> {
         Ok(UpdateChannelCommandBuilder::default()
             .id(value.0 .0.try_into().context("context")?)
-            .priority(value.0 .1.priority.map(Into::into))
-            .dispatch_properties(value.0 .1.properties.map(Into::into))
-            .enabled(value.0 .1.enabled)
+            .priority(value.0 .1.into_priority()?)
+            .dispatch_properties(value.0 .1.into_properties()?)
+            .enabled(value.0 .1.into_enabled())
             .build()?)
     }
 }

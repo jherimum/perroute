@@ -29,7 +29,7 @@ use super::{
         },
         schema::{
             create_schema::CreateSchemaCommandHandler, delete_schema::DeleteSchemaCommandHandler,
-            publish_schema::PublishSchemaCommandHandler, update_schema::UpdateSchemaCommandHandler,
+            update_schema::UpdateSchemaCommandHandler,
         },
         template::{
             create_template::CreateTemplateCommandHandler,
@@ -153,7 +153,6 @@ impl CommandBus {
             .with_handler(DeleteMessageTypeCommandHandler)
             //schema
             .with_handler(CreateSchemaCommandHandler)
-            .with_handler(PublishSchemaCommandHandler)
             .with_handler(DeleteSchemaCommandHandler)
             .with_handler(UpdateSchemaCommandHandler)
             //template

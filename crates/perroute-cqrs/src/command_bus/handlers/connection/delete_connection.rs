@@ -18,7 +18,7 @@ use serde::Serialize;
 use tap::TapFallible;
 
 #[derive(Debug, thiserror::Error)]
-pub enum DeleteConnectionCommandHandlerError {
+pub enum DeleteConnectionError {
     #[error("Connection with id {0} not found")]
     ConnectionNotFound(Id),
 
@@ -57,15 +57,13 @@ impl CommandHandler for DeleteConnectionCommandHandler {
         )
         .await
         .tap_err(|e| tracing::error!("Failed to retrieve connection: {e}"))?
-        .ok_or(DeleteConnectionCommandHandlerError::ConnectionNotFound(
-            cmd.id,
-        ))?;
+        .ok_or(DeleteConnectionError::ConnectionNotFound(cmd.id))?;
 
         if Channel::exists(ctx.pool(), ChannelQuery::with_connection(*conn.id()))
             .await
             .tap_err(|e| tracing::error!("Faled to check if channel exists: {e}"))?
         {
-            return Err(DeleteConnectionCommandHandlerError::DeleteError(
+            return Err(DeleteConnectionError::DeleteError(
                 cmd.id,
                 "Connection is still in use by channels".to_string(),
             )

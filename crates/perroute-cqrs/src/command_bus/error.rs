@@ -2,14 +2,43 @@ use perroute_storage::error::StorageError;
 
 use super::{
     commands::CommandType,
-    handlers::{business_unit, channel, connection, message, message_type, route, schema},
+    handlers::{
+        business_unit::{
+            create_business_unit::CreateBusinessUnitError,
+            delete_business_unit::DeleteBusinessUnitError,
+            update_business_unit::UpdateBusinessUnitError,
+        },
+        channel::{
+            create_channel::CreateChannelError, delete_channel::DeleteChannelError,
+            update_channel::UpdateChannelError,
+        },
+        connection::{
+            create_connection::CreateConnectionError, delete_connection::DeleteConnectionError,
+            update_connection::UpdateConnectionError,
+        },
+        message::{create_message::CreateMessageError, distribute_message::DistributeMessageError},
+        message_type::{
+            create_message_type::CreateMessageTypeError,
+            delete_message_type::DeleteMessageTypeError,
+            update_message_type::UpdateMessageTypeError,
+        },
+        route::{
+            create_route::CreateRouteError, delete_route::DeleteRouteError,
+            update_route::UpdateRouteError,
+        },
+        schema::{
+            create_schema::CreateSchemaError, delete_schema::DeleteSchemaError,
+            update_schema::UpdateSchemaError,
+        },
+        template::{
+            create_template::CreateTemplateError, delete_template::DeleteTemplateError,
+            update_template::UpdateTemplatelError,
+        },
+    },
 };
 
 #[derive(Debug, thiserror::Error)]
 pub enum CommandBusError {
-    #[error("{0}")]
-    ExpectedError(&'static str),
-
     #[error("Command handler not found for command {0}")]
     HandlerNotFound(CommandType),
 
@@ -21,75 +50,78 @@ pub enum CommandBusError {
 
     //business_unit
     #[error(transparent)]
-    CreateBusinessUnit(
-        #[from] business_unit::create_business_unit::CreateBusinessUnitCommandHandlerError,
-    ),
+    CreateBusinessUnit(#[from] CreateBusinessUnitError),
 
     #[error(transparent)]
-    UpdateBusinessUnit(
-        #[from] business_unit::update_business_unit::UpdateBusinessUnitCommandHandlerError,
-    ),
+    UpdateBusinessUnit(#[from] UpdateBusinessUnitError),
 
     #[error(transparent)]
-    DeleteBusinessUnit(#[from] business_unit::delete_business_unit::Error),
+    DeleteBusinessUnit(#[from] DeleteBusinessUnitError),
 
     //message_type
     #[error(transparent)]
-    DeleteMessageType(#[from] message_type::delete_message_type::Error),
+    DeleteMessageType(#[from] DeleteMessageTypeError),
 
     #[error(transparent)]
-    UpdateMessageType(#[from] message_type::update_message_type::Error),
+    UpdateMessageType(#[from] UpdateMessageTypeError),
 
     #[error(transparent)]
-    CreateMessageType(#[from] message_type::create_message_type::Error),
+    CreateMessageType(#[from] CreateMessageTypeError),
 
     //schema
     #[error(transparent)]
-    CreateSchema(#[from] schema::create_schema::Error),
+    CreateSchema(#[from] CreateSchemaError),
 
     #[error(transparent)]
-    UpdateSchema(#[from] schema::update_schema::Error),
+    UpdateSchema(#[from] UpdateSchemaError),
 
     #[error(transparent)]
-    DeleteSchema(#[from] schema::delete_schema::Error),
-
-    #[error(transparent)]
-    PublishSchema(#[from] schema::publish_schema::Error),
+    DeleteSchema(#[from] DeleteSchemaError),
 
     //message
     #[error(transparent)]
-    CreateMessage(#[from] message::create_message::Error),
+    CreateMessage(#[from] CreateMessageError),
 
     #[error(transparent)]
-    DistributeMessage(#[from] message::distribute_message::Error),
+    DistributeMessage(#[from] DistributeMessageError),
 
     //channel
     #[error(transparent)]
-    CreateChannel(#[from] channel::create_channel::Error),
+    CreateChannel(#[from] CreateChannelError),
 
     #[error(transparent)]
-    UpdateChannel(#[from] channel::update_channel::Error),
+    UpdateChannel(#[from] UpdateChannelError),
 
     #[error(transparent)]
-    DeleteChannel(#[from] channel::delete_channel::Error),
+    DeleteChannel(#[from] DeleteChannelError),
 
     //connection
     #[error(transparent)]
-    CreateConnection(#[from] connection::create_connection::Error),
+    CreateConnection(#[from] CreateConnectionError),
 
     #[error(transparent)]
-    UpdateConnection(#[from] connection::update_connection::UpdateConnectionCommandHandlerError),
+    UpdateConnection(#[from] UpdateConnectionError),
 
     #[error(transparent)]
-    DeleteConnection(#[from] connection::delete_connection::DeleteConnectionCommandHandlerError),
+    DeleteConnection(#[from] DeleteConnectionError),
 
     //route
     #[error(transparent)]
-    CreateRoute(#[from] route::create_route::Error),
+    CreateRoute(#[from] CreateRouteError),
 
     #[error(transparent)]
-    UpdateRoute(#[from] route::update_route::Error),
+    UpdateRoute(#[from] UpdateRouteError),
 
     #[error(transparent)]
-    DeleteRoute(#[from] route::delete_route::Error),
+    DeleteRoute(#[from] DeleteRouteError),
+
+    //template
+    #[error(transparent)]
+    CreateTemplate(#[from] CreateTemplateError),
+
+    #[error(transparent)]
+    DeleteTemplate(#[from] DeleteTemplateError),
+
+    #[error(transparent)]
+    UpdateTemplate(#[from] UpdateTemplatelError),
 }

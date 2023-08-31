@@ -20,7 +20,7 @@ use serde::Serialize;
 use tap::TapFallible;
 
 #[derive(Debug, thiserror::Error)]
-pub enum UpdateConnectionCommandHandlerError {
+pub enum UpdateConnectionError {
     #[error("Connection with id {0} not found")]
     ConnectionNotFound(Id),
 
@@ -56,9 +56,7 @@ impl CommandHandler for UpdateConnectionCommandHandler {
         let mut conn = Connection::find(ctx.pool(), ConnectionQuery::with_id(cmd.id))
             .await
             .tap_err(|e| tracing::error!("Failed to retrieve connection:{e}"))?
-            .ok_or(UpdateConnectionCommandHandlerError::ConnectionNotFound(
-                cmd.id,
-            ))?;
+            .ok_or(UpdateConnectionError::ConnectionNotFound(cmd.id))?;
 
         if cmd.enabled.is_none() && cmd.name.is_none() && cmd.properties.is_none() {
             return Ok(conn);
@@ -73,7 +71,7 @@ impl CommandHandler for UpdateConnectionCommandHandler {
             connector_plugin
                 .configuration()
                 .validate(&properties)
-                .map_err(UpdateConnectionCommandHandlerError::from)?;
+                .map_err(UpdateConnectionError::from)?;
 
             conn = conn.set_properties(properties);
         }
