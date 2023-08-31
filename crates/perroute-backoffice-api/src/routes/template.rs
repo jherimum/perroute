@@ -71,6 +71,7 @@ impl TemplateRouter {
             .priority(body.priority()?)
             .start_at(body.start_at()?)
             .end_at(body.end_at()?)
+            .vars(body.vars()?)
             .build()
             .unwrap();
         let template = state

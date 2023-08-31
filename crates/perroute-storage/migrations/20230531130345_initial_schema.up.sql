@@ -67,6 +67,7 @@ create table schemas(
 create table templates(
     id                  uuid            not null,
     dispatch_type       dispatch_type   not null,
+    name                varchar         not null,
     subject             text            null,
     text                text            null,
     html                text            null,

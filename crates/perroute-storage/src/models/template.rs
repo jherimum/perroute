@@ -171,7 +171,7 @@ impl Template {
             start_at,
             end_at,
             priority) 
-        VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11,$12,$13,$14)
         RETURNING *"#,
         )
         .bind(self.id)
@@ -217,6 +217,9 @@ impl Template {
         .bind(self.vars)
         .bind(self.active)
         .bind(self.name)
+        .bind(self.start_at)
+        .bind(self.end_at)
+        .bind(self.priority)
         .fetch_one(exec)
         .await
         .tap_err(log_query_error!())?)

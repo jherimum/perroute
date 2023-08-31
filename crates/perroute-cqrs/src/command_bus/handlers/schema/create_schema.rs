@@ -73,6 +73,7 @@ impl CommandHandler for CreateSchemaCommandHandler {
             .version(next_version)
             .published(false)
             .message_type_id(cmd.message_type_id)
+            .business_unit_id(*mt.business_unit_id())
             .enabled(false)
             .vars(cmd.vars)
             .build()

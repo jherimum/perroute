@@ -163,7 +163,7 @@ impl Schema {
         Ok(sqlx::query_as(
             r#"
                 INSERT INTO schemas (id, value, version, published, message_type_id, enabled, vars, business_unit_id) 
-                VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING *
+                VALUES($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *
             "#,
         )
         .bind(self.id)

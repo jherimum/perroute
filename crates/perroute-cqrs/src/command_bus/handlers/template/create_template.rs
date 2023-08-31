@@ -72,6 +72,7 @@ impl CommandHandler for CreateTemplateCommandHandler {
         .tap_err(|e| tracing::error!("Failed to check if exists template:{e}"))?;
 
         Ok(TemplateBuilder::default()
+            .schema_id(cmd.schema_id)
             .id(cmd.id)
             .name(cmd.name)
             .subject(cmd.subject)

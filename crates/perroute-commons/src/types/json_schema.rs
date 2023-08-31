@@ -30,6 +30,7 @@ impl Display for InvalidPayloadError {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Eq, Deserialize, Type)]
 #[serde(transparent)]
+#[sqlx(transparent)]
 pub struct JsonSchema(serde_json::Value);
 
 impl Default for JsonSchema {
