@@ -1,18 +1,19 @@
 use super::{
     business_unit::{BusinessUnit, BusinessUnitQueryBuilder},
     message_type::{MessageType, MessageTypeQueryBuilder},
-    schema::{self, Schema, SchemasQueryBuilder},
+    schema::{Schema, SchemasQueryBuilder},
 };
 use crate::{
     log_query_error,
     query::{FetchableModel, ModelQueryBuilder, Projection},
     DatabaseModel, Result,
 };
+use chrono::NaiveDateTime;
 use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
-use perroute_commons::types::{id::Id, template::TemplateSnippet, vars::Vars};
-use perroute_connectors::types::dispatch_type::{self, DispatchType};
+use perroute_commons::types::{id::Id, priority::Priority, template::TemplateSnippet, vars::Vars};
+use perroute_connectors::types::dispatch_type::DispatchType;
 use sqlx::{FromRow, PgExecutor, QueryBuilder};
 use std::ops::Deref;
 use tap::TapFallible;
@@ -95,17 +96,18 @@ impl DatabaseModel for Template {}
 pub struct Template {
     #[setters(skip)]
     id: Id,
-
     name: String,
-
-    #[setters(skip)]
-    dispatch_type: DispatchType,
-
     subject: Option<TemplateSnippet>,
     text: Option<TemplateSnippet>,
     html: Option<TemplateSnippet>,
     vars: Vars,
     active: bool,
+    start_at: NaiveDateTime,
+    end_at: Option<NaiveDateTime>,
+    priority: Priority,
+
+    #[setters(skip)]
+    dispatch_type: DispatchType,
 
     #[setters(skip)]
     schema_id: Id,
@@ -154,7 +156,21 @@ impl Template {
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self> {
         Ok(sqlx::query_as(
             r#"
-        INSERT INTO templates (id, dispatch_type, subject, text, html, vars, active, schema_id, message_type_id, business_unit_id, name) 
+        INSERT INTO templates (
+            id, 
+            dispatch_type, 
+            subject, 
+            text, 
+            html, 
+            vars, 
+            active, 
+            schema_id, 
+            message_type_id, 
+            business_unit_id, 
+            name,
+            start_at,
+            end_at,
+            priority) 
         VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         RETURNING *"#,
         )
@@ -169,6 +185,9 @@ impl Template {
         .bind(self.message_type_id)
         .bind(self.business_unit_id)
         .bind(self.name)
+        .bind(self.start_at)
+        .bind(self.end_at)
+        .bind(self.priority)
         .fetch_one(exec)
         .await
         .tap_err(log_query_error!())?)
@@ -178,7 +197,16 @@ impl Template {
         Ok(sqlx::query_as(
             r#"
             UPDATE templates 
-            SET subject= $2, text=$3, html=$4, vars=$5, active=$6, name=$7
+            SET 
+                subject= $2, 
+                text=$3, 
+                html=$4, 
+                vars=$5, 
+                active=$6, 
+                name=$7,
+                start_at=$8,
+                end_at=$9,
+                priority=$10
             WHERE id=$1 
             RETURNING *"#,
         )

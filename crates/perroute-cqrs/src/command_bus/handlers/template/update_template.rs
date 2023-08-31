@@ -6,7 +6,10 @@ use crate::{
     into_event,
 };
 use async_trait::async_trait;
-use perroute_commons::types::{actor::Actor, id::Id, template::TemplateSnippet, vars::Vars};
+use chrono::NaiveDateTime;
+use perroute_commons::types::{
+    actor::Actor, id::Id, priority::Priority, template::TemplateSnippet, vars::Vars,
+};
 use perroute_storage::{
     models::template::{Template, TemplatesQuery},
     query::FetchableModel,
@@ -22,7 +25,10 @@ command!(
     html: Option<Option<TemplateSnippet>>,
     text: Option<Option<TemplateSnippet>>,
     vars: Option<Vars>,
-    active: Option<bool>
+    active: Option<bool>,
+    start_at: Option<NaiveDateTime>,
+    end_at: Option<Option<NaiveDateTime>>,
+    priority: Option<Priority>
 );
 into_event!(UpdateTemplateCommand);
 
@@ -58,6 +64,9 @@ impl CommandHandler for UpdateTemplateCommandHandler {
             & cmd.text.is_none()
             & cmd.vars.is_none()
             & cmd.active.is_none()
+            & cmd.start_at.is_none()
+            & cmd.end_at.is_none()
+            & cmd.priority.is_none()
         {
             return Ok(actual_template);
         }
@@ -94,6 +103,18 @@ impl CommandHandler for UpdateTemplateCommandHandler {
 
         if let Some(text) = cmd.text {
             actual_template = actual_template.set_text(text);
+        }
+
+        if let Some(start_at) = cmd.start_at {
+            actual_template = actual_template.set_start_at(start_at);
+        }
+
+        if let Some(end_at) = cmd.end_at {
+            actual_template = actual_template.set_end_at(end_at);
+        }
+
+        if let Some(priority) = cmd.priority {
+            actual_template = actual_template.set_priority(priority);
         }
 
         Ok(actual_template

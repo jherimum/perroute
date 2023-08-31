@@ -9,7 +9,6 @@ use crate::{
     query,
     query_bus::{
         bus::{QueryBusContext, QueryHandler},
-        error::QueryBusError,
         queries::QueryType,
         Result,
     },

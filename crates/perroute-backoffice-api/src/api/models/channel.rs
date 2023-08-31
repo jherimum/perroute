@@ -37,48 +37,42 @@ pub struct CreateChannelRequest {
 
 impl CreateChannelRequest {
     pub fn into_business_id(&self) -> Result<Id> {
-        Ok(self
-            .business_id
+        self.business_id
             .clone()
             .context("Missing business id")?
             .try_into()
-            .context("Invalid Id")?)
+            .context("Invalid Id")
     }
 
     pub fn into_connection_id(&self) -> Result<Id> {
-        Ok(self
-            .connection_id
+        self.connection_id
             .clone()
             .context("Missing connection id")?
             .try_into()
-            .context("Invalid Id")?)
+            .context("Invalid Id")
     }
 
     pub fn into_dispatch_type(&self) -> Result<DispatchType> {
-        Ok(self
-            .dispatch_type
+        self.dispatch_type
             .clone()
             .context("Missing dispatch type")?
             .try_into()
-            .context("Invalid dispatch type")?)
+            .context("Invalid dispatch type")
     }
 
     pub fn into_properties(&self) -> Result<Properties> {
-        Ok(self
-            .properties
+        self.properties
             .clone()
             .context("Missing properties")?
             .try_into()
-            .context("Invalid properties")?)
+            .context("Invalid properties")
     }
 
     pub fn into_priority(&self) -> Result<Priority> {
-        Ok(self
-            .priority
-            .clone()
+        self.priority
             .context("Missing priority")?
             .try_into()
-            .context("Invalid priority")?)
+            .context("Invalid priority")
     }
 }
 
@@ -101,7 +95,7 @@ impl UpdateChannelRequest {
     }
 
     pub fn into_priority(&self) -> Result<Option<Priority>> {
-        Ok(self.priority.clone().map(|p| p.try_into()).transpose()?)
+        Ok(self.priority.map(|p| p.try_into()).transpose()?)
     }
 
     pub fn into_enabled(&self) -> Option<bool> {

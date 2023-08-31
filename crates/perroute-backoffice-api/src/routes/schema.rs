@@ -55,7 +55,7 @@ impl SchemaRouter {
             .query_bus()
             .execute::<_, QuerySchemasQueryHandler, _>(&actor, &query)
             .await
-            .map(|schemas| ApiResponse::ok(schemas))
+            .map(ApiResponse::ok)
             .map_err(ApiError::from)
     }
 

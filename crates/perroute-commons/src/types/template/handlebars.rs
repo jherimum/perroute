@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use super::{TemplateError, TemplateRender, TemplateSnippet, TemplateValidator};
+use super::{TemplateError, TemplateRender, TemplateValidator};
 use handlebars::Template;
 use serde::Serialize;
 use validator::ValidationError;

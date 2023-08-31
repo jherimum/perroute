@@ -26,21 +26,19 @@ pub struct CreateSchemaRequest {
 
 impl CreateSchemaRequest {
     pub fn message_type_id(&self) -> Result<Id> {
-        Ok(self
-            .message_type_id
+        self.message_type_id
             .clone()
             .context("missing message type id")?
             .try_into()
-            .context("invalid message type id")?)
+            .context("invalid message type id")
     }
 
     pub fn value(&self) -> Result<JsonSchema> {
-        Ok(self
-            .value
+        self.value
             .clone()
             .context("missing value")?
             .try_into()
-            .context("Invalid schame")?)
+            .context("Invalid schame")
     }
 
     pub fn vars(&self) -> Result<Vars> {
@@ -63,7 +61,7 @@ impl UpdateSchemaRequest {
     }
 
     pub fn enabled(&self) -> Result<Option<bool>> {
-        Ok(self.enabled.clone())
+        Ok(self.enabled)
     }
 
     pub fn vars(&self) -> Option<Vars> {

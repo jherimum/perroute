@@ -29,25 +29,19 @@ pub struct CreateMessageTypeRequest {
 
 impl CreateMessageTypeRequest {
     pub fn code(&self) -> Result<Code> {
-        Ok(Code::from_str(self.code.as_ref().context("Missing code")?).context("Invalid code")?)
+        Code::from_str(self.code.as_ref().context("Missing code")?).context("Invalid code")
     }
 
     pub fn name(&self) -> Result<String> {
-        Ok(self
-            .name
-            .clone()
-            .context("Missing name")?
-            .try_into()
-            .context("Invalid name")?)
+        self.name.clone().context("Missing name")
     }
 
     pub fn business_unit_id(&self) -> Result<Id> {
-        Ok(self
-            .business_unit_id
+        self.business_unit_id
             .clone()
             .context("Missing business id")?
             .try_into()
-            .context("Invalid Id")?)
+            .context("Invalid Id")
     }
 
     pub fn vars(&self) -> Result<Vars> {
@@ -75,7 +69,7 @@ impl UpdateMessageTypeRequest {
     }
 
     pub fn enabled(&self) -> Result<Option<bool>> {
-        Ok(self.enabled.clone())
+        Ok(self.enabled)
     }
 }
 

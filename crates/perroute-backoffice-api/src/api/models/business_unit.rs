@@ -25,11 +25,11 @@ pub struct CreateBusinessUnitRequest {
 }
 impl CreateBusinessUnitRequest {
     pub fn code(&self) -> Result<Code> {
-        Ok(Code::from_str(self.code.as_ref().context("Missing code")?).context("Invalid code")?)
+        Code::from_str(self.code.as_ref().context("Missing code")?).context("Invalid code")
     }
 
     pub fn name(&self) -> Result<String> {
-        Ok(self.name.clone().context("missing name")?)
+        self.name.clone().context("missing name")
     }
 
     pub fn vars(&self) -> Result<Vars> {

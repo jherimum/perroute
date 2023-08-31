@@ -1,7 +1,6 @@
 use super::business_unit::BusinessUnitQueryBuilder;
 use super::channel::ChannelQueryBuilder;
 use super::connection::{Connection, ConnectionQueryBuilder};
-use super::message_dispatch::{MessageDispatch, MessageDispatchQuery};
 use super::message_type::{MessageType, MessageTypeQueryBuilder};
 use super::schema::{Schema, SchemasQueryBuilder};
 use super::{business_unit::BusinessUnit, channel::Channel};

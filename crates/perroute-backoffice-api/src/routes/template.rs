@@ -62,10 +62,15 @@ impl TemplateRouter {
     ) -> SingleResult {
         let cmd = CreateTemplateCommandBuilder::default()
             .id(Id::new())
+            .schema_id(body.schema_id()?)
+            .dispatch_type(body.dispatch_type()?)
             .name(body.name()?)
             .subject(body.subject()?)
             .html(body.html()?)
             .text(body.text()?)
+            .priority(body.priority()?)
+            .start_at(body.start_at()?)
+            .end_at(body.end_at()?)
             .build()
             .unwrap();
         let template = state
@@ -96,6 +101,9 @@ impl TemplateRouter {
             .html(body.html()?)
             .text(body.text()?)
             .subject(body.subject()?)
+            .start_at(body.start_at()?)
+            .end_at(body.end_at()?)
+            .priority(body.priority()?)
             .build()
             .unwrap();
 

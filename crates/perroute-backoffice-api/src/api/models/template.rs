@@ -1,3 +1,4 @@
+use super::RestDateTime;
 use crate::api::response::CollectionResourceModel;
 use crate::api::response::Links;
 use crate::api::response::ResourceBuilder;
@@ -7,16 +8,23 @@ use crate::links::ResourceLink;
 use anyhow::Context;
 use anyhow::Result;
 use perroute_commons::types::id::Id;
+use perroute_commons::types::priority::Priority;
 use perroute_commons::types::template::TemplateSnippet;
 use perroute_commons::types::template::TemplateValidator;
+use perroute_commons::types::vars::Vars;
 use perroute_connectors::types::dispatch_type::DispatchType;
 use perroute_storage::models::template::Template;
 use serde::Serialize;
+use sqlx::types::chrono::NaiveDateTime;
+use std::borrow::Cow;
 use std::collections::HashMap;
+use std::str::FromStr;
 use validator::Validate;
+use validator::ValidationError;
 
 #[derive(Debug, serde::Deserialize, Clone, Validate, Default)]
 #[serde(default)]
+#[validate(schema(function = "validate_create_date_range"))]
 pub struct CreateTemplateRequest {
     #[validate(required)]
     #[validate(custom = "Id::validate")]
@@ -40,29 +48,59 @@ pub struct CreateTemplateRequest {
     text: Option<String>,
 
     vars: Option<HashMap<String, String>>,
+
+    #[validate(required)]
+    #[validate(custom = "super::RestDateTime::validate")]
+    start_at: Option<String>,
+
+    #[validate(custom = "super::RestDateTime::validate")]
+    end_at: Option<String>,
+
+    #[validate(required)]
+    #[validate(custom = "Priority::validate")]
+    priority: Option<i32>,
+}
+
+fn validate_create_date_range(req: &CreateTemplateRequest) -> Result<(), ValidationError> {
+    if let (Some(start_at), Some(end_at)) = (&req.start_at, &req.end_at) {
+        let start_at = RestDateTime::from_str(start_at)
+            .context("Invalid start_at")
+            .unwrap();
+        let end_at = RestDateTime::from_str(end_at)
+            .context("Invalid end_at")
+            .unwrap();
+
+        if start_at > end_at {
+            return Err(ValidationError {
+                code: Cow::Borrowed("dates"),
+                message: Some(Cow::Borrowed("Invalid date range")),
+                params: Default::default(),
+            });
+        }
+    }
+
+    Ok(())
 }
 
 impl CreateTemplateRequest {
     pub fn schema_id(&self) -> Result<Id> {
-        Ok(self
-            .schema_id
+        self.schema_id
             .clone()
             .context("missing schema id")?
             .try_into()
-            .context("invalid schema id")?)
+            .context("invalid schema id")
     }
 
     pub fn dispatch_type(&self) -> Result<DispatchType> {
-        Ok(self
-            .dispatch_type
+        self.dispatch_type
             .clone()
             .context("missing dispatch type")?
             .try_into()
-            .context("invalid dispatch type")?)
+            .context("invalid dispatch type")
     }
 
     pub fn name(&self) -> Result<String> {
-        Ok(self.name.clone().context("missing name")?)
+        self.name.clone().context("missing name")
     }
 
     pub fn subject(&self) -> Result<Option<TemplateSnippet>> {
@@ -76,10 +114,41 @@ impl CreateTemplateRequest {
     pub fn text(&self) -> Result<Option<TemplateSnippet>> {
         Ok(self.text.clone().map(Into::into))
     }
+
+    pub fn vars(&self) -> Result<Vars> {
+        Ok(self.vars.clone().unwrap_or_default().into())
+    }
+
+    pub fn priority(&self) -> Result<Priority> {
+        self.priority
+            .context("Missing priority")?
+            .try_into()
+            .context("Invalid priority")
+    }
+
+    pub fn start_at(&self) -> Result<NaiveDateTime> {
+        Ok(self
+            .start_at
+            .clone()
+            .context("Missing start_at")?
+            .parse::<RestDateTime>()
+            .context("Invalid start_at")?
+            .into())
+    }
+
+    pub fn end_at(&self) -> Result<Option<NaiveDateTime>> {
+        Ok(self
+            .end_at
+            .clone()
+            .map(|s| s.parse::<RestDateTime>().context("Invalid end_at"))
+            .transpose()?
+            .map(Into::into))
+    }
 }
 
 #[derive(Debug, serde::Deserialize, Clone, Validate, Default)]
 #[serde(default)]
+#[validate(schema(function = "validate_update_date_range"))]
 pub struct UpdateTemplateRequest {
     #[validate(custom = "perroute_commons::types::name::validate")]
     name: Option<String>,
@@ -104,6 +173,21 @@ pub struct UpdateTemplateRequest {
 
     vars: Option<HashMap<String, String>>,
     active: Option<bool>,
+
+    #[validate(required)]
+    #[validate(custom = "super::RestDateTime::validate")]
+    start_at: Option<String>,
+
+    #[serde(
+        default,                                    // <- important for deserialization
+        with = "::serde_with::rust::double_option",
+    )]
+    #[validate(custom = "super::RestDateTime::validate")]
+    end_at: Option<Option<String>>,
+
+    #[validate(required)]
+    #[validate(custom = "Priority::validate")]
+    priority: Option<i32>,
 }
 
 impl UpdateTemplateRequest {
@@ -124,8 +208,54 @@ impl UpdateTemplateRequest {
     }
 
     pub fn active(&self) -> Result<Option<bool>> {
-        Ok(self.active.clone())
+        Ok(self.active)
     }
+
+    pub fn priority(&self) -> Result<Option<Priority>> {
+        Ok(self.priority.map(|p| p.try_into()).transpose()?)
+    }
+
+    pub fn start_at(&self) -> Result<Option<NaiveDateTime>> {
+        Ok(self
+            .start_at
+            .clone()
+            .map(|s| RestDateTime::from_str(&s).context("Invalid start_at"))
+            .transpose()?
+            .map(Into::into))
+    }
+
+    pub fn end_at(&self) -> Result<Option<Option<NaiveDateTime>>> {
+        Ok(self
+            .text
+            .clone()
+            .map(|s| {
+                s.map(|s| RestDateTime::from_str(&s).context("Invalid end_at"))
+                    .transpose()
+            })
+            .transpose()?
+            .map(|s| s.map(Into::into)))
+    }
+}
+
+fn validate_update_date_range(req: &UpdateTemplateRequest) -> Result<(), ValidationError> {
+    if let (Some(start_at), Some(Some(end_at))) = (&req.start_at, &req.end_at) {
+        let start_at = RestDateTime::from_str(start_at)
+            .context("Invalid start_at")
+            .unwrap();
+        let end_at = RestDateTime::from_str(end_at)
+            .context("Invalid end_at")
+            .unwrap();
+
+        if start_at > end_at {
+            return Err(ValidationError {
+                code: Cow::Borrowed("dates"),
+                message: Some(Cow::Borrowed("Invalid date range")),
+                params: Default::default(),
+            });
+        }
+    }
+
+    Ok(())
 }
 
 #[derive(Debug, Serialize, Clone)]

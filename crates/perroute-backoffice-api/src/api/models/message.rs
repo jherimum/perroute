@@ -43,30 +43,26 @@ impl CreateMessageRequest {
     }
 
     pub fn business_unit_code(&self) -> Result<Code> {
-        Ok(self
-            .business_unit_code
+        self.business_unit_code
             .clone()
             .context("missing business unit code")?
             .try_into()
-            .context("invalid business unit code")?)
+            .context("invalid business unit code")
     }
 
     pub fn message_type_code(&self) -> Result<Code> {
-        Ok(self
-            .message_type_code
+        self.message_type_code
             .clone()
             .context("missing message type code")?
             .try_into()
-            .context("invalid message type code ")?)
+            .context("invalid message type code ")
     }
 
     pub fn schema_version(&self) -> Result<Version> {
-        Ok(self
-            .schema_version
-            .clone()
+        self.schema_version
             .context("missing schema version")?
             .try_into()
-            .context("invalid schema version")?)
+            .context("invalid schema version")
     }
 
     pub fn deliveries(&self) -> Result<HashSet<Delivery>> {

@@ -28,21 +28,19 @@ pub struct CreateRouteRequest {
 
 impl CreateRouteRequest {
     pub fn channel_id(&self) -> Result<Id> {
-        Ok(self
-            .channel_id
+        self.channel_id
             .clone()
             .context("missing channel id")?
             .try_into()
-            .context("invalid channel id")?)
+            .context("invalid channel id")
     }
 
     pub fn schema_id(&self) -> Result<Id> {
-        Ok(self
-            .schema_id
+        self.schema_id
             .clone()
             .context("missing schema id")?
             .try_into()
-            .context("invalid schema id")?)
+            .context("invalid schema id")
     }
 
     pub fn properties(&self) -> Result<Properties> {

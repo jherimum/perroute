@@ -7,7 +7,10 @@ use crate::{
 };
 use anyhow::Context;
 use async_trait::async_trait;
-use perroute_commons::types::{actor::Actor, id::Id, template::TemplateSnippet, vars::Vars};
+use chrono::NaiveDateTime;
+use perroute_commons::types::{
+    actor::Actor, id::Id, priority::Priority, template::TemplateSnippet, vars::Vars,
+};
 use perroute_connectors::types::dispatch_type::DispatchType;
 use perroute_storage::{
     models::{
@@ -28,7 +31,10 @@ command!(
     text: Option<TemplateSnippet>,
     dispatch_type: DispatchType,
     schema_id: Id,
-    vars: Vars
+    vars: Vars,
+    start_at: NaiveDateTime,
+    end_at: Option<NaiveDateTime>,
+    priority: Priority
 );
 into_event!(CreateTemplateCommand);
 
@@ -71,11 +77,14 @@ impl CommandHandler for CreateTemplateCommandHandler {
             .subject(cmd.subject)
             .text(cmd.text)
             .html(cmd.html)
-            .active(if exists_any { false } else { true })
+            .active(!exists_any)
             .business_unit_id(*schema.business_unit_id())
             .dispatch_type(cmd.dispatch_type)
             .message_type_id(*schema.message_type_id())
             .vars(cmd.vars)
+            .start_at(cmd.start_at)
+            .end_at(cmd.end_at)
+            .priority(cmd.priority)
             .build()
             .context("Failed to build template")?
             .save(ctx.pool())

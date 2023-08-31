@@ -29,30 +29,23 @@ pub struct CreateConnectionRequest {
 
 impl CreateConnectionRequest {
     pub fn plugin_id(&self) -> Result<ConnectorPluginId> {
-        Ok(self
-            .plugin_id
+        self.plugin_id
             .clone()
             .context("Missing plugin id")?
             .try_into()
-            .context("Invalid plugin id")?)
+            .context("Invalid plugin id")
     }
 
     pub fn name(&self) -> Result<String> {
-        Ok(self
-            .name
-            .clone()
-            .context("Missing name")?
-            .try_into()
-            .context("Invalid name")?)
+        self.name.clone().context("Missing name")
     }
 
     pub fn properties(&self) -> Result<Properties> {
-        Ok(self
-            .properties
+        self.properties
             .clone()
             .context("Missing properties")?
             .try_into()
-            .context("Invalid properties")?)
+            .context("Invalid properties")
     }
 }
 
