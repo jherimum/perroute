@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use crate::{
     api::response::{CollectionResourceModel, Links, ResourceBuilder, SingleResourceModel},
     links::{Linkrelation, ResourceLink},
@@ -9,6 +7,7 @@ use perroute_commons::types::{id::Id, json_schema::JsonSchema, vars::Vars};
 use perroute_storage::models::schema::Schema;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::collections::HashMap;
 use validator::Validate;
 
 #[derive(Debug, Deserialize, Validate, Default)]

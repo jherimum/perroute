@@ -13,9 +13,10 @@ use crate::{
     W,
 };
 use actix_web::{
-    web::{Data, Json, Path},
+    web::{Data, Path},
     HttpResponse,
 };
+use actix_web_validator::Json;
 use anyhow::Context;
 use perroute_commons::{new_id, types::id::Id};
 use perroute_cqrs::command_bus::handlers::channel::{

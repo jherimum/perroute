@@ -10,7 +10,8 @@ use crate::{
     extractors::actor::ActorExtractor,
     links::ResourceLink,
 };
-use actix_web::web::{Data, Json, Path};
+use actix_web::web::{Data, Path};
+use actix_web_validator::Json;
 use perroute_commons::types::{actor::Actor, id::Id};
 use perroute_cqrs::{
     command_bus::handlers::template::{

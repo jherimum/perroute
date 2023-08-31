@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use crate::api::response::CollectionResourceModel;
 use crate::api::response::Links;
 use crate::api::response::ResourceBuilder;
@@ -14,6 +12,7 @@ use perroute_commons::types::template::TemplateValidator;
 use perroute_connectors::types::dispatch_type::DispatchType;
 use perroute_storage::models::template::Template;
 use serde::Serialize;
+use std::collections::HashMap;
 use validator::Validate;
 
 #[derive(Debug, serde::Deserialize, Clone, Validate, Default)]
@@ -140,8 +139,8 @@ pub struct TemplateResource {
     pub active: bool,
 }
 
-impl From<Template> for TemplateResource {
-    fn from(template: Template) -> Self {
+impl From<&Template> for TemplateResource {
+    fn from(template: &Template) -> Self {
         Self {
             id: template.id().into(),
             name: template.name().into(),
@@ -157,7 +156,7 @@ impl From<Template> for TemplateResource {
 impl ResourceBuilder<SingleResourceModel<TemplateResource>> for Template {
     fn build(&self, req: &actix_web::HttpRequest) -> SingleResourceModel<TemplateResource> {
         SingleResourceModel {
-            data: Some(TemplateResource::from(self.clone())),
+            data: Some(TemplateResource::from(self)),
             links: Links::default()
                 .add(
                     Linkrelation::Schema,
