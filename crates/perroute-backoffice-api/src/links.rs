@@ -54,6 +54,12 @@ pub enum Linkrelation {
 
     #[serde(rename = "channels")]
     Channels,
+
+    #[serde(rename = "template")]
+    Template,
+
+    #[serde(rename = "templates")]
+    Templates,
 }
 
 #[derive(Debug, Serialize, Clone)]

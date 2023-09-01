@@ -1,12 +1,10 @@
 use crate::{
     api::{
-        models::{
-            channel::{ChannelResource, CreateChannelRequest, UpdateChannelRequest},
-            SingleIdPath,
-        },
+        models::channel::{ChannelResource, CreateChannelRequest, UpdateChannelRequest},
         response::{
             ApiResponse, ApiResult, CollectionResourceModel, EmptyApiResult, SingleResourceModel,
         },
+        types::SingleIdPath,
     },
     app::AppState,
     extractors::actor::ActorExtractor,

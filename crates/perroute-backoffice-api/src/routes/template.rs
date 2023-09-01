@@ -92,12 +92,8 @@ impl TemplateRouter {
         path: Path<Id>,
         Json(body): Json<UpdateTemplateRequest>,
     ) -> SingleResult {
-        let template = Self::retrieve_template(state.query_bus(), &actor, *path.as_ref(), identity)
-            .await
-            .unwrap();
-
         let cmd = UpdateTemplateCommandBuilder::default()
-            .id(*template.id())
+            .id(path.into_inner())
             .name(body.name()?)
             .html(body.html()?)
             .text(body.text()?)

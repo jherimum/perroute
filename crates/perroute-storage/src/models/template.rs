@@ -243,20 +243,4 @@ impl Template {
             .tap_err(log_query_error!())
             .map(|result| result.rows_affected())?)
     }
-
-    pub async fn inactivate_all<'e, E: PgExecutor<'e>>(
-        exec: E,
-        schema_id: Id,
-        dispatch_type: DispatchType,
-    ) -> Result<u64> {
-        Ok(sqlx::query(
-            "UPDATE templates SET active = false WHERE schema_id = $1 AND dispatch_type = $2",
-        )
-        .bind(schema_id)
-        .bind(dispatch_type)
-        .execute(exec)
-        .await
-        .tap_err(log_query_error!())
-        .map(|result| result.rows_affected())?)
-    }
 }

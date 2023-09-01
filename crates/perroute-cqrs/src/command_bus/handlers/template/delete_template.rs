@@ -46,30 +46,10 @@ impl CommandHandler for DeleteTemplateCommandHandler {
             .tap_err(|e| tracing::error!("Failed to retrieve template:{e}"))?
             .ok_or(DeleteTemplateError::TemplateNotFound(cmd.id))?;
 
-        let deleted = template
+        Ok(template
             .clone()
             .delete(ctx.tx())
             .await
-            .tap_err(|e| tracing::error!("Failed to delete template:{e}"))?;
-
-        if *template.active() {
-            let first_left_template = Template::find(
-                ctx.tx(),
-                TemplatesQuery::with_schema_id_and_dispatch_type(
-                    *template.schema_id(),
-                    *template.dispatch_type(),
-                ),
-            )
-            .await
-            .tap_err(|e| tracing::error!("Failed to retrieve template: {e}"))?;
-
-            if let Some(temp) = first_left_template {
-                temp.set_active(true)
-                    .update(ctx.tx())
-                    .await
-                    .tap_err(|e| tracing::error!("Failed to update template: {e}"))?;
-            };
-        }
-        Ok(deleted)
+            .tap_err(|e| tracing::error!("Failed to delete template:{e}"))?)
     }
 }

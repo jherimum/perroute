@@ -72,16 +72,6 @@ impl CommandHandler for UpdateTemplateCommandHandler {
         }
 
         if let Some(active) = cmd.active {
-            if active {
-                Template::inactivate_all(
-                    ctx.tx(),
-                    *actual_template.schema_id(),
-                    *actual_template.dispatch_type(),
-                )
-                .await
-                .tap_err(|e| tracing::error!("Failed to inactivate all templates:{e}"))?;
-            }
-
             actual_template = actual_template.set_active(active);
         }
 

@@ -1,8 +1,8 @@
-use super::RestDateTime;
 use crate::api::response::CollectionResourceModel;
 use crate::api::response::Links;
 use crate::api::response::ResourceBuilder;
 use crate::api::response::SingleResourceModel;
+use crate::api::types::RestDateTime;
 use crate::links::Linkrelation;
 use crate::links::ResourceLink;
 use anyhow::Context;
@@ -50,10 +50,10 @@ pub struct CreateTemplateRequest {
     vars: Option<HashMap<String, String>>,
 
     #[validate(required)]
-    #[validate(custom = "super::RestDateTime::validate")]
+    #[validate(custom = "RestDateTime::validate")]
     start_at: Option<String>,
 
-    #[validate(custom = "super::RestDateTime::validate")]
+    #[validate(custom = "RestDateTime::validate")]
     end_at: Option<String>,
 
     #[validate(required)]
@@ -175,14 +175,14 @@ pub struct UpdateTemplateRequest {
     active: Option<bool>,
 
     #[validate(required)]
-    #[validate(custom = "super::RestDateTime::validate")]
+    #[validate(custom = "RestDateTime::validate")]
     start_at: Option<String>,
 
     #[serde(
         default,                                    // <- important for deserialization
         with = "::serde_with::rust::double_option",
     )]
-    #[validate(custom = "super::RestDateTime::validate")]
+    #[validate(custom = "RestDateTime::validate")]
     end_at: Option<Option<String>>,
 
     #[validate(required)]
@@ -288,6 +288,8 @@ impl ResourceBuilder<SingleResourceModel<TemplateResource>> for Template {
         SingleResourceModel {
             data: Some(TemplateResource::from(self)),
             links: Links::default()
+                .add(Linkrelation::Self_, ResourceLink::Template(*self.id()))
+                .add(Linkrelation::Templates, ResourceLink::Templates)
                 .add(
                     Linkrelation::Schema,
                     ResourceLink::Schema(*self.schema_id()),

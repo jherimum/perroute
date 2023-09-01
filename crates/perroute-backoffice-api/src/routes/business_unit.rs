@@ -1,14 +1,12 @@
 use crate::{
     api::{
-        models::{
-            business_unit::{
-                BusinessUnitResource, CreateBusinessUnitRequest, UpdateBusinessUnitRequest,
-            },
-            SingleIdPath,
+        models::business_unit::{
+            BusinessUnitResource, CreateBusinessUnitRequest, UpdateBusinessUnitRequest,
         },
         response::{
             ApiResponse, ApiResult, CollectionResourceModel, EmptyApiResult, SingleResourceModel,
         },
+        types::SingleIdPath,
     },
     app::AppState,
     error::ApiError,
@@ -38,7 +36,9 @@ use perroute_cqrs::{
         find_business_unit::{
             FindBusinessUnitQuery, FindBusinessUnitQueryBuilder, FindBusinessUnitQueryHandler,
         },
-        query_business_units::{QueryBusinessUnitsQueryBuilder, QueryBusinessUnitsQueryHandler},
+        query_business_units::{
+            QueryBusinessUnitsQuery, QueryBusinessUnitsQueryBuilder, QueryBusinessUnitsQueryHandler,
+        },
     },
 };
 use tap::TapFallible;
@@ -60,13 +60,13 @@ impl TryInto<CreateBusinessUnitCommand> for CreateBusinessUnitRequest {
     }
 }
 
-impl TryInto<UpdateBusinessUnitCommand> for W<(SingleIdPath, UpdateBusinessUnitRequest)> {
+impl TryInto<UpdateBusinessUnitCommand> for W<(Path<SingleIdPath>, UpdateBusinessUnitRequest)> {
     type Error = anyhow::Error;
 
     fn try_into(self) -> Result<UpdateBusinessUnitCommand, Self::Error> {
         let w = self.into_inner();
         Ok(UpdateBusinessUnitCommandBuilder::default()
-            .business_unit_id(w.0.try_into()?)
+            .business_unit_id(w.0.into_inner().try_into()?)
             .name(w.1.name())
             .vars(w.1.vars().map(Into::into))
             .build()
@@ -74,25 +74,35 @@ impl TryInto<UpdateBusinessUnitCommand> for W<(SingleIdPath, UpdateBusinessUnitR
     }
 }
 
-impl TryInto<FindBusinessUnitQuery> for SingleIdPath {
+impl TryInto<FindBusinessUnitQuery> for W<Path<SingleIdPath>> {
     type Error = anyhow::Error;
 
     fn try_into(self) -> Result<FindBusinessUnitQuery, Self::Error> {
         Ok(FindBusinessUnitQueryBuilder::default()
-            .id(self.try_into()?)
+            .id(self.into_inner().into_inner().try_into()?)
             .build()
             .tap_err(|e| tracing::error!("Failed to build FindBusinessUnitByCodeQuery: {e}"))?)
     }
 }
 
-impl TryInto<DeleteBusinessUnitCommand> for SingleIdPath {
+impl TryInto<DeleteBusinessUnitCommand> for W<Path<SingleIdPath>> {
     type Error = anyhow::Error;
 
     fn try_into(self) -> Result<DeleteBusinessUnitCommand, Self::Error> {
         Ok(DeleteBusinessUnitCommandBuilder::default()
-            .business_unit_id(self.try_into()?)
+            .business_unit_id(self.into_inner().into_inner().try_into()?)
             .build()
             .tap_err(|e| tracing::error!("Failed to build DeleteBusinessUnitCommand: {e}"))?)
+    }
+}
+
+impl TryInto<QueryBusinessUnitsQuery> for W<()> {
+    type Error = anyhow::Error;
+
+    fn try_into(self) -> Result<QueryBusinessUnitsQuery, Self::Error> {
+        Ok(QueryBusinessUnitsQueryBuilder::default()
+            .build()
+            .tap_err(|e| tracing::error!("Failed to build QueryBusinessUnitsQuery: {e}"))?)
     }
 }
 
@@ -124,7 +134,7 @@ impl BusinessUnitRouter {
     ) -> SingleResult {
         Ok(state
             .query_bus()
-            .execute::<_, FindBusinessUnitQueryHandler, _>(&actor, &path.into_inner().try_into()?)
+            .execute::<_, FindBusinessUnitQueryHandler, _>(&actor, &W(path).try_into()?)
             .await
             .tap_err(|e| tracing::error!("Failed to retrieve business unit: {e}"))
             .map(ApiResponse::ok)?)
@@ -135,13 +145,9 @@ impl BusinessUnitRouter {
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
     ) -> CollectionResult {
-        let query = QueryBusinessUnitsQueryBuilder::default()
-            .build()
-            .tap_err(|e| tracing::error!("Failed to build QueryBusinessUnitsQuery: {e}"))
-            .map_err(anyhow::Error::from)?;
         state
             .query_bus()
-            .execute::<_, QueryBusinessUnitsQueryHandler, _>(&actor, &query)
+            .execute::<_, QueryBusinessUnitsQueryHandler, _>(&actor, &W(()).try_into()?)
             .await
             .tap_err(|e| tracing::error!("Failed to query business units: {e}"))
             .map(ApiResponse::ok)
@@ -157,10 +163,7 @@ impl BusinessUnitRouter {
     ) -> SingleResult {
         Ok(state
             .command_bus()
-            .execute::<_, UpdateBusinessUnitCommandHandler, _>(
-                &actor,
-                &W((path.into_inner(), body)).try_into()?,
-            )
+            .execute::<_, UpdateBusinessUnitCommandHandler, _>(&actor, &W((path, body)).try_into()?)
             .await
             .tap_err(|e| tracing::error!("Failed to update BusinessUnit: {e}"))
             .map(ApiResponse::ok)?)
@@ -174,10 +177,7 @@ impl BusinessUnitRouter {
     ) -> EmptyApiResult {
         Ok(state
             .command_bus()
-            .execute::<_, DeleteBusinessUnitCommandHandler, _>(
-                &actor,
-                &path.into_inner().try_into()?,
-            )
+            .execute::<_, DeleteBusinessUnitCommandHandler, _>(&actor, &W(path).try_into()?)
             .await
             .tap_err(|e: &perroute_cqrs::command_bus::error::CommandBusError| {
                 tracing::error!("Failed to delete Business unit: {e}");

@@ -15,7 +15,7 @@ use perroute_connectors::types::dispatch_type::DispatchType;
 use perroute_storage::{
     models::{
         schema::{Schema, SchemasQuery},
-        template::{Template, TemplateBuilder, TemplatesQuery},
+        template::{Template, TemplateBuilder},
     },
     query::FetchableModel,
 };
@@ -64,13 +64,6 @@ impl CommandHandler for CreateTemplateCommandHandler {
             .tap_err(|e| tracing::error!("Failed to retrieve schema: {e}"))?
             .ok_or(CreateTemplateError::SchemaNotFound(cmd.schema_id))?;
 
-        let exists_any = Template::exists(
-            ctx.pool(),
-            TemplatesQuery::with_schema_id_and_dispatch_type(cmd.schema_id, cmd.dispatch_type),
-        )
-        .await
-        .tap_err(|e| tracing::error!("Failed to check if exists template:{e}"))?;
-
         Ok(TemplateBuilder::default()
             .schema_id(cmd.schema_id)
             .id(cmd.id)
@@ -78,7 +71,7 @@ impl CommandHandler for CreateTemplateCommandHandler {
             .subject(cmd.subject)
             .text(cmd.text)
             .html(cmd.html)
-            .active(!exists_any)
+            .active(false)
             .business_unit_id(*schema.business_unit_id())
             .dispatch_type(cmd.dispatch_type)
             .message_type_id(*schema.message_type_id())

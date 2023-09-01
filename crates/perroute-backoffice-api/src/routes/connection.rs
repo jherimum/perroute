@@ -1,12 +1,12 @@
 use crate::{
     api::{
-        models::{
-            connection::{ConnectionResource, CreateConnectionRequest, UpdateConnectionRequest},
-            SingleIdPath,
+        models::connection::{
+            ConnectionResource, CreateConnectionRequest, UpdateConnectionRequest,
         },
         response::{
             ApiResponse, ApiResult, CollectionResourceModel, EmptyApiResult, SingleResourceModel,
         },
+        types::SingleIdPath,
     },
     app::AppState,
     extractors::actor::ActorExtractor,
