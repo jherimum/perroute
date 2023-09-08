@@ -24,4 +24,6 @@ pub enum QueryType {
 
     QueryApiKeys,
     FindApiKey,
+
+    PendingEvents,
 }

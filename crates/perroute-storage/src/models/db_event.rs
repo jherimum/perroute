@@ -32,11 +32,17 @@ impl From<&Event> for DbEvent {
 #[setters(prefix = "set_")]
 #[setters(into)]
 pub struct DbEvent {
+    #[setters(skip)]
     id: Id,
+    #[setters(skip)]
     entity_id: Id,
+    #[setters(skip)]
     event_type: EventType,
+    #[setters(skip)]
     created_at: NaiveDateTime,
+    #[setters(skip)]
     scheduled_to: NaiveDateTime,
+
     #[builder(default)]
     consumed_at: Option<NaiveDateTime>,
 }

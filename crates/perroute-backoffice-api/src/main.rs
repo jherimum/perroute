@@ -11,11 +11,12 @@ async fn main() -> Result<()> {
     init_tracing();
     let settings =
         Settings::load().tap_err(|e| tracing::error!("Error loading settings. Error: {e}"))?;
+
     let application = Application::build(&settings).await.unwrap();
     let application_task = tokio::spawn(application.run());
 
     tokio::select! {
-        o = application_task => report_exit("API", o),
+        o = application_task => report_exit("Api", o),
     };
     Ok(())
 }

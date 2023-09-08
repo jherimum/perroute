@@ -1,20 +1,17 @@
 [package]
-name = "perroute-backoffice-api"
+name = "perroute-scheduler"
 version = "0.1.0"
 edition = "2021"
 
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-perroute-cqrs = { path = "../../crates/perroute-cqrs" }
 perroute-storage = { path = "../../crates/perroute-storage" }
 perroute-commons = { path = "../../crates/perroute-commons" }
-perroute-connectors = { path = "../../crates/perroute-connectors" }
 perroute-messaging = { path = "../../crates/perroute-messaging" }
 
 
-actix-web = { workspace = true }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
-dotenv = { workspace = true }
 anyhow = { workspace = true }
 tap = { workspace = true }
 tracing = { workspace = true }
@@ -23,24 +20,11 @@ thiserror = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 derive-getters = { workspace = true }
-tracing-actix-web = { workspace = true }
-url = { workspace = true, features = ["serde"] }
 strum = { workspace = true, features = ["derive"] }
 strum_macros = { workspace = true }
 sqlx = { workspace = true, features = ["postgres", "runtime-tokio-rustls"] }
-futures = { workspace = true }
-http = { workspace = true }
-validator = { workspace = true, features = ["derive"] }
-actix-web-validator = { workspace = true }
-serde_with = { workspace = true, features = ["json"] }
+tokio-cron-scheduler = { workspace = true, features = ["signal"] }
 chrono = { workspace = true }
 async-trait = { workspace = true }
-
-[dev-dependencies]
-reqwest = { version = "0.11.18", features = [
-    "json",
-    "native-tls",
-    "gzip",
-    "multipart",
-] }
-tracing-test = { workspace = true }
+cron = { workspace = true }
+dotenv = { workspace = true }

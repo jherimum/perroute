@@ -4,7 +4,6 @@ members = [
     # runnable applications    
     "crates/perroute-backoffice-api",
     "crates/perroute-events",
-    "crates/perroute-dispatcher",
 
     # dependent library crates
     "crates/perroute-cqrs",
@@ -12,6 +11,7 @@ members = [
     "crates/perroute-connectors",
     "crates/perroute-commons",
     "crates/perroute-messaging",
+    "crates/perroute-scheduler",
 
 ]
 
@@ -60,6 +60,9 @@ derive_setters = "0.1"
 validator = "0.16"
 actix-web-validator = "5"
 serde_with = "3"
+tokio-cron-scheduler = "0.9.4"
+tracing-test = "0.2"
+cron = "0.12"
 
 [profile.release]
 strip = true

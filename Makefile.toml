@@ -11,9 +11,9 @@ command = "cargo"
 args = ["watch", "-x", "clippy", "-x", "run | bunyan"]
 dependencies = ["postgres", "rabbitmq"]
 
-[tasks.dev-events]
+[tasks.dev-scheduler]
 install_crate = "cargo-watch"
-cwd = "./crates/perroute-events"
+cwd = "./crates/perroute-scheduler"
 command = "cargo"
 args = ["watch", "-x", "clippy", "-x", "run | bunyan"]
 dependencies = ["postgres", "rabbitmq"]
