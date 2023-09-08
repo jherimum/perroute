@@ -3,7 +3,7 @@ resolver = "2"
 members = [
     # runnable applications    
     "crates/perroute-backoffice-api",
-    "crates/perroute-events",
+    "crates/perroute-scheduler",
 
     # dependent library crates
     "crates/perroute-cqrs",
@@ -11,7 +11,7 @@ members = [
     "crates/perroute-connectors",
     "crates/perroute-commons",
     "crates/perroute-messaging",
-    "crates/perroute-scheduler",
+
 
 ]
 
@@ -63,6 +63,7 @@ serde_with = "3"
 tokio-cron-scheduler = "0.9.4"
 tracing-test = "0.2"
 cron = "0.12"
+log = "0.4"
 
 [profile.release]
 strip = true

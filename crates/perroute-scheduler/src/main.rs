@@ -1,6 +1,9 @@
 use perroute_commons::{configuration::settings::Settings, tracing::init_tracing};
+use perroute_messaging::rabbitmq::{connection::RecoverableConnection, RabbitmqEventPublisher};
 use perroute_scheduler::event_pooling::EventPooling;
-use perroute_storage::connection_manager::ConnectionManager;
+use perroute_storage::{connection_manager::ConnectionManager, error::StorageError};
+use sqlx::PgPool;
+use std::sync::Arc;
 use tap::TapFallible;
 use tokio_cron_scheduler::{Job, JobScheduler};
 
@@ -11,17 +14,18 @@ async fn main() -> Result<(), anyhow::Error> {
     let settings =
         Settings::load().tap_err(|e| tracing::error!("Error loading settings. Error: {e}"))?;
 
-    let pool = ConnectionManager::build_pool(&settings.database)
-        .await
-        .tap_err(|e| tracing::error!("Failed to build connection poll:{e}"))?;
-
-    let event_pooling_job: Job = EventPooling::new(pool.clone(), 10, "1/1 * * * * *".to_string())
-        .try_into()
-        .tap_err(|e| tracing::error!("Failed to build event pooling job: {e}"))?;
+    let publisher = build_publisher(&settings).await?;
+    let pool = build_pool(&settings).await?;
 
     let mut sched = JobScheduler::new()
         .await
         .tap_err(|e| tracing::error!("Failed to build scheduler: {e}"))?;
+
+    let event_pooling_job: Job =
+        EventPooling::new(pool.clone(), 10, "1/3 * * * * *".to_string(), publisher)
+            .await
+            .try_into()
+            .tap_err(|e| tracing::error!("Failed to build event pooling job: {e}"))?;
 
     sched.shutdown_on_ctrl_c();
     sched.set_shutdown_handler(Box::new(|| {
@@ -43,4 +47,21 @@ async fn main() -> Result<(), anyhow::Error> {
         tracing::info!("I'm alive!");
         tokio::time::sleep(tokio::time::Duration::from_secs(60)).await;
     }
+}
+
+async fn build_publisher(
+    settings: &Settings,
+) -> Result<Arc<RabbitmqEventPublisher>, anyhow::Error> {
+    let rabbitmq_conn = RecoverableConnection::connect(settings.into()).await?;
+    Ok(Arc::new(
+        RabbitmqEventPublisher::new(rabbitmq_conn, "perroute.events", true)
+            .await
+            .unwrap(),
+    ))
+}
+
+async fn build_pool(settings: &Settings) -> Result<PgPool, StorageError> {
+    ConnectionManager::build_pool(&settings.database)
+        .await
+        .tap_err(|e| tracing::error!("Failed to build connection poll:{e}"))
 }

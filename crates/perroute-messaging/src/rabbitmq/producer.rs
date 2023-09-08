@@ -1,4 +1,4 @@
-use crate::connection::RecoverableConnection;
+use super::{connection::RecoverableConnection, RoutingKey};
 use lapin::{options::ConfirmSelectOptions, Channel};
 use serde::Serialize;
 use std::{fmt::Debug, sync::Arc};
@@ -16,22 +16,22 @@ pub enum ProducerError {
 }
 
 #[derive(Debug, Clone)]
-pub struct Producer<'c> {
-    connection: &'c RecoverableConnection,
+pub struct Producer {
+    connection: RecoverableConnection,
     channel: Arc<RwLock<Channel>>,
     exchange: String,
     confirm_select: bool,
 }
 
-impl<'c> Producer<'c> {
+impl Producer {
     pub async fn new(
-        conn: &'c RecoverableConnection,
+        conn: RecoverableConnection,
         exchange: &str,
         confirm_select: bool,
-    ) -> Result<Producer<'c>, ProducerError> {
+    ) -> Result<Producer, ProducerError> {
         Ok(Self {
             channel: Arc::new(RwLock::new(
-                Self::create_channel(conn, confirm_select)
+                Self::create_channel(&conn, confirm_select)
                     .await
                     .tap_err(|e| tracing::error!("Failed to create channel: {e}"))?,
             )),
@@ -60,7 +60,7 @@ impl<'c> Producer<'c> {
 
     async fn recreate_channel(&self) -> Result<(), lapin::Error> {
         let mut channel = self.channel.write().await;
-        *channel = Self::create_channel(self.connection, self.confirm_select)
+        *channel = Self::create_channel(&self.connection, self.confirm_select)
             .await
             .tap_err(|e| tracing::error!("Failed to recreate channel: {e}"))?;
         Ok(())
@@ -70,14 +70,14 @@ impl<'c> Producer<'c> {
         &self,
         channel: &Channel,
         message: &M,
-        routing_key: Option<&str>,
+        routing_key: Option<RoutingKey>,
     ) -> Result<(), ProducerError> {
         let json = serde_json::to_string(&message)
             .tap_err(|e| tracing::error!("Failed to serialize message: {e}"))?;
         match channel
             .basic_publish(
                 &self.exchange,
-                routing_key.unwrap_or(""),
+                routing_key.as_ref().map(|r| r.as_ref()).unwrap_or(""),
                 lapin::options::BasicPublishOptions::default(),
                 json.as_bytes(),
                 lapin::BasicProperties::default(),
@@ -103,7 +103,7 @@ impl<'c> Producer<'c> {
     pub async fn send<M: Serialize + Debug + Send>(
         &self,
         message: &M,
-        routing_key: Option<&str>,
+        routing_key: Option<RoutingKey>,
     ) -> Result<(), ProducerError> {
         {
             let channel = self.channel.read().await;

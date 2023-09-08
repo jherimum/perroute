@@ -1,7 +1,6 @@
-use crate::{
-    connection::{RecoverableChannel, RecoverableConnection},
-    events::Event,
-};
+use crate::events::Event;
+
+use super::connection::{RecoverableChannel, RecoverableConnection};
 use futures::StreamExt;
 use lapin::{
     options::{BasicAckOptions, BasicConsumeOptions, QueueBindOptions, QueueDeclareOptions},

@@ -1,11 +1,13 @@
+use log::LevelFilter;
 use perroute_commons::configuration::settings::DatabaseSettings;
 use secrecy::ExposeSecret;
 use sqlx::{
     postgres::{PgConnectOptions, PgPoolOptions, PgSslMode},
-    Connection as SqlxConn, PgConnection, PgPool,
+    ConnectOptions, Connection as SqlxConn, PgConnection, PgPool,
 };
 use std::time::Duration;
 use tap::TapFallible;
+use tracing::Level;
 
 use crate::{error::StorageError, Result};
 
@@ -66,12 +68,16 @@ impl ConnectionManager {
         } else {
             PgSslMode::Prefer
         };
-        PgConnectOptions::new()
+        let mut opt = PgConnectOptions::new()
             .host(&database_settings.host)
             .username(&database_settings.username)
             .password(database_settings.password.expose_secret())
             .port(database_settings.port)
             .ssl_mode(ssl_mode)
-            .database(&database_settings.database_name)
+            .database(&database_settings.database_name);
+
+        opt.disable_statement_logging();
+
+        opt
     }
 }

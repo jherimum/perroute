@@ -3,6 +3,7 @@ use lapin::{
     types::FieldTable,
     Channel, Connection, ConnectionProperties, Queue,
 };
+use perroute_commons::configuration::settings::Settings;
 use std::{fmt::Debug, sync::Arc, time::Duration};
 use tap::TapFallible;
 use tokio::{
@@ -17,6 +18,16 @@ pub enum ConnectionError {
 
     #[error(transparent)]
     ConnectionTimeout(#[from] Elapsed),
+}
+
+impl From<&Settings> for Config {
+    fn from(value: &Settings) -> Self {
+        Self {
+            uri: value.rabbitmq.as_ref().unwrap().uri.clone(),
+            time_out: Duration::from_secs(20),
+            retry_delay: Duration::from_secs(1),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
