@@ -1,5 +1,5 @@
 use self::{connection::RecoverableConnection, producer::Producer};
-use crate::{events::Event, EventPublisher, EventPublisherError};
+use crate::events::{Event, EventPublisher, EventPublisherError};
 use anyhow::anyhow;
 
 pub mod connection;

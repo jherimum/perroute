@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{fmt::Debug, str::FromStr};
 
 use derive_getters::Getters;
 use perroute_commons::types::id::Id;
@@ -11,6 +11,15 @@ use sqlx::{
     Decode, Encode, Postgres, Type,
 };
 use strum_macros::{Display, EnumString};
+
+#[derive(Debug, thiserror::Error)]
+#[error(transparent)]
+pub struct EventPublisherError(#[from] anyhow::Error);
+
+#[async_trait::async_trait]
+pub trait EventPublisher: Debug + Clone {
+    async fn publish(&self, event: &Event) -> Result<(), EventPublisherError>;
+}
 
 pub trait IntoEvent {
     fn into_event(&self) -> Option<Event>;

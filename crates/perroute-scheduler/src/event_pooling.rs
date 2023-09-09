@@ -1,5 +1,5 @@
 use chrono::Utc;
-use perroute_messaging::{EventPublisher, EventPublisherError};
+use perroute_messaging::events::{EventPublisher, EventPublisherError};
 use perroute_storage::{error::StorageError, models::db_event::DbEvent};
 use sqlx::PgPool;
 use std::{fmt::Debug, sync::Arc};
@@ -78,7 +78,7 @@ impl<P: EventPublisher> EventPooling<P> {
 
             match self.publish_event(&event).await {
                 Ok(_) => {
-                    tracing::info!("Event {} published. Commiting ", event.id());
+                    tracing::info!("Event {} published. Commiting...", event.id());
                     tx.commit()
                         .await
                         .tap_err(|e| {
