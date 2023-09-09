@@ -24,3 +24,8 @@ futures = { workspace = true }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 rand = { workspace = true }
 tracing = { workspace = true }
+async-recursion = { workspace = true }
+
+
+[dev-dependencies]
+tracing-test = { workspace = true, features = ["no-env-filter"] }

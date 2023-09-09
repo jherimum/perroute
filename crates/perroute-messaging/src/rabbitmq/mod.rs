@@ -1,4 +1,6 @@
-use self::{connection::RecoverableConnection, producer::Producer};
+use std::sync::Arc;
+
+use self::{connection::RabbitmqConnection, producer::Producer};
 use crate::events::{Event, EventPublisher, EventPublisherError};
 use anyhow::anyhow;
 
@@ -22,17 +24,13 @@ impl From<&Event> for RoutingKey {
 
 #[derive(Clone, Debug)]
 pub struct RabbitmqEventPublisher {
-    producer: producer::Producer,
+    producer: Arc<producer::Producer>,
 }
 
 impl RabbitmqEventPublisher {
-    pub async fn new(
-        conn: RecoverableConnection,
-        exchange: &str,
-        confirm_select: bool,
-    ) -> Result<Self, anyhow::Error> {
+    pub async fn new(conn: RabbitmqConnection) -> Result<RabbitmqEventPublisher, anyhow::Error> {
         Ok(Self {
-            producer: Producer::new(conn, exchange, confirm_select).await.unwrap(),
+            producer: Arc::new(Producer::new(conn, "perroute.events", true).await.unwrap()),
         })
     }
 }

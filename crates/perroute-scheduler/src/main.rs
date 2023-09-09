@@ -1,9 +1,8 @@
 use perroute_commons::{configuration::settings::Settings, tracing::init_tracing};
-use perroute_messaging::rabbitmq::{connection::RecoverableConnection, RabbitmqEventPublisher};
+use perroute_messaging::rabbitmq::{connection::RabbitmqConnection, RabbitmqEventPublisher};
 use perroute_scheduler::event_pooling::EventPooling;
 use perroute_storage::{connection_manager::ConnectionManager, error::StorageError};
 use sqlx::PgPool;
-use std::sync::Arc;
 use tap::TapFallible;
 use tokio_cron_scheduler::{Job, JobScheduler};
 
@@ -14,7 +13,7 @@ async fn main() -> Result<(), anyhow::Error> {
     let settings =
         Settings::load().tap_err(|e| tracing::error!("Error loading settings. Error: {e}"))?;
 
-    let publisher = build_publisher(&settings).await?;
+    let publisher: RabbitmqEventPublisher = build_publisher(&settings).await?;
     let pool = build_pool(&settings).await?;
 
     let mut sched = JobScheduler::new()
@@ -49,15 +48,9 @@ async fn main() -> Result<(), anyhow::Error> {
     }
 }
 
-async fn build_publisher(
-    settings: &Settings,
-) -> Result<Arc<RabbitmqEventPublisher>, anyhow::Error> {
-    let rabbitmq_conn = RecoverableConnection::connect(settings.into()).await?;
-    Ok(Arc::new(
-        RabbitmqEventPublisher::new(rabbitmq_conn, "perroute.events", true)
-            .await
-            .unwrap(),
-    ))
+async fn build_publisher(settings: &Settings) -> Result<RabbitmqEventPublisher, anyhow::Error> {
+    let rabbitmq_conn = RabbitmqConnection::connect(settings.into()).await?;
+    Ok(RabbitmqEventPublisher::new(rabbitmq_conn).await.unwrap())
 }
 
 async fn build_pool(settings: &Settings) -> Result<PgPool, StorageError> {

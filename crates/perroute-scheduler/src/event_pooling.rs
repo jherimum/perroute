@@ -21,12 +21,12 @@ pub struct EventPooling<P> {
     pool: PgPool,
     batch_size: i64,
     cron: String,
-    publisher: Arc<P>,
+    publisher: P,
     semaphore: Arc<Semaphore>,
 }
 
 impl<P: EventPublisher> EventPooling<P> {
-    pub async fn new(pool: PgPool, batch_size: i64, cron: String, publisher: Arc<P>) -> Self {
+    pub async fn new(pool: PgPool, batch_size: i64, cron: String, publisher: P) -> Self {
         Self {
             pool,
             batch_size,

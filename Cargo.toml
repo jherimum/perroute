@@ -26,6 +26,7 @@ thiserror = "1"
 tracing-bunyan-formatter = "0.3"
 tracing-log = "0.1"
 tracing-subscriber = "0.3"
+tracing-test = "0.2"
 argon2 = "0.5"
 handlebars = "4"
 actix-web = "4"
@@ -61,9 +62,9 @@ validator = "0.16"
 actix-web-validator = "5"
 serde_with = "3"
 tokio-cron-scheduler = "0.9.4"
-tracing-test = "0.2"
 cron = "0.12"
 log = "0.4"
+
 
 [profile.release]
 strip = true

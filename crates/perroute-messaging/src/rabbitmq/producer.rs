@@ -1,9 +1,11 @@
-use super::{connection::RecoverableConnection, RoutingKey};
-use lapin::{options::ConfirmSelectOptions, Channel};
+use super::{
+    connection::{RabbitmqChannel, RabbitmqConnection},
+    RoutingKey,
+};
+use lapin::options::ConfirmSelectOptions;
 use serde::Serialize;
-use std::{fmt::Debug, sync::Arc};
+use std::fmt::Debug;
 use tap::TapFallible;
-use tokio::sync::RwLock;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ProducerError {
@@ -13,67 +15,47 @@ pub enum ProducerError {
     JsonError(#[from] serde_json::Error),
     #[error("Message was not acked")]
     NotAcked,
+
+    #[error(transparent)]
+    ConnectionError(#[from] super::connection::ConnectionError),
 }
 
 #[derive(Debug, Clone)]
 pub struct Producer {
-    connection: RecoverableConnection,
-    channel: Arc<RwLock<Channel>>,
+    channel: RabbitmqChannel,
     exchange: String,
     confirm_select: bool,
 }
 
 impl Producer {
     pub async fn new(
-        conn: RecoverableConnection,
+        conn: RabbitmqConnection,
         exchange: &str,
         confirm_select: bool,
     ) -> Result<Producer, ProducerError> {
         Ok(Self {
-            channel: Arc::new(RwLock::new(
-                Self::create_channel(&conn, confirm_select)
-                    .await
-                    .tap_err(|e| tracing::error!("Failed to create channel: {e}"))?,
-            )),
-            connection: conn,
-            exchange: exchange.to_owned(),
+            channel: conn.create_channel(),
+            exchange: exchange.to_string(),
             confirm_select,
         })
     }
 
-    async fn create_channel(
-        conn: &RecoverableConnection,
-        confirm_select: bool,
-    ) -> Result<Channel, lapin::Error> {
-        let channel = conn.create_recoverable_channel().await;
-
-        if confirm_select {
-            channel
-                .get()
-                .await
-                .confirm_select(ConfirmSelectOptions::default())
-                .await
-                .tap_err(|e| tracing::error!("Failed to confirm select: {e}"))?
-        }
-        Ok(channel.get().await)
-    }
-
-    async fn recreate_channel(&self) -> Result<(), lapin::Error> {
-        let mut channel = self.channel.write().await;
-        *channel = Self::create_channel(&self.connection, self.confirm_select)
-            .await
-            .tap_err(|e| tracing::error!("Failed to recreate channel: {e}"))?;
-        Ok(())
-    }
-
-    async fn send_message<M: Serialize + Debug + Send>(
+    pub async fn send<M: Serialize + Debug + Send>(
         &self,
-        channel: &Channel,
         message: &M,
         routing_key: Option<RoutingKey>,
     ) -> Result<(), ProducerError> {
         let json = serde_json::to_string(&message)
             .tap_err(|e| tracing::error!("Failed to serialize message: {e}"))?;
+
+        let channel = self.channel.get().await?;
+
+        if self.confirm_select {
+            channel
+                .confirm_select(ConfirmSelectOptions::default())
+                .await?;
+        }
+
         match channel
             .basic_publish(
                 &self.exchange,
@@ -98,28 +80,5 @@ impl Producer {
                 Err(e.into())
             }
         }
-    }
-
-    pub async fn send<M: Serialize + Debug + Send>(
-        &self,
-        message: &M,
-        routing_key: Option<RoutingKey>,
-    ) -> Result<(), ProducerError> {
-        {
-            let channel = self.channel.read().await;
-            if channel.status().connected() {
-                self.send_message(&channel, message, routing_key)
-                    .await
-                    .tap_err(|e| tracing::error!("Failed to send message: {e}"))?;
-                return Ok(());
-            }
-        }
-        tracing::warn!("Channel is not connected, recreating it...");
-        self.recreate_channel().await?;
-        let channel = &self.channel.read().await;
-        self.send_message(channel, message, routing_key)
-            .await
-            .tap_err(|e| tracing::error!("Failed to send message: {e}"))?;
-        Ok(())
     }
 }

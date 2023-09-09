@@ -1,8 +1,5 @@
-use lapin::{
-    options::{QueueBindOptions, QueueDeclareOptions},
-    types::FieldTable,
-    Channel, Connection, ConnectionProperties, Queue,
-};
+use async_recursion::async_recursion;
+use lapin::{Channel, Connection, ConnectionProperties};
 use perroute_commons::configuration::settings::Settings;
 use std::{fmt::Debug, sync::Arc, time::Duration};
 use tap::TapFallible;
@@ -38,126 +35,102 @@ pub struct Config {
 }
 
 #[derive(Debug, Clone)]
-pub struct RecoverableConnection {
+pub struct RabbitmqConnection {
     config: Config,
-    connection: Arc<RwLock<Connection>>,
+    connection: Arc<RwLock<Option<Connection>>>,
 }
 
-impl RecoverableConnection {
-    pub async fn connect(config: Config) -> Result<Self, ConnectionError> {
+impl RabbitmqConnection {
+    pub async fn connect(config: Config) -> Result<RabbitmqConnection, ConnectionError> {
         Ok(Self {
-            connection: Arc::new(RwLock::new(Self::connection(&config).await?)),
-            config,
+            config: config.clone(),
+            connection: Arc::new(RwLock::new(Some(Self::connection(&config).await?))),
         })
     }
 
-    async fn connection(config: &Config) -> Result<Connection, ConnectionError> {
-        tokio::time::timeout_at(Instant::now() + config.time_out, async move {
-            let mut res = Connection::connect(&config.uri, ConnectionProperties::default())
-                .await
-                .tap_err(|e| tracing::error!("Failed to connect to RabbitMQ: {e}"));
-            while res.is_err() {
-                tokio::time::sleep(config.retry_delay).await;
-                tracing::info!("Retrying to connect to RabbitMQ...");
-                res = Connection::connect(&config.uri, ConnectionProperties::default())
-                    .await
-                    .tap_err(|e| tracing::error!("Failed to connect to RabbitMQ: {e}"));
-            }
+    async fn inner_connect(config: &Config) -> Result<Connection, lapin::Error> {
+        Connection::connect(&config.uri, ConnectionProperties::default())
+            .await
+            .tap_err(|e| tracing::error!("Failed to connect to RabbitMQ: {e}"))
+    }
 
-            res.tap_ok(|c| tracing::info!("Connected to RabbitMQ: {:?}", c))
-                .unwrap()
+    async fn try_connect(config: &Config) -> Connection {
+        let mut res = Self::inner_connect(config).await;
+        while res.is_err() {
+            tokio::time::sleep(config.retry_delay).await;
+            tracing::info!("Retrying to connect to RabbitMQ...");
+            res = Self::inner_connect(config).await;
+        }
+        res.unwrap()
+    }
+
+    async fn connection(config: &Config) -> Result<Connection, ConnectionError> {
+        tracing::info!("Connecting to RabbitMQ...");
+        tokio::time::timeout_at(Instant::now() + config.time_out, async move {
+            let conn = Self::try_connect(config).await;
+            tracing::info!("Connected to RabbitMQ.");
+            conn
         })
         .await
         .map_err(ConnectionError::from)
     }
 
-    async fn refresh(&self) -> Result<(), ConnectionError> {
-        tracing::info!("Refreshing connection to RabbitMQ...");
-        let mut conn = self.connection.write().await;
-        *conn = Self::connection(&self.config).await?;
-        Ok(())
-    }
-
-    async fn create_channel(&self) -> Result<Channel, ConnectionError> {
+    #[async_recursion]
+    async fn inner_create_channel(&self) -> Result<Channel, ConnectionError> {
         {
             let conn = self.connection.read().await;
-            if conn.status().connected() {
-                return Ok(conn.create_channel().await?);
+            if let Some(c) = conn.as_ref() {
+                if c.status().connected() {
+                    return c.create_channel().await.map_err(ConnectionError::from);
+                }
             }
         }
+        {
+            let mut conn = self.connection.write().await;
+            *conn = Some(Self::connection(&self.config).await?);
+        }
 
-        self.refresh().await?;
-        self.connection
-            .read()
-            .await
-            .create_channel()
-            .await
-            .map_err(ConnectionError::from)
+        self.inner_create_channel().await
     }
 
-    pub async fn create_recoverable_channel(&self) -> RecoverableChannel {
-        RecoverableChannel::new(self.clone()).await
+    pub fn create_channel(&self) -> RabbitmqChannel {
+        RabbitmqChannel::new(self.clone())
     }
 }
 
 #[derive(Debug, Clone)]
-pub struct RecoverableChannel {
+pub struct RabbitmqChannel {
     channel: Arc<RwLock<Option<Channel>>>,
-    connection: RecoverableConnection,
+    connection: RabbitmqConnection,
 }
 
-impl RecoverableChannel {
-    pub async fn new(connection: RecoverableConnection) -> Self {
+impl RabbitmqChannel {
+    #[async_recursion]
+    pub async fn get(&self) -> Result<Channel, ConnectionError> {
+        {
+            let channel = self.channel.read().await;
+            if let Some(c) = channel.as_ref() {
+                if c.status().connected() {
+                    return Ok(c.clone());
+                } else {
+                    tracing::warn!("Channel is not connected, reconnecting...")
+                }
+            }
+        }
+        {
+            self.channel
+                .write()
+                .await
+                .replace(self.connection.inner_create_channel().await?);
+        }
+
+        self.get().await
+    }
+
+    pub fn new(connection: RabbitmqConnection) -> Self {
         Self {
             channel: Arc::new(RwLock::new(None)),
             connection,
         }
-    }
-
-    async fn refresh(&self) {
-        tracing::info!("Refreshing channel to RabbitMQ...");
-        let mut channel = self.channel.write().await;
-        *channel = Some(self.connection.create_channel().await.unwrap());
-    }
-
-    pub async fn get(&self) -> Channel {
-        tracing::info!("Getting channel to RabbitMQ........................");
-
-        {
-            let channel = self.channel.read().await;
-
-            if channel.is_some() && channel.as_ref().unwrap().status().connected() {
-                return channel.clone().unwrap();
-            }
-        }
-
-        self.refresh().await;
-        self.channel.read().await.as_ref().unwrap().clone()
-    }
-
-    pub async fn queue_declare(
-        &self,
-        queue: &str,
-        options: QueueDeclareOptions,
-        arguments: FieldTable,
-    ) -> Result<Queue, lapin::Error> {
-        self.get()
-            .await
-            .queue_declare(queue, options, arguments)
-            .await
-    }
-
-    pub async fn queue_bind(
-        &self,
-        queue: &str,
-        exchange: &str,
-        routing_key: &str,
-        options: QueueBindOptions,
-        arguments: FieldTable,
-    ) -> Result<(), lapin::Error> {
-        self.get()
-            .await
-            .queue_bind(queue, exchange, routing_key, options, arguments)
-            .await
     }
 }
