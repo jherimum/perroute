@@ -149,6 +149,9 @@ pub struct Message {
 
     #[setters(skip)]
     business_unit_id: Id,
+
+    #[setters(skip)]
+    created_at: NaiveDateTime,
 }
 
 impl Message {
@@ -168,7 +171,7 @@ impl Message {
         Ok(sqlx::query_as(
             r#"
                 INSERT INTO messages (id, payload, deliveries, status, schema_id, message_type_id, business_unit_id) 
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *"#,
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *"#,
             ).bind(self.id)
             .bind(self.payload)
             .bind(self.deliveries)
@@ -176,6 +179,7 @@ impl Message {
             .bind(self.schema_id)
             .bind(self.message_type_id)
             .bind(self.business_unit_id)
+            .bind(self.created_at)
         .fetch_one(exec)
         .await
         .tap_err(log_query_error!())?)

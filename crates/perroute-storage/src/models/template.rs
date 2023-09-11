@@ -1,7 +1,7 @@
 use super::{
     business_unit::{BusinessUnit, BusinessUnitQueryBuilder},
     message_type::{MessageType, MessageTypeQueryBuilder},
-    schema::{Schema, SchemasQueryBuilder},
+    schema::{self, Schema, SchemasQueryBuilder},
 };
 use crate::{
     log_query_error,
@@ -13,7 +13,7 @@ use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::types::{id::Id, priority::Priority, template::TemplateSnippet, vars::Vars};
-use perroute_connectors::types::dispatch_type::DispatchType;
+use perroute_connectors::types::dispatch_type::{self, DispatchType};
 use sqlx::{FromRow, PgExecutor, QueryBuilder};
 use std::ops::Deref;
 use tap::TapFallible;
@@ -120,6 +120,32 @@ pub struct Template {
 }
 
 impl Template {
+    pub async fn find_active_template<'e, E: PgExecutor<'e>>(
+        exec: E,
+        schema_id: Id,
+        dispatch_type: DispatchType,
+        instant: NaiveDateTime,
+    ) -> Result<Option<Template>> {
+        Ok(sqlx::query_as(
+            r#"
+                    SELECT * 
+                    FROM templates 
+                    WHERE 
+                        schema_id = $1 
+                        AND dispatch_type = $2
+                        AND start_at <= $3 
+                        AND (end_at is null OR end_at >= $3 ) 
+                        AND active = true               
+                        ORDER BY priority desc
+                        LIMIT 1"#,
+        )
+        .bind(schema_id)
+        .bind(dispatch_type)
+        .bind(instant)
+        .fetch_optional(exec)
+        .await?)
+    }
+
     pub async fn message_type<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<MessageType> {
         MessageType::find_one(
             exec,

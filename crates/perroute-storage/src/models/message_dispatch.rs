@@ -5,6 +5,7 @@ use crate::{
 };
 use derive_builder::Builder;
 use derive_getters::Getters;
+use derive_setters::Setters;
 use perroute_commons::types::id::Id;
 use perroute_connectors::types::{delivery::Delivery, plugin_id::ConnectorPluginId};
 use serde::{Deserialize, Serialize};
@@ -78,7 +79,7 @@ pub enum MessageDispatchStatus {
     Failed,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Type)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Type, Default)]
 pub struct MessageDispatchResult {
     reference: Option<String>,
     response_data: Option<Value>,
@@ -93,8 +94,10 @@ impl MessageDispatchResult {
     }
 }
 
-#[derive(Debug, FromRow, PartialEq, Eq, Clone, Getters, Builder)]
+#[derive(Debug, FromRow, PartialEq, Eq, Clone, Getters, Builder, Setters)]
 #[builder(setter(into))]
+#[setters(prefix = "set_")]
+#[setters(into)]
 pub struct MessageDispatch {
     id: Id,
     success: bool,
@@ -106,6 +109,13 @@ pub struct MessageDispatch {
 }
 
 impl MessageDispatch {
+    pub async fn save_all<'e, E: PgExecutor<'e>>(
+        exec: E,
+        dispatches: Vec<Self>,
+    ) -> Result<Vec<Self>> {
+        todo!()
+    }
+
     pub async fn message<'e, E: PgExecutor<'e>>(&self, executor: E) -> Result<Message> {
         Message::find_one(
             executor,
@@ -133,5 +143,9 @@ impl MessageDispatch {
         .bind(self.created_at)
         .fetch_one(executor)
         .await?)
+    }
+
+    pub async fn update<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self> {
+        todo!()
     }
 }

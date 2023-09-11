@@ -2517,6 +2517,7 @@ dependencies = [
  "derive-getters",
  "derive-new",
  "derive_builder",
+ "futures",
  "once_cell",
  "perroute-commons",
  "perroute-connectors",

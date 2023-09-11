@@ -16,7 +16,9 @@ use super::{
             create_connection::CreateConnectionError, delete_connection::DeleteConnectionError,
             update_connection::UpdateConnectionError,
         },
-        message::{create_message::CreateMessageError, distribute_message::DistributeMessageError},
+        message::{
+            create_message::CreateMessageError, distribute_message::handler::DistributeMessageError,
+        },
         message_type::{
             create_message_type::CreateMessageTypeError,
             delete_message_type::DeleteMessageTypeError,
