@@ -20,14 +20,14 @@ use super::template::InnerDispatchTemplate;
 pub struct InnerDispatchrequest {
     pub id: Id,
     pub delivery: Delivery,
-    pub message: Arc<Message>,
-    pub schema: Arc<Schema>,
-    pub message_type: Arc<MessageType>,
-    pub business_unit: Arc<BusinessUnit>,
+    pub message: Message,
+    pub schema: Schema,
+    pub message_type: MessageType,
+    pub business_unit: BusinessUnit,
     pub route: Route,
     pub connection: Connection,
     pub channel: Channel,
-    pub template: Arc<Template>,
+    pub template: Template,
     pub template_render: Arc<dyn TemplateRender<TemplateData>>,
 }
 
@@ -46,7 +46,7 @@ impl DispatchRequest for InnerDispatchrequest {
 
     fn template(&self) -> Box<dyn DispatchTemplate> {
         Box::new(InnerDispatchTemplate {
-            template: self.template.clone(),
+            template: Arc::new(self.template.clone()),
             render: self.template_render.clone(),
         })
     }

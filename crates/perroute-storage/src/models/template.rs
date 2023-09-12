@@ -122,9 +122,9 @@ pub struct Template {
 impl Template {
     pub async fn find_active_template<'e, E: PgExecutor<'e>>(
         exec: E,
-        schema_id: Id,
-        dispatch_type: DispatchType,
-        instant: NaiveDateTime,
+        schema_id: &Id,
+        dispatch_type: &DispatchType,
+        instant: &NaiveDateTime,
     ) -> Result<Option<Template>> {
         Ok(sqlx::query_as(
             r#"
