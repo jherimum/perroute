@@ -5,7 +5,6 @@ use crate::{
 };
 use derive_builder::Builder;
 use derive_getters::Getters;
-use derive_setters::Setters;
 use perroute_commons::types::id::Id;
 use perroute_connectors::types::{delivery::Delivery, plugin_id::ConnectorPluginId};
 use serde::{Deserialize, Serialize};
@@ -94,10 +93,8 @@ impl MessageDispatchResult {
     }
 }
 
-#[derive(Debug, FromRow, PartialEq, Eq, Clone, Getters, Builder, Setters)]
+#[derive(Debug, FromRow, PartialEq, Eq, Clone, Getters, Builder)]
 #[builder(setter(into))]
-#[setters(prefix = "set_")]
-#[setters(into)]
 pub struct MessageDispatch {
     id: Id,
     success: bool,

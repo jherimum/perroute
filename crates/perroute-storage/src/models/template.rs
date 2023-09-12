@@ -1,7 +1,7 @@
 use super::{
     business_unit::{BusinessUnit, BusinessUnitQueryBuilder},
     message_type::{MessageType, MessageTypeQueryBuilder},
-    schema::{self, Schema, SchemasQueryBuilder},
+    schema::{Schema, SchemasQueryBuilder},
 };
 use crate::{
     log_query_error,
@@ -13,7 +13,7 @@ use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::types::{id::Id, priority::Priority, template::TemplateSnippet, vars::Vars};
-use perroute_connectors::types::dispatch_type::{self, DispatchType};
+use perroute_connectors::types::dispatch_type::DispatchType;
 use sqlx::{FromRow, PgExecutor, QueryBuilder};
 use std::ops::Deref;
 use tap::TapFallible;

@@ -45,16 +45,18 @@ impl From<EmailDispatcherError> for DispatchError {
     }
 }
 
-pub async fn dispatch<'r>(req: &DispatchRequest<'r>) -> Result<DispatchResponse, DispatchError> {
+pub async fn dispatch(
+    req: Box<dyn DispatchRequest + Send + Sync>,
+) -> Result<DispatchResponse, DispatchError> {
     let conn_properties = req
-        .connection_properties
+        .connection_properties()
         .from_value::<SmtpConnectorProperties>()
         .unwrap();
 
     let transport = SmtpTransport::try_from(&conn_properties)?;
 
     transport
-        .send(&Message::try_from(req)?)
+        .send(&Message::try_from(&*req)?)
         .map_err(|e| DispatchError::Unrecoverable(Box::new(e)))
         .map(|response| DispatchResponse {
             reference: None,
@@ -122,10 +124,10 @@ impl Validate for EmailDispatcherProperties {
 pub struct EmailResponse(pub Response);
 impl ResponseData for EmailResponse {}
 
-impl TryFrom<&DispatchRequest<'_>> for Message {
+impl TryFrom<&(dyn DispatchRequest + Send + Sync)> for Message {
     type Error = DispatchError;
 
-    fn try_from(req: &DispatchRequest) -> Result<Self, Self::Error> {
+    fn try_from(req: &(dyn DispatchRequest + Send + Sync)) -> Result<Self, Self::Error> {
         // let disp_properties = req
         //     .dispatch_properties()
         //     .from_value::<EmailDispatcherProperties>()
@@ -143,8 +145,8 @@ impl TryFrom<&DispatchRequest<'_>> for Message {
             .render_text(&req.into())
             .map_err(DispatchError::from)?;
 
-        let recipient_mail_box = req
-            .delivery()
+        let delivery = req.delivery();
+        let recipient_mail_box = delivery
             .email_data()
             .map(|d| d.mailbox())
             .ok_or(EmailDispatcherError::EmailNotSupplied)?;

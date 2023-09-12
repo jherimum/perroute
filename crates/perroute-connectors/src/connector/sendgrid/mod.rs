@@ -64,14 +64,16 @@ fn dispatcher_properties() -> ConfigurationProperties {
     ConfigurationProperties::default()
 }
 
-pub async fn dispatch<'r>(req: &DispatchRequest<'r>) -> Result<DispatchResponse, DispatchError> {
+pub async fn dispatch(
+    req: Box<dyn DispatchRequest + Send + Sync>,
+) -> Result<DispatchResponse, DispatchError> {
     let conn_properties = req
-        .connection_properties
+        .connection_properties()
         .from_value::<SendgridConnectionProperties>()
         .unwrap();
 
     let sender = Sender::new(conn_properties.api_key);
-    let message = build_message(req).unwrap();
+    let message = build_message(&*req).unwrap();
     let r = sender.send(&message).await;
 
     if r.is_err() {
@@ -95,9 +97,9 @@ pub async fn dispatch<'r>(req: &DispatchRequest<'r>) -> Result<DispatchResponse,
 
 //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
 
-fn build_message(req: &DispatchRequest) -> SendgridResult<Message> {
+fn build_message(req: &dyn DispatchRequest) -> SendgridResult<Message> {
     let disp_properties = req
-        .dispatch_properties
+        .dispatch_properties()
         .from_value::<EmailDispatcherProperties>()
         .unwrap();
 
@@ -110,7 +112,7 @@ fn build_message(req: &DispatchRequest) -> SendgridResult<Message> {
     )
 }
 
-fn personalization_from_request(req: &DispatchRequest) -> Personalization {
+fn personalization_from_request(req: &dyn DispatchRequest) -> Personalization {
     let email: SendGridEmail = req.delivery().email_data().unwrap().mailbox().into();
     Personalization::new(email.into())
 }

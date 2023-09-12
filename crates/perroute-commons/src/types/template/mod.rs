@@ -11,9 +11,9 @@ pub mod handlebars;
 pub struct TemplateSnippet(String);
 
 impl TemplateSnippet {
-    pub fn render<D: Serialize, T: TemplateRender<D>>(
+    pub fn render<D: Serialize>(
         &self,
-        template_render: &T,
+        template_render: &dyn TemplateRender<D>,
         data: &D,
     ) -> Result<String, TemplateError> {
         template_render.render(self.as_ref(), data)

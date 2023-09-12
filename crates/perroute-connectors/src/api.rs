@@ -3,7 +3,6 @@ use crate::{
     template::DispatchTemplate,
     types::{delivery::Delivery, dispatch_type::DispatchType, plugin_id::ConnectorPluginId},
 };
-use derive_getters::Getters;
 use erased_serde::serialize_trait_object;
 use futures_util::future::BoxFuture;
 use perroute_commons::types::{
@@ -32,23 +31,27 @@ pub trait ConnectorPlugin: Sync + Send + Debug {
 pub trait DispatcherPlugin: Sync + Send + Debug {
     fn dispatch_type(&self) -> DispatchType;
     fn configuration(&self) -> &dyn Configuration;
-    async fn dispatch(&self, req: &DispatchRequest) -> Result<DispatchResponse, DispatchError>;
+    async fn dispatch(
+        &self,
+        req: Box<dyn DispatchRequest + Send + Sync>,
+    ) -> Result<DispatchResponse, DispatchError>;
 }
 
 pub struct BaseDispatcherPlugin {
     pub dispatch_type: DispatchType,
     pub configuration: Box<dyn Configuration>,
-    pub func:
-        for<'r> fn(&'r DispatchRequest) -> BoxFuture<'r, Result<DispatchResponse, DispatchError>>,
+    pub func: fn(
+        Box<dyn DispatchRequest + Send + Sync>,
+    ) -> BoxFuture<'static, Result<DispatchResponse, DispatchError>>,
 }
 
 impl BaseDispatcherPlugin {
     pub fn new(
         dispatch_type: DispatchType,
         configuration: Box<dyn Configuration>,
-        func: for<'r> fn(
-            &'r DispatchRequest,
-        ) -> BoxFuture<'r, Result<DispatchResponse, DispatchError>>,
+        func: fn(
+            Box<dyn DispatchRequest + Send + Sync>,
+        ) -> BoxFuture<'static, Result<DispatchResponse, DispatchError>>,
     ) -> Self {
         Self {
             dispatch_type,
@@ -77,27 +80,29 @@ impl DispatcherPlugin for BaseDispatcherPlugin {
         self.configuration.as_ref()
     }
 
-    async fn dispatch(&self, req: &DispatchRequest) -> Result<DispatchResponse, DispatchError> {
+    async fn dispatch(
+        &self,
+        req: Box<dyn DispatchRequest + Send + Sync>,
+    ) -> Result<DispatchResponse, DispatchError> {
         (self.func)(req).await
     }
 }
 
-#[derive(Getters)]
-pub struct DispatchRequest<'r> {
-    pub id: Id,
-    pub connection_properties: &'r Properties,
-    pub dispatch_properties: &'r Properties,
-    pub template: &'r dyn DispatchTemplate,
-    pub payload: &'r Payload,
-    pub vars: &'r Vars,
-    pub delivery: Delivery,
+pub trait DispatchRequest {
+    fn id(&self) -> Id;
+    fn connection_properties(&self) -> Properties;
+    fn dispatch_properties(&self) -> Properties;
+    fn template(&self) -> Box<dyn DispatchTemplate>;
+    fn payload(&self) -> &Payload;
+    fn vars(&self) -> Vars;
+    fn delivery(&self) -> Delivery;
 }
 
-impl<'r> From<&DispatchRequest<'r>> for TemplateData {
-    fn from(value: &DispatchRequest) -> Self {
+impl From<&(dyn DispatchRequest + Send + Sync)> for TemplateData {
+    fn from(value: &(dyn DispatchRequest + Send + Sync)) -> Self {
         Self {
-            payload: value.payload.clone(),
-            vars: value.vars.clone(),
+            payload: value.payload().clone(),
+            vars: value.vars().clone(),
         }
     }
 }

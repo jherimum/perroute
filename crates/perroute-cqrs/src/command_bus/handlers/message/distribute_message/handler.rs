@@ -1,30 +1,34 @@
+use std::sync::Arc;
+
+use super::request::InnerDispatchrequest;
+use crate::{
+    command_bus::{
+        bus::CommandBusContext, commands::CommandType, handlers::CommandHandler, Result,
+    },
+    impl_command, into_event,
+};
 use async_trait::async_trait;
 use chrono::Utc;
 use derive_builder::Builder;
 use derive_getters::Getters;
-use futures::Future;
-use perroute_commons::{
-    new_id,
-    types::{
-        actor::Actor,
-        id::Id,
-        template::{TemplateData, TemplateError},
-        vars::Vars,
-    },
+use perroute_commons::types::{
+    actor::Actor,
+    id::Id,
+    template::{TemplateData, TemplateRender},
 };
 use perroute_connectors::{
-    api::{DispatchError, DispatchRequest, DispatchResponse},
-    template::DispatchTemplate,
+    api::{DispatchError, DispatchResponse},
     types::plugin_id::ConnectorPluginId,
 };
 use perroute_connectors::{types::delivery::Delivery, Plugins};
 use perroute_messaging::events::EventType;
 use perroute_storage::{
+    error::StorageError,
     models::{
-        channel::Channel,
-        connection::Connection,
-        message::{Message, MessageQueryBuilder, Status},
+        business_unit::BusinessUnit,
+        message::{Message, MessageQuery, Status},
         message_dispatch::{MessageDispatch, MessageDispatchBuilder, MessageDispatchResult},
+        message_type::MessageType,
         route::Route,
         schema::Schema,
         template::Template,
@@ -33,26 +37,7 @@ use perroute_storage::{
 };
 use serde::Serialize;
 use sqlx::{types::Json, PgPool};
-use std::{
-    collections::HashMap,
-    pin::Pin,
-    task::{Context, Poll},
-};
 use tap::{TapFallible, TapOptional};
-use tokio::task::JoinHandle;
-
-use crate::{
-    command_bus::{
-        bus::CommandBusContext,
-        commands::CommandType,
-        error::CommandBusError,
-        handlers::{channel, CommandHandler},
-        Result,
-    },
-    impl_command, into_event,
-};
-
-use super::template::InnerDispatchTemplate;
 
 #[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
 pub struct DistributeMessageCommand {
@@ -75,7 +60,9 @@ pub enum DistributeMessageError {
 }
 
 #[derive(Debug)]
-pub struct DistributeMessageCommandHandler;
+pub struct DistributeMessageCommandHandler {
+    template_render: Arc<dyn TemplateRender<TemplateData>>,
+}
 
 #[async_trait]
 impl CommandHandler for DistributeMessageCommandHandler {
@@ -89,43 +76,52 @@ impl CommandHandler for DistributeMessageCommandHandler {
         actor: &Actor,
         cmd: Self::Command,
     ) -> Result<Self::Output> {
-        let message = retrieve_message(ctx.pool(), cmd.message_id).await?;
+        let message = Arc::new(retrieve_message(ctx.pool(), cmd.message_id).await?);
 
         if Status::Pending != *message.status() {
             tracing::error!("To be distributed message must be in pending state");
             return Err(DistributeMessageError::InvalidMessageState(cmd.message_id).into());
         }
 
-        let schema = message.schema(ctx.pool()).await.tap_err(|e| {
+        let bu = Arc::new(message.business_unit(ctx.pool()).await?);
+        let message_type = Arc::new(message.message_type(ctx.pool()).await?);
+        let schema = Arc::new(message.schema(ctx.pool()).await.tap_err(|e| {
             tracing::error!("Failed to retrieve schema {}: {e}", message.schema_id())
-        })?;
+        })?);
 
-        //let mut dispatches = vec![];
+        let mut dispatches = vec![];
         for delivery in message.deliveries().iter() {
-            let template = Template::find_active_template(
-                ctx.pool(),
-                *schema.id(),
-                delivery.dispatch_type(),
-                *message.created_at(),
-            )
-            .await?
-            .unwrap();
+            let template = Arc::new(
+                Template::find_active_template(
+                    ctx.pool(),
+                    *schema.id(),
+                    delivery.dispatch_type(),
+                    *message.created_at(),
+                )
+                .await?
+                .unwrap(),
+            );
 
-            // dispatches.push(tokio::spawn(dispatch_delivery(
-            //     ctx.pool().clone(),
-            //     ctx.plugins().clone(),
-            //     message.clone(),
-            //     schema.clone(),
-            //     template,
-            //     delivery.clone(),
-            // )));
+            dispatches.push(tokio::spawn(dispatch_delivery(
+                ctx.pool().clone(),
+                ctx.plugins().clone(),
+                message.clone(),
+                schema.clone(),
+                message_type.clone(),
+                bu.clone(),
+                template,
+                delivery.clone(),
+                self.template_render.clone(),
+            )));
         }
 
-        // for dispatch in dispatches {
-        //     let r = dispatch.await;
-        // }
+        for dispatch in dispatches {
+            let r = dispatch.await;
+        }
 
         let message = message
+            .as_ref()
+            .clone()
             .set_status(Status::Distributed)
             .update(ctx.tx())
             .await
@@ -135,80 +131,42 @@ impl CommandHandler for DistributeMessageCommandHandler {
     }
 }
 
-fn build_request<'r>(
-    message: &'r Message,
-    message_dispatch: &'r MessageDispatch,
-    connection: &'r Connection,
-    route: &'r Route,
-    channel: &'r Channel,
-    template: &'r dyn DispatchTemplate,
-    vars: &'r Vars,
-) -> DispatchRequest<'r> {
-    DispatchRequest {
-        id: *message_dispatch.id(),
-        connection_properties: connection.properties(),
-        dispatch_properties: channel.properties(),
-        template: template,
-        payload: message.payload(),
-        vars: vars,
-        delivery: message_dispatch.delivery().as_ref().clone(),
-    }
-}
-
-async fn retrieve_message(pool: &PgPool, message_id: Id) -> Result<Message> {
-    Message::find(
-        pool,
-        MessageQueryBuilder::default()
-            .id(Some(message_id))
-            .build()
-            .tap_err(|e| tracing::error!("Failed to build MessageQueryBuilder: {e}"))
-            .map_err(anyhow::Error::from)?,
-    )
-    .await
-    .tap_err(|e| tracing::error!("Failed to retrieve message from database: {e}"))?
-    .tap_none(|| tracing::warn!("Message with id {} not found", message_id))
-    .ok_or_else(|| DistributeMessageError::MessageNotFound(message_id).into())
-}
-
 async fn dispatch_delivery<'tx>(
     pool: PgPool,
     plugins: Plugins,
-    message: Message,
-    schema: Schema,
-    template: Template,
+    message: Arc<Message>,
+    schema: Arc<Schema>,
+    message_type: Arc<MessageType>,
+    bu: Arc<BusinessUnit>,
+    template: Arc<Template>,
     delivery: Delivery,
+    template_render: Arc<dyn TemplateRender<TemplateData>>,
 ) -> Result<()> {
     for route in Route::dispatch_route_stack(&pool, schema.id(), &delivery.dispatch_type()).await? {
         let channel = route.channel(&pool).await?;
         let conn = route.connection(&pool).await?;
         let plugin = plugins.get(conn.plugin_id()).unwrap();
         let dispatcher = plugin.dispatcher(&delivery.dispatch_type()).unwrap();
-        let message_dispatch = build_message_dispatch(&message, &delivery, &plugin.id())
-            .save(&pool)
-            .await
-            .unwrap();
-
-        let temp = InnerDispatchTemplate(&template);
-        let vars = &Vars::default();
-
-        let request = build_request(
-            &message,
-            &message_dispatch,
-            &conn,
-            &route,
-            &channel,
-            &temp,
-            vars,
-        );
-        let disp_result = dispatcher.dispatch(&request).await;
-
-        message_dispatch
-            .set_success(true)
-            .set_result(Option::default())
-            .update(&pool)
+        let disp_result = dispatcher
+            .dispatch(Box::new(InnerDispatchrequest {
+                id: Id::new(),
+                delivery: delivery.clone(),
+                message: message.clone(),
+                schema: schema.clone(),
+                message_type: message_type.clone(),
+                business_unit: bu.clone(),
+                connection: conn,
+                channel: channel,
+                route: route,
+                template: template.clone(),
+                template_render: template_render.clone(),
+            }))
             .await;
 
-        if disp_result.is_ok() {
+        let message_dispatch =
+            save_message_dispatch(&pool, &message, &delivery, &plugin.id(), disp_result).await?;
+
+        if *message_dispatch.success() {
             break;
         }
     }
@@ -216,23 +174,34 @@ async fn dispatch_delivery<'tx>(
     Ok(())
 }
 
-fn build_message_dispatch(
+async fn retrieve_message(pool: &PgPool, message_id: Id) -> Result<Message> {
+    Message::find(pool, MessageQuery::with_id(message_id))
+        .await
+        .tap_err(|e| tracing::error!("Failed to retrieve message from database: {e}"))?
+        .tap_none(|| tracing::warn!("Message with id {} not found", message_id))
+        .ok_or_else(|| DistributeMessageError::MessageNotFound(message_id).into())
+}
+
+async fn save_message_dispatch(
+    pool: &PgPool,
     message: &Message,
     delivery: &Delivery,
     plugin_id: &ConnectorPluginId,
-    //result: &std::result::Result<DispatchResponse, DispatchError>,
-) -> MessageDispatch {
-    MessageDispatchBuilder::default()
+    result: std::result::Result<DispatchResponse, DispatchError>,
+) -> std::result::Result<MessageDispatch, StorageError> {
+    Ok(MessageDispatchBuilder::default()
         .id(Id::new())
         .message_id(*message.id())
         .delivery(Json(delivery.clone()))
         .plugin_id(*plugin_id)
-        //.success(result.is_ok())
+        .success(result.is_ok())
         .created_at(Utc::now().naive_utc())
-        // .result(match result {
-        //     Ok(response) => Some(MessageDispatchResult::new(response.reference.clone(), None)),
-        //     Err(_) => None,
-        // })
+        .result(match result {
+            Ok(response) => Some(MessageDispatchResult::new(response.reference.clone(), None)),
+            Err(_) => None,
+        })
         .build()
         .unwrap()
+        .save(pool)
+        .await?)
 }

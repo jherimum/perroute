@@ -31,7 +31,9 @@ pub fn log_connector_plugin() -> impl ConnectorPlugin {
     )
 }
 
-pub async fn dispatch<'r>(_: &DispatchRequest<'r>) -> Result<DispatchResponse, DispatchError> {
+pub async fn dispatch<'r>(
+    _: Box<dyn DispatchRequest + Send + Sync>,
+) -> Result<DispatchResponse, DispatchError> {
     Ok(DispatchResponse {
         reference: None,
         data: None,
