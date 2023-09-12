@@ -17,7 +17,7 @@ use perroute_storage::models::{
 
 use super::template::InnerDispatchTemplate;
 
-pub struct InnerDispatchrequest {
+pub struct InnerDispatchRequest {
     pub id: Id,
     pub delivery: Delivery,
     pub message: Message,
@@ -31,7 +31,7 @@ pub struct InnerDispatchrequest {
     pub template_render: Arc<dyn TemplateRender<TemplateData>>,
 }
 
-impl DispatchRequest for InnerDispatchrequest {
+impl DispatchRequest for InnerDispatchRequest {
     fn id(&self) -> Id {
         self.id
     }

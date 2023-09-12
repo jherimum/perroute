@@ -15,6 +15,12 @@ use perroute_commons::types::{
 use serde::Serialize;
 use std::{error::Error, fmt::Debug};
 
+pub type DispatchFunction = fn(
+    Box<dyn DispatchRequest + Send + Sync>,
+) -> BoxFuture<'static, Result<DispatchResponse, DispatchError>>;
+
+pub type Request = Box<dyn DispatchRequest + Send + Sync>;
+
 pub trait ConnectorPlugin: Sync + Send + Debug {
     fn id(&self) -> ConnectorPluginId;
     fn configuration(&self) -> &dyn Configuration;
@@ -31,27 +37,20 @@ pub trait ConnectorPlugin: Sync + Send + Debug {
 pub trait DispatcherPlugin: Sync + Send + Debug {
     fn dispatch_type(&self) -> DispatchType;
     fn configuration(&self) -> &dyn Configuration;
-    async fn dispatch(
-        &self,
-        req: Box<dyn DispatchRequest + Send + Sync>,
-    ) -> Result<DispatchResponse, DispatchError>;
+    async fn dispatch(&self, req: Request) -> Result<DispatchResponse, DispatchError>;
 }
 
 pub struct BaseDispatcherPlugin {
     pub dispatch_type: DispatchType,
     pub configuration: Box<dyn Configuration>,
-    pub func: fn(
-        Box<dyn DispatchRequest + Send + Sync>,
-    ) -> BoxFuture<'static, Result<DispatchResponse, DispatchError>>,
+    pub func: DispatchFunction,
 }
 
 impl BaseDispatcherPlugin {
     pub fn new(
         dispatch_type: DispatchType,
         configuration: Box<dyn Configuration>,
-        func: fn(
-            Box<dyn DispatchRequest + Send + Sync>,
-        ) -> BoxFuture<'static, Result<DispatchResponse, DispatchError>>,
+        func: DispatchFunction,
     ) -> Self {
         Self {
             dispatch_type,
@@ -80,10 +79,7 @@ impl DispatcherPlugin for BaseDispatcherPlugin {
         self.configuration.as_ref()
     }
 
-    async fn dispatch(
-        &self,
-        req: Box<dyn DispatchRequest + Send + Sync>,
-    ) -> Result<DispatchResponse, DispatchError> {
+    async fn dispatch(&self, req: Request) -> Result<DispatchResponse, DispatchError> {
         (self.func)(req).await
     }
 }

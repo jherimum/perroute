@@ -1,7 +1,7 @@
 use crate::{
     api::{
-        BaseConnectorPlugin, BaseDispatcherPlugin, ConnectorPlugin, DispatchError, DispatchRequest,
-        DispatchResponse,
+        BaseConnectorPlugin, BaseDispatcherPlugin, ConnectorPlugin, DispatchError,
+        DispatchResponse, Request,
     },
     configuration::{DefaultConfiguration, NilConfiguration},
     types::{dispatch_type::DispatchType, plugin_id::ConnectorPluginId},
@@ -31,9 +31,7 @@ pub fn log_connector_plugin() -> impl ConnectorPlugin {
     )
 }
 
-pub async fn dispatch<'r>(
-    _: Box<dyn DispatchRequest + Send + Sync>,
-) -> Result<DispatchResponse, DispatchError> {
+pub async fn dispatch<'r>(_: Request) -> Result<DispatchResponse, DispatchError> {
     Ok(DispatchResponse {
         reference: None,
         data: None,

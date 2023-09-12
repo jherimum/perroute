@@ -1,4 +1,3 @@
-use log::LevelFilter;
 use perroute_commons::configuration::settings::DatabaseSettings;
 use secrecy::ExposeSecret;
 use sqlx::{
@@ -7,7 +6,6 @@ use sqlx::{
 };
 use std::time::Duration;
 use tap::TapFallible;
-use tracing::Level;
 
 use crate::{error::StorageError, Result};
 

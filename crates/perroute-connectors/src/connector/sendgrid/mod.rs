@@ -1,7 +1,7 @@
 use crate::{
     api::{
         BaseConnectorPlugin, BaseDispatcherPlugin, ConnectorPlugin, DispatchError, DispatchRequest,
-        DispatchResponse,
+        DispatchResponse, Request,
     },
     configuration::{ConfigurationProperties, DefaultConfiguration},
     types::{dispatch_type::DispatchType, plugin_id::ConnectorPluginId},
@@ -64,9 +64,7 @@ fn dispatcher_properties() -> ConfigurationProperties {
     ConfigurationProperties::default()
 }
 
-pub async fn dispatch(
-    req: Box<dyn DispatchRequest + Send + Sync>,
-) -> Result<DispatchResponse, DispatchError> {
+pub async fn dispatch(req: Request) -> Result<DispatchResponse, DispatchError> {
     let conn_properties = req
         .connection_properties()
         .from_value::<SendgridConnectionProperties>()
