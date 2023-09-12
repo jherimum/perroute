@@ -7,6 +7,7 @@ use crate::{
     },
     impl_command, into_event,
 };
+use anyhow::Context;
 use async_trait::async_trait;
 use chrono::Utc;
 use derive_builder::Builder;
@@ -131,7 +132,7 @@ impl CommandHandler for DistributeMessageCommandHandler {
     }
 }
 
-async fn dispatch_delivery<'tx>(
+async fn dispatch_delivery(
     pool: PgPool,
     plugins: Plugins,
     message: Arc<Message>,
@@ -142,7 +143,10 @@ async fn dispatch_delivery<'tx>(
     delivery: Delivery,
     template_render: Arc<dyn TemplateRender<TemplateData>>,
 ) -> Result<()> {
-    for route in Route::dispatch_route_stack(&pool, schema.id(), &delivery.dispatch_type()).await? {
+    for route in Route::dispatch_route_stack(&pool, schema.id(), &delivery.dispatch_type())
+        .await
+        .tap_err(|e| tracing::error!("Failed to retrieve routes: {e}"))?
+    {
         let channel = route.channel(&pool).await?;
         let conn = route.connection(&pool).await?;
         let plugin = plugins.get(conn.plugin_id()).unwrap();
@@ -188,7 +192,7 @@ async fn save_message_dispatch(
     delivery: &Delivery,
     plugin_id: &ConnectorPluginId,
     result: std::result::Result<DispatchResponse, DispatchError>,
-) -> std::result::Result<MessageDispatch, StorageError> {
+) -> Result<MessageDispatch> {
     Ok(MessageDispatchBuilder::default()
         .id(Id::new())
         .message_id(*message.id())
@@ -201,7 +205,8 @@ async fn save_message_dispatch(
             Err(_) => None,
         })
         .build()
-        .unwrap()
+        .context("Failed to build message dispatch")?
         .save(pool)
-        .await?)
+        .await
+        .tap_err(|e| tracing::error!("Failed to save message dispatch: {e}"))?)
 }
