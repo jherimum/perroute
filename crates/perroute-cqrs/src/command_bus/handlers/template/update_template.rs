@@ -7,6 +7,7 @@ use crate::{
 };
 use async_trait::async_trait;
 use chrono::NaiveDateTime;
+use derive_getters::Getters;
 use perroute_commons::types::{
     actor::Actor, id::Id, priority::Priority, template::TemplateSnippet, vars::Vars,
 };
@@ -14,6 +15,7 @@ use perroute_storage::{
     models::template::{Template, TemplatesQuery},
     query::FetchableModel,
 };
+use sqlx::PgPool;
 use tap::TapFallible;
 
 command!(
@@ -32,13 +34,21 @@ command!(
 );
 into_event!(UpdateTemplateCommand);
 
-#[derive(Debug)]
-pub struct UpdateTemplateCommandHandler;
-
 #[derive(thiserror::Error, Debug, Clone)]
 pub enum UpdateTemplatelError {
     #[error("Template not found: {0}")]
     TemplateNotFound(Id),
+}
+
+#[derive(Debug, Getters)]
+pub struct UpdateTemplateCommandHandler {
+    pool: PgPool,
+}
+
+impl UpdateTemplateCommandHandler {
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
+    }
 }
 
 #[async_trait]

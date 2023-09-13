@@ -14,6 +14,7 @@ use perroute_storage::{
     },
     query::FetchableModel,
 };
+use sqlx::PgPool;
 use tap::TapFallible;
 
 #[derive(Debug, serde::Serialize, Clone, PartialEq, Eq, Builder, Getters)]
@@ -30,7 +31,15 @@ pub enum DeleteChannelError {
 }
 
 #[derive(Debug)]
-pub struct DeleteChannelCommandHandler;
+pub struct DeleteChannelCommandHandler {
+    pool: PgPool,
+}
+
+impl DeleteChannelCommandHandler {
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
+    }
+}
 
 #[async_trait::async_trait]
 impl CommandHandler for DeleteChannelCommandHandler {

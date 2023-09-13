@@ -6,6 +6,7 @@ use crate::{
     into_event,
 };
 use anyhow::Context;
+use derive_getters::Getters;
 use perroute_commons::{
     new_id,
     types::{
@@ -22,6 +23,7 @@ use perroute_storage::{
     },
     query::FetchableModel,
 };
+use sqlx::PgPool;
 use tap::TapFallible;
 
 #[derive(Debug, thiserror::Error)]
@@ -43,8 +45,16 @@ command!(
 );
 into_event!(CreateSchemaCommand);
 
-#[derive(Debug)]
-pub struct CreateSchemaCommandHandler;
+#[derive(Debug, Getters)]
+pub struct CreateSchemaCommandHandler {
+    pool: PgPool,
+}
+
+impl CreateSchemaCommandHandler {
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
+    }
+}
 
 #[async_trait::async_trait]
 impl CommandHandler for CreateSchemaCommandHandler {

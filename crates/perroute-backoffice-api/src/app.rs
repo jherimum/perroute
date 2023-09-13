@@ -3,12 +3,15 @@ use actix_web::{dev::Server, web::Data, App, HttpServer};
 use actix_web_validator::{JsonConfig, PathConfig};
 use anyhow::Result;
 use derive_getters::Getters;
-use perroute_commons::configuration::settings::{ServerSettings, Settings};
+use perroute_commons::{
+    configuration::settings::{ServerSettings, Settings},
+    types::template::handlebars::Handlebars,
+};
 use perroute_connectors::Plugins;
 use perroute_cqrs::{command_bus::bus::CommandBus, query_bus::bus::QueryBus};
 use perroute_storage::connection_manager::ConnectionManager;
 use sqlx::PgPool;
-use std::net::TcpListener;
+use std::{net::TcpListener, sync::Arc};
 use tracing_actix_web::TracingLogger;
 
 #[derive(Clone, Getters, Debug)]
@@ -20,10 +23,11 @@ pub struct AppState {
 
 impl AppState {
     pub async fn from_settings(settings: &Settings) -> Result<Self> {
+        let template_render = Arc::new(Handlebars::new());
         let pool = ConnectionManager::build_pool(&settings.database).await?;
         Ok(Self {
             plugins: Plugins::full(),
-            command_bus: CommandBus::complete(pool.clone(), Plugins::full()),
+            command_bus: CommandBus::complete(pool.clone(), Plugins::full(), template_render),
             query_bus: QueryBus::complete(pool),
         })
     }
@@ -31,9 +35,10 @@ impl AppState {
 
 impl From<PgPool> for AppState {
     fn from(value: PgPool) -> Self {
+        let template_render = Arc::new(Handlebars::new());
         Self {
             plugins: Plugins::full(),
-            command_bus: CommandBus::complete(value.clone(), Plugins::full()),
+            command_bus: CommandBus::complete(value.clone(), Plugins::full(), template_render),
             query_bus: QueryBus::complete(value),
         }
     }

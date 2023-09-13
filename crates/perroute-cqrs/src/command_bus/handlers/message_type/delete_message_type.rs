@@ -10,6 +10,7 @@ use perroute_storage::{
     models::message_type::{MessageType, MessageTypeQuery},
     query::FetchableModel,
 };
+use sqlx::PgPool;
 use tap::TapFallible;
 
 command!(
@@ -29,7 +30,15 @@ pub enum DeleteMessageTypeError {
 }
 
 #[derive(Debug)]
-pub struct DeleteMessageTypeCommandHandler;
+pub struct DeleteMessageTypeCommandHandler {
+    pool: PgPool,
+}
+
+impl DeleteMessageTypeCommandHandler {
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
+    }
+}
 
 #[async_trait::async_trait]
 impl CommandHandler for DeleteMessageTypeCommandHandler {

@@ -12,6 +12,7 @@ use perroute_storage::{
     models::business_unit::{BusinessUnit, BusinessUnitQuery},
     query::FetchableModel,
 };
+use sqlx::PgPool;
 use tap::TapFallible;
 
 #[derive(thiserror::Error, Debug, Clone)]
@@ -29,8 +30,16 @@ command!(
 );
 into_event!(UpdateBusinessUnitCommand);
 
-#[derive(Debug, new)]
-pub struct UpdateBusinessUnitCommandHandler;
+#[derive(Debug)]
+pub struct UpdateBusinessUnitCommandHandler {
+    pool: PgPool,
+}
+
+impl UpdateBusinessUnitCommandHandler {
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
+    }
+}
 
 #[async_trait]
 impl CommandHandler for UpdateBusinessUnitCommandHandler {

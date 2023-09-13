@@ -18,6 +18,7 @@ use perroute_storage::{
     query::FetchableModel,
 };
 use serde::Serialize;
+use sqlx::PgPool;
 use tap::TapFallible;
 
 #[derive(Debug, thiserror::Error)]
@@ -38,8 +39,16 @@ pub struct UpdateRouteCommand {
 impl_command!(UpdateRouteCommand, CommandType::UpdateRoute);
 into_event!(UpdateRouteCommand);
 
-#[derive(Debug)]
-pub struct UpdateRouteCommandHandler;
+#[derive(Debug, Getters)]
+pub struct UpdateRouteCommandHandler {
+    pool: PgPool,
+}
+
+impl UpdateRouteCommandHandler {
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
+    }
+}
 
 #[async_trait::async_trait]
 impl CommandHandler for UpdateRouteCommandHandler {

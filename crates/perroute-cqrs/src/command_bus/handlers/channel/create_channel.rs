@@ -13,7 +13,10 @@ use perroute_commons::types::{
     priority::Priority,
     properties::{Properties, PropertiesError},
 };
-use perroute_connectors::types::{dispatch_type::DispatchType, plugin_id::ConnectorPluginId};
+use perroute_connectors::{
+    types::{dispatch_type::DispatchType, plugin_id::ConnectorPluginId},
+    Plugins,
+};
 use perroute_storage::{
     models::{
         business_unit::{BusinessUnit, BusinessUnitQuery},
@@ -22,6 +25,7 @@ use perroute_storage::{
     },
     query::FetchableModel,
 };
+use sqlx::PgPool;
 use tap::TapFallible;
 
 #[derive(Debug, thiserror::Error)]
@@ -56,7 +60,16 @@ impl_command!(CreateChannelCommand, CommandType::CreateChannel);
 into_event!(CreateChannelCommand);
 
 #[derive(Debug)]
-pub struct CreateChannelCommandHandler;
+pub struct CreateChannelCommandHandler {
+    pool: PgPool,
+    plugins: Plugins,
+}
+
+impl CreateChannelCommandHandler {
+    pub fn new(pool: PgPool, plugins: Plugins) -> Self {
+        Self { pool, plugins }
+    }
+}
 
 #[async_trait::async_trait]
 impl CommandHandler for CreateChannelCommandHandler {

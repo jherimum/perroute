@@ -15,6 +15,7 @@ use perroute_storage::{
     query::FetchableModel,
 };
 use serde::Serialize;
+use sqlx::PgPool;
 use tap::TapFallible;
 
 #[derive(Debug, thiserror::Error)]
@@ -35,7 +36,15 @@ impl_command!(DeleteConnectionCommand, CommandType::DeleteConnection);
 into_event!(DeleteConnectionCommand);
 
 #[derive(Debug)]
-pub struct DeleteConnectionCommandHandler;
+pub struct DeleteConnectionCommandHandler {
+    pool: PgPool,
+}
+
+impl DeleteConnectionCommandHandler {
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
+    }
+}
 
 #[async_trait::async_trait]
 impl CommandHandler for DeleteConnectionCommandHandler {

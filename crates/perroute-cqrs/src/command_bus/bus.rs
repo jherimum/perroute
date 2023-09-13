@@ -17,7 +17,10 @@ use super::{
             delete_connection::DeleteConnectionCommandHandler,
             update_connection::UpdateConnectionCommandHandler,
         },
-        message::create_message::CreateMessageCommandHandler,
+        message::{
+            create_message::CreateMessageCommandHandler,
+            distribute_message::handler::DistributeMessageCommandHandler,
+        },
         message_type::{
             create_message_type::CreateMessageTypeCommandHandler,
             delete_message_type::DeleteMessageTypeCommandHandler,
@@ -40,7 +43,10 @@ use super::{
     },
     Result,
 };
-use perroute_commons::types::actor::Actor;
+use perroute_commons::types::{
+    actor::Actor,
+    template::{TemplateData, TemplateRender},
+};
 use perroute_connectors::Plugins;
 use perroute_storage::{error::StorageError, models::db_event::DbEvent};
 use sqlx::{Acquire, PgConnection, PgPool, Postgres, Transaction};
@@ -139,40 +145,61 @@ pub struct CommandBus {
 }
 
 impl CommandBus {
-    pub fn complete(pool: PgPool, plugins: Plugins) -> Self {
+    pub fn complete(
+        pool: PgPool,
+        plugins: Plugins,
+        template_render: Arc<dyn TemplateRender<TemplateData>>,
+    ) -> Self {
         Self::builder()
-            .with_plugins(plugins)
-            .with_pool(pool)
+            .with_plugins(plugins.clone())
+            .with_pool(pool.clone())
             //business unit
-            .with_handler(CreateBusinessUnitCommandHandler)
-            .with_handler(DeleteBusinessUnitCommandHandler)
-            .with_handler(UpdateBusinessUnitCommandHandler)
+            .with_handler(CreateBusinessUnitCommandHandler::new(pool.clone()))
+            .with_handler(DeleteBusinessUnitCommandHandler::new(pool.clone()))
+            .with_handler(UpdateBusinessUnitCommandHandler::new(pool.clone()))
             //message type
-            .with_handler(CreateMessageTypeCommandHandler)
-            .with_handler(UpdateMessageTypeCommandHandler)
-            .with_handler(DeleteMessageTypeCommandHandler)
+            .with_handler(CreateMessageTypeCommandHandler::new(pool.clone()))
+            .with_handler(UpdateMessageTypeCommandHandler::new(pool.clone()))
+            .with_handler(DeleteMessageTypeCommandHandler::new(pool.clone()))
             //schema
-            .with_handler(CreateSchemaCommandHandler)
-            .with_handler(DeleteSchemaCommandHandler)
-            .with_handler(UpdateSchemaCommandHandler)
+            .with_handler(CreateSchemaCommandHandler::new(pool.clone()))
+            .with_handler(DeleteSchemaCommandHandler::new(pool.clone()))
+            .with_handler(UpdateSchemaCommandHandler::new(pool.clone()))
             //template
-            .with_handler(CreateTemplateCommandHandler)
-            .with_handler(UpdateTemplateCommandHandler)
-            .with_handler(DeleteTemplateCommandHandler)
+            .with_handler(CreateTemplateCommandHandler::new(pool.clone()))
+            .with_handler(UpdateTemplateCommandHandler::new(pool.clone()))
+            .with_handler(DeleteTemplateCommandHandler::new(pool.clone()))
             //message
-            .with_handler(CreateMessageCommandHandler)
+            .with_handler(CreateMessageCommandHandler::new(pool.clone()))
+            .with_handler(DistributeMessageCommandHandler::new(
+                pool.clone(),
+                plugins.clone(),
+                template_render.clone(),
+            ))
             //opnnection
-            .with_handler(CreateConnectionCommandHandler)
-            .with_handler(UpdateConnectionCommandHandler)
-            .with_handler(DeleteConnectionCommandHandler)
+            .with_handler(CreateConnectionCommandHandler::new(
+                pool.clone(),
+                plugins.clone(),
+            ))
+            .with_handler(UpdateConnectionCommandHandler::new(
+                pool.clone(),
+                plugins.clone(),
+            ))
+            .with_handler(DeleteConnectionCommandHandler::new(pool.clone()))
             //channel
-            .with_handler(CreateChannelCommandHandler)
-            .with_handler(UpdateChannelCommandHandler)
-            .with_handler(DeleteChannelCommandHandler)
+            .with_handler(CreateChannelCommandHandler::new(
+                pool.clone(),
+                plugins.clone(),
+            ))
+            .with_handler(UpdateChannelCommandHandler::new(
+                pool.clone(),
+                plugins.clone(),
+            ))
+            .with_handler(DeleteChannelCommandHandler::new(pool.clone()))
             //route
-            .with_handler(CreateRouteCommandHandler)
-            .with_handler(UpdateRouteCommandHandler)
-            .with_handler(DeleteRouteCommandHandler)
+            .with_handler(CreateRouteCommandHandler::new(pool.clone()))
+            .with_handler(UpdateRouteCommandHandler::new(pool.clone()))
+            .with_handler(DeleteRouteCommandHandler::new(pool.clone()))
             .build()
     }
 

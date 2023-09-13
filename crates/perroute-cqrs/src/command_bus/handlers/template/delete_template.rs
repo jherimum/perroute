@@ -6,11 +6,13 @@ use crate::{
     into_event,
 };
 use async_trait::async_trait;
+use derive_getters::Getters;
 use perroute_commons::types::{actor::Actor, id::Id};
 use perroute_storage::{
     models::template::{Template, TemplatesQuery},
     query::FetchableModel,
 };
+use sqlx::PgPool;
 use tap::TapFallible;
 
 command!(
@@ -20,8 +22,16 @@ command!(
 );
 into_event!(DeleteTemplateCommand);
 
-#[derive(Debug)]
-pub struct DeleteTemplateCommandHandler;
+#[derive(Debug, Getters)]
+pub struct DeleteTemplateCommandHandler {
+    pool: PgPool,
+}
+
+impl DeleteTemplateCommandHandler {
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
+    }
+}
 
 #[derive(thiserror::Error, Debug, Clone)]
 pub enum DeleteTemplateError {

@@ -12,9 +12,10 @@ use perroute_commons::types::{
     id::Id,
     properties::{Properties, PropertiesError},
 };
-use perroute_connectors::types::plugin_id::ConnectorPluginId;
+use perroute_connectors::{types::plugin_id::ConnectorPluginId, Plugins};
 use perroute_storage::models::connection::{Connection, ConnectionBuilder};
 use serde::Serialize;
+use sqlx::PgPool;
 use tap::TapFallible;
 
 #[derive(Debug, thiserror::Error)]
@@ -38,7 +39,16 @@ impl_command!(CreateConnectionCommand, CommandType::CreateConnection);
 into_event!(CreateConnectionCommand);
 
 #[derive(Debug)]
-pub struct CreateConnectionCommandHandler;
+pub struct CreateConnectionCommandHandler {
+    pool: PgPool,
+    plugins: Plugins,
+}
+
+impl CreateConnectionCommandHandler {
+    pub fn new(pool: PgPool, plugins: Plugins) -> Self {
+        Self { pool, plugins }
+    }
+}
 
 #[async_trait::async_trait]
 impl CommandHandler for CreateConnectionCommandHandler {

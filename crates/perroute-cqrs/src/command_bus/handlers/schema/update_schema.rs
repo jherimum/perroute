@@ -5,11 +5,13 @@ use crate::{
     },
     into_event,
 };
+use derive_getters::Getters;
 use perroute_commons::types::{actor::Actor, id::Id, json_schema::JsonSchema, vars::Vars};
 use perroute_storage::{
     models::schema::{Schema, SchemasQuery},
     query::FetchableModel,
 };
+use sqlx::PgPool;
 use tap::TapFallible;
 
 #[derive(Debug, thiserror::Error)]
@@ -31,8 +33,16 @@ command!(
 );
 into_event!(UpdateSchemaCommand);
 
-#[derive(Debug)]
-pub struct UpdateSchemaCommandHandler;
+#[derive(Debug, Getters)]
+pub struct UpdateSchemaCommandHandler {
+    pool: PgPool,
+}
+
+impl UpdateSchemaCommandHandler {
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
+    }
+}
 
 #[async_trait::async_trait]
 impl CommandHandler for UpdateSchemaCommandHandler {

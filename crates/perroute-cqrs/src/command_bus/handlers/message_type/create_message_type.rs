@@ -12,6 +12,7 @@ use perroute_storage::{
     query::FetchableModel,
 };
 use serde::Serialize;
+use sqlx::PgPool;
 use tap::TapFallible;
 
 #[derive(Debug, thiserror::Error)]
@@ -34,7 +35,15 @@ impl_command!(CreateMessageTypeCommand, CommandType::CreateMessageType);
 into_event!(CreateMessageTypeCommand);
 
 #[derive(Debug)]
-pub struct CreateMessageTypeCommandHandler;
+pub struct CreateMessageTypeCommandHandler {
+    pool: PgPool,
+}
+
+impl CreateMessageTypeCommandHandler {
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
+    }
+}
 
 #[async_trait::async_trait]
 impl CommandHandler for CreateMessageTypeCommandHandler {

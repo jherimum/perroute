@@ -17,6 +17,7 @@ use perroute_commons::types::{
 use perroute_connectors::{
     api::{DispatchError, DispatchResponse},
     types::{delivery::Delivery, plugin_id::ConnectorPluginId},
+    Plugins,
 };
 use perroute_messaging::events::EventType;
 use perroute_storage::{
@@ -65,7 +66,23 @@ pub enum DistributeMessageError {
 
 #[derive(Debug)]
 pub struct DistributeMessageCommandHandler {
+    pool: PgPool,
+    plugins: Plugins,
     template_render: Arc<dyn TemplateRender<TemplateData>>,
+}
+
+impl DistributeMessageCommandHandler {
+    pub fn new(
+        pool: PgPool,
+        plugins: Plugins,
+        template_render: Arc<dyn TemplateRender<TemplateData>>,
+    ) -> Self {
+        Self {
+            pool,
+            plugins,
+            template_render,
+        }
+    }
 }
 
 #[async_trait]

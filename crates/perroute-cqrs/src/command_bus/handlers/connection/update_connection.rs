@@ -12,11 +12,13 @@ use perroute_commons::types::{
     id::Id,
     properties::{Properties, PropertiesError},
 };
+use perroute_connectors::Plugins;
 use perroute_storage::{
     models::connection::{Connection, ConnectionQuery},
     query::FetchableModel,
 };
 use serde::Serialize;
+use sqlx::PgPool;
 use tap::TapFallible;
 
 #[derive(Debug, thiserror::Error)]
@@ -40,7 +42,16 @@ impl_command!(UpdateConnectionCommand, CommandType::UpdateConnection);
 into_event!(UpdateConnectionCommand);
 
 #[derive(Debug)]
-pub struct UpdateConnectionCommandHandler;
+pub struct UpdateConnectionCommandHandler {
+    pool: PgPool,
+    plugins: Plugins,
+}
+
+impl UpdateConnectionCommandHandler {
+    pub fn new(pool: PgPool, plugins: Plugins) -> Self {
+        Self { pool, plugins }
+    }
+}
 
 #[async_trait::async_trait]
 impl CommandHandler for UpdateConnectionCommandHandler {

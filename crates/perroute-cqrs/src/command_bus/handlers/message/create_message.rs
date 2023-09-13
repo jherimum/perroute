@@ -24,7 +24,7 @@ use perroute_storage::{
     query::FetchableModel,
 };
 use serde::Serialize;
-use sqlx::types::Json;
+use sqlx::{types::Json, PgPool};
 use tap::TapFallible;
 use thiserror::Error;
 
@@ -70,7 +70,15 @@ pub enum CreateMessageError {
 }
 
 #[derive(Debug)]
-pub struct CreateMessageCommandHandler;
+pub struct CreateMessageCommandHandler {
+    pool: PgPool,
+}
+
+impl CreateMessageCommandHandler {
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
+    }
+}
 
 #[async_trait::async_trait]
 impl CommandHandler for CreateMessageCommandHandler {

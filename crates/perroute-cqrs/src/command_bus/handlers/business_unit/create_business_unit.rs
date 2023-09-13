@@ -14,6 +14,7 @@ use perroute_storage::{
     query::FetchableModel,
 };
 use serde::Serialize;
+use sqlx::PgPool;
 use tap::TapFallible;
 
 #[derive(thiserror::Error, Debug, Clone)]
@@ -33,7 +34,15 @@ impl_command!(CreateBusinessUnitCommand, CommandType::CreateBusinessUnit);
 into_event!(CreateBusinessUnitCommand);
 
 #[derive(Debug)]
-pub struct CreateBusinessUnitCommandHandler;
+pub struct CreateBusinessUnitCommandHandler {
+    pool: PgPool,
+}
+
+impl CreateBusinessUnitCommandHandler {
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
+    }
+}
 
 #[async_trait]
 impl CommandHandler for CreateBusinessUnitCommandHandler {
@@ -48,7 +57,7 @@ impl CommandHandler for CreateBusinessUnitCommandHandler {
         cmd: Self::Command,
     ) -> Result<Self::Output> {
         let code_exists =
-            BusinessUnit::exists(ctx.pool(), BusinessUnitQuery::with_code(cmd.code.clone()))
+            BusinessUnit::exists(&self.pool, BusinessUnitQuery::with_code(cmd.code.clone()))
                 .await
                 .tap_err(|e| {
                     tracing::error!(
@@ -68,7 +77,7 @@ impl CommandHandler for CreateBusinessUnitCommandHandler {
             .vars(cmd.vars)
             .build()
             .context("Failed to build BusinessUnit")?
-            .save(ctx.tx())
+            .save(&self.pool)
             .await
             .tap_err(|e| tracing::error!("Failed to save BusinessUnit: {e}"))?)
     }

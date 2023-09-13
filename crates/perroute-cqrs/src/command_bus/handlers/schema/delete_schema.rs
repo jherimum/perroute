@@ -5,6 +5,7 @@ use crate::{
     },
     into_event,
 };
+use derive_getters::Getters;
 use perroute_commons::types::{actor::Actor, id::Id};
 use perroute_storage::{
     models::{
@@ -14,6 +15,7 @@ use perroute_storage::{
     },
     query::FetchableModel,
 };
+use sqlx::PgPool;
 use tap::TapFallible;
 
 #[derive(Debug, thiserror::Error)]
@@ -32,8 +34,16 @@ command!(
 );
 into_event!(DeleteSchemaCommand);
 
-#[derive(Debug)]
-pub struct DeleteSchemaCommandHandler;
+#[derive(Debug, Getters)]
+pub struct DeleteSchemaCommandHandler {
+    pool: PgPool,
+}
+
+impl DeleteSchemaCommandHandler {
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
+    }
+}
 
 #[async_trait::async_trait]
 impl CommandHandler for DeleteSchemaCommandHandler {

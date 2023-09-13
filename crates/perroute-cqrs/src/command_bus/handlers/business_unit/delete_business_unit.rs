@@ -15,6 +15,7 @@ use perroute_storage::{
     },
     query::FetchableModel,
 };
+use sqlx::PgPool;
 use tap::TapFallible;
 
 #[derive(thiserror::Error, Debug, Clone)]
@@ -34,7 +35,15 @@ command!(
 into_event!(DeleteBusinessUnitCommand);
 
 #[derive(Debug)]
-pub struct DeleteBusinessUnitCommandHandler;
+pub struct DeleteBusinessUnitCommandHandler {
+    pool: PgPool,
+}
+
+impl DeleteBusinessUnitCommandHandler {
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
+    }
+}
 
 #[async_trait]
 impl CommandHandler for DeleteBusinessUnitCommandHandler {

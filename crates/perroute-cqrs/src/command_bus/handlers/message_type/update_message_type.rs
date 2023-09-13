@@ -10,6 +10,7 @@ use perroute_storage::{
     models::message_type::{MessageType, MessageTypeQuery},
     query::FetchableModel,
 };
+use sqlx::PgPool;
 use tap::TapFallible;
 
 #[derive(Debug, thiserror::Error)]
@@ -30,7 +31,15 @@ command!(
 into_event!(UpdateMessageTypeCommand);
 
 #[derive(Debug)]
-pub struct UpdateMessageTypeCommandHandler;
+pub struct UpdateMessageTypeCommandHandler {
+    pool: PgPool,
+}
+
+impl UpdateMessageTypeCommandHandler {
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
+    }
+}
 
 #[async_trait::async_trait]
 impl CommandHandler for UpdateMessageTypeCommandHandler {

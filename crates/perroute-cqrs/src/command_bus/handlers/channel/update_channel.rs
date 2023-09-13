@@ -13,12 +13,13 @@ use perroute_commons::types::{
     priority::Priority,
     properties::{Properties, PropertiesError},
 };
-use perroute_connectors::types::dispatch_type::DispatchType;
+use perroute_connectors::{types::dispatch_type::DispatchType, Plugins};
 use perroute_storage::{
     models::channel::{Channel, ChannelQuery},
     query::FetchableModel,
 };
 use serde::Serialize;
+use sqlx::PgPool;
 use tap::TapFallible;
 
 #[derive(Debug, thiserror::Error)]
@@ -44,7 +45,16 @@ impl_command!(UpdateChannelCommand, CommandType::UpdateChannel);
 into_event!(UpdateChannelCommand);
 
 #[derive(Debug)]
-pub struct UpdateChannelCommandHandler;
+pub struct UpdateChannelCommandHandler {
+    pool: PgPool,
+    plugins: Plugins,
+}
+
+impl UpdateChannelCommandHandler {
+    pub fn new(pool: PgPool, plugins: Plugins) -> Self {
+        Self { pool, plugins }
+    }
+}
 
 #[async_trait::async_trait]
 impl CommandHandler for UpdateChannelCommandHandler {
