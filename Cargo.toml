@@ -4,6 +4,7 @@ members = [
     # runnable applications    
     "crates/perroute-backoffice-api",
     "crates/perroute-scheduler",
+    "crates/perroute-integrations",
 
     # dependent library crates
     "crates/perroute-cqrs",
