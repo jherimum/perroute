@@ -9,7 +9,6 @@ use anyhow::Context;
 use derive_builder::Builder;
 use derive_getters::Getters;
 use perroute_commons::types::{
-    actor::Actor,
     id::Id,
     properties::{Properties, PropertiesError},
 };
@@ -49,8 +48,8 @@ impl CommandHandler for UpdateRouteCommandHandler {
     #[tracing::instrument(name = "update_route_handler", skip(self, ctx))]
     async fn handle<'tx>(
         &self,
-        ctx: &mut CommandBusContext<'tx>,
-        _: &Actor,
+        ctx: &mut CommandBusContext,
+
         cmd: Self::Command,
     ) -> Result<Self::Output> {
         let mut route = Route::find(ctx.pool(), RouteQuery::with_id(cmd.id))
@@ -91,7 +90,7 @@ impl CommandHandler for UpdateRouteCommandHandler {
             route = route.set_properties(props);
         }
         Ok(route
-            .update(ctx.tx())
+            .update(ctx.pool())
             .await
             .tap_err(|e| tracing::error!("Failed to update route:{e}"))?)
     }

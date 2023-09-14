@@ -42,8 +42,8 @@ use super::{
 };
 use perroute_commons::types::actor::Actor;
 use perroute_connectors::Plugins;
-use perroute_storage::{error::StorageError, models::db_event::DbEvent};
-use sqlx::{Acquire, PgConnection, PgPool, Postgres, Transaction};
+use perroute_storage::models::db_event::DbEvent;
+use sqlx::PgPool;
 use std::{
     any::{Any, TypeId},
     collections::HashMap,
@@ -53,24 +53,19 @@ use std::{
 use tap::{TapFallible, TapOptional};
 
 #[derive(Debug)]
-pub struct CommandBusContext<'tx> {
+pub struct CommandBusContext<'a> {
     plugins: Plugins,
     pool: PgPool,
-    tx: Transaction<'tx, Postgres>,
+    actor: &'a Actor,
 }
 
-impl<'tx> CommandBusContext<'tx> {
-    pub async fn begin(pool: PgPool, plugins: Plugins) -> Result<CommandBusContext<'tx>> {
-        let tx = pool
-            .begin()
-            .await
-            .tap_err(|e| tracing::error!("Failed to begin transaction: {e}"))
-            .map_err(StorageError::Tx)?;
-        Ok(Self { plugins, pool, tx })
-    }
-
-    pub fn tx(&mut self) -> &mut Transaction<'tx, Postgres> {
-        &mut self.tx
+impl<'a> CommandBusContext<'a> {
+    fn new(pool: PgPool, plugins: Plugins, actor: &'a Actor) -> Self {
+        Self {
+            pool,
+            plugins,
+            actor,
+        }
     }
 
     pub const fn pool(&self) -> &PgPool {
@@ -81,17 +76,8 @@ impl<'tx> CommandBusContext<'tx> {
         &self.plugins
     }
 
-    pub async fn conn(&mut self) -> &mut PgConnection {
-        self.tx.acquire().await.unwrap()
-    }
-
-    async fn commit(self) -> Result<()> {
-        Ok(self
-            .tx
-            .commit()
-            .await
-            .tap_err(|e| tracing::error!("Failed to commit transaction: {e}"))
-            .map_err(StorageError::Tx)?)
+    pub fn actor(&self) -> &Actor {
+        self.actor
     }
 }
 
@@ -201,12 +187,10 @@ impl CommandBus {
             .tap_none(|| tracing::error!("Handler not found for command: {}", cmd.ty()))
             .ok_or_else(|| CommandBusError::HandlerNotFound(cmd.ty()))?;
 
-        let mut ctx = CommandBusContext::begin(self.pool.clone(), self.plugins.clone())
-            .await
-            .tap_err(|e| tracing::error!("Failed to create command bus context: {e}"))?;
+        let mut ctx = CommandBusContext::new(self.pool.clone(), self.plugins.clone(), actor);
 
         let handler_result = handler
-            .handle(&mut ctx, actor, cmd.clone())
+            .handle(&mut ctx, cmd.clone())
             .await
             .tap_err(|e| {
                 tracing::error!("Failed to handle command: {e}"); //TODO: improve logging
@@ -216,20 +200,16 @@ impl CommandBus {
             });
 
         cmd.to_log(actor, handler_result.as_ref().err())
-            .save(ctx.tx())
+            .save(ctx.pool())
             .await
             .tap_err(|e| tracing::error!("Failed to save command log: {e}"))?;
 
         if handler_result.is_ok() {
             if let Some(event) = cmd.into_event() {
                 let db_event: DbEvent = (&event).into();
-                db_event.save(ctx.tx()).await?;
+                db_event.save(ctx.pool()).await?;
             }
         }
-
-        ctx.commit()
-            .await
-            .tap_err(|e| tracing::error!("Failed to commit transaction: {e}"))?;
 
         handler_result
     }

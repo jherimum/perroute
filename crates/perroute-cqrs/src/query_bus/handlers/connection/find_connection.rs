@@ -8,7 +8,7 @@ use crate::{
     },
 };
 use async_trait::async_trait;
-use perroute_commons::types::{actor::Actor, id::Id};
+use perroute_commons::types::id::Id;
 use perroute_storage::{
     models::connection::{Connection, ConnectionQueryBuilder},
     query::FetchableModel,
@@ -27,12 +27,7 @@ impl QueryHandler for FindConnectionQueryHandler {
     type Output = Connection;
 
     #[tracing::instrument(name = "find_Connection_handler", skip(self, ctx))]
-    async fn handle(
-        &self,
-        ctx: &QueryBusContext,
-        actor: &Actor,
-        query: &Self::Query,
-    ) -> Result<Self::Output> {
+    async fn handle(&self, ctx: &QueryBusContext, query: &Self::Query) -> Result<Self::Output> {
         Connection::find(
             ctx.pool(),
             ConnectionQueryBuilder::default()

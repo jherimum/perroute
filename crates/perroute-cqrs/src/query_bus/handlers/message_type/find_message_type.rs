@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use derive_builder::Builder;
 use derive_getters::Getters;
-use perroute_commons::types::{actor::Actor, id::Id};
+use perroute_commons::types::id::Id;
 use perroute_storage::{
     models::message_type::{MessageType, MessageTypeQueryBuilder},
     query::FetchableModel,
@@ -33,12 +33,7 @@ impl QueryHandler for FindMessageTypeQueryHandler {
     type Output = MessageType;
 
     #[tracing::instrument(name = "find_message_type_handler", skip(self, ctx))]
-    async fn handle(
-        &self,
-        ctx: &QueryBusContext,
-        _: &Actor,
-        query: &Self::Query,
-    ) -> Result<Self::Output> {
+    async fn handle(&self, ctx: &QueryBusContext, query: &Self::Query) -> Result<Self::Output> {
         MessageType::find(
             ctx.pool(),
             MessageTypeQueryBuilder::default()

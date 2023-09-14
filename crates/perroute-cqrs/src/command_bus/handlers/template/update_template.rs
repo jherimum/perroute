@@ -7,9 +7,7 @@ use crate::{
 };
 use async_trait::async_trait;
 use chrono::NaiveDateTime;
-use perroute_commons::types::{
-    actor::Actor, id::Id, priority::Priority, template::TemplateSnippet, vars::Vars,
-};
+use perroute_commons::types::{id::Id, priority::Priority, template::TemplateSnippet, vars::Vars};
 use perroute_storage::{
     models::template::{Template, TemplatesQuery},
     query::FetchableModel,
@@ -49,8 +47,8 @@ impl CommandHandler for UpdateTemplateCommandHandler {
     #[tracing::instrument(name = "update_template_handler", skip(self, ctx))]
     async fn handle<'tx>(
         &self,
-        ctx: &mut CommandBusContext<'tx>,
-        _: &Actor,
+        ctx: &mut CommandBusContext,
+
         cmd: Self::Command,
     ) -> Result<Self::Output> {
         let mut actual_template = Template::find(ctx.pool(), TemplatesQuery::with_id(cmd.id))
@@ -108,7 +106,7 @@ impl CommandHandler for UpdateTemplateCommandHandler {
         }
 
         Ok(actual_template
-            .update(ctx.tx())
+            .update(ctx.pool())
             .await
             .tap_err(|e| tracing::error!("Failed to update template:{e}"))?)
     }

@@ -5,7 +5,7 @@ use crate::{
     },
     into_event,
 };
-use perroute_commons::types::{actor::Actor, id::Id};
+use perroute_commons::types::id::Id;
 use perroute_storage::{
     models::message_type::{MessageType, MessageTypeQuery},
     query::FetchableModel,
@@ -39,11 +39,11 @@ impl CommandHandler for DeleteMessageTypeCommandHandler {
     #[tracing::instrument(name = "delete_message_type_handler", skip(self, ctx))]
     async fn handle<'tx>(
         &self,
-        ctx: &mut CommandBusContext<'tx>,
-        _: &Actor,
+        ctx: &mut CommandBusContext,
+
         cmd: Self::Command,
     ) -> Result<Self::Output> {
-        let message_type = MessageType::find(ctx.tx(), MessageTypeQuery::with_id(cmd.id))
+        let message_type = MessageType::find(ctx.pool(), MessageTypeQuery::with_id(cmd.id))
             .await
             .tap_err(|e| tracing::error!("Failed to retrive message type {}: {e}", cmd.id))?
             .ok_or(DeleteMessageTypeError::MessageTypeNotFound(cmd.id))?;
@@ -62,7 +62,7 @@ impl CommandHandler for DeleteMessageTypeCommandHandler {
         }
 
         Ok(message_type
-            .delete(ctx.tx())
+            .delete(ctx.pool())
             .await
             .tap_err(|e| tracing::error!("Failed to delete message type {}:{e}", cmd.id))?)
     }

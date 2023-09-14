@@ -31,17 +31,22 @@ use std::{
 };
 use tap::{TapFallible, TapOptional};
 
-pub struct QueryBusContext {
+pub struct QueryBusContext<'a> {
     pool: PgPool,
+    actor: &'a Actor,
 }
 
-impl QueryBusContext {
-    pub const fn new(pool: PgPool) -> Self {
-        Self { pool }
+impl<'a> QueryBusContext<'a> {
+    pub const fn new(pool: PgPool, actor: &'a Actor) -> Self {
+        Self { pool, actor }
     }
 
     pub const fn pool(&self) -> &PgPool {
         &self.pool
+    }
+
+    pub fn actor(&self) -> &Actor {
+        self.actor
     }
 }
 
@@ -52,7 +57,6 @@ pub trait QueryHandler: Send + Sync {
     async fn handle(
         &self,
         ctx: &QueryBusContext,
-        actor: &Actor,
         query: &Self::Query,
     ) -> Result<Self::Output, QueryBusError>;
 }
@@ -105,10 +109,10 @@ impl QueryBus {
             .tap_none(|| tracing::error!("Handler not found for query: {}", query.ty()))
             .ok_or_else(|| QueryBusError::HandlerNotFound(query.ty()))?;
 
-        let ctx = QueryBusContext::new(self.pool.clone());
+        let ctx = QueryBusContext::new(self.pool.clone(), actor);
 
         handler
-            .handle(&ctx, actor, query)
+            .handle(&ctx, query)
             .await
             .tap_err(|e| tracing::error!("Failed to execute query {:?}: {}", query, e))
     }

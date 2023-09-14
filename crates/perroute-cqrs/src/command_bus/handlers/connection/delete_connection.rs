@@ -6,7 +6,7 @@ use crate::{
 };
 use derive_builder::Builder;
 use derive_getters::Getters;
-use perroute_commons::types::{actor::Actor, id::Id};
+use perroute_commons::types::id::Id;
 use perroute_storage::{
     models::{
         channel::{Channel, ChannelQuery},
@@ -44,8 +44,8 @@ impl CommandHandler for DeleteConnectionCommandHandler {
 
     async fn handle<'tx>(
         &self,
-        ctx: &mut CommandBusContext<'tx>,
-        _: &Actor,
+        ctx: &mut CommandBusContext,
+
         cmd: Self::Command,
     ) -> Result<Self::Output> {
         let conn = Connection::find(
@@ -71,7 +71,7 @@ impl CommandHandler for DeleteConnectionCommandHandler {
         }
 
         Ok(conn
-            .delete(ctx.tx())
+            .delete(ctx.pool())
             .await
             .tap_err(|e| tracing::error!("Failed to delete connection: {e}"))
             .map(|_| ())?)

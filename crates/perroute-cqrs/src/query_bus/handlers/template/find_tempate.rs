@@ -8,7 +8,7 @@ use crate::{
     },
 };
 use async_trait::async_trait;
-use perroute_commons::types::{actor::Actor, id::Id};
+use perroute_commons::types::id::Id;
 use perroute_storage::{
     models::template::{Template, TemplatesQueryBuilder},
     query::FetchableModel,
@@ -31,12 +31,7 @@ impl QueryHandler for FindTemplateQueryHandler {
     type Output = Template;
 
     #[tracing::instrument(name = "find_template_handler", skip(self, ctx))]
-    async fn handle(
-        &self,
-        ctx: &QueryBusContext,
-        _: &Actor,
-        query: &Self::Query,
-    ) -> Result<Self::Output> {
+    async fn handle(&self, ctx: &QueryBusContext, query: &Self::Query) -> Result<Self::Output> {
         Template::find(
             ctx.pool(),
             TemplatesQueryBuilder::default()

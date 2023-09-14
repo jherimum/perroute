@@ -6,7 +6,7 @@ use crate::{
 };
 use derive_builder::Builder;
 use derive_getters::Getters;
-use perroute_commons::types::{actor::Actor, code::Code, id::Id, vars::Vars};
+use perroute_commons::types::{code::Code, id::Id, vars::Vars};
 use perroute_storage::{
     models::message_type::{MessageType, MessageTypeBuilder, MessageTypeQuery},
     query::FetchableModel,
@@ -44,8 +44,8 @@ impl CommandHandler for CreateMessageTypeCommandHandler {
     #[tracing::instrument(name = "create_message_type_handler", skip(self, ctx))]
     async fn handle<'tx>(
         &self,
-        ctx: &mut CommandBusContext<'tx>,
-        _: &Actor,
+        ctx: &mut CommandBusContext,
+
         cmd: Self::Command,
     ) -> Result<MessageType> {
         if MessageType::exists(
@@ -66,7 +66,7 @@ impl CommandHandler for CreateMessageTypeCommandHandler {
             .business_unit_id(cmd.business_unit_id)
             .build()
             .unwrap()
-            .save(ctx.tx())
+            .save(ctx.pool())
             .await
             .tap_err(|e| tracing::error!("Failed to save message type: {e}"))?;
         Ok(message_type)

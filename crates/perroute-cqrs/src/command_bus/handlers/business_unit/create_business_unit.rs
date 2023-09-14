@@ -8,7 +8,7 @@ use anyhow::Context;
 use async_trait::async_trait;
 use derive_builder::Builder;
 use derive_getters::Getters;
-use perroute_commons::types::{actor::Actor, code::Code, id::Id, vars::Vars};
+use perroute_commons::types::{code::Code, id::Id, vars::Vars};
 use perroute_storage::{
     models::business_unit::{BusinessUnit, BusinessUnitBuilder, BusinessUnitQuery},
     query::FetchableModel,
@@ -43,8 +43,7 @@ impl CommandHandler for CreateBusinessUnitCommandHandler {
     #[tracing::instrument(name = "create_business_unit_handler", skip(self, ctx))]
     async fn handle<'tx>(
         &self,
-        ctx: &mut CommandBusContext<'tx>,
-        _: &Actor,
+        ctx: &mut CommandBusContext,
         cmd: Self::Command,
     ) -> Result<Self::Output> {
         let code_exists =
@@ -68,7 +67,7 @@ impl CommandHandler for CreateBusinessUnitCommandHandler {
             .vars(cmd.vars)
             .build()
             .context("Failed to build BusinessUnit")?
-            .save(ctx.tx())
+            .save(ctx.pool())
             .await
             .tap_err(|e| tracing::error!("Failed to save BusinessUnit: {e}"))?)
     }

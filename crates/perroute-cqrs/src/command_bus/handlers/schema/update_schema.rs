@@ -5,7 +5,7 @@ use crate::{
     },
     into_event,
 };
-use perroute_commons::types::{actor::Actor, id::Id, json_schema::JsonSchema, vars::Vars};
+use perroute_commons::types::{id::Id, json_schema::JsonSchema, vars::Vars};
 use perroute_storage::{
     models::schema::{Schema, SchemasQuery},
     query::FetchableModel,
@@ -42,11 +42,11 @@ impl CommandHandler for UpdateSchemaCommandHandler {
     #[tracing::instrument(name = "update_schema_handler", skip(self, ctx))]
     async fn handle<'tx>(
         &self,
-        ctx: &mut CommandBusContext<'tx>,
-        _: &Actor,
+        ctx: &mut CommandBusContext,
+
         cmd: Self::Command,
     ) -> Result<Self::Output> {
-        let mut schema = Schema::find(ctx.tx(), SchemasQuery::with_id(cmd.id))
+        let mut schema = Schema::find(ctx.pool(), SchemasQuery::with_id(cmd.id))
             .await
             .tap_err(|e| tracing::error!("Failed to retrieve schema {}:{e}", cmd.id))?
             .ok_or(UpdateSchemaError::SchemaNotFound(cmd.id))?;
@@ -68,7 +68,7 @@ impl CommandHandler for UpdateSchemaCommandHandler {
         }
 
         Ok(schema
-            .update(ctx.tx())
+            .update(ctx.pool())
             .await
             .tap_err(|e| tracing::error!("Failed to update schema:{e}"))?)
     }

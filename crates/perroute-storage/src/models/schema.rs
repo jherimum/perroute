@@ -207,8 +207,8 @@ impl Schema {
             .map(|r| r.rows_affected() > 0)?)
     }
 
-    pub async fn next_version(
-        exec: &mut sqlx::PgConnection,
+    pub async fn next_version<'e, E: PgExecutor<'e>>(
+        exec: E,
         message_type_id: &Id,
     ) -> Result<Version> {
         Ok(sqlx::query_scalar::<_, Version>(

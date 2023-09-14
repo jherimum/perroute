@@ -9,8 +9,7 @@ use crate::{
 use derive_builder::Builder;
 use derive_getters::Getters;
 use perroute_commons::types::{
-    actor::Actor, code::Code, id::Id, json_schema::InvalidPayloadError, payload::Payload,
-    version::Version,
+    code::Code, id::Id, json_schema::InvalidPayloadError, payload::Payload, version::Version,
 };
 use perroute_connectors::types::delivery::Delivery;
 use perroute_messaging::events::EventType;
@@ -80,8 +79,7 @@ impl CommandHandler for CreateMessageCommandHandler {
     #[tracing::instrument(name = "create_message_handler", skip(self, ctx))]
     async fn handle<'tx>(
         &self,
-        ctx: &mut CommandBusContext<'tx>,
-        actor: &Actor,
+        ctx: &mut CommandBusContext,
         cmd: Self::Command,
     ) -> Result<Self::Output> {
         let bu = BusinessUnit::find(
@@ -149,7 +147,7 @@ impl CommandHandler for CreateMessageCommandHandler {
             .deliveries(Json(cmd.deliveries))
             .build()
             .unwrap()
-            .save(ctx.tx())
+            .save(ctx.pool())
             .await?)
     }
 }

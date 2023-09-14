@@ -5,8 +5,9 @@ use crate::{
     },
     into_event,
 };
-use perroute_commons::types::{actor::Actor, id::Id};
+use perroute_commons::types::id::Id;
 use perroute_storage::{
+    error::StorageError,
     models::{
         route::{Route, RouteQuery},
         schema::{Schema, SchemasQuery},
@@ -43,8 +44,8 @@ impl CommandHandler for DeleteSchemaCommandHandler {
     #[tracing::instrument(name = "delete_schema_handler", skip(self, ctx))]
     async fn handle<'tx>(
         &self,
-        ctx: &mut CommandBusContext<'tx>,
-        _: &Actor,
+        ctx: &mut CommandBusContext,
+
         cmd: Self::Command,
     ) -> Result<Self::Output> {
         let schema = Schema::find(ctx.pool(), SchemasQuery::with_id(cmd.id))
@@ -60,11 +61,13 @@ impl CommandHandler for DeleteSchemaCommandHandler {
             .into());
         }
 
+        let mut tx = ctx.pool().begin().await.map_err(StorageError::Tx)?;
+
         let template_ids = Template::ids(ctx.pool(), TemplatesQuery::with_schema_id(cmd.id))
             .await
             .tap_err(|e| tracing::error!("Failed to retrieve templates:{e}"))?;
 
-        Template::batch_delete(template_ids, ctx.tx())
+        Template::batch_delete(template_ids, &mut tx)
             .await
             .tap_err(|e| tracing::error!("Failed to delete templates:{e}"))?;
 
@@ -72,13 +75,17 @@ impl CommandHandler for DeleteSchemaCommandHandler {
             .await
             .tap_err(|e| tracing::error!("Failed to retrieve routes:{e}"))?;
 
-        Route::batch_delete(route_ids, ctx.tx())
+        Route::batch_delete(route_ids, &mut tx)
             .await
             .tap_err(|e| tracing::error!("Failed to delete routes:{e}"))?;
 
-        Ok(schema
-            .delete(ctx.tx())
+        let deleted = schema
+            .delete(&mut tx)
             .await
-            .tap_err(|e| tracing::info!("Failed to delete schema: {e}"))?)
+            .tap_err(|e| tracing::info!("Failed to delete schema: {e}"))?;
+
+        tx.commit().await.map_err(StorageError::Tx)?;
+
+        Ok(deleted)
     }
 }

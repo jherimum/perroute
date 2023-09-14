@@ -8,9 +8,7 @@ use crate::{
 use anyhow::Context;
 use async_trait::async_trait;
 use chrono::NaiveDateTime;
-use perroute_commons::types::{
-    actor::Actor, id::Id, priority::Priority, template::TemplateSnippet, vars::Vars,
-};
+use perroute_commons::types::{id::Id, priority::Priority, template::TemplateSnippet, vars::Vars};
 use perroute_connectors::types::dispatch_type::DispatchType;
 use perroute_storage::{
     models::{
@@ -55,8 +53,8 @@ impl CommandHandler for CreateTemplateCommandHandler {
     #[tracing::instrument(name = "create_template_handler", skip(self, ctx))]
     async fn handle<'tx>(
         &self,
-        ctx: &mut CommandBusContext<'tx>,
-        _: &Actor,
+        ctx: &mut CommandBusContext,
+
         cmd: Self::Command,
     ) -> Result<Self::Output> {
         let schema = Schema::find(ctx.pool(), SchemasQuery::with_id(cmd.schema_id))

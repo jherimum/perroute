@@ -10,7 +10,6 @@ use chrono::Utc;
 use derive_builder::Builder;
 use derive_getters::Getters;
 use perroute_commons::types::{
-    actor::Actor,
     id::Id,
     template::{TemplateData, TemplateRender},
 };
@@ -76,8 +75,7 @@ impl CommandHandler for DistributeMessageCommandHandler {
     #[tracing::instrument(name = "distribute_message_handler", skip(self, ctx))]
     async fn handle<'tx>(
         &self,
-        ctx: &mut CommandBusContext<'tx>,
-        actor: &Actor,
+        ctx: &mut CommandBusContext,
         cmd: Self::Command,
     ) -> Result<Self::Output> {
         let message = retrieve_message(ctx.pool(), cmd.message_id).await?;
@@ -153,7 +151,7 @@ impl CommandHandler for DistributeMessageCommandHandler {
 
         let message = message
             .set_status(Status::Distributed)
-            .update(ctx.tx())
+            .update(ctx.pool())
             .await
             .tap_err(|e| tracing::error!("Failed to update message: {e}"))?;
 

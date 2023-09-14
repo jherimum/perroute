@@ -10,7 +10,7 @@ use crate::{
 use async_trait::async_trait;
 use derive_builder::Builder;
 use derive_getters::Getters;
-use perroute_commons::types::{actor::Actor, code::Code, id::Id, version::Version};
+use perroute_commons::types::{code::Code, id::Id, version::Version};
 use perroute_storage::{
     models::schema::{Schema, SchemasQueryBuilder},
     query::FetchableModel,
@@ -41,12 +41,7 @@ impl QueryHandler for FindSchemaQueryHandler {
     type Output = Schema;
 
     #[tracing::instrument(name = "find_schema_handler", skip(self, ctx))]
-    async fn handle(
-        &self,
-        ctx: &QueryBusContext,
-        _: &Actor,
-        query: &Self::Query,
-    ) -> Result<Self::Output> {
+    async fn handle(&self, ctx: &QueryBusContext, query: &Self::Query) -> Result<Self::Output> {
         let query = SchemasQueryBuilder::default()
             .id(*query.schema_id())
             .message_type_id(*query.message_type_id())

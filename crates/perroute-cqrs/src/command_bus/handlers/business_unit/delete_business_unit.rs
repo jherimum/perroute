@@ -6,7 +6,7 @@ use crate::{
     into_event,
 };
 use async_trait::async_trait;
-use perroute_commons::types::{actor::Actor, id::Id};
+use perroute_commons::types::id::Id;
 use perroute_storage::{
     models::{
         business_unit::{BusinessUnit, BusinessUnitQuery},
@@ -42,13 +42,8 @@ impl CommandHandler for DeleteBusinessUnitCommandHandler {
     type Output = bool;
 
     #[tracing::instrument(name = "delete_business_unit_handler", skip(self, ctx))]
-    async fn handle<'ctx>(
-        &self,
-        ctx: &mut CommandBusContext<'ctx>,
-        _: &Actor,
-        cmd: Self::Command,
-    ) -> Result<bool> {
-        let bu = BusinessUnit::find(ctx.tx(), BusinessUnitQuery::with_id(cmd.business_unit_id))
+    async fn handle<'ctx>(&self, ctx: &mut CommandBusContext, cmd: Self::Command) -> Result<bool> {
+        let bu = BusinessUnit::find(ctx.pool(), BusinessUnitQuery::with_id(cmd.business_unit_id))
             .await
             .tap_err(|e| {
                 tracing::error!(
@@ -83,7 +78,7 @@ impl CommandHandler for DeleteBusinessUnitCommandHandler {
         }
 
         Ok(bu
-            .delete(ctx.tx())
+            .delete(ctx.pool())
             .await
             .tap_err(|e| tracing::error!("Failed to delete business unit: {e}"))?)
     }

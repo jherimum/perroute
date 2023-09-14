@@ -8,7 +8,6 @@ use anyhow::Context;
 use derive_builder::Builder;
 use derive_getters::Getters;
 use perroute_commons::types::{
-    actor::Actor,
     id::Id,
     properties::{Properties, PropertiesError},
 };
@@ -47,8 +46,8 @@ impl CommandHandler for CreateConnectionCommandHandler {
 
     async fn handle<'tx>(
         &self,
-        ctx: &mut CommandBusContext<'tx>,
-        _: &Actor,
+        ctx: &mut CommandBusContext,
+
         cmd: Self::Command,
     ) -> Result<Self::Output> {
         let connector_plugin = ctx
@@ -69,7 +68,7 @@ impl CommandHandler for CreateConnectionCommandHandler {
             .enabled(false)
             .build()
             .context("Failed to build connection")?
-            .save(ctx.tx())
+            .save(ctx.pool())
             .await
             .tap_err(|e| {
                 tracing::error!("Failed to save connection: {e}");

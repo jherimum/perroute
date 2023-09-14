@@ -7,7 +7,7 @@ use crate::{
 };
 use async_trait::async_trait;
 use derive_new::new;
-use perroute_commons::types::{actor::Actor, id::Id, vars::Vars};
+use perroute_commons::types::{id::Id, vars::Vars};
 use perroute_storage::{
     models::business_unit::{BusinessUnit, BusinessUnitQuery},
     query::FetchableModel,
@@ -40,12 +40,12 @@ impl CommandHandler for UpdateBusinessUnitCommandHandler {
     #[tracing::instrument(name = "update_business_units_handler", skip(self, ctx))]
     async fn handle<'ctx>(
         &self,
-        ctx: &mut CommandBusContext<'ctx>,
-        _: &Actor,
+        ctx: &mut CommandBusContext,
+
         command: Self::Command,
     ) -> Result<BusinessUnit> {
         let mut bu = BusinessUnit::find(
-            ctx.tx(),
+            ctx.pool(),
             BusinessUnitQuery::with_id(command.business_unit_id),
         )
         .await
@@ -71,7 +71,7 @@ impl CommandHandler for UpdateBusinessUnitCommandHandler {
             bu = bu.set_vars(vars);
         }
 
-        Ok(bu.update(ctx.tx()).await.tap_err(|e| {
+        Ok(bu.update(ctx.pool()).await.tap_err(|e| {
             tracing::error!(
                 "Failed to update business unit {}: {e}",
                 command.business_unit_id

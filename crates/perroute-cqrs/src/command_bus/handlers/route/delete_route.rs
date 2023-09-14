@@ -6,7 +6,7 @@ use crate::{
 };
 use derive_builder::Builder;
 use derive_getters::Getters;
-use perroute_commons::types::{actor::Actor, id::Id};
+use perroute_commons::types::id::Id;
 use perroute_storage::{
     models::route::{Route, RouteQuery},
     query::FetchableModel,
@@ -42,8 +42,8 @@ impl CommandHandler for DeleteRouteCommandHandler {
     #[tracing::instrument(name = "delete_route_handler", skip(self, ctx))]
     async fn handle<'tx>(
         &self,
-        ctx: &mut CommandBusContext<'tx>,
-        _: &Actor,
+        ctx: &mut CommandBusContext,
+
         cmd: Self::Command,
     ) -> Result<Self::Output> {
         let route = Route::find(ctx.pool(), RouteQuery::with_id(cmd.id))
@@ -52,7 +52,7 @@ impl CommandHandler for DeleteRouteCommandHandler {
             .ok_or(DeleteRouteError::RouteNotFound(cmd.id))?;
 
         Ok(route
-            .delete(ctx.tx())
+            .delete(ctx.pool())
             .await
             .tap_err(|e| tracing::error!("Failed to delete route {}: {e}", cmd.id))?)
     }
