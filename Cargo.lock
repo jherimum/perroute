@@ -2538,6 +2538,27 @@ dependencies = [
 [[package]]
 name = "perroute-integration"
 version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "chrono",
+ "cron",
+ "derive-getters",
+ "dotenv",
+ "perroute-commons",
+ "perroute-messaging",
+ "perroute-storage",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "strum",
+ "strum_macros",
+ "tap",
+ "thiserror",
+ "tokio",
+ "tracing",
+ "uuid",
+]
 
 [[package]]
 name = "perroute-messaging"
