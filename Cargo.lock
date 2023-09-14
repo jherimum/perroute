@@ -2536,6 +2536,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "perroute-integration"
+version = "0.1.0"
+
+[[package]]
 name = "perroute-messaging"
 version = "0.1.0"
 dependencies = [
