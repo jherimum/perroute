@@ -8,7 +8,6 @@ use crate::{
     },
 };
 use async_trait::async_trait;
-use perroute_commons::types::actor::Actor;
 use perroute_storage::{
     models::business_unit::{BusinessUnit, BusinessUnitQueryBuilder},
     query::FetchableModel,
@@ -24,12 +23,7 @@ impl QueryHandler for QueryBusinessUnitsQueryHandler {
     type Output = Vec<BusinessUnit>;
 
     #[tracing::instrument(name = "query_business_units_handler", skip(self, ctx))]
-    async fn handle(
-        &self,
-        ctx: &QueryBusContext,
-        actor: &Actor,
-        _: &Self::Query,
-    ) -> Result<Self::Output> {
+    async fn handle(&self, ctx: &QueryBusContext, _: &Self::Query) -> Result<Self::Output> {
         BusinessUnit::query(
             ctx.pool(),
             BusinessUnitQueryBuilder::default().build().unwrap(),

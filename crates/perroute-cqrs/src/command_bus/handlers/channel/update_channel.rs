@@ -8,7 +8,6 @@ use anyhow::anyhow;
 use derive_builder::Builder;
 use derive_getters::Getters;
 use perroute_commons::types::{
-    actor::Actor,
     id::Id,
     priority::Priority,
     properties::{Properties, PropertiesError},
@@ -63,8 +62,8 @@ impl CommandHandler for UpdateChannelCommandHandler {
 
     async fn handle<'tx>(
         &self,
-        ctx: &mut CommandBusContext<'tx>,
-        _: &Actor,
+        ctx: &mut CommandBusContext,
+
         cmd: Self::Command,
     ) -> Result<Self::Output> {
         let mut channel = Channel::find(ctx.pool(), ChannelQuery::with_id(cmd.id))
@@ -107,7 +106,7 @@ impl CommandHandler for UpdateChannelCommandHandler {
         }
 
         Ok(channel
-            .update(ctx.tx())
+            .update(ctx.pool())
             .await
             .tap_err(|e| tracing::error!("Failed to update channel: {e}"))?)
     }

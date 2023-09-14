@@ -7,7 +7,7 @@ use crate::{
     },
 };
 use async_trait::async_trait;
-use perroute_commons::types::{actor::Actor, id::Id};
+use perroute_commons::types::id::Id;
 use perroute_storage::{
     models::schema::{Schema, SchemasQueryBuilder},
     query::FetchableModel,
@@ -28,12 +28,7 @@ impl QueryHandler for QuerySchemasQueryHandler {
     type Query = QuerySchemasQuery;
 
     #[tracing::instrument(name = "query_schemas_handler", skip(self, ctx))]
-    async fn handle(
-        &self,
-        ctx: &QueryBusContext,
-        _: &Actor,
-        query: &Self::Query,
-    ) -> Result<Self::Output> {
+    async fn handle(&self, ctx: &QueryBusContext, query: &Self::Query) -> Result<Self::Output> {
         Schema::query(
             ctx.pool(),
             SchemasQueryBuilder::default()

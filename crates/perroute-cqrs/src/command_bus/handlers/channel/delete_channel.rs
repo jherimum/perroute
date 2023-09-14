@@ -6,8 +6,9 @@ use crate::{
 };
 use derive_builder::Builder;
 use derive_getters::Getters;
-use perroute_commons::types::{actor::Actor, id::Id};
+use perroute_commons::types::id::Id;
 use perroute_storage::{
+    error::StorageError,
     models::{
         channel::{Channel, ChannelQuery},
         route::Route,
@@ -48,8 +49,8 @@ impl CommandHandler for DeleteChannelCommandHandler {
 
     async fn handle<'tx>(
         &self,
-        ctx: &mut CommandBusContext<'tx>,
-        _: &Actor,
+        ctx: &mut CommandBusContext,
+
         cmd: Self::Command,
     ) -> Result<Self::Output> {
         let channel = Channel::find(ctx.pool(), ChannelQuery::with_id(cmd.id))
@@ -57,11 +58,17 @@ impl CommandHandler for DeleteChannelCommandHandler {
             .tap_err(|e| tracing::error!("Failed to retrieve channel {}: {e}", cmd.id))?
             .ok_or(DeleteChannelError::ChannelNotFound(cmd.id))?;
 
-        Route::delete_by_channel(ctx.tx(), channel.id()).await?;
+        let mut tx = ctx.pool().begin().await.map_err(StorageError::Tx)?;
 
-        Ok(channel
-            .delete(ctx.tx())
+        Route::delete_by_channel(&mut tx, channel.id()).await?;
+
+        let deleted = channel
+            .delete(&mut tx)
             .await
-            .tap_err(|e| tracing::error!("Failed to delete channel{}: {e}", cmd.id))?)
+            .tap_err(|e| tracing::error!("Failed to delete channel{}: {e}", cmd.id))?;
+
+        tx.commit().await.map_err(StorageError::Tx)?;
+
+        Ok(deleted)
     }
 }

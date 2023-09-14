@@ -8,7 +8,6 @@ use anyhow::Context;
 use derive_builder::Builder;
 use derive_getters::Getters;
 use perroute_commons::types::{
-    actor::Actor,
     id::Id,
     properties::{Properties, PropertiesError},
 };
@@ -66,8 +65,8 @@ impl CommandHandler for CreateRouteCommandHandler {
     #[tracing::instrument(name = "create_route_handler", skip(self, ctx))]
     async fn handle<'tx>(
         &self,
-        ctx: &mut CommandBusContext<'tx>,
-        _: &Actor,
+        ctx: &mut CommandBusContext,
+
         cmd: Self::Command,
     ) -> Result<Self::Output> {
         let channel = Channel::find(ctx.pool(), ChannelQuery::with_id(cmd.channel_id))
@@ -108,7 +107,7 @@ impl CommandHandler for CreateRouteCommandHandler {
             .properties(props)
             .build()
             .context("Failed to build route")?
-            .save(ctx.tx())
+            .save(ctx.pool())
             .await
             .tap_err(|e| tracing::error!("Failed to save route: {e}"))?)
     }

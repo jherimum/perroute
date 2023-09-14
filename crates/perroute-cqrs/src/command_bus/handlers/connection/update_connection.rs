@@ -8,7 +8,6 @@ use anyhow::Context;
 use derive_builder::Builder;
 use derive_getters::Getters;
 use perroute_commons::types::{
-    actor::Actor,
     id::Id,
     properties::{Properties, PropertiesError},
 };
@@ -60,8 +59,8 @@ impl CommandHandler for UpdateConnectionCommandHandler {
 
     async fn handle<'tx>(
         &self,
-        ctx: &mut CommandBusContext<'tx>,
-        _: &Actor,
+        ctx: &mut CommandBusContext,
+
         cmd: Self::Command,
     ) -> Result<Self::Output> {
         let mut conn = Connection::find(ctx.pool(), ConnectionQuery::with_id(cmd.id))
@@ -95,7 +94,7 @@ impl CommandHandler for UpdateConnectionCommandHandler {
             conn = conn.set_enabled(enabled);
         }
 
-        Ok(conn.update(ctx.tx()).await.tap_err(|e| {
+        Ok(conn.update(ctx.pool()).await.tap_err(|e| {
             tracing::error!("Failed to update connection {}: {e}", cmd.id);
         })?)
     }

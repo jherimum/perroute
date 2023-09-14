@@ -1,5 +1,4 @@
 use super::{bus::CommandBusContext, commands::Command, Result};
-use perroute_commons::types::actor::Actor;
 use std::fmt::Debug;
 
 pub mod business_unit;
@@ -18,8 +17,7 @@ pub trait CommandHandler: Send + Sync + Debug {
 
     async fn handle<'tx>(
         &self,
-        ctx: &mut CommandBusContext<'tx>,
-        actor: &Actor,
+        ctx: &mut CommandBusContext,
         cmd: Self::Command,
     ) -> Result<Self::Output>;
 }

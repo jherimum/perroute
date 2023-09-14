@@ -8,7 +8,6 @@ use anyhow::Context;
 use derive_builder::Builder;
 use derive_getters::Getters;
 use perroute_commons::types::{
-    actor::Actor,
     id::Id,
     priority::Priority,
     properties::{Properties, PropertiesError},
@@ -78,8 +77,8 @@ impl CommandHandler for CreateChannelCommandHandler {
 
     async fn handle<'tx>(
         &self,
-        ctx: &mut CommandBusContext<'tx>,
-        _: &Actor,
+        ctx: &mut CommandBusContext,
+
         cmd: Self::Command,
     ) -> Result<Self::Output> {
         let _ = BusinessUnit::find(ctx.pool(), BusinessUnitQuery::with_id(cmd.business_unit_id))
@@ -122,7 +121,7 @@ impl CommandHandler for CreateChannelCommandHandler {
             .enabled(false)
             .build()
             .context("Failed to build Channel")?
-            .save(ctx.tx())
+            .save(ctx.pool())
             .await
             .tap_err(|e| tracing::error!("Failed to save channel:{e}"))?)
     }

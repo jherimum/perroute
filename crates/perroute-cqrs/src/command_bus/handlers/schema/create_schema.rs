@@ -10,7 +10,6 @@ use derive_getters::Getters;
 use perroute_commons::{
     new_id,
     types::{
-        actor::Actor,
         id::Id,
         json_schema::{InvalidSchemaError, JsonSchema},
         vars::Vars,
@@ -64,16 +63,16 @@ impl CommandHandler for CreateSchemaCommandHandler {
     #[tracing::instrument(name = "create_schema_handler", skip(self, ctx))]
     async fn handle<'tx>(
         &self,
-        ctx: &mut CommandBusContext<'tx>,
-        _: &Actor,
+        ctx: &mut CommandBusContext,
+
         cmd: Self::Command,
     ) -> Result<Self::Output> {
-        let mt = MessageType::find(ctx.tx(), MessageTypeQuery::with_id(cmd.message_type_id))
+        let mt = MessageType::find(ctx.pool(), MessageTypeQuery::with_id(cmd.message_type_id))
             .await
             .tap_err(|e| tracing::error!("Failed to retrieve message type: {e}"))?
             .ok_or(CreateSchemaError::MessageTypeNotFound(cmd.message_type_id))?;
 
-        let next_version = Schema::next_version(ctx.tx(), mt.id())
+        let next_version = Schema::next_version(ctx.pool(), mt.id())
             .await
             .tap_err(|e| tracing::error!("Failed to calculate next version number: {e}"))?;
 
@@ -88,7 +87,7 @@ impl CommandHandler for CreateSchemaCommandHandler {
             .vars(cmd.vars)
             .build()
             .context("Failed to build schema")?
-            .save(ctx.tx())
+            .save(ctx.pool())
             .await
             .tap_err(|e| tracing::error!("Failed to save schema: {e}"))?)
     }

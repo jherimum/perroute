@@ -5,7 +5,7 @@ use crate::{
     },
     into_event,
 };
-use perroute_commons::types::{actor::Actor, id::Id, vars::Vars};
+use perroute_commons::types::{id::Id, vars::Vars};
 use perroute_storage::{
     models::message_type::{MessageType, MessageTypeQuery},
     query::FetchableModel,
@@ -49,11 +49,11 @@ impl CommandHandler for UpdateMessageTypeCommandHandler {
     #[tracing::instrument(name = "update_message_type_handler", skip(self, ctx))]
     async fn handle<'tx>(
         &self,
-        ctx: &mut CommandBusContext<'tx>,
-        _: &Actor,
+        ctx: &mut CommandBusContext,
+
         cmd: Self::Command,
     ) -> Result<Self::Output> {
-        let mut message_type = MessageType::find(ctx.tx(), MessageTypeQuery::with_id(cmd.id))
+        let mut message_type = MessageType::find(ctx.pool(), MessageTypeQuery::with_id(cmd.id))
             .await
             .tap_err(|e| tracing::error!("Failed to retrieve message type {}:{e}", cmd.id))?
             .ok_or(UpdateMessageTypeError::MessageTypeNotFound(cmd.id))?;
@@ -75,7 +75,7 @@ impl CommandHandler for UpdateMessageTypeCommandHandler {
         }
 
         Ok(message_type
-            .update(ctx.tx())
+            .update(ctx.pool())
             .await
             .tap_err(|e| tracing::error!("Failed to update message type {}: {e}", cmd.id))?)
     }

@@ -1,5 +1,4 @@
 use async_trait::async_trait;
-use perroute_commons::types::actor::Actor;
 use perroute_storage::{
     models::template::{Template, TemplatesQueryBuilder},
     query::FetchableModel,
@@ -24,12 +23,7 @@ impl QueryHandler for QueryTemplatesQueryHandler {
     type Output = Vec<Template>;
 
     #[tracing::instrument(name = "query_templates_handler", skip(self, ctx))]
-    async fn handle(
-        &self,
-        ctx: &QueryBusContext,
-        _: &Actor,
-        query: &Self::Query,
-    ) -> Result<Self::Output> {
+    async fn handle(&self, ctx: &QueryBusContext, query: &Self::Query) -> Result<Self::Output> {
         Template::query(
             ctx.pool(),
             TemplatesQueryBuilder::default().build().unwrap(),
