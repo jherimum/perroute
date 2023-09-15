@@ -17,6 +17,7 @@ members = [
 ]
 
 [workspace.dependencies]
+deadpool-lapin = "0.10"
 sqlx = "0.6"
 anyhow = "1"
 config = "0.13"
@@ -62,10 +63,10 @@ derive_setters = "0.1"
 validator = "0.16"
 actix-web-validator = "5"
 serde_with = "3"
-tokio-cron-scheduler = "0.9.4"
+tokio-cron-scheduler = "0.9"
 cron = "0.12"
 log = "0.4"
-serde_qs = "0.12.0"
+serde_qs = "0.12"
 
 [profile.release]
 strip = true
