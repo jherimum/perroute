@@ -10,6 +10,8 @@ use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, str::FromStr};
 use validator::Validate;
 
+use super::{channel::ChannelRestQueryBuilder, message_type::MessageTypeRestQueryBuilder};
+
 #[derive(Debug, serde::Deserialize, Clone, Validate, Default)]
 #[serde(default)]
 pub struct CreateBusinessUnitRequest {
@@ -75,11 +77,29 @@ impl From<&BusinessUnit> for BusinessUnitResource {
 
 impl ResourceBuilder<SingleResourceModel<BusinessUnitResource>> for BusinessUnit {
     fn build(&self, req: &HttpRequest) -> SingleResourceModel<BusinessUnitResource> {
+        let mesage_type_query = MessageTypeRestQueryBuilder::default()
+            .business_unit_id(Some(self.id().to_string()))
+            .build()
+            .unwrap();
+
+        let channel_query = ChannelRestQueryBuilder::default()
+            .business_unit_id(Some(self.id().to_string()))
+            .build()
+            .unwrap();
+
         SingleResourceModel {
             data: Some(self.into()),
             links: Links::default()
                 .add(Linkrelation::Self_, ResourceLink::BusinessUnit(*self.id()))
                 .add(Linkrelation::BusinessUnits, ResourceLink::BusinessUnits)
+                .add(
+                    Linkrelation::MessageTypes,
+                    ResourceLink::MessageTypes(mesage_type_query),
+                )
+                .add(
+                    Linkrelation::Channels,
+                    ResourceLink::Channels(channel_query),
+                )
                 .as_url_map(req),
         }
     }

@@ -3,11 +3,28 @@ use crate::{
     links::{Linkrelation, ResourceLink},
 };
 use anyhow::{Context, Result};
+use derive_builder::Builder;
 use perroute_commons::types::{code::Code, id::Id, vars::Vars};
 use perroute_storage::models::message_type::MessageType;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, str::FromStr};
 use validator::Validate;
+
+#[derive(Debug, Default, Deserialize, Validate, Clone, Builder, Serialize)]
+pub struct MessageTypeRestQuery {
+    #[validate(custom = "Id::validate")]
+    pub business_unit_id: Option<String>,
+}
+
+impl MessageTypeRestQuery {
+    pub fn business_unit_id(&self) -> Result<Option<Id>> {
+        Ok(self
+            .business_unit_id
+            .clone()
+            .map(|id| id.try_into())
+            .transpose()?)
+    }
+}
 
 #[derive(Debug, serde::Deserialize, Clone, Validate, Default)]
 #[serde(default)]
@@ -100,7 +117,10 @@ impl ResourceBuilder<SingleResourceModel<MessageTypeResource>> for MessageType {
             data: Some(self.into()),
             links: Links::default()
                 .add(Linkrelation::Self_, ResourceLink::MessageType(*self.id()))
-                .add(Linkrelation::MessageTypes, ResourceLink::MessageTypes)
+                .add(
+                    Linkrelation::MessageTypes,
+                    ResourceLink::MessageTypes(MessageTypeRestQuery::default()),
+                )
                 .add(
                     Linkrelation::BusinessUnit,
                     ResourceLink::BusinessUnit(*self.business_unit_id()),
@@ -110,12 +130,17 @@ impl ResourceBuilder<SingleResourceModel<MessageTypeResource>> for MessageType {
     }
 }
 
-impl ResourceBuilder<CollectionResourceModel<MessageTypeResource>> for Vec<MessageType> {
+impl ResourceBuilder<CollectionResourceModel<MessageTypeResource>>
+    for (Vec<MessageType>, MessageTypeRestQuery)
+{
     fn build(&self, req: &actix_web::HttpRequest) -> CollectionResourceModel<MessageTypeResource> {
         CollectionResourceModel {
-            data: self.iter().map(|c| c.build(req)).collect(),
+            data: self.0.iter().map(|c| c.build(req)).collect(),
             links: Links::default()
-                .add(Linkrelation::Self_, ResourceLink::MessageTypes)
+                .add(
+                    Linkrelation::Self_,
+                    ResourceLink::MessageTypes(self.1.clone()),
+                )
                 .as_url_map(req),
         }
     }

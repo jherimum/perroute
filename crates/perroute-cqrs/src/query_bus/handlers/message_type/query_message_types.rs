@@ -9,6 +9,7 @@ use crate::{
 use async_trait::async_trait;
 use derive_builder::Builder;
 use derive_getters::Getters;
+use perroute_commons::types::{code::Code, id::Id};
 use perroute_storage::{
     models::message_type::{MessageType, MessageTypeQueryBuilder},
     query::FetchableModel,
@@ -16,7 +17,11 @@ use perroute_storage::{
 use serde::Serialize;
 
 #[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
-pub struct QueryMessageTypesQuery {}
+pub struct QueryMessageTypesQuery {
+    business_unit_id: Option<Id>,
+    enabled: Option<bool>,
+    code: Option<Code>,
+}
 
 impl_query!(QueryMessageTypesQuery, QueryType::QueryMessageTypes);
 
@@ -31,7 +36,12 @@ impl QueryHandler for QueryMessageTypesHandler {
     async fn handle(&self, ctx: &QueryBusContext, query: &Self::Query) -> Result<Self::Output> {
         MessageType::query(
             ctx.pool(),
-            MessageTypeQueryBuilder::default().build().unwrap(),
+            MessageTypeQueryBuilder::default()
+                .business_unit_id(query.business_unit_id().clone())
+                .enabled(query.enabled)
+                .code(query.code.clone())
+                .build()
+                .unwrap(),
         )
         .await
         .map_err(Into::into)

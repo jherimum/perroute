@@ -4,12 +4,29 @@ use crate::{
 };
 use actix_web::HttpRequest;
 use anyhow::{Context, Result};
+use derive_builder::Builder;
 use perroute_commons::types::{id::Id, priority::Priority, properties::Properties};
 use perroute_connectors::types::dispatch_type::DispatchType;
 use perroute_storage::models::channel::Channel;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use validator::Validate;
+
+#[derive(Debug, Default, Deserialize, Validate, Clone, Builder, Serialize)]
+pub struct ChannelRestQuery {
+    #[validate(custom = "Id::validate")]
+    pub business_unit_id: Option<String>,
+}
+
+impl ChannelRestQuery {
+    pub fn business_unit_id(&self) -> Result<Option<Id>> {
+        Ok(self
+            .business_unit_id
+            .clone()
+            .map(|id| id.try_into())
+            .transpose()?)
+    }
+}
 
 #[derive(Debug, Deserialize, Clone, Validate, Default)]
 #[serde(default)]
@@ -130,7 +147,10 @@ impl ResourceBuilder<SingleResourceModel<ChannelResource>> for Channel {
             data: Some(self.into()),
             links: Links::default()
                 .add(Linkrelation::Self_, ResourceLink::Channel(*self.id()))
-                .add(Linkrelation::Channels, ResourceLink::Channels)
+                .add(
+                    Linkrelation::Channels,
+                    ResourceLink::Channels(Default::default()),
+                )
                 .add(
                     Linkrelation::Connection,
                     ResourceLink::Connection(*self.connection_id()),
@@ -144,12 +164,14 @@ impl ResourceBuilder<SingleResourceModel<ChannelResource>> for Channel {
     }
 }
 
-impl ResourceBuilder<CollectionResourceModel<ChannelResource>> for Vec<Channel> {
+impl ResourceBuilder<CollectionResourceModel<ChannelResource>>
+    for (Vec<Channel>, ChannelRestQuery)
+{
     fn build(&self, req: &HttpRequest) -> CollectionResourceModel<ChannelResource> {
         CollectionResourceModel {
-            data: self.iter().map(|c| c.build(req)).collect(),
+            data: self.0.iter().map(|c| c.build(req)).collect(),
             links: Links::default()
-                .add(Linkrelation::Self_, ResourceLink::Channels)
+                .add(Linkrelation::Self_, ResourceLink::Channels(self.1.clone()))
                 .as_url_map(req),
         }
     }

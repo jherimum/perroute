@@ -1,7 +1,8 @@
 use crate::{
     api::{
         models::message_type::{
-            CreateMessageTypeRequest, MessageTypeResource, UpdateMessageTypeRequest,
+            CreateMessageTypeRequest, MessageTypeResource, MessageTypeRestQuery,
+            UpdateMessageTypeRequest,
         },
         response::{
             ApiResponse, ApiResult, CollectionResourceModel, EmptyApiResult, SingleResourceModel,
@@ -15,6 +16,7 @@ use crate::{
 };
 use actix_web::web::{Data, Path};
 use actix_web_validator::Json;
+use actix_web_validator::Query;
 use perroute_cqrs::{
     command_bus::handlers::message_type::create_message_type::CreateMessageTypeCommandHandler,
     query_bus::handlers::message_type::{
@@ -85,11 +87,12 @@ impl TryInto<DeleteMessageTypeCommand> for W<Path<SingleIdPath>> {
     }
 }
 
-impl TryInto<QueryMessageTypesQuery> for W<()> {
+impl TryInto<QueryMessageTypesQuery> for MessageTypeRestQuery {
     type Error = anyhow::Error;
 
     fn try_into(self) -> Result<QueryMessageTypesQuery, Self::Error> {
         Ok(QueryMessageTypesQueryBuilder::default()
+            .business_unit_id(self.business_unit_id()?)
             .build()
             .tap_err(|e| tracing::error!("Failed to build QueryMessageTypesQuery: {e}"))?)
     }
@@ -116,21 +119,22 @@ impl MessageTypeRouter {
     pub const MESSAGE_TYPE_RESOURCE_NAME: &str = "message_type";
 
     #[tracing::instrument(skip(state))]
-    pub async fn query_message_types(
+    pub async fn query(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
+        Query(query): Query<MessageTypeRestQuery>,
     ) -> CollectionResult {
         let message_types = state
             .query_bus()
-            .execute::<_, QueryMessageTypesHandler, _>(&actor, &W(()).try_into()?)
+            .execute::<_, QueryMessageTypesHandler, _>(&actor, &query.clone().try_into()?)
             .await
             .tap_err(|e| tracing::error!("Failed to query message types: {e}"))?;
 
-        Ok(ApiResponse::ok(message_types))
+        Ok(ApiResponse::ok((message_types, query)))
     }
 
     #[tracing::instrument(skip(state))]
-    pub async fn create_message_type(
+    pub async fn create(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
         Json(body): Json<CreateMessageTypeRequest>,
@@ -146,7 +150,7 @@ impl MessageTypeRouter {
     }
 
     #[tracing::instrument(skip(state))]
-    pub async fn update_message_type(
+    pub async fn partial_update(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
         path: Path<SingleIdPath>,
@@ -161,7 +165,7 @@ impl MessageTypeRouter {
     }
 
     #[tracing::instrument(skip(state))]
-    pub async fn delete_message_type(
+    pub async fn delete(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
         path: Path<SingleIdPath>,
@@ -175,7 +179,7 @@ impl MessageTypeRouter {
     }
 
     #[tracing::instrument(skip(state))]
-    pub async fn find_message_type(
+    pub async fn find_one(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
         path: Path<SingleIdPath>,

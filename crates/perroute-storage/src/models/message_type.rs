@@ -22,6 +22,7 @@ pub struct MessageTypeQuery {
     id: Option<Id>,
     code: Option<Code>,
     business_unit_id: Option<Id>,
+    enabled: Option<bool>,
 }
 
 impl MessageTypeQuery {
@@ -67,6 +68,11 @@ impl ModelQueryBuilder<MessageType> for MessageTypeQuery {
         if let Some(business_unit_id) = self.business_unit_id {
             query_builder.push(" and business_unit_id = ");
             query_builder.push_bind(business_unit_id);
+        }
+
+        if let Some(enabled) = self.enabled {
+            query_builder.push(" and enabled = ");
+            query_builder.push_bind(enabled);
         }
 
         query_builder

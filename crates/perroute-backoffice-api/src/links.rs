@@ -1,5 +1,8 @@
 use crate::{
-    api::response::AsUrl,
+    api::{
+        models::{channel::ChannelRestQuery, message_type::MessageTypeRestQuery},
+        response::AsUrl,
+    },
     routes::{
         business_unit::BusinessUnitRouter, channel::ChannelsRouter, connection::ConnectionsRouter,
         message_type::MessageTypeRouter, plugin::PluginRouter, route::RouteRouter,
@@ -62,12 +65,12 @@ pub enum Linkrelation {
     Templates,
 }
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Clone)]
 pub enum ResourceLink {
     BusinessUnit(Id),
     BusinessUnits,
 
-    MessageTypes,
+    MessageTypes(MessageTypeRestQuery),
     MessageType(Id),
 
     Schemas,
@@ -86,7 +89,7 @@ pub enum ResourceLink {
     Plugins,
 
     Channel(Id),
-    Channels,
+    Channels(ChannelRestQuery),
 }
 
 impl AsUrl for ResourceLink {
@@ -97,8 +100,13 @@ impl AsUrl for ResourceLink {
             }
             Self::BusinessUnits => req.url_for_static(BusinessUnitRouter::BUS_RESOURCE_NAME),
 
-            Self::MessageTypes => {
-                req.url_for_static(MessageTypeRouter::MESSAGE_TYPES_RESOURCE_NAME)
+            Self::MessageTypes(query) => {
+                let mut url = req
+                    .url_for_static(MessageTypeRouter::MESSAGE_TYPES_RESOURCE_NAME)
+                    .unwrap();
+                url.set_query(Some(serde_qs::to_string(&query).unwrap().as_str()));
+
+                Ok(url)
             }
             Self::MessageType(message_type_id) => req.url_for(
                 MessageTypeRouter::MESSAGE_TYPE_RESOURCE_NAME,
@@ -132,7 +140,12 @@ impl AsUrl for ResourceLink {
             }
             Self::Plugins => req.url_for_static(PluginRouter::PLUGINS_RESOURCE_NAME),
 
-            Self::Channels => req.url_for_static(ChannelsRouter::CHANNELS_RESOURCE_NAME),
+            Self::Channels(q) => req
+                .url_for_static(ChannelsRouter::CHANNELS_RESOURCE_NAME)
+                .map(|mut u| {
+                    u.set_query(Some(serde_qs::to_string(q).unwrap().as_str()));
+                    u
+                }),
             Self::Channel(id) => {
                 req.url_for(ChannelsRouter::CHANNEL_RESOURCE_NAME, [id.to_string()])
             }

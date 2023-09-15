@@ -97,16 +97,16 @@ pub fn routes() -> Scope {
         .service(
             web::resource("")
                 .name(MessageTypeRouter::MESSAGE_TYPES_RESOURCE_NAME)
-                .route(web::get().to(MessageTypeRouter::query_message_types))
-                .route(web::post().to(MessageTypeRouter::create_message_type)),
+                .route(web::get().to(MessageTypeRouter::query))
+                .route(web::post().to(MessageTypeRouter::create)),
         )
         .service(
             web::scope("/{message_type_id}").service(
                 web::resource("")
                     .name(MessageTypeRouter::MESSAGE_TYPE_RESOURCE_NAME)
-                    .route(web::get().to(MessageTypeRouter::find_message_type))
-                    .route(web::patch().to(MessageTypeRouter::update_message_type))
-                    .route(web::delete().to(MessageTypeRouter::delete_message_type)),
+                    .route(web::get().to(MessageTypeRouter::find_one))
+                    .route(web::patch().to(MessageTypeRouter::partial_update))
+                    .route(web::delete().to(MessageTypeRouter::delete)),
             ),
         );
 
