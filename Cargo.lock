@@ -2581,6 +2581,8 @@ dependencies = [
  "derive-getters",
  "dotenv",
  "perroute-commons",
+ "perroute-connectors",
+ "perroute-cqrs",
  "perroute-messaging",
  "perroute-storage",
  "serde",

@@ -9,6 +9,8 @@ edition = "2021"
 perroute-storage = { path = "../../crates/perroute-storage" }
 perroute-commons = { path = "../../crates/perroute-commons" }
 perroute-messaging = { path = "../../crates/perroute-messaging" }
+perroute-cqrs = { path = "../../crates/perroute-cqrs" }
+perroute-connectors = { path = "../../crates/perroute-connectors" }
 
 
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }

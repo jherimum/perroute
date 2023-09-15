@@ -1,12 +1,9 @@
 use async_recursion::async_recursion;
-use lapin::{Channel, Connection, ConnectionProperties};
+use deadpool_lapin::{Config, Pool, PoolConfig, Runtime};
+use lapin::Channel;
 use perroute_commons::configuration::settings::Settings;
 use std::{fmt::Debug, sync::Arc, time::Duration};
-use tap::TapFallible;
-use tokio::{
-    sync::RwLock,
-    time::{error::Elapsed, Instant},
-};
+use tokio::{sync::RwLock, time::error::Elapsed};
 
 #[derive(Debug, thiserror::Error)]
 pub enum ConnectionError {
@@ -15,82 +12,51 @@ pub enum ConnectionError {
 
     #[error(transparent)]
     ConnectionTimeout(#[from] Elapsed),
-}
 
-impl From<&Settings> for Config {
-    fn from(value: &Settings) -> Self {
-        Self {
-            uri: value.rabbitmq.as_ref().unwrap().uri.clone(),
-            time_out: Duration::from_secs(20),
-            retry_delay: Duration::from_secs(1),
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct Config {
-    pub uri: String,
-    pub time_out: Duration,
-    pub retry_delay: Duration,
+    #[error(transparent)]
+    PoolError(#[from] deadpool_lapin::CreatePoolError),
 }
 
 #[derive(Debug, Clone)]
 pub struct RabbitmqConnection {
-    config: Config,
-    connection: Arc<RwLock<Option<Connection>>>,
+    pool: Pool,
 }
 
 impl RabbitmqConnection {
-    pub async fn connect(config: Config) -> Result<RabbitmqConnection, ConnectionError> {
-        Ok(Self {
-            config: config.clone(),
-            connection: Arc::new(RwLock::new(Some(Self::connection(&config).await?))),
-        })
-    }
-
-    async fn inner_connect(config: &Config) -> Result<Connection, lapin::Error> {
-        Connection::connect(&config.uri, ConnectionProperties::default())
-            .await
-            .tap_err(|e| tracing::error!("Failed to connect to RabbitMQ: {e}"))
-    }
-
-    async fn try_connect(config: &Config) -> Connection {
-        let mut res = Self::inner_connect(config).await;
-        while res.is_err() {
-            tokio::time::sleep(config.retry_delay).await;
-            tracing::info!("Retrying to connect to RabbitMQ...");
-            res = Self::inner_connect(config).await;
-        }
-        res.unwrap()
-    }
-
-    async fn connection(config: &Config) -> Result<Connection, ConnectionError> {
-        tracing::info!("Connecting to RabbitMQ...");
-        tokio::time::timeout_at(Instant::now() + config.time_out, async move {
-            let conn = Self::try_connect(config).await;
-            tracing::info!("Connected to RabbitMQ.");
-            conn
+    pub async fn connect(uri: &str) -> Result<RabbitmqConnection, ConnectionError> {
+        Self::from_config(deadpool_lapin::Config {
+            url: Some(uri.to_string()),
+            ..deadpool_lapin::Config::default()
         })
         .await
-        .map_err(ConnectionError::from)
     }
 
-    #[async_recursion]
-    async fn inner_create_channel(&self) -> Result<Channel, ConnectionError> {
-        {
-            let conn = self.connection.read().await;
-            if let Some(c) = conn.as_ref() {
-                if c.status().connected() {
-                    return c.create_channel().await.map_err(ConnectionError::from);
-                }
+    pub async fn connect_from_settings(
+        settings: &Settings,
+    ) -> Result<RabbitmqConnection, ConnectionError> {
+        let rabbitmq_settings = settings.rabbitmq.as_ref().unwrap();
+        let pool_config = if let Some(pool_settings) = rabbitmq_settings.pool.as_ref() {
+            let mut pool_config = PoolConfig::default();
+            if let Some(max_connection) = pool_settings.max_connection {
+                pool_config.max_size = max_connection;
             }
-        }
-        {
-            let mut conn = self.connection.write().await;
-            *conn = Some(Self::connection(&self.config).await?);
-        }
+            pool_config
+        } else {
+            PoolConfig::default()
+        };
 
-        self.inner_create_channel().await
+        let config = Config {
+            url: Some(rabbitmq_settings.uri.clone()),
+            pool: Some(pool_config),
+            ..Config::default()
+        };
+        Self::from_config(config).await
+    }
+
+    async fn from_config(config: Config) -> Result<RabbitmqConnection, ConnectionError> {
+        Ok(Self {
+            pool: config.create_pool(Some(Runtime::Tokio1))?,
+        })
     }
 
     pub fn create_channel(&self) -> RabbitmqChannel {
@@ -118,10 +84,16 @@ impl RabbitmqChannel {
             }
         }
         {
-            self.channel
-                .write()
+            let mut channel = self.channel.write().await;
+            let new_channel = self
+                .connection
+                .pool
+                .get()
                 .await
-                .replace(self.connection.inner_create_channel().await?);
+                .unwrap()
+                .create_channel()
+                .await?;
+            channel.replace(new_channel);
         }
 
         self.get().await

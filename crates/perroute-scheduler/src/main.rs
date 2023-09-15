@@ -21,7 +21,7 @@ async fn main() -> Result<(), anyhow::Error> {
         .tap_err(|e| tracing::error!("Failed to build scheduler: {e}"))?;
 
     let event_pooling_job: Job =
-        EventPooling::new(pool.clone(), 10, "1/3 * * * * *".to_string(), publisher)
+        EventPooling::new(pool.clone(), 2000, "1/3 * * * * *".to_string(), publisher)
             .await
             .try_into()
             .tap_err(|e| tracing::error!("Failed to build event pooling job: {e}"))?;
@@ -49,7 +49,7 @@ async fn main() -> Result<(), anyhow::Error> {
 }
 
 async fn build_publisher(settings: &Settings) -> Result<RabbitmqEventPublisher, anyhow::Error> {
-    let rabbitmq_conn = RabbitmqConnection::connect(settings.into()).await?;
+    let rabbitmq_conn = RabbitmqConnection::connect_from_settings(settings).await?;
     Ok(RabbitmqEventPublisher::new(rabbitmq_conn).await.unwrap())
 }
 

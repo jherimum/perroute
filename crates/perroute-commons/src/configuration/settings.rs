@@ -60,6 +60,15 @@ pub struct PollSettings {
 #[derive(Deserialize, Clone, Debug)]
 pub struct RabbitMqSettings {
     pub uri: String,
+    pub pool: Option<RabbitMqPool>,
+}
+
+#[derive(Deserialize, Clone, Debug)]
+pub struct RabbitMqPool {
+    pub max_connection: Option<usize>,
+    pub wait_timeout: Option<usize>,
+    pub create_timeout: Option<usize>,
+    pub recycle_timeout: Option<usize>,
 }
 
 impl Settings {
