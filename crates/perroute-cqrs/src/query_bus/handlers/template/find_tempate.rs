@@ -19,7 +19,6 @@ query!(
     QueryType::FindTemplate,
     template_id: Id,
     message_type_id: Option<Id>,
-    schema_id: Option<Id>,
     business_unit_id: Option<Id>
 );
 

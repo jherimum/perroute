@@ -44,7 +44,6 @@ impl RouteRouter {
         let command = CreateRouteCommandBuilder::default()
             .id(new_id!())
             .channel_id(body.channel_id()?)
-            .schema_id(body.schema_id()?)
             .properties(body.properties()?)
             .build()
             .context("Failed to build CreateRouteCommand")?;

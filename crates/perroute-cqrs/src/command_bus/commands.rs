@@ -36,11 +36,6 @@ pub enum CommandType {
     UpdateMessageType,
     DeleteMessageType,
 
-    CreateSchema,
-    UpdateSchema,
-    DeleteSchema,
-    PublishSchema,
-
     CreateTemplate,
     UpdateTemplate,
     DeleteTemplate,

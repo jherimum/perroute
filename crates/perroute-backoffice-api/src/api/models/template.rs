@@ -7,11 +7,9 @@ use crate::links::Linkrelation;
 use crate::links::ResourceLink;
 use anyhow::Context;
 use anyhow::Result;
-use perroute_commons::types::id::Id;
 use perroute_commons::types::priority::Priority;
 use perroute_commons::types::template::TemplateSnippet;
 use perroute_commons::types::template::TemplateValidator;
-use perroute_commons::types::vars::Vars;
 use perroute_connectors::types::dispatch_type::DispatchType;
 use perroute_storage::models::template::Template;
 use serde::Serialize;
@@ -24,12 +22,7 @@ use validator::ValidationError;
 
 #[derive(Debug, serde::Deserialize, Clone, Validate, Default)]
 #[serde(default)]
-#[validate(schema(function = "validate_create_date_range"))]
 pub struct CreateTemplateRequest {
-    #[validate(required)]
-    #[validate(custom = "Id::validate")]
-    schema_id: Option<String>,
-
     #[validate(required)]
     #[validate(custom = "DispatchType::validate")]
     dispatch_type: Option<String>,
@@ -46,51 +39,9 @@ pub struct CreateTemplateRequest {
 
     #[validate(custom = "perroute_commons::types::template::handlebars::Handlebars::validate")]
     text: Option<String>,
-
-    vars: Option<HashMap<String, String>>,
-
-    #[validate(required)]
-    #[validate(custom = "RestDateTime::validate")]
-    start_at: Option<String>,
-
-    #[validate(custom = "RestDateTime::validate")]
-    end_at: Option<String>,
-
-    #[validate(required)]
-    #[validate(custom = "Priority::validate")]
-    priority: Option<i32>,
-}
-
-fn validate_create_date_range(req: &CreateTemplateRequest) -> Result<(), ValidationError> {
-    if let (Some(start_at), Some(end_at)) = (&req.start_at, &req.end_at) {
-        let start_at = RestDateTime::from_str(start_at)
-            .context("Invalid start_at")
-            .unwrap();
-        let end_at = RestDateTime::from_str(end_at)
-            .context("Invalid end_at")
-            .unwrap();
-
-        if start_at > end_at {
-            return Err(ValidationError {
-                code: Cow::Borrowed("dates"),
-                message: Some(Cow::Borrowed("Invalid date range")),
-                params: Default::default(),
-            });
-        }
-    }
-
-    Ok(())
 }
 
 impl CreateTemplateRequest {
-    pub fn schema_id(&self) -> Result<Id> {
-        self.schema_id
-            .clone()
-            .context("missing schema id")?
-            .try_into()
-            .context("invalid schema id")
-    }
-
     pub fn dispatch_type(&self) -> Result<DispatchType> {
         self.dispatch_type
             .clone()
@@ -113,36 +64,6 @@ impl CreateTemplateRequest {
 
     pub fn text(&self) -> Result<Option<TemplateSnippet>> {
         Ok(self.text.clone().map(Into::into))
-    }
-
-    pub fn vars(&self) -> Result<Vars> {
-        Ok(self.vars.clone().unwrap_or_default().into())
-    }
-
-    pub fn priority(&self) -> Result<Priority> {
-        self.priority
-            .context("Missing priority")?
-            .try_into()
-            .context("Invalid priority")
-    }
-
-    pub fn start_at(&self) -> Result<NaiveDateTime> {
-        Ok(self
-            .start_at
-            .clone()
-            .context("Missing start_at")?
-            .parse::<RestDateTime>()
-            .context("Invalid start_at")?
-            .into())
-    }
-
-    pub fn end_at(&self) -> Result<Option<NaiveDateTime>> {
-        Ok(self
-            .end_at
-            .clone()
-            .map(|s| s.parse::<RestDateTime>().context("Invalid end_at"))
-            .transpose()?
-            .map(Into::into))
     }
 }
 
@@ -290,10 +211,6 @@ impl ResourceBuilder<SingleResourceModel<TemplateResource>> for Template {
             links: Links::default()
                 .add(Linkrelation::Self_, ResourceLink::Template(*self.id()))
                 .add(Linkrelation::Templates, ResourceLink::Templates)
-                .add(
-                    Linkrelation::Schema,
-                    ResourceLink::Schema(*self.schema_id()),
-                )
                 .as_url_map(req),
         }
     }

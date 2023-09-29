@@ -13,7 +13,6 @@ use super::{
             find_message_type::FindMessageTypeQueryHandler,
             query_message_types::QueryMessageTypesHandler,
         },
-        schema::{find_schema::FindSchemaQueryHandler, query_schemas::QuerySchemasQueryHandler},
         template::{
             find_tempate::FindTemplateQueryHandler, query_templates::QueryTemplatesQueryHandler,
         },
@@ -75,8 +74,6 @@ impl QueryBus {
             .with_handler(QueryBusinessUnitsQueryHandler)
             .with_handler(FindMessageTypeQueryHandler)
             .with_handler(QueryMessageTypesHandler)
-            .with_handler(FindSchemaQueryHandler)
-            .with_handler(QuerySchemasQueryHandler)
             .with_handler(FindTemplateQueryHandler)
             .with_handler(QueryTemplatesQueryHandler)
             .with_handler(FindConnectionQueryHandler)

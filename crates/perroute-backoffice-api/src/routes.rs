@@ -1,7 +1,7 @@
 use self::{
     business_unit::BusinessUnitRouter, channel::ChannelsRouter, connection::ConnectionsRouter,
     health::HealthRouter, message::MessageRouter, message_type::MessageTypeRouter,
-    plugin::PluginRouter, route::RouteRouter, schema::SchemaRouter, template::TemplateRouter,
+    plugin::PluginRouter, route::RouteRouter, template::TemplateRouter,
 };
 use actix_web::{web, Scope};
 
@@ -13,7 +13,6 @@ pub mod message;
 pub mod message_type;
 pub mod plugin;
 pub mod route;
-pub mod schema;
 pub mod template;
 
 pub fn routes() -> Scope {
@@ -66,31 +65,6 @@ pub fn routes() -> Scope {
                     .route(web::patch().to(TemplateRouter::update_template))
                     .route(web::delete().to(TemplateRouter::delete_template)),
             ),
-        );
-
-    let schemas = web::scope("/schemas")
-        .service(
-            web::resource("")
-                .name(SchemaRouter::SCHEMAS_RESOURCE_NAME)
-                .route(web::get().to(SchemaRouter::query))
-                .route(web::post().to(SchemaRouter::create_schema)),
-        )
-        .service(
-            web::scope("/{schema_id}")
-                .service(
-                    web::resource("")
-                        .name(SchemaRouter::SCHEMA_RESOURCE_NAME)
-                        .route(web::get().to(SchemaRouter::find_schema))
-                        .route(web::patch().to(SchemaRouter::update_schema))
-                        .route(web::delete().to(SchemaRouter::delete_schema)),
-                )
-                .service(
-                    web::scope("/clone").service(
-                        web::resource("")
-                            .name(SchemaRouter::SCHEMA_CLONE_RESOURCE_NAME)
-                            .route(web::post().to(SchemaRouter::clone)),
-                    ),
-                ),
         );
 
     let message_types = web::scope("/message_types")
@@ -179,8 +153,7 @@ pub fn routes() -> Scope {
                     .service(routes)
                     .service(connections)
                     .service(plugins)
-                    .service(channels)
-                    .service(schemas),
+                    .service(channels),
             ),
         )
 }

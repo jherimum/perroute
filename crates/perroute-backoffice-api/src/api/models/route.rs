@@ -18,10 +18,6 @@ pub struct CreateRouteRequest {
     channel_id: Option<String>,
 
     #[validate(required)]
-    #[validate(custom = "Id::validate")]
-    schema_id: Option<String>,
-
-    #[validate(required)]
     #[validate(custom = "Properties::validate")]
     properties: Option<Value>,
 }
@@ -33,14 +29,6 @@ impl CreateRouteRequest {
             .context("missing channel id")?
             .try_into()
             .context("invalid channel id")
-    }
-
-    pub fn schema_id(&self) -> Result<Id> {
-        self.schema_id
-            .clone()
-            .context("missing schema id")?
-            .try_into()
-            .context("invalid schema id")
     }
 
     pub fn properties(&self) -> Result<Properties> {
@@ -90,10 +78,6 @@ impl ResourceBuilder<SingleResourceModel<RouteResource>> for Route {
                 .add(
                     Linkrelation::Channel,
                     ResourceLink::Channel(*self.channel_id()),
-                )
-                .add(
-                    Linkrelation::Schema,
-                    ResourceLink::Schema(*self.schema_id()),
                 )
                 .as_url_map(req),
         }

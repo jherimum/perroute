@@ -18,7 +18,6 @@ use perroute_storage::{
         business_unit::{BusinessUnit, BusinessUnitQueryBuilder},
         message::{Message, MessageBuilder, Status},
         message_type::{MessageType, MessageTypeQueryBuilder},
-        schema::{Schema, SchemasQueryBuilder},
     },
     query::FetchableModel,
 };
@@ -33,7 +32,6 @@ pub struct CreateMessageCommand {
     payload: Payload,
     business_unit_code: Code,
     message_type_code: Code,
-    schema_version: Version,
     deliveries: HashSet<Delivery>,
 }
 
@@ -52,17 +50,8 @@ pub enum CreateMessageError {
     #[error("Message type not found: {0}")]
     MessageTypeNotFound(Code),
 
-    #[error("Schema not found: {0}")]
-    SchemaNotFound(Version),
-
     #[error("Message type {0} is disabled")]
     MessageTypeDisabled(Code),
-
-    #[error("Schema {0} is disabled")]
-    SchemaDisabled(Version),
-
-    #[error("Schema {0} is not published")]
-    SchemaNotPublished(Version),
 
     #[error(transparent)]
     InvalidPayload(#[from] InvalidPayloadError),
@@ -119,43 +108,18 @@ impl CommandHandler for CreateMessageCommandHandler {
             );
         }
 
-        let schema = Schema::find(
-            ctx.pool(),
-            SchemasQueryBuilder::default()
-                .message_type_id(Some(*message_type.id()))
-                .version(Some(cmd.schema_version))
-                .build()
-                .unwrap(),
-        )
-        .await
-        .tap_err(|e| tracing::error!("Failed to retrieve schema:{e}"))?
-        .ok_or_else(|| CreateMessageError::SchemaNotFound(cmd.schema_version))?;
+        // Ok(MessageBuilder::default()
+        //     .id(cmd.id)
+        //     .status(Status::Pending)
+        //     .payload(cmd.payload)
+        //     .message_type_id(*schema.message_type_id())
+        //     .business_unit_id(*schema.business_unit_id())
+        //     .deliveries(Json(cmd.deliveries))
+        //     .build()
+        //     .unwrap()
+        //     .save(ctx.pool())
+        //     .await?)
 
-        if !schema.enabled() {
-            return Err(CreateMessageError::SchemaDisabled(cmd.schema_version).into());
-        }
-
-        if !schema.published() {
-            return Err(CreateMessageError::SchemaNotPublished(cmd.schema_version).into());
-        }
-
-        schema
-            .value()
-            .validate_payload(&cmd.payload)
-            .tap_err(|e| tracing::error!("Invalid payload: {e}"))
-            .map_err(CreateMessageError::from)?;
-
-        Ok(MessageBuilder::default()
-            .id(cmd.id)
-            .status(Status::Pending)
-            .payload(cmd.payload)
-            .schema_id(*schema.id())
-            .message_type_id(*schema.message_type_id())
-            .business_unit_id(*schema.business_unit_id())
-            .deliveries(Json(cmd.deliveries))
-            .build()
-            .unwrap()
-            .save(ctx.pool())
-            .await?)
+        todo!()
     }
 }

@@ -28,10 +28,6 @@ use super::{
             create_route::CreateRouteError, delete_route::DeleteRouteError,
             update_route::UpdateRouteError,
         },
-        schema::{
-            create_schema::CreateSchemaError, delete_schema::DeleteSchemaError,
-            update_schema::UpdateSchemaError,
-        },
         template::{
             create_template::CreateTemplateError, delete_template::DeleteTemplateError,
             update_template::UpdateTemplatelError,
@@ -69,16 +65,6 @@ pub enum CommandBusError {
 
     #[error(transparent)]
     CreateMessageType(#[from] CreateMessageTypeError),
-
-    //schema
-    #[error(transparent)]
-    CreateSchema(#[from] CreateSchemaError),
-
-    #[error(transparent)]
-    UpdateSchema(#[from] UpdateSchemaError),
-
-    #[error(transparent)]
-    DeleteSchema(#[from] DeleteSchemaError),
 
     //message
     #[error(transparent)]

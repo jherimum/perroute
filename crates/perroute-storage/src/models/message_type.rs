@@ -1,7 +1,4 @@
-use super::{
-    business_unit::{BusinessUnit, BusinessUnitQueryBuilder},
-    schema::{Schema, SchemasQuery, SchemasQueryBuilder},
-};
+use super::business_unit::{BusinessUnit, BusinessUnitQueryBuilder};
 use crate::{
     log_query_error,
     query::{FetchableModel, ModelQueryBuilder, Projection},
@@ -10,7 +7,7 @@ use crate::{
 use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
-use perroute_commons::types::{code::Code, id::Id, vars::Vars};
+use perroute_commons::types::{code::Code, id::Id, json_schema::JsonSchema, vars::Vars};
 use sqlx::{FromRow, PgExecutor, Postgres, QueryBuilder};
 use tap::TapFallible;
 
@@ -96,6 +93,8 @@ pub struct MessageType {
 
     #[setters(skip)]
     business_unit_id: Id,
+
+    schema: JsonSchema,
 }
 
 impl MessageType {
@@ -104,21 +103,6 @@ impl MessageType {
             exec,
             BusinessUnitQueryBuilder::default()
                 .id(Some(self.business_unit_id))
-                .build()
-                .unwrap(),
-        )
-        .await
-    }
-
-    pub async fn exists_schemas<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<bool> {
-        Schema::exists(exec, SchemasQuery::with_message_type_id(self.id)).await
-    }
-
-    pub async fn schemas<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Vec<Schema>> {
-        Schema::query(
-            exec,
-            SchemasQueryBuilder::default()
-                .message_type_id(Some(self.id))
                 .build()
                 .unwrap(),
         )

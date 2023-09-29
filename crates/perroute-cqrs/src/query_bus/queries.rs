@@ -16,9 +16,6 @@ pub enum QueryType {
     FindMessageTypeQuery,
     QueryMessageTypes,
 
-    QuerySchemas,
-    FindSchema,
-
     QueryTemplates,
     FindTemplate,
 

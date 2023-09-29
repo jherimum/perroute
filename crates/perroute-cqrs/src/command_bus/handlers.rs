@@ -7,7 +7,6 @@ pub mod connection;
 pub mod message;
 pub mod message_type;
 pub mod route;
-pub mod schema;
 pub mod template;
 
 #[async_trait::async_trait]

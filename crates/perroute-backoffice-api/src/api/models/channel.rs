@@ -46,10 +46,6 @@ pub struct CreateChannelRequest {
     #[validate(required)]
     #[validate(custom = "Properties::validate")]
     properties: Option<Value>,
-
-    #[validate(required)]
-    #[validate(custom = "Priority::validate")]
-    priority: Option<i32>,
 }
 
 impl CreateChannelRequest {
@@ -84,13 +80,6 @@ impl CreateChannelRequest {
             .try_into()
             .context("Invalid properties")
     }
-
-    pub fn into_priority(&self) -> Result<Priority> {
-        self.priority
-            .context("Missing priority")?
-            .try_into()
-            .context("Invalid priority")
-    }
 }
 
 #[derive(Debug, Deserialize, Clone, Validate, Default)]
@@ -100,19 +89,12 @@ pub struct UpdateChannelRequest {
     #[validate(custom = "perroute_commons::types::properties::Properties::validate")]
     properties: Option<Value>,
 
-    #[validate(custom = "perroute_commons::types::priority::Priority::validate")]
-    priority: Option<i32>,
-
     enabled: Option<bool>,
 }
 
 impl UpdateChannelRequest {
     pub fn into_properties(&self) -> Result<Option<Properties>> {
         Ok(self.properties.clone().map(|p| p.try_into()).transpose()?)
-    }
-
-    pub fn into_priority(&self) -> Result<Option<Priority>> {
-        Ok(self.priority.map(|p| p.try_into()).transpose()?)
     }
 
     pub fn into_enabled(&self) -> Option<bool> {
@@ -126,7 +108,6 @@ pub struct ChannelResource {
     dispatch_type: String,
     properties: Value,
     enabled: bool,
-    priority: i32,
 }
 
 impl From<&Channel> for ChannelResource {
@@ -136,7 +117,6 @@ impl From<&Channel> for ChannelResource {
             dispatch_type: value.dispatch_type().into(),
             properties: value.properties().into(),
             enabled: *value.enabled(),
-            priority: value.priority().into(),
         }
     }
 }

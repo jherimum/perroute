@@ -1,6 +1,4 @@
-use std::collections::HashSet;
-
-use super::{business_unit::BusinessUnit, message_type::MessageType, schema::Schema};
+use super::{business_unit::BusinessUnit, message_type::MessageType};
 use crate::{log_query_error, query::ModelQueryBuilder, DatabaseModel, Result};
 use chrono::NaiveDateTime;
 use derive_builder::Builder;
@@ -10,6 +8,7 @@ use perroute_commons::types::{id::Id, payload::Payload};
 use perroute_connectors::types::delivery::Delivery;
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Json, FromRow, PgExecutor};
+use std::collections::HashSet;
 use tap::TapFallible;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, sqlx::Type, Copy)]
@@ -24,7 +23,6 @@ pub enum Status {
 pub struct MessageQuery {
     pub id: Option<Id>,
     pub status: Option<Status>,
-    pub schema_id: Option<Id>,
     pub message_type_id: Option<Id>,
     pub business_unit_id: Option<Id>,
     pub scheduled_from: Option<NaiveDateTime>,
@@ -35,13 +33,6 @@ impl MessageQuery {
     pub fn with_id(id: Id) -> Self {
         Self {
             id: Some(id),
-            ..Default::default()
-        }
-    }
-
-    pub fn with_schema_id(schema_id: Id) -> Self {
-        Self {
-            schema_id: Some(schema_id),
             ..Default::default()
         }
     }
@@ -93,11 +84,6 @@ impl ModelQueryBuilder<Message> for MessageQuery {
             builder.push_bind(status);
         }
 
-        if let Some(schema_id) = self.schema_id {
-            builder.push(" AND schema_id = ");
-            builder.push_bind(schema_id);
-        }
-
         if let Some(message_type_id) = self.message_type_id {
             builder.push(" AND message_type_id = ");
             builder.push_bind(message_type_id);
@@ -142,9 +128,6 @@ pub struct Message {
     status: Status,
 
     #[setters(skip)]
-    schema_id: Id,
-
-    #[setters(skip)]
     message_type_id: Id,
 
     #[setters(skip)]
@@ -163,20 +146,15 @@ impl Message {
         todo!()
     }
 
-    pub async fn schema<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Schema> {
-        todo!()
-    }
-
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self> {
         Ok(sqlx::query_as(
             r#"
-                INSERT INTO messages (id, payload, deliveries, status, schema_id, message_type_id, business_unit_id) 
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *"#,
+                INSERT INTO messages (id, payload, deliveries, status, message_type_id, business_unit_id) 
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *"#,
             ).bind(self.id)
             .bind(self.payload)
             .bind(self.deliveries)
             .bind(self.status)
-            .bind(self.schema_id)
             .bind(self.message_type_id)
             .bind(self.business_unit_id)
             .bind(self.created_at)

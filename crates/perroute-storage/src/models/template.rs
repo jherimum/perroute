@@ -1,7 +1,6 @@
 use super::{
     business_unit::{BusinessUnit, BusinessUnitQueryBuilder},
     message_type::{MessageType, MessageTypeQueryBuilder},
-    schema::{Schema, SchemasQueryBuilder},
 };
 use crate::{
     log_query_error,
@@ -22,7 +21,6 @@ use tap::TapFallible;
 #[builder(default)]
 pub struct TemplatesQuery {
     id: Option<Id>,
-    schema_id: Option<Id>,
     message_type_id: Option<Id>,
     business_unit_id: Option<Id>,
     dispatch_type: Option<DispatchType>,
@@ -32,21 +30,6 @@ impl TemplatesQuery {
     pub fn with_id(id: Id) -> Self {
         Self {
             id: Some(id),
-            ..Default::default()
-        }
-    }
-
-    pub fn with_schema_id(schema_id: Id) -> Self {
-        Self {
-            schema_id: Some(schema_id),
-            ..Default::default()
-        }
-    }
-
-    pub fn with_schema_id_and_dispatch_type(schema_id: Id, dispatch_type: DispatchType) -> Self {
-        Self {
-            schema_id: Some(schema_id),
-            dispatch_type: Some(dispatch_type),
             ..Default::default()
         }
     }
@@ -66,11 +49,6 @@ impl ModelQueryBuilder<Template> for TemplatesQuery {
         if let Some(business_unit_id) = self.business_unit_id {
             builder.push(" AND business_unit_id = ");
             builder.push_bind(business_unit_id);
-        }
-
-        if let Some(schema_id) = self.schema_id {
-            builder.push(" AND schema_id = ");
-            builder.push_bind(schema_id);
         }
 
         if let Some(message_type_id) = self.message_type_id {
@@ -100,29 +78,15 @@ pub struct Template {
     subject: Option<TemplateSnippet>,
     text: Option<TemplateSnippet>,
     html: Option<TemplateSnippet>,
-    vars: Vars,
     active: bool,
-    start_at: NaiveDateTime,
-    end_at: Option<NaiveDateTime>,
-    priority: Priority,
 
     #[setters(skip)]
     dispatch_type: DispatchType,
-
-    #[setters(skip)]
-    schema_id: Id,
-
-    #[setters(skip)]
-    message_type_id: Id,
-
-    #[setters(skip)]
-    business_unit_id: Id,
 }
 
 impl Template {
     pub async fn find_active_template<'e, E: PgExecutor<'e>>(
         exec: E,
-        schema_id: &Id,
         dispatch_type: &DispatchType,
         instant: &NaiveDateTime,
     ) -> Result<Option<Template>> {
@@ -131,52 +95,17 @@ impl Template {
                     SELECT * 
                     FROM templates 
                     WHERE 
-                        schema_id = $1 
-                        AND dispatch_type = $2
-                        AND start_at <= $3 
-                        AND (end_at is null OR end_at >= $3 ) 
+                        dispatch_type = $1
+                        AND start_at <= $2 
+                        AND (end_at is null OR end_at >= $2 ) 
                         AND active = true               
                         ORDER BY priority desc
                         LIMIT 1"#,
         )
-        .bind(schema_id)
         .bind(dispatch_type)
         .bind(instant)
         .fetch_optional(exec)
         .await?)
-    }
-
-    pub async fn message_type<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<MessageType> {
-        MessageType::find_one(
-            exec,
-            MessageTypeQueryBuilder::default()
-                .id(Some(self.message_type_id))
-                .build()
-                .unwrap(),
-        )
-        .await
-    }
-
-    pub async fn schema<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Schema> {
-        Schema::find_one(
-            exec,
-            SchemasQueryBuilder::default()
-                .id(Some(self.schema_id))
-                .build()
-                .unwrap(),
-        )
-        .await
-    }
-
-    pub async fn business_unit<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<BusinessUnit> {
-        BusinessUnit::find_one(
-            exec,
-            BusinessUnitQueryBuilder::default()
-                .id(Some(self.business_unit_id))
-                .build()
-                .unwrap(),
-        )
-        .await
     }
 
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self> {
@@ -188,16 +117,9 @@ impl Template {
             subject, 
             text, 
             html, 
-            vars, 
             active, 
-            schema_id, 
-            message_type_id, 
-            business_unit_id, 
-            name,
-            start_at,
-            end_at,
-            priority) 
-        VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11,$12,$13,$14)
+            name) 
+        VALUES($1, $2, $3, $4, $5, $6, $7)
         RETURNING *"#,
         )
         .bind(self.id)
@@ -205,15 +127,8 @@ impl Template {
         .bind(self.subject)
         .bind(self.text)
         .bind(self.html)
-        .bind(self.vars)
         .bind(self.active)
-        .bind(self.schema_id)
-        .bind(self.message_type_id)
-        .bind(self.business_unit_id)
         .bind(self.name)
-        .bind(self.start_at)
-        .bind(self.end_at)
-        .bind(self.priority)
         .fetch_one(exec)
         .await
         .tap_err(log_query_error!())?)
@@ -227,12 +142,8 @@ impl Template {
                 subject= $2, 
                 text=$3, 
                 html=$4, 
-                vars=$5, 
-                active=$6, 
-                name=$7,
-                start_at=$8,
-                end_at=$9,
-                priority=$10
+                active=$5, 
+                name=$6,
             WHERE id=$1 
             RETURNING *"#,
         )
@@ -240,12 +151,8 @@ impl Template {
         .bind(self.subject)
         .bind(self.text)
         .bind(self.html)
-        .bind(self.vars)
         .bind(self.active)
         .bind(self.name)
-        .bind(self.start_at)
-        .bind(self.end_at)
-        .bind(self.priority)
         .fetch_one(exec)
         .await
         .tap_err(log_query_error!())?)

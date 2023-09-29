@@ -9,7 +9,6 @@ use derive_builder::Builder;
 use derive_getters::Getters;
 use perroute_commons::types::{
     id::Id,
-    priority::Priority,
     properties::{Properties, PropertiesError},
 };
 use perroute_connectors::{types::dispatch_type::DispatchType, Plugins};
@@ -38,7 +37,6 @@ pub struct UpdateChannelCommand {
     id: Id,
     dispatch_properties: Option<Properties>,
     enabled: Option<bool>,
-    priority: Option<Priority>,
 }
 impl_command!(UpdateChannelCommand, CommandType::UpdateChannel);
 into_event!(UpdateChannelCommand);
@@ -71,7 +69,7 @@ impl CommandHandler for UpdateChannelCommandHandler {
             .tap_err(|e| tracing::error!("Failed to retrieve channel: {e}"))?
             .ok_or_else(|| UpdateChannelError::ChannelNotFound(cmd.id))?;
 
-        if cmd.dispatch_properties.is_none() && cmd.enabled.is_none() && cmd.priority.is_none() {
+        if cmd.dispatch_properties.is_none() && cmd.enabled.is_none() {
             return Ok(channel);
         }
 
@@ -99,10 +97,6 @@ impl CommandHandler for UpdateChannelCommandHandler {
 
         if let Some(enabled) = cmd.enabled {
             channel = channel.set_enabled(enabled);
-        }
-
-        if let Some(priority) = cmd.priority {
-            channel = channel.set_priority(priority);
         }
 
         Ok(channel

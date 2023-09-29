@@ -57,19 +57,6 @@ impl CommandHandler for DeleteMessageTypeCommandHandler {
             .tap_err(|e| tracing::error!("Failed to retrive message type {}: {e}", cmd.id))?
             .ok_or(DeleteMessageTypeError::MessageTypeNotFound(cmd.id))?;
 
-        if message_type.exists_schemas(ctx.pool()).await.tap_err(|e| {
-            tracing::error!(
-                "Failed to check if schemas exists for message type {}:{e}",
-                cmd.id
-            )
-        })? {
-            return Err(DeleteMessageTypeError::MessageTypeDelete(
-                cmd.id,
-                "Threre are schemas associated with message type",
-            )
-            .into());
-        }
-
         Ok(message_type
             .delete(ctx.pool())
             .await

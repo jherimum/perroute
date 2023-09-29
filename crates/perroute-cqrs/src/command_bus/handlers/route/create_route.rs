@@ -15,7 +15,6 @@ use perroute_storage::{
     models::{
         channel::{Channel, ChannelQuery},
         route::{Route, RouteBuilder},
-        schema::{Schema, SchemasQuery},
     },
     query::FetchableModel,
 };
@@ -28,9 +27,6 @@ pub enum CreateRouteError {
     #[error("Channel with id {0} not found")]
     ChannelNotFound(Id),
 
-    #[error("Schema with id {0} not found")]
-    SchemaNotFound(Id),
-
     #[error("Invalid properties: {0}")]
     InvalidProperties(#[from] PropertiesError),
 }
@@ -39,7 +35,6 @@ pub enum CreateRouteError {
 pub struct CreateRouteCommand {
     id: Id,
     channel_id: Id,
-    schema_id: Id,
     properties: Properties,
 }
 
@@ -69,46 +64,47 @@ impl CommandHandler for CreateRouteCommandHandler {
 
         cmd: Self::Command,
     ) -> Result<Self::Output> {
-        let channel = Channel::find(ctx.pool(), ChannelQuery::with_id(cmd.channel_id))
-            .await
-            .tap_err(|e| tracing::error!("Failed to retrieve channel {}: {e}", cmd.channel_id))?
-            .ok_or(CreateRouteError::ChannelNotFound(cmd.channel_id))?;
+        // let channel = Channel::find(ctx.pool(), ChannelQuery::with_id(cmd.channel_id))
+        //     .await
+        //     .tap_err(|e| tracing::error!("Failed to retrieve channel {}: {e}", cmd.channel_id))?
+        //     .ok_or(CreateRouteError::ChannelNotFound(cmd.channel_id))?;
 
-        let schema = Schema::find(
-            ctx.pool(),
-            SchemasQuery::with_id_and_business_unit(cmd.schema_id, *channel.business_unit_id()),
-        )
-        .await
-        .tap_err(|e| tracing::error!("Failed to retrieve schema {}: {e}", cmd.schema_id))?
-        .ok_or(CreateRouteError::SchemaNotFound(cmd.schema_id))?;
+        // let schema = Schema::find(
+        //     ctx.pool(),
+        //     SchemasQuery::with_id_and_business_unit(cmd.schema_id, *channel.business_unit_id()),
+        // )
+        // .await
+        // .tap_err(|e| tracing::error!("Failed to retrieve schema {}: {e}", cmd.schema_id))?
+        // .ok_or(CreateRouteError::SchemaNotFound(cmd.schema_id))?;
 
-        let conn = channel.connection(ctx.pool()).await?;
+        // let conn = channel.connection(ctx.pool()).await?;
 
-        let plugin = ctx
-            .plugins()
-            .get(conn.plugin_id())
-            .context("Connector Plugin expected to be found")?;
+        // let plugin = ctx
+        //     .plugins()
+        //     .get(conn.plugin_id())
+        //     .context("Connector Plugin expected to be found")?;
 
-        let disp = plugin
-            .dispatcher(channel.dispatch_type())
-            .context("Dispatcher plugin expected to be found")?;
+        // let disp = plugin
+        //     .dispatcher(channel.dispatch_type())
+        //     .context("Dispatcher plugin expected to be found")?;
 
-        let props = channel.properties().merge(&cmd.properties);
-        disp.configuration()
-            .validate(&props)
-            .map_err(CreateRouteError::from)?;
+        // let props = channel.properties().merge(&cmd.properties);
+        // disp.configuration()
+        //     .validate(&props)
+        //     .map_err(CreateRouteError::from)?;
 
-        Ok(RouteBuilder::default()
-            .id(cmd.id)
-            .channel_id(*channel.id())
-            .message_type_id(*schema.message_type_id())
-            .business_unit_id(*channel.business_unit_id())
-            .schema_id(*schema.id())
-            .properties(props)
-            .build()
-            .context("Failed to build route")?
-            .save(ctx.pool())
-            .await
-            .tap_err(|e| tracing::error!("Failed to save route: {e}"))?)
+        // Ok(RouteBuilder::default()
+        //     .id(cmd.id)
+        //     .channel_id(*channel.id())
+        //     .message_type_id(*schema.message_type_id())
+        //     .business_unit_id(*channel.business_unit_id())
+        //     .schema_id(*schema.id())
+        //     .properties(props)
+        //     .build()
+        //     .context("Failed to build route")?
+        //     .save(ctx.pool())
+        //     .await
+        //     .tap_err(|e| tracing::error!("Failed to save route: {e}"))?)
+        todo!()
     }
 }

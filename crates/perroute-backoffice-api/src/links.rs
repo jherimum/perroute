@@ -6,7 +6,7 @@ use crate::{
     routes::{
         business_unit::BusinessUnitRouter, channel::ChannelsRouter, connection::ConnectionsRouter,
         message_type::MessageTypeRouter, plugin::PluginRouter, route::RouteRouter,
-        schema::SchemaRouter, template::TemplateRouter,
+        template::TemplateRouter,
     },
 };
 use actix_web::HttpRequest;
@@ -34,12 +34,6 @@ pub enum Linkrelation {
 
     #[serde(rename = "routes")]
     Routes,
-
-    #[serde(rename = "schemas")]
-    Schemas,
-
-    #[serde(rename = "schema")]
-    Schema,
 
     #[serde(rename = "connections")]
     Connections,
@@ -72,9 +66,6 @@ pub enum ResourceLink {
 
     MessageTypes(MessageTypeRestQuery),
     MessageType(Id),
-
-    Schemas,
-    Schema(Id),
 
     Templates,
     Template(Id),
@@ -112,11 +103,6 @@ impl AsUrl for ResourceLink {
                 MessageTypeRouter::MESSAGE_TYPE_RESOURCE_NAME,
                 [message_type_id.to_string()],
             ),
-
-            Self::Schemas => req.url_for_static(SchemaRouter::SCHEMAS_RESOURCE_NAME),
-            Self::Schema(schema_id) => {
-                req.url_for(SchemaRouter::SCHEMA_RESOURCE_NAME, [schema_id.to_string()])
-            }
 
             Self::Templates => req.url_for_static(TemplateRouter::TEMPLATES_RESOURCE_NAME),
 

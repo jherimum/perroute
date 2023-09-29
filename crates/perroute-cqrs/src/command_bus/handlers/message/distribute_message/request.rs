@@ -12,7 +12,7 @@ use perroute_connectors::{
 };
 use perroute_storage::models::{
     business_unit::BusinessUnit, channel::Channel, connection::Connection, message::Message,
-    message_type::MessageType, route::Route, schema::Schema, template::Template,
+    message_type::MessageType, route::Route, template::Template,
 };
 
 use super::template::InnerDispatchTemplate;
@@ -21,7 +21,6 @@ pub struct InnerDispatchRequest {
     pub id: Id,
     pub delivery: Delivery,
     pub message: Message,
-    pub schema: Schema,
     pub message_type: MessageType,
     pub business_unit: BusinessUnit,
     pub route: Route,
@@ -56,11 +55,12 @@ impl DispatchRequest for InnerDispatchRequest {
     }
 
     fn vars(&self) -> Vars {
-        self.template
-            .vars()
-            .merge(self.schema.vars())
-            .merge(self.message_type.vars())
-            .merge(self.business_unit.vars())
+        // self.template
+        //     .vars()
+        //     .merge(self.message_type.vars())
+        //     .merge(self.business_unit.vars())
+
+        todo!()
     }
 
     fn delivery(&self) -> Delivery {

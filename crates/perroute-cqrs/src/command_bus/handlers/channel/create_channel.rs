@@ -52,7 +52,6 @@ pub struct CreateChannelCommand {
     business_unit_id: Id,
     dispatch_type: DispatchType,
     dispatch_properties: Properties,
-    priority: Priority,
 }
 
 impl_command!(CreateChannelCommand, CommandType::CreateChannel);
@@ -117,7 +116,6 @@ impl CommandHandler for CreateChannelCommandHandler {
             .business_unit_id(cmd.business_unit_id)
             .properties(cmd.dispatch_properties)
             .dispatch_type(cmd.dispatch_type)
-            .priority(cmd.priority)
             .enabled(false)
             .build()
             .context("Failed to build Channel")?

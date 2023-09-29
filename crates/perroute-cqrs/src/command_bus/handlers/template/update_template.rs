@@ -6,11 +6,8 @@ use crate::{
     into_event,
 };
 use async_trait::async_trait;
-use chrono::NaiveDateTime;
 use derive_getters::Getters;
-use perroute_commons::types::{
-    actor::Actor, id::Id, priority::Priority, template::TemplateSnippet, vars::Vars,
-};
+use perroute_commons::types::{id::Id, template::TemplateSnippet};
 use perroute_storage::{
     models::template::{Template, TemplatesQuery},
     query::FetchableModel,
@@ -26,11 +23,7 @@ command!(
     subject: Option<Option<TemplateSnippet>>,
     html: Option<Option<TemplateSnippet>>,
     text: Option<Option<TemplateSnippet>>,
-    vars: Option<Vars>,
-    active: Option<bool>,
-    start_at: Option<NaiveDateTime>,
-    end_at: Option<Option<NaiveDateTime>>,
-    priority: Option<Priority>
+    active: Option<bool>
 );
 into_event!(UpdateTemplateCommand);
 
@@ -72,11 +65,7 @@ impl CommandHandler for UpdateTemplateCommandHandler {
             & cmd.subject.is_none()
             & cmd.html.is_none()
             & cmd.text.is_none()
-            & cmd.vars.is_none()
             & cmd.active.is_none()
-            & cmd.start_at.is_none()
-            & cmd.end_at.is_none()
-            & cmd.priority.is_none()
         {
             return Ok(actual_template);
         }
@@ -89,10 +78,6 @@ impl CommandHandler for UpdateTemplateCommandHandler {
             actual_template = actual_template.set_name(name);
         }
 
-        if let Some(vars) = cmd.vars {
-            actual_template = actual_template.set_vars(vars);
-        }
-
         if let Some(subject) = cmd.subject {
             actual_template = actual_template.set_subject(subject);
         }
@@ -103,18 +88,6 @@ impl CommandHandler for UpdateTemplateCommandHandler {
 
         if let Some(text) = cmd.text {
             actual_template = actual_template.set_text(text);
-        }
-
-        if let Some(start_at) = cmd.start_at {
-            actual_template = actual_template.set_start_at(start_at);
-        }
-
-        if let Some(end_at) = cmd.end_at {
-            actual_template = actual_template.set_end_at(end_at);
-        }
-
-        if let Some(priority) = cmd.priority {
-            actual_template = actual_template.set_priority(priority);
         }
 
         Ok(actual_template

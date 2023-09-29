@@ -87,7 +87,6 @@ pub struct Channel {
 
     properties: Properties,
     enabled: bool,
-    priority: Priority,
 
     #[setters(skip)]
     connection_id: Id,
@@ -99,15 +98,14 @@ impl Channel {
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self> {
         Ok(sqlx::query_as(
             r#"
-            INSERT INTO channels (id, dispatch_type, properties, enabled, priority, connection_id, business_unit_id ) 
-            VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING *
+            INSERT INTO channels (id, dispatch_type, properties, enabled,  connection_id, business_unit_id ) 
+            VALUES($1, $2, $3, $4, $5, $6) RETURNING *
             "#,
         )
         .bind(self.id)
         .bind(self.dispatch_type)
         .bind(self.properties)
         .bind(self.enabled)
-        .bind(self.priority)
         .bind(self.connection_id)
         .bind(self.business_unit_id)
         .fetch_one(exec)
@@ -119,13 +117,12 @@ impl Channel {
         Ok(sqlx::query_as(
             r#"
             UPDATE channels 
-            SET properties= $2, priority=$3, enabled=$4 
+            SET properties= $2, enabled=$3
             WHERE id= $1 RETURNING *
             "#,
         )
         .bind(self.id)
         .bind(self.properties)
-        .bind(self.priority)
         .bind(self.enabled)
         .fetch_one(exec)
         .await

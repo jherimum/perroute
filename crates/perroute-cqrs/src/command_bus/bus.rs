@@ -30,10 +30,6 @@ use super::{
             create_route::CreateRouteCommandHandler, delete_route::DeleteRouteCommandHandler,
             update_route::UpdateRouteCommandHandler,
         },
-        schema::{
-            create_schema::CreateSchemaCommandHandler, delete_schema::DeleteSchemaCommandHandler,
-            update_schema::UpdateSchemaCommandHandler,
-        },
         template::{
             create_template::CreateTemplateCommandHandler,
             delete_template::DeleteTemplateCommandHandler,
@@ -147,10 +143,6 @@ impl CommandBus {
             .with_handler(CreateMessageTypeCommandHandler::new(pool.clone()))
             .with_handler(UpdateMessageTypeCommandHandler::new(pool.clone()))
             .with_handler(DeleteMessageTypeCommandHandler::new(pool.clone()))
-            //schema
-            .with_handler(CreateSchemaCommandHandler::new(pool.clone()))
-            .with_handler(DeleteSchemaCommandHandler::new(pool.clone()))
-            .with_handler(UpdateSchemaCommandHandler::new(pool.clone()))
             //template
             .with_handler(CreateTemplateCommandHandler::new(pool.clone()))
             .with_handler(UpdateTemplateCommandHandler::new(pool.clone()))

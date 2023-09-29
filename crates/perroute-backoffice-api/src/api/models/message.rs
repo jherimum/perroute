@@ -23,10 +23,6 @@ pub struct CreateMessageRequest {
     #[validate(custom = "Code::validate")]
     message_type_code: Option<String>,
 
-    #[validate(required)]
-    #[validate(custom = "Version::validate")]
-    schema_version: Option<i32>,
-
     #[validate]
     #[validate(length(min = 1))]
     deliveries: HashSet<DeliveryRest>,
@@ -56,13 +52,6 @@ impl CreateMessageRequest {
             .context("missing message type code")?
             .try_into()
             .context("invalid message type code ")
-    }
-
-    pub fn schema_version(&self) -> Result<Version> {
-        self.schema_version
-            .context("missing schema version")?
-            .try_into()
-            .context("invalid schema version")
     }
 
     pub fn deliveries(&self) -> Result<HashSet<Delivery>> {

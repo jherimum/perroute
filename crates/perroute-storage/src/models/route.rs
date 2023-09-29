@@ -2,7 +2,6 @@ use super::business_unit::BusinessUnitQueryBuilder;
 use super::channel::ChannelQueryBuilder;
 use super::connection::{Connection, ConnectionQueryBuilder};
 use super::message_type::{MessageType, MessageTypeQueryBuilder};
-use super::schema::{Schema, SchemasQueryBuilder};
 use super::{business_unit::BusinessUnit, channel::Channel};
 use crate::query::FetchableModel;
 use crate::{log_query_error, Result};
@@ -25,7 +24,6 @@ pub struct RouteQuery {
     id: Option<Id>,
     business_unit_id: Option<Id>,
     message_type_id: Option<Id>,
-    schema_id: Option<Id>,
     connection_id: Option<Id>,
     channel_id: Option<Id>,
 }
@@ -34,13 +32,6 @@ impl RouteQuery {
     pub fn with_id(id: Id) -> RouteQuery {
         Self {
             id: Some(id),
-            ..Default::default()
-        }
-    }
-
-    pub fn with_schema_id(schema_id: Id) -> RouteQuery {
-        Self {
-            schema_id: Some(schema_id),
             ..Default::default()
         }
     }
@@ -66,11 +57,6 @@ impl ModelQueryBuilder<Route> for RouteQuery {
             builder.push_bind(message_type_id);
         }
 
-        if let Some(schema_id) = &self.schema_id {
-            builder.push(" and schema_id = ");
-            builder.push_bind(schema_id);
-        }
-
         if let Some(connection_id) = &self.connection_id {
             builder.push(" and connection_id = ");
             builder.push_bind(connection_id);
@@ -89,9 +75,6 @@ impl DatabaseModel for Route {}
 pub struct Route {
     #[setters(skip)]
     id: Id,
-
-    #[setters(skip)]
-    schema_id: Id,
 
     #[setters(skip)]
     channel_id: Id,
@@ -120,7 +103,6 @@ impl Route {
 
     pub async fn dispatch_route_stack<'e, E: PgExecutor<'e>>(
         exec: E,
-        schema_id: &Id,
         dispatch_type: &DispatchType,
     ) -> Result<Vec<Route>> {
         let query = r#"
@@ -129,7 +111,6 @@ impl Route {
             INNER JOIN channels c
             ON c.id = r.channel_id
             WHERE c.dispatch_type = $1 
-            AND r.schema_id = $2
             AND c.enabled = true
             ORDER by c.priority DESC
         "#;
@@ -150,12 +131,11 @@ impl Route {
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self> {
         Ok(sqlx::query_as(
             r#"
-            INSERT INTO routes (id, schema_id, channel_id, business_unit_id, message_type_id, connection_id, properties ) 
-            VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING *
+            INSERT INTO routes (id,  channel_id, business_unit_id, message_type_id, connection_id, properties ) 
+            VALUES($1, $2, $3, $4, $5, $6) RETURNING *
             "#,
         )
         .bind(self.id)
-        .bind(self.schema_id)
         .bind(self.channel_id)
         .bind(self.business_unit_id)
         .bind(self.message_type_id)
@@ -193,17 +173,6 @@ impl Route {
         .await
         .tap_err(log_query_error!())
         .map(|result| result.rows_affected() > 0)?)
-    }
-
-    pub async fn schema<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Schema> {
-        Schema::find_one(
-            exec,
-            SchemasQueryBuilder::default()
-                .id(Some(self.schema_id))
-                .build()
-                .unwrap(),
-        )
-        .await
     }
 
     pub async fn channel<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Channel> {
