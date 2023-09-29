@@ -6,7 +6,6 @@ use crate::{
     into_event,
 };
 use async_trait::async_trait;
-use derive_new::new;
 use perroute_commons::types::{id::Id, vars::Vars};
 use perroute_storage::{
     models::business_unit::{BusinessUnit, BusinessUnitQuery},

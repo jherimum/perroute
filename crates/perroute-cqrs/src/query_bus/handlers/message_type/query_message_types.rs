@@ -37,7 +37,6 @@ impl QueryHandler for QueryMessageTypesHandler {
         MessageType::query(
             ctx.pool(),
             MessageTypeQueryBuilder::default()
-                .business_unit_id(query.business_unit_id().clone())
                 .enabled(query.enabled)
                 .code(query.code.clone())
                 .build()

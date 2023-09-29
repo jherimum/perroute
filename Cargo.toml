@@ -17,8 +17,8 @@ members = [
 ]
 
 [workspace.dependencies]
-deadpool-lapin = "0.10"
-sqlx = "0.6"
+deadpool-lapin = "0.11"
+sqlx = "0.7"
 anyhow = "1"
 config = "0.13"
 strum_macros = "0.25"

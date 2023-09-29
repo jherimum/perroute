@@ -9,11 +9,13 @@ use derive_builder::Builder;
 use derive_getters::Getters;
 use perroute_commons::types::{
     id::Id,
+    priority::Priority,
     properties::{Properties, PropertiesError},
 };
 use perroute_storage::{
     models::{
         channel::{Channel, ChannelQuery},
+        message_type::{MessageType, MessageTypeQuery},
         route::{Route, RouteBuilder},
     },
     query::FetchableModel,
@@ -27,6 +29,9 @@ pub enum CreateRouteError {
     #[error("Channel with id {0} not found")]
     ChannelNotFound(Id),
 
+    #[error("Message type with id {0} not found")]
+    MessageTypeNotFound(Id),
+
     #[error("Invalid properties: {0}")]
     InvalidProperties(#[from] PropertiesError),
 }
@@ -35,7 +40,9 @@ pub enum CreateRouteError {
 pub struct CreateRouteCommand {
     id: Id,
     channel_id: Id,
+    message_type_id: Id,
     properties: Properties,
+    priority: Priority,
 }
 
 impl_command!(CreateRouteCommand, CommandType::CreateRoute);
@@ -64,47 +71,48 @@ impl CommandHandler for CreateRouteCommandHandler {
 
         cmd: Self::Command,
     ) -> Result<Self::Output> {
-        // let channel = Channel::find(ctx.pool(), ChannelQuery::with_id(cmd.channel_id))
-        //     .await
-        //     .tap_err(|e| tracing::error!("Failed to retrieve channel {}: {e}", cmd.channel_id))?
-        //     .ok_or(CreateRouteError::ChannelNotFound(cmd.channel_id))?;
+        let channel = Channel::find(ctx.pool(), ChannelQuery::with_id(cmd.channel_id))
+            .await
+            .tap_err(|e| tracing::error!("Failed to retrieve channel {}: {e}", cmd.channel_id))?
+            .ok_or(CreateRouteError::ChannelNotFound(cmd.channel_id))?;
 
-        // let schema = Schema::find(
-        //     ctx.pool(),
-        //     SchemasQuery::with_id_and_business_unit(cmd.schema_id, *channel.business_unit_id()),
-        // )
-        // .await
-        // .tap_err(|e| tracing::error!("Failed to retrieve schema {}: {e}", cmd.schema_id))?
-        // .ok_or(CreateRouteError::SchemaNotFound(cmd.schema_id))?;
+        let message_type = MessageType::find(ctx.pool(), MessageTypeQuery::with_id(cmd.id))
+            .await
+            .tap_err(|e| {
+                tracing::error!(
+                    "Failed to retrieve message type{}: {e}",
+                    cmd.message_type_id
+                )
+            })?
+            .ok_or(CreateRouteError::MessageTypeNotFound(cmd.message_type_id))?;
 
-        // let conn = channel.connection(ctx.pool()).await?;
+        let conn = channel.connection(ctx.pool()).await?;
 
-        // let plugin = ctx
-        //     .plugins()
-        //     .get(conn.plugin_id())
-        //     .context("Connector Plugin expected to be found")?;
+        let plugin = ctx
+            .plugins()
+            .get(conn.plugin_id())
+            .context("Connector Plugin expected to be found")?;
 
-        // let disp = plugin
-        //     .dispatcher(channel.dispatch_type())
-        //     .context("Dispatcher plugin expected to be found")?;
+        let disp = plugin
+            .dispatcher(channel.dispatch_type())
+            .context("Dispatcher plugin expected to be found")?;
 
-        // let props = channel.properties().merge(&cmd.properties);
-        // disp.configuration()
-        //     .validate(&props)
-        //     .map_err(CreateRouteError::from)?;
+        let props = channel.properties().merge(&cmd.properties);
+        disp.configuration()
+            .validate(&props)
+            .map_err(CreateRouteError::from)?;
 
-        // Ok(RouteBuilder::default()
-        //     .id(cmd.id)
-        //     .channel_id(*channel.id())
-        //     .message_type_id(*schema.message_type_id())
-        //     .business_unit_id(*channel.business_unit_id())
-        //     .schema_id(*schema.id())
-        //     .properties(props)
-        //     .build()
-        //     .context("Failed to build route")?
-        //     .save(ctx.pool())
-        //     .await
-        //     .tap_err(|e| tracing::error!("Failed to save route: {e}"))?)
-        todo!()
+        Ok(RouteBuilder::default()
+            .id(cmd.id)
+            .channel_id(*channel.id())
+            .message_type_id(*message_type.id())
+            .business_unit_id(*channel.business_unit_id())
+            .properties(props)
+            .priority(cmd.priority)
+            .build()
+            .context("Failed to build route")?
+            .save(ctx.pool())
+            .await
+            .tap_err(|e| tracing::error!("Failed to save route: {e}"))?)
     }
 }

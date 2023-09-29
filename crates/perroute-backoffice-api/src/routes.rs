@@ -2,6 +2,7 @@ use self::{
     business_unit::BusinessUnitRouter, channel::ChannelsRouter, connection::ConnectionsRouter,
     health::HealthRouter, message::MessageRouter, message_type::MessageTypeRouter,
     plugin::PluginRouter, route::RouteRouter, template::TemplateRouter,
+    template_assignment::TemplateAssignmentRouter,
 };
 use actix_web::{web, Scope};
 
@@ -14,8 +15,26 @@ pub mod message_type;
 pub mod plugin;
 pub mod route;
 pub mod template;
+pub mod template_assignment;
 
 pub fn routes() -> Scope {
+    let template_assignments = web::scope("/template_assignments")
+        .service(
+            web::resource("")
+                .name(TemplateAssignmentRouter::COLLECTION_RESOURCE_NAME)
+                .route(web::get().to(TemplateAssignmentRouter::create))
+                .route(web::get().to(TemplateAssignmentRouter::query)),
+        )
+        .service(
+            web::scope("/{id}").service(
+                web::resource("")
+                    .name(TemplateAssignmentRouter::SINGLE_RESOURCE_NAME)
+                    .route(web::get().to(TemplateAssignmentRouter::find))
+                    .route(web::patch().to(TemplateAssignmentRouter::update))
+                    .route(web::delete().to(TemplateAssignmentRouter::delete)),
+            ),
+        );
+
     let business_units = web::scope("/business_units")
         .service(
             web::resource("")
@@ -153,7 +172,8 @@ pub fn routes() -> Scope {
                     .service(routes)
                     .service(connections)
                     .service(plugins)
-                    .service(channels),
+                    .service(channels)
+                    .service(template_assignments),
             ),
         )
 }

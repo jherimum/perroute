@@ -121,17 +121,6 @@ impl BusinessUnit {
         .map(|result| result.rows_affected() > 0)?)
     }
 
-    pub async fn message_types<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Vec<MessageType>> {
-        MessageType::query(
-            exec,
-            MessageTypeQueryBuilder::default()
-                .business_unit_id(Some(self.id))
-                .build()
-                .unwrap(),
-        )
-        .await
-    }
-
     pub async fn channels<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Vec<Channel>> {
         Channel::query(
             exec,

@@ -66,16 +66,13 @@ impl ConnectionManager {
         } else {
             PgSslMode::Prefer
         };
-        let mut opt = PgConnectOptions::new()
+        PgConnectOptions::new()
             .host(&database_settings.host)
             .username(&database_settings.username)
             .password(database_settings.password.expose_secret())
             .port(database_settings.port)
             .ssl_mode(ssl_mode)
-            .database(&database_settings.database_name);
-
-        opt.disable_statement_logging();
-
-        opt
+            .database(&database_settings.database_name)
+            .disable_statement_logging()
     }
 }

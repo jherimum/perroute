@@ -38,7 +38,6 @@ pub struct TemplateRouter;
 impl TemplateRouter {
     pub const TEMPLATES_RESOURCE_NAME: &str = "templates";
     pub const TEMPLATE_RESOURCE_NAME: &str = "template";
-    pub const TEMPLATE_ACTIVATION_RESOURCE_NAME: &str = "activation";
 
     #[tracing::instrument]
     pub async fn query_templates(

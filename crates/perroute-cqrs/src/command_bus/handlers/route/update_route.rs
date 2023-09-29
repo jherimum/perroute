@@ -10,6 +10,7 @@ use derive_builder::Builder;
 use derive_getters::Getters;
 use perroute_commons::types::{
     id::Id,
+    priority::Priority,
     properties::{Properties, PropertiesError},
 };
 use perroute_storage::{
@@ -33,6 +34,7 @@ pub enum UpdateRouteError {
 pub struct UpdateRouteCommand {
     id: Id,
     properties: Option<Properties>,
+    priority: Option<Priority>,
 }
 
 impl_command!(UpdateRouteCommand, CommandType::UpdateRoute);
@@ -66,7 +68,7 @@ impl CommandHandler for UpdateRouteCommandHandler {
             .tap_err(|e| tracing::error!("Failed to retrieve route {}: {e}", cmd.id))?
             .ok_or(UpdateRouteError::RouteNotFound(cmd.id))?;
 
-        if cmd.properties.is_none() {
+        if cmd.properties.is_none() && cmd.priority.is_none() {
             return Ok(route);
         }
 
@@ -98,6 +100,11 @@ impl CommandHandler for UpdateRouteCommandHandler {
 
             route = route.set_properties(props);
         }
+
+        if let Some(priority) = cmd.priority {
+            route = route.set_priority(priority);
+        }
+
         Ok(route
             .update(ctx.pool())
             .await

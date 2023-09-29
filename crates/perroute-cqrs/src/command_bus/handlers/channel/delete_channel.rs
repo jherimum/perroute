@@ -60,10 +60,10 @@ impl CommandHandler for DeleteChannelCommandHandler {
 
         let mut tx = ctx.pool().begin().await.map_err(StorageError::Tx)?;
 
-        Route::delete_by_channel(&mut tx, channel.id()).await?;
+        Route::delete_by_channel(tx.as_mut(), channel.id()).await?;
 
         let deleted = channel
-            .delete(&mut tx)
+            .delete(tx.as_mut())
             .await
             .tap_err(|e| tracing::error!("Failed to delete channel{}: {e}", cmd.id))?;
 

@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 use crate::{
     command_bus::{
         bus::CommandBusContext, commands::CommandType, handlers::CommandHandler, Result,
@@ -9,20 +7,21 @@ use crate::{
 use derive_builder::Builder;
 use derive_getters::Getters;
 use perroute_commons::types::{
-    code::Code, id::Id, json_schema::InvalidPayloadError, payload::Payload, version::Version,
+    code::Code, id::Id, json_schema::InvalidPayloadError, payload::Payload,
 };
 use perroute_connectors::types::delivery::Delivery;
 use perroute_messaging::events::EventType;
 use perroute_storage::{
     models::{
-        business_unit::{BusinessUnit, BusinessUnitQueryBuilder},
+        business_unit::{BusinessUnit, BusinessUnitQuery},
         message::{Message, MessageBuilder, Status},
-        message_type::{MessageType, MessageTypeQueryBuilder},
+        message_type::{MessageType, MessageTypeQuery},
     },
     query::FetchableModel,
 };
 use serde::Serialize;
 use sqlx::{types::Json, PgPool};
+use std::collections::HashSet;
 use tap::TapFallible;
 use thiserror::Error;
 
@@ -81,10 +80,7 @@ impl CommandHandler for CreateMessageCommandHandler {
     ) -> Result<Self::Output> {
         let bu = BusinessUnit::find(
             ctx.pool(),
-            BusinessUnitQueryBuilder::default()
-                .code(Some(cmd.business_unit_code.clone()))
-                .build()
-                .unwrap(),
+            BusinessUnitQuery::with_code(cmd.business_unit_code.clone()),
         )
         .await
         .tap_err(|e| tracing::error!("Failed to retrieve business unit:{e}"))?
@@ -92,11 +88,7 @@ impl CommandHandler for CreateMessageCommandHandler {
 
         let message_type = MessageType::find(
             ctx.pool(),
-            MessageTypeQueryBuilder::default()
-                .business_unit_id(Some(*bu.id()))
-                .code(Some(cmd.message_type_code.clone()))
-                .build()
-                .unwrap(),
+            MessageTypeQuery::with_code(cmd.message_type_code.clone()),
         )
         .await
         .tap_err(|e| tracing::error!("Failed to retrieve message type:{e}"))?
@@ -108,18 +100,16 @@ impl CommandHandler for CreateMessageCommandHandler {
             );
         }
 
-        // Ok(MessageBuilder::default()
-        //     .id(cmd.id)
-        //     .status(Status::Pending)
-        //     .payload(cmd.payload)
-        //     .message_type_id(*schema.message_type_id())
-        //     .business_unit_id(*schema.business_unit_id())
-        //     .deliveries(Json(cmd.deliveries))
-        //     .build()
-        //     .unwrap()
-        //     .save(ctx.pool())
-        //     .await?)
-
-        todo!()
+        Ok(MessageBuilder::default()
+            .id(cmd.id)
+            .status(Status::Pending)
+            .payload(cmd.payload)
+            .message_type_id(*message_type.id())
+            .business_unit_id(*bu.id())
+            .deliveries(Json(cmd.deliveries))
+            .build()
+            .unwrap()
+            .save(ctx.pool())
+            .await?)
     }
 }

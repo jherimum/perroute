@@ -18,18 +18,10 @@ impl DatabaseModel for MessageType {}
 pub struct MessageTypeQuery {
     id: Option<Id>,
     code: Option<Code>,
-    business_unit_id: Option<Id>,
     enabled: Option<bool>,
 }
 
 impl MessageTypeQuery {
-    pub fn with_business_unit(business_unit_id: Id) -> Self {
-        Self {
-            business_unit_id: Some(business_unit_id),
-            ..Default::default()
-        }
-    }
-
     pub fn with_id(id: Id) -> Self {
         Self {
             id: Some(id),
@@ -37,10 +29,9 @@ impl MessageTypeQuery {
         }
     }
 
-    pub fn with_code_and_business_unit(code: Code, business_unit_id: Id) -> Self {
+    pub fn with_code(code: Code) -> Self {
         Self {
             code: Some(code),
-            business_unit_id: Some(business_unit_id),
             ..Default::default()
         }
     }
@@ -60,11 +51,6 @@ impl ModelQueryBuilder<MessageType> for MessageTypeQuery {
         if let Some(id) = self.id {
             query_builder.push(" and id = ");
             query_builder.push_bind(id);
-        }
-
-        if let Some(business_unit_id) = self.business_unit_id {
-            query_builder.push(" and business_unit_id = ");
-            query_builder.push_bind(business_unit_id);
         }
 
         if let Some(enabled) = self.enabled {
@@ -91,28 +77,14 @@ pub struct MessageType {
     enabled: bool,
     vars: Vars,
 
-    #[setters(skip)]
-    business_unit_id: Id,
-
     schema: JsonSchema,
 }
 
 impl MessageType {
-    pub async fn business_unit<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<BusinessUnit> {
-        BusinessUnit::find_one(
-            exec,
-            BusinessUnitQueryBuilder::default()
-                .id(Some(self.business_unit_id))
-                .build()
-                .unwrap(),
-        )
-        .await
-    }
-
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self> {
         Ok(sqlx::query_as(
             r#"
-                    INSERT INTO message_types (id, code, name, enabled, vars, business_unit_id) 
+                    INSERT INTO message_types (id, code, name, enabled, vars) 
                     VALUES($1, $2, $3, $4, $5, $6) RETURNING *
                 "#,
         )
@@ -121,7 +93,6 @@ impl MessageType {
         .bind(self.name)
         .bind(self.enabled)
         .bind(self.vars)
-        .bind(self.business_unit_id)
         .fetch_one(exec)
         .await
         .tap_err(log_query_error!())?)

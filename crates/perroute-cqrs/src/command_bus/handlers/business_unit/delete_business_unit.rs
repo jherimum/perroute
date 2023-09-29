@@ -11,7 +11,6 @@ use perroute_storage::{
     models::{
         business_unit::{BusinessUnit, BusinessUnitQuery},
         channel::{Channel, ChannelQuery},
-        message_type::{MessageType, MessageTypeQuery},
     },
     query::FetchableModel,
 };
@@ -75,16 +74,8 @@ impl CommandHandler for DeleteBusinessUnitCommandHandler {
             .into());
         }
 
-        if MessageType::exists(ctx.pool(), MessageTypeQuery::with_business_unit(*bu.id()))
-            .await
-            .tap_err(|e| tracing::error!("Failed to check exist message types: {e}"))?
-        {
-            return Err(DeleteBusinessUnitError::BusinessUnitDelete(
-                *bu.id(),
-                "There are message types associated with this Business unit",
-            )
-            .into());
-        }
+        //todo: check if there are messages associated with this business unit
+        //todo: check if there are template assignments with this business unit
 
         Ok(bu
             .delete(ctx.pool())

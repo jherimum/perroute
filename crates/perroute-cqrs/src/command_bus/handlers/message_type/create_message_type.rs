@@ -28,7 +28,6 @@ pub struct CreateMessageTypeCommand {
     code: Code,
     name: String,
     vars: Vars,
-    business_unit_id: Id,
 }
 
 impl_command!(CreateMessageTypeCommand, CommandType::CreateMessageType);
@@ -57,12 +56,7 @@ impl CommandHandler for CreateMessageTypeCommandHandler {
 
         cmd: Self::Command,
     ) -> Result<MessageType> {
-        if MessageType::exists(
-            ctx.pool(),
-            MessageTypeQuery::with_code_and_business_unit(cmd.code.clone(), cmd.business_unit_id),
-        )
-        .await?
-        {
+        if MessageType::exists(ctx.pool(), MessageTypeQuery::with_code(cmd.code.clone())).await? {
             return Err(CreateMessageTypeError::CodeAlreadyExists(cmd.code().clone()).into());
         }
 
@@ -72,7 +66,6 @@ impl CommandHandler for CreateMessageTypeCommandHandler {
             .name(cmd.name)
             .enabled(false)
             .vars(cmd.vars)
-            .business_unit_id(cmd.business_unit_id)
             .build()
             .unwrap()
             .save(ctx.pool())

@@ -4,27 +4,16 @@ use crate::{
 };
 use anyhow::{Context, Result};
 use derive_builder::Builder;
-use perroute_commons::types::{code::Code, id::Id, vars::Vars};
+use perroute_commons::types::{code::Code, vars::Vars};
 use perroute_storage::models::message_type::MessageType;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, str::FromStr};
 use validator::Validate;
 
 #[derive(Debug, Default, Deserialize, Validate, Clone, Builder, Serialize)]
-pub struct MessageTypeRestQuery {
-    #[validate(custom = "Id::validate")]
-    pub business_unit_id: Option<String>,
-}
+pub struct MessageTypeRestQuery {}
 
-impl MessageTypeRestQuery {
-    pub fn business_unit_id(&self) -> Result<Option<Id>> {
-        Ok(self
-            .business_unit_id
-            .clone()
-            .map(|id| id.try_into())
-            .transpose()?)
-    }
-}
+impl MessageTypeRestQuery {}
 
 #[derive(Debug, serde::Deserialize, Clone, Validate, Default)]
 #[serde(default)]
@@ -38,10 +27,6 @@ pub struct CreateMessageTypeRequest {
     name: Option<String>,
 
     vars: Option<HashMap<String, String>>,
-
-    #[validate(required)]
-    #[validate(custom = "Id::validate")]
-    business_unit_id: Option<String>,
 }
 
 impl CreateMessageTypeRequest {
@@ -51,14 +36,6 @@ impl CreateMessageTypeRequest {
 
     pub fn name(&self) -> Result<String> {
         self.name.clone().context("Missing name")
-    }
-
-    pub fn business_unit_id(&self) -> Result<Id> {
-        self.business_unit_id
-            .clone()
-            .context("Missing business id")?
-            .try_into()
-            .context("Invalid Id")
     }
 
     pub fn vars(&self) -> Result<Vars> {
@@ -120,10 +97,6 @@ impl ResourceBuilder<SingleResourceModel<MessageTypeResource>> for MessageType {
                 .add(
                     Linkrelation::MessageTypes,
                     ResourceLink::MessageTypes(MessageTypeRestQuery::default()),
-                )
-                .add(
-                    Linkrelation::BusinessUnit,
-                    ResourceLink::BusinessUnit(*self.business_unit_id()),
                 )
                 .as_url_map(req),
         }

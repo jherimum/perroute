@@ -56,7 +56,6 @@ impl TryInto<CreateMessageTypeCommand> for CreateMessageTypeRequest {
             .code(self.code()?)
             .name(self.name()?)
             .vars(self.vars()?)
-            .business_unit_id(self.business_unit_id()?)
             .build()
             .tap_err(|e| tracing::error!("Failed to build CreateMessageTypeCommand:{e}"))?)
     }
@@ -92,7 +91,6 @@ impl TryInto<QueryMessageTypesQuery> for MessageTypeRestQuery {
 
     fn try_into(self) -> Result<QueryMessageTypesQuery, Self::Error> {
         Ok(QueryMessageTypesQueryBuilder::default()
-            .business_unit_id(self.business_unit_id()?)
             .build()
             .tap_err(|e| tracing::error!("Failed to build QueryMessageTypesQuery: {e}"))?)
     }

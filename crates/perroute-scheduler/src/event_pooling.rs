@@ -70,7 +70,7 @@ impl<P: EventPublisher> EventPooling<P> {
 
             let event = event
                 .set_consumed_at(Utc::now().naive_utc())
-                .update(&mut tx)
+                .update(tx.as_mut())
                 .await
                 .tap_err(|e| {
                     tracing::error!("Failed to update event: {e}");
