@@ -1,17 +1,13 @@
-use super::{
-    business_unit::{BusinessUnit, BusinessUnitQueryBuilder},
-    message_type::{MessageType, MessageTypeQueryBuilder},
-};
 use crate::{
     log_query_error,
-    query::{FetchableModel, ModelQueryBuilder, Projection},
+    query::{ModelQueryBuilder, Projection},
     DatabaseModel, Result,
 };
 use chrono::NaiveDateTime;
 use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
-use perroute_commons::types::{id::Id, priority::Priority, template::TemplateSnippet, vars::Vars};
+use perroute_commons::types::{id::Id, template::TemplateSnippet};
 use perroute_connectors::types::dispatch_type::DispatchType;
 use sqlx::{FromRow, PgExecutor, QueryBuilder};
 use std::ops::Deref;
@@ -21,9 +17,6 @@ use tap::TapFallible;
 #[builder(default)]
 pub struct TemplatesQuery {
     id: Option<Id>,
-    message_type_id: Option<Id>,
-    business_unit_id: Option<Id>,
-    dispatch_type: Option<DispatchType>,
 }
 
 impl TemplatesQuery {
@@ -46,21 +39,6 @@ impl ModelQueryBuilder<Template> for TemplatesQuery {
             builder.push_bind(id);
         }
 
-        if let Some(business_unit_id) = self.business_unit_id {
-            builder.push(" AND business_unit_id = ");
-            builder.push_bind(business_unit_id);
-        }
-
-        if let Some(message_type_id) = self.message_type_id {
-            builder.push(" AND message_type_id = ");
-            builder.push_bind(message_type_id);
-        }
-
-        if let Some(dispath_type) = self.dispatch_type {
-            builder.push(" AND dispatch_type = ");
-            builder.push_bind(dispath_type);
-        }
-
         builder
     }
 }
@@ -78,10 +56,6 @@ pub struct Template {
     subject: Option<TemplateSnippet>,
     text: Option<TemplateSnippet>,
     html: Option<TemplateSnippet>,
-    active: bool,
-
-    #[setters(skip)]
-    dispatch_type: DispatchType,
 }
 
 impl Template {
@@ -113,21 +87,17 @@ impl Template {
             r#"
         INSERT INTO templates (
             id, 
-            dispatch_type, 
             subject, 
             text, 
             html, 
-            active, 
             name) 
-        VALUES($1, $2, $3, $4, $5, $6, $7)
+        VALUES($1, $2, $3, $4, $5)
         RETURNING *"#,
         )
         .bind(self.id)
-        .bind(self.dispatch_type)
         .bind(self.subject)
         .bind(self.text)
         .bind(self.html)
-        .bind(self.active)
         .bind(self.name)
         .fetch_one(exec)
         .await
@@ -142,8 +112,7 @@ impl Template {
                 subject= $2, 
                 text=$3, 
                 html=$4, 
-                active=$5, 
-                name=$6,
+                name=$5,
             WHERE id=$1 
             RETURNING *"#,
         )
@@ -151,7 +120,6 @@ impl Template {
         .bind(self.subject)
         .bind(self.text)
         .bind(self.html)
-        .bind(self.active)
         .bind(self.name)
         .fetch_one(exec)
         .await

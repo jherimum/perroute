@@ -22,8 +22,8 @@ command!(
     name: Option<String>,
     subject: Option<Option<TemplateSnippet>>,
     html: Option<Option<TemplateSnippet>>,
-    text: Option<Option<TemplateSnippet>>,
-    active: Option<bool>
+    text: Option<Option<TemplateSnippet>>
+
 );
 into_event!(UpdateTemplateCommand);
 
@@ -61,17 +61,8 @@ impl CommandHandler for UpdateTemplateCommandHandler {
             .tap_err(|e| tracing::error!("Failed to retrieve template:{e}"))?
             .ok_or(UpdateTemplatelError::TemplateNotFound(cmd.id))?;
 
-        if cmd.name.is_none()
-            & cmd.subject.is_none()
-            & cmd.html.is_none()
-            & cmd.text.is_none()
-            & cmd.active.is_none()
-        {
+        if cmd.name.is_none() & cmd.subject.is_none() & cmd.html.is_none() & cmd.text.is_none() {
             return Ok(actual_template);
-        }
-
-        if let Some(active) = cmd.active {
-            actual_template = actual_template.set_active(active);
         }
 
         if let Some(name) = cmd.name {

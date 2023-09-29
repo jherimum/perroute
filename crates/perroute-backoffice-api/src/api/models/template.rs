@@ -2,31 +2,19 @@ use crate::api::response::CollectionResourceModel;
 use crate::api::response::Links;
 use crate::api::response::ResourceBuilder;
 use crate::api::response::SingleResourceModel;
-use crate::api::types::RestDateTime;
 use crate::links::Linkrelation;
 use crate::links::ResourceLink;
 use anyhow::Context;
 use anyhow::Result;
-use perroute_commons::types::priority::Priority;
 use perroute_commons::types::template::TemplateSnippet;
 use perroute_commons::types::template::TemplateValidator;
-use perroute_connectors::types::dispatch_type::DispatchType;
 use perroute_storage::models::template::Template;
 use serde::Serialize;
-use sqlx::types::chrono::NaiveDateTime;
-use std::borrow::Cow;
-use std::collections::HashMap;
-use std::str::FromStr;
 use validator::Validate;
-use validator::ValidationError;
 
 #[derive(Debug, serde::Deserialize, Clone, Validate, Default)]
 #[serde(default)]
 pub struct CreateTemplateRequest {
-    #[validate(required)]
-    #[validate(custom = "DispatchType::validate")]
-    dispatch_type: Option<String>,
-
     #[validate(required)]
     #[validate(custom = "perroute_commons::types::name::validate")]
     name: Option<String>,
@@ -42,14 +30,6 @@ pub struct CreateTemplateRequest {
 }
 
 impl CreateTemplateRequest {
-    pub fn dispatch_type(&self) -> Result<DispatchType> {
-        self.dispatch_type
-            .clone()
-            .context("missing dispatch type")?
-            .try_into()
-            .context("invalid dispatch type")
-    }
-
     pub fn name(&self) -> Result<String> {
         self.name.clone().context("missing name")
     }
@@ -69,7 +49,6 @@ impl CreateTemplateRequest {
 
 #[derive(Debug, serde::Deserialize, Clone, Validate, Default)]
 #[serde(default)]
-#[validate(schema(function = "validate_update_date_range"))]
 pub struct UpdateTemplateRequest {
     #[validate(custom = "perroute_commons::types::name::validate")]
     name: Option<String>,
@@ -91,24 +70,6 @@ pub struct UpdateTemplateRequest {
         with = "::serde_with::rust::double_option",
     )]
     text: Option<Option<String>>,
-
-    vars: Option<HashMap<String, String>>,
-    active: Option<bool>,
-
-    #[validate(required)]
-    #[validate(custom = "RestDateTime::validate")]
-    start_at: Option<String>,
-
-    #[serde(
-        default,                                    // <- important for deserialization
-        with = "::serde_with::rust::double_option",
-    )]
-    #[validate(custom = "RestDateTime::validate")]
-    end_at: Option<Option<String>>,
-
-    #[validate(required)]
-    #[validate(custom = "Priority::validate")]
-    priority: Option<i32>,
 }
 
 impl UpdateTemplateRequest {
@@ -127,56 +88,6 @@ impl UpdateTemplateRequest {
     pub fn text(&self) -> Result<Option<Option<TemplateSnippet>>> {
         Ok(self.text.clone().map(|s| s.map(Into::into)))
     }
-
-    pub fn active(&self) -> Result<Option<bool>> {
-        Ok(self.active)
-    }
-
-    pub fn priority(&self) -> Result<Option<Priority>> {
-        Ok(self.priority.map(|p| p.try_into()).transpose()?)
-    }
-
-    pub fn start_at(&self) -> Result<Option<NaiveDateTime>> {
-        Ok(self
-            .start_at
-            .clone()
-            .map(|s| RestDateTime::from_str(&s).context("Invalid start_at"))
-            .transpose()?
-            .map(Into::into))
-    }
-
-    pub fn end_at(&self) -> Result<Option<Option<NaiveDateTime>>> {
-        Ok(self
-            .text
-            .clone()
-            .map(|s| {
-                s.map(|s| RestDateTime::from_str(&s).context("Invalid end_at"))
-                    .transpose()
-            })
-            .transpose()?
-            .map(|s| s.map(Into::into)))
-    }
-}
-
-fn validate_update_date_range(req: &UpdateTemplateRequest) -> Result<(), ValidationError> {
-    if let (Some(start_at), Some(Some(end_at))) = (&req.start_at, &req.end_at) {
-        let start_at = RestDateTime::from_str(start_at)
-            .context("Invalid start_at")
-            .unwrap();
-        let end_at = RestDateTime::from_str(end_at)
-            .context("Invalid end_at")
-            .unwrap();
-
-        if start_at > end_at {
-            return Err(ValidationError {
-                code: Cow::Borrowed("dates"),
-                message: Some(Cow::Borrowed("Invalid date range")),
-                params: Default::default(),
-            });
-        }
-    }
-
-    Ok(())
 }
 
 #[derive(Debug, Serialize, Clone)]
@@ -186,8 +97,6 @@ pub struct TemplateResource {
     pub subject: Option<String>,
     pub html: Option<String>,
     pub text: Option<String>,
-    pub dispatch_type: String,
-    pub active: bool,
 }
 
 impl From<&Template> for TemplateResource {
@@ -198,8 +107,6 @@ impl From<&Template> for TemplateResource {
             subject: template.subject().clone().map(Into::into),
             html: template.html().clone().map(Into::into),
             text: template.text().clone().map(Into::into),
-            dispatch_type: template.dispatch_type().into(),
-            active: *template.active(),
         }
     }
 }

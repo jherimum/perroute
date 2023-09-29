@@ -35,7 +35,6 @@ impl QueryHandler for FindTemplateQueryHandler {
             ctx.pool(),
             TemplatesQueryBuilder::default()
                 .id(Some(*query.template_id()))
-                .business_unit_id(*query.business_unit_id())
                 .build()
                 .unwrap(),
         )

@@ -62,7 +62,6 @@ impl TemplateRouter {
     ) -> SingleResult {
         let cmd = CreateTemplateCommandBuilder::default()
             .id(Id::new())
-            .dispatch_type(body.dispatch_type()?)
             .name(body.name()?)
             .subject(body.subject()?)
             .html(body.html()?)

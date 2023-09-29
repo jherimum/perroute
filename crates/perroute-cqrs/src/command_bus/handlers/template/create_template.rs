@@ -9,11 +9,7 @@ use anyhow::Context;
 use async_trait::async_trait;
 use derive_getters::Getters;
 use perroute_commons::types::{id::Id, template::TemplateSnippet};
-use perroute_connectors::types::dispatch_type::DispatchType;
-use perroute_storage::{
-    models::template::{Template, TemplateBuilder},
-    query::FetchableModel,
-};
+use perroute_storage::models::template::{Template, TemplateBuilder};
 use sqlx::PgPool;
 use tap::TapFallible;
 
@@ -24,8 +20,7 @@ command!(
     name: String,
     subject: Option<TemplateSnippet>,
     html: Option<TemplateSnippet>,
-    text: Option<TemplateSnippet>,
-    dispatch_type: DispatchType
+    text: Option<TemplateSnippet>
 );
 into_event!(CreateTemplateCommand);
 
@@ -61,8 +56,6 @@ impl CommandHandler for CreateTemplateCommandHandler {
             .subject(cmd.subject)
             .text(cmd.text)
             .html(cmd.html)
-            .active(false)
-            .dispatch_type(cmd.dispatch_type)
             .build()
             .context("Failed to build template")?
             .save(ctx.pool())

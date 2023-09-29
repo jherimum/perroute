@@ -12,6 +12,7 @@ use crate::{
 use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
+use perroute_commons::types::priority::Priority;
 use perroute_commons::types::{id::Id, properties::Properties};
 use perroute_connectors::types::dispatch_type::DispatchType;
 use sqlx::{FromRow, PgExecutor, Postgres, QueryBuilder};
@@ -88,6 +89,8 @@ pub struct Route {
     #[setters(skip)]
     connection_id: Id,
 
+    priority: Priority,
+
     properties: Properties,
 }
 
@@ -131,7 +134,7 @@ impl Route {
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self> {
         Ok(sqlx::query_as(
             r#"
-            INSERT INTO routes (id,  channel_id, business_unit_id, message_type_id, connection_id, properties ) 
+            INSERT INTO routes (id, channel_id, business_unit_id, message_type_id, connection_id, properties, priority) 
             VALUES($1, $2, $3, $4, $5, $6) RETURNING *
             "#,
         )
@@ -141,6 +144,7 @@ impl Route {
         .bind(self.message_type_id)
         .bind(self.connection_id)
         .bind(self.properties)
+        .bind(self.priority)
         .fetch_one(exec)
         .await
         .tap_err(log_query_error!())?)
@@ -150,12 +154,13 @@ impl Route {
         Ok(sqlx::query_as(
             r#"
             UPDATE routes 
-            SET properties= $2
+            SET properties= $2, priority= $3
             WHERE id= $1 RETURNING *
             "#,
         )
         .bind(self.id)
         .bind(self.properties)
+        .bind(self.priority)
         .fetch_one(exec)
         .await
         .tap_err(log_query_error!())?)
