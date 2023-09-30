@@ -64,7 +64,6 @@ impl CommandHandler for CreateMessageTypeCommandHandler {
             .id(cmd.id)
             .code(cmd.code)
             .name(cmd.name)
-            .enabled(false)
             .vars(cmd.vars)
             .build()
             .unwrap()

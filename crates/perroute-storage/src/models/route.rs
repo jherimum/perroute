@@ -36,6 +36,13 @@ impl RouteQuery {
             ..Default::default()
         }
     }
+
+    pub fn with_message_type_id(id: Id) -> RouteQuery {
+        Self {
+            message_type_id: Some(id),
+            ..Default::default()
+        }
+    }
 }
 
 impl ModelQueryBuilder<Route> for RouteQuery {
@@ -89,6 +96,8 @@ pub struct Route {
     #[setters(skip)]
     connection_id: Id,
 
+    enabled: bool,
+
     priority: Priority,
 
     properties: Properties,
@@ -115,7 +124,8 @@ impl Route {
             ON c.id = r.channel_id
             WHERE c.dispatch_type = $1 
             AND c.enabled = true
-            ORDER by c.priority DESC
+            AND t.enabled = true
+            ORDER by r.priority DESC
         "#;
 
         todo!()
@@ -134,8 +144,17 @@ impl Route {
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self> {
         Ok(sqlx::query_as(
             r#"
-            INSERT INTO routes (id, channel_id, business_unit_id, message_type_id, connection_id, properties, priority) 
-            VALUES($1, $2, $3, $4, $5, $6) RETURNING *
+            INSERT INTO routes 
+            (
+                id, 
+                channel_id, 
+                business_unit_id, 
+                message_type_id, 
+                connection_id, 
+                properties, 
+                priority, 
+                enabled) 
+            VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING *
             "#,
         )
         .bind(self.id)
@@ -145,6 +164,7 @@ impl Route {
         .bind(self.connection_id)
         .bind(self.properties)
         .bind(self.priority)
+        .bind(self.enabled)
         .fetch_one(exec)
         .await
         .tap_err(log_query_error!())?)
@@ -154,13 +174,17 @@ impl Route {
         Ok(sqlx::query_as(
             r#"
             UPDATE routes 
-            SET properties= $2, priority= $3
+            SET 
+                properties= $2, 
+                priority= $3,
+                enabled = $4
             WHERE id= $1 RETURNING *
             "#,
         )
         .bind(self.id)
         .bind(self.properties)
         .bind(self.priority)
+        .bind(self.enabled)
         .fetch_one(exec)
         .await
         .tap_err(log_query_error!())?)

@@ -1,11 +1,18 @@
-use super::{business_unit::BusinessUnit, message_type::MessageType};
-use crate::{log_query_error, query::ModelQueryBuilder, DatabaseModel, Result};
+use super::{
+    business_unit::{BusinessUnit, BusinessUnitQuery},
+    message_type::{MessageType, MessageTypeQuery},
+};
+use crate::{
+    log_query_error,
+    query::{FetchableModel, ModelQueryBuilder},
+    DatabaseModel, Result,
+};
 use chrono::NaiveDateTime;
 use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::types::{id::Id, payload::Payload};
-use perroute_connectors::types::delivery::Delivery;
+use perroute_connectors::types::recipient::Recipient;
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Json, FromRow, PgExecutor};
 use std::collections::HashSet;
@@ -123,7 +130,7 @@ pub struct Message {
 
     #[setters(skip)]
     #[builder(default)]
-    deliveries: Json<HashSet<Delivery>>,
+    recipients: Json<HashSet<Recipient>>,
 
     status: Status,
 
@@ -139,21 +146,22 @@ pub struct Message {
 
 impl Message {
     pub async fn message_type<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<MessageType> {
-        todo!()
+        MessageType::find_one(exec, MessageTypeQuery::with_id(self.message_type_id)).await
     }
 
     pub async fn business_unit<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<BusinessUnit> {
-        todo!()
+        BusinessUnit::find_one(exec, BusinessUnitQuery::with_id(self.business_unit_id)).await
     }
 
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self> {
         Ok(sqlx::query_as(
             r#"
-                INSERT INTO messages (id, payload, deliveries, status, message_type_id, business_unit_id) 
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *"#,
+                INSERT INTO messages (id, payload, recipients, status, message_type_id, business_unit_id) 
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 
+                RETURNING *"#,
             ).bind(self.id)
             .bind(self.payload)
-            .bind(self.deliveries)
+            .bind(self.recipients)
             .bind(self.status)
             .bind(self.message_type_id)
             .bind(self.business_unit_id)
@@ -167,8 +175,10 @@ impl Message {
         Ok(sqlx::query_as(
             r#"
                 UPDATE messages 
-                SET status = $2
-                WHERE id = $1
+                SET 
+                    status = $2
+                WHERE 
+                    id = $1
                 RETURNING *"#,
         )
         .bind(self.id)

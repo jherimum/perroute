@@ -3,12 +3,10 @@ use crate::{
     query::{ModelQueryBuilder, Projection},
     DatabaseModel, Result,
 };
-use chrono::NaiveDateTime;
 use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::types::{id::Id, template::TemplateSnippet};
-use perroute_connectors::types::dispatch_type::DispatchType;
 use sqlx::{FromRow, PgExecutor, QueryBuilder};
 use std::ops::Deref;
 use tap::TapFallible;
@@ -59,29 +57,6 @@ pub struct Template {
 }
 
 impl Template {
-    pub async fn find_active_template<'e, E: PgExecutor<'e>>(
-        exec: E,
-        dispatch_type: &DispatchType,
-        instant: &NaiveDateTime,
-    ) -> Result<Option<Template>> {
-        Ok(sqlx::query_as(
-            r#"
-                    SELECT * 
-                    FROM templates 
-                    WHERE 
-                        dispatch_type = $1
-                        AND start_at <= $2 
-                        AND (end_at is null OR end_at >= $2 ) 
-                        AND active = true               
-                        ORDER BY priority desc
-                        LIMIT 1"#,
-        )
-        .bind(dispatch_type)
-        .bind(instant)
-        .fetch_optional(exec)
-        .await?)
-    }
-
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self> {
         Ok(sqlx::query_as(
             r#"

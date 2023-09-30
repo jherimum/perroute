@@ -6,7 +6,7 @@ use crate::{
 use derive_builder::Builder;
 use derive_getters::Getters;
 use perroute_commons::types::id::Id;
-use perroute_connectors::types::{delivery::Delivery, plugin_id::ConnectorPluginId};
+use perroute_connectors::types::{plugin_id::ConnectorPluginId, recipient::Recipient};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sqlx::{types::Json, FromRow, PgExecutor, QueryBuilder, Type};
@@ -102,7 +102,7 @@ pub struct MessageDispatch {
     message_id: Id,
     plugin_id: ConnectorPluginId,
     created_at: chrono::NaiveDateTime,
-    delivery: Json<Delivery>,
+    recipient: Json<Recipient>,
 }
 
 impl MessageDispatch {
@@ -127,7 +127,7 @@ impl MessageDispatch {
     pub async fn save<'e, E: PgExecutor<'e>>(&self, executor: E) -> Result<Self> {
         Ok(sqlx::query_as(
             r#"
-            INSERT INTO message_dispatches (id, message_id, success, plugin_id, delivery, created_at)
+            INSERT INTO message_dispatches (id, message_id, success, plugin_id, recipient, created_at)
             VALUES ($1, $2, $3, $4, $5)
             RETURNING *
             "#,
@@ -136,7 +136,7 @@ impl MessageDispatch {
         .bind(self.message_id)
         .bind(self.success)
         .bind(self.plugin_id)
-        .bind(self.delivery.clone())
+        .bind(self.recipient.clone())
         .bind(self.created_at)
         .fetch_one(executor)
         .await?)

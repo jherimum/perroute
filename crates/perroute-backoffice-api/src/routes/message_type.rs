@@ -68,7 +68,6 @@ impl TryInto<UpdateMessageTypeCommand> for W<(Path<SingleIdPath>, UpdateMessageT
         Ok(UpdateMessageTypeCommandBuilder::default()
             .id(w.0.into_inner().try_into()?)
             .name(w.1.name()?)
-            .enabled(w.1.enabled()?)
             .vars(w.1.vars()?)
             .build()
             .tap_err(|e| tracing::error!("Failed to build UpdateMessageTypeCommand: {e}"))?)

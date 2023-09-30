@@ -11,7 +11,7 @@ use crate::{
 use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
-use perroute_commons::types::{id::Id, priority::Priority, properties::Properties};
+use perroute_commons::types::{id::Id, properties::Properties};
 use perroute_connectors::types::dispatch_type::DispatchType;
 use sqlx::{FromRow, PgExecutor};
 use tap::TapFallible;
@@ -85,21 +85,30 @@ pub struct Channel {
     #[setters(skip)]
     dispatch_type: DispatchType,
 
-    properties: Properties,
-    enabled: bool,
-
     #[setters(skip)]
     connection_id: Id,
+
     #[setters(skip)]
     business_unit_id: Id,
+
+    properties: Properties,
+    enabled: bool,
 }
 
 impl Channel {
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self> {
         Ok(sqlx::query_as(
             r#"
-            INSERT INTO channels (id, dispatch_type, properties, enabled,  connection_id, business_unit_id ) 
-            VALUES($1, $2, $3, $4, $5, $6) RETURNING *
+            INSERT INTO channels 
+            (
+                id, 
+                dispatch_type, 
+                properties, 
+                enabled,  
+                connection_id, 
+                business_unit_id ) 
+            VALUES($1, $2, $3, $4, $5, $6) 
+            RETURNING *
             "#,
         )
         .bind(self.id)
@@ -117,8 +126,12 @@ impl Channel {
         Ok(sqlx::query_as(
             r#"
             UPDATE channels 
-            SET properties= $2, enabled=$3
-            WHERE id= $1 RETURNING *
+            SET 
+                properties= $2, 
+                enabled=$3
+            WHERE 
+                id= $1 
+            RETURNING *
             "#,
         )
         .bind(self.id)

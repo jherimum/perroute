@@ -111,7 +111,7 @@ fn build_message(req: &dyn DispatchRequest) -> SendgridResult<Message> {
 }
 
 fn personalization_from_request(req: &dyn DispatchRequest) -> Personalization {
-    let email: SendGridEmail = req.delivery().email_data().unwrap().mailbox().into();
+    let email: SendGridEmail = req.recipient().email_data().unwrap().mailbox().into();
     Personalization::new(email.into())
 }
 

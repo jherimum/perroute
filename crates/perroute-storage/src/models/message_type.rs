@@ -1,4 +1,3 @@
-use super::business_unit::{BusinessUnit, BusinessUnitQueryBuilder};
 use crate::{
     log_query_error,
     query::{FetchableModel, ModelQueryBuilder, Projection},
@@ -10,6 +9,8 @@ use derive_setters::Setters;
 use perroute_commons::types::{code::Code, id::Id, json_schema::JsonSchema, vars::Vars};
 use sqlx::{FromRow, PgExecutor, Postgres, QueryBuilder};
 use tap::TapFallible;
+
+use super::route::{Route, RouteQuery};
 
 impl DatabaseModel for MessageType {}
 
@@ -74,9 +75,7 @@ pub struct MessageType {
     code: Code,
 
     name: String,
-    enabled: bool,
     vars: Vars,
-
     schema: JsonSchema,
 }
 
@@ -84,15 +83,22 @@ impl MessageType {
     pub async fn save<'e, E: PgExecutor<'e>>(self, exec: E) -> Result<Self> {
         Ok(sqlx::query_as(
             r#"
-                    INSERT INTO message_types (id, code, name, enabled, vars) 
-                    VALUES($1, $2, $3, $4, $5, $6) RETURNING *
+                    INSERT INTO message_types 
+                    (
+                        id, 
+                        code, 
+                        name, 
+                        vars, 
+                        schema) 
+                    VALUES($1, $2, $3, $4, $5, $6, $7) 
+                    RETURNING *
                 "#,
         )
         .bind(self.id)
         .bind(self.code)
         .bind(self.name)
-        .bind(self.enabled)
         .bind(self.vars)
+        .bind(self.schema)
         .fetch_one(exec)
         .await
         .tap_err(log_query_error!())?)
@@ -102,14 +108,19 @@ impl MessageType {
         Ok(sqlx::query_as(
             r#"
                     UPDATE message_types 
-                    SET name= $2, enabled= $3, vars= $4
-                    WHERE id= $1 RETURNING *
+                    SET 
+                        name= $2, 
+                        vars= $3,
+                        schema = $4
+                    WHERE 
+                        id= $1 
+                    RETURNING *
                 "#,
         )
         .bind(self.id)
         .bind(self.name)
-        .bind(self.enabled)
         .bind(self.vars)
+        .bind(self.schema)
         .fetch_one(exec)
         .await
         .tap_err(log_query_error!())?)
@@ -122,5 +133,9 @@ impl MessageType {
             .await
             .tap_err(log_query_error!())
             .map(|result| result.rows_affected() > 0)?)
+    }
+
+    pub async fn routes<'e, E: PgExecutor<'e>>(&self, exec: E) -> Result<Vec<Route>> {
+        Route::query(exec, RouteQuery::with_message_type_id(self.id)).await
     }
 }

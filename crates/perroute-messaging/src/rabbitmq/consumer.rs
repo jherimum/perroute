@@ -82,8 +82,8 @@ async fn consume<'e>(
         )
         .await?;
 
-    while let Some(delivery) = consumer.next().await {
-        match delivery {
+    while let Some(recipient) = consumer.next().await {
+        match recipient {
             Ok(r) => {
                 tracing::info!("Mensagem recebida");
                 let event = serde_json::from_slice::<Event>(&r.data).unwrap();

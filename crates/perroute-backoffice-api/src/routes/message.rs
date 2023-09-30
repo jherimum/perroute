@@ -42,7 +42,7 @@ async fn create_message(
         .payload(body.payload()?)
         .business_unit_code(body.business_unit_code()?)
         .message_type_code(body.message_type_code()?)
-        .deliveries(body.deliveries()?)
+        .recipients(body.recipients()?)
         .build()
         .unwrap();
     state

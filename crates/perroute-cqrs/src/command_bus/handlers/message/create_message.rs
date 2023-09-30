@@ -9,7 +9,7 @@ use derive_getters::Getters;
 use perroute_commons::types::{
     code::Code, id::Id, json_schema::InvalidPayloadError, payload::Payload,
 };
-use perroute_connectors::types::delivery::Delivery;
+use perroute_connectors::types::recipient::Recipient;
 use perroute_messaging::events::EventType;
 use perroute_storage::{
     models::{
@@ -31,7 +31,7 @@ pub struct CreateMessageCommand {
     payload: Payload,
     business_unit_code: Code,
     message_type_code: Code,
-    deliveries: HashSet<Delivery>,
+    recipients: HashSet<Recipient>,
 }
 
 impl_command!(CreateMessageCommand, CommandType::CreateMessage);
@@ -48,9 +48,6 @@ pub enum CreateMessageError {
 
     #[error("Message type not found: {0}")]
     MessageTypeNotFound(Code),
-
-    #[error("Message type {0} is disabled")]
-    MessageTypeDisabled(Code),
 
     #[error(transparent)]
     InvalidPayload(#[from] InvalidPayloadError),
@@ -94,19 +91,13 @@ impl CommandHandler for CreateMessageCommandHandler {
         .tap_err(|e| tracing::error!("Failed to retrieve message type:{e}"))?
         .ok_or_else(|| CreateMessageError::MessageTypeNotFound(cmd.message_type_code))?;
 
-        if !message_type.enabled() {
-            return Err(
-                CreateMessageError::MessageTypeDisabled(message_type.code().clone()).into(),
-            );
-        }
-
         Ok(MessageBuilder::default()
             .id(cmd.id)
             .status(Status::Pending)
             .payload(cmd.payload)
             .message_type_id(*message_type.id())
             .business_unit_id(*bu.id())
-            .deliveries(Json(cmd.deliveries))
+            .recipients(Json(cmd.recipients))
             .build()
             .unwrap()
             .save(ctx.pool())

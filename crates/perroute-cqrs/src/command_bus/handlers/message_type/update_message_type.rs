@@ -24,7 +24,6 @@ command!(
     CommandType::UpdateMessageType,
     id: Id,
     name: Option<String>,
-    enabled: Option<bool>,
     vars: Option<Vars>
 
 );
@@ -58,16 +57,12 @@ impl CommandHandler for UpdateMessageTypeCommandHandler {
             .tap_err(|e| tracing::error!("Failed to retrieve message type {}:{e}", cmd.id))?
             .ok_or(UpdateMessageTypeError::MessageTypeNotFound(cmd.id))?;
 
-        if cmd.name.is_none() & cmd.enabled.is_none() & cmd.vars.is_none() {
+        if cmd.name.is_none() & cmd.vars.is_none() {
             return Ok(message_type);
         }
 
         if let Some(name) = cmd.name {
             message_type = message_type.set_name(name);
-        }
-
-        if let Some(enabled) = cmd.enabled {
-            message_type = message_type.set_enabled(enabled);
         }
 
         if let Some(vars) = cmd.vars {

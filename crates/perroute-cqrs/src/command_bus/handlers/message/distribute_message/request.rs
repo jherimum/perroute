@@ -8,7 +8,7 @@ use perroute_commons::types::{
     vars::Vars,
 };
 use perroute_connectors::{
-    api::DispatchRequest, template::DispatchTemplate, types::delivery::Delivery,
+    api::DispatchRequest, template::DispatchTemplate, types::recipient::Recipient,
 };
 use perroute_storage::models::{
     business_unit::BusinessUnit, channel::Channel, connection::Connection, message::Message,
@@ -19,7 +19,7 @@ use super::template::InnerDispatchTemplate;
 
 pub struct InnerDispatchRequest {
     pub id: Id,
-    pub delivery: Delivery,
+    pub recipient: Recipient,
     pub message: Message,
     pub message_type: MessageType,
     pub business_unit: BusinessUnit,
@@ -63,7 +63,7 @@ impl DispatchRequest for InnerDispatchRequest {
         todo!()
     }
 
-    fn delivery(&self) -> Delivery {
-        self.delivery.clone()
+    fn recipient(&self) -> Recipient {
+        self.recipient.clone()
     }
 }

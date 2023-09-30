@@ -20,13 +20,11 @@ pub struct Connection {
     #[setters(skip)]
     id: Id,
 
-    name: String,
-
     #[setters(skip)]
     plugin_id: ConnectorPluginId,
 
+    name: String,
     enabled: bool,
-
     properties: Properties,
 }
 
@@ -73,7 +71,8 @@ impl Connection {
         Ok(sqlx::query_as(
             r#"
             INSERT INTO connections (id, name, plugin_id, enabled, properties ) 
-            VALUES($1, $2, $3, $4, $5) RETURNING *
+            VALUES($1, $2, $3, $4, $5) 
+            RETURNING *
             "#,
         )
         .bind(self.id)
@@ -90,8 +89,13 @@ impl Connection {
         Ok(sqlx::query_as(
             r#"
             UPDATE connections 
-            SET name= $2, enabled=$3, properties=$4 
-            WHERE id= $1 RETURNING *
+            SET 
+                name= $2, 
+                enabled=$3, 
+                properties=$4 
+            WHERE 
+                id= $1 
+            RETURNING *
             "#,
         )
         .bind(self.id)

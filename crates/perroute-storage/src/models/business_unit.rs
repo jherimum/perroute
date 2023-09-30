@@ -1,7 +1,4 @@
-use super::{
-    channel::{Channel, ChannelQueryBuilder},
-    message_type::{MessageType, MessageTypeQueryBuilder},
-};
+use super::channel::{Channel, ChannelQueryBuilder};
 use crate::{
     log_query_error,
     query::{FetchableModel, ModelQueryBuilder, Projection},
@@ -77,7 +74,8 @@ impl BusinessUnit {
         Ok(sqlx::query_as(
             r#"
             INSERT INTO business_units (id, code, name, vars) 
-            VALUES($1, $2, $3, $4) RETURNING *
+            VALUES($1, $2, $3, $4) 
+            RETURNING *
             "#,
         )
         .bind(self.id)
@@ -94,8 +92,12 @@ impl BusinessUnit {
         Ok(sqlx::query_as(
             r#"
             UPDATE business_units 
-            SET name= $2, vars=$3 
-            WHERE id= $1 RETURNING *
+            SET 
+                name= $2, 
+                vars=$3 
+            WHERE 
+                id= $1 
+            RETURNING *
             "#,
         )
         .bind(self.id)

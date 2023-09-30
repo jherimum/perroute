@@ -1,7 +1,7 @@
 use crate::{
     configuration::Configuration,
     template::DispatchTemplate,
-    types::{delivery::Delivery, dispatch_type::DispatchType, plugin_id::ConnectorPluginId},
+    types::{dispatch_type::DispatchType, plugin_id::ConnectorPluginId, recipient::Recipient},
 };
 use erased_serde::serialize_trait_object;
 use futures_util::future::BoxFuture;
@@ -91,7 +91,7 @@ pub trait DispatchRequest {
     fn template(&self) -> Box<dyn DispatchTemplate>;
     fn payload(&self) -> &Payload;
     fn vars(&self) -> Vars;
-    fn delivery(&self) -> Delivery;
+    fn recipient(&self) -> Recipient;
 }
 
 impl From<&(dyn DispatchRequest + Send + Sync)> for TemplateData {

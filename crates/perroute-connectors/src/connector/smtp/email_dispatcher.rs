@@ -145,8 +145,8 @@ impl TryFrom<&(dyn DispatchRequest + Send + Sync)> for Message {
             .render_text(&req.into())
             .map_err(DispatchError::from)?;
 
-        let delivery = req.delivery();
-        let recipient_mail_box = delivery
+        let recipient = req.recipient();
+        let recipient_mail_box = recipient
             .email_data()
             .map(|d| d.mailbox())
             .ok_or(EmailDispatcherError::EmailNotSupplied)?;

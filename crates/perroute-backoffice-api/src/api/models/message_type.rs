@@ -48,8 +48,6 @@ pub struct UpdateMessageTypeRequest {
     #[validate(custom = "perroute_commons::types::name::validate")]
     name: Option<String>,
 
-    enabled: Option<bool>,
-
     vars: Option<HashMap<String, String>>,
 }
 
@@ -61,10 +59,6 @@ impl UpdateMessageTypeRequest {
     pub fn name(&self) -> Result<Option<String>> {
         Ok(self.name.clone())
     }
-
-    pub fn enabled(&self) -> Result<Option<bool>> {
-        Ok(self.enabled)
-    }
 }
 
 #[derive(Clone, Serialize, Debug, Validate)]
@@ -72,7 +66,6 @@ pub struct MessageTypeResource {
     id: String,
     code: String,
     name: String,
-    enabled: bool,
     vars: HashMap<String, String>,
 }
 
@@ -82,7 +75,6 @@ impl From<&MessageType> for MessageTypeResource {
             id: value.id().into(),
             code: value.code().to_string(),
             name: value.name().clone(),
-            enabled: *value.enabled(),
             vars: value.vars().into(),
         }
     }

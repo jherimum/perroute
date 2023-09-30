@@ -15,7 +15,7 @@ use perroute_commons::types::{
 };
 use perroute_connectors::{
     api::{DispatchError, DispatchResponse},
-    types::{delivery::Delivery, plugin_id::ConnectorPluginId},
+    types::{plugin_id::ConnectorPluginId, recipient::Recipient},
     Plugins,
 };
 use perroute_messaging::events::EventType;

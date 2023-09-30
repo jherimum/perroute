@@ -4,7 +4,7 @@ use perroute_commons::types::{
     code::Code, email::Mailbox, id::Id, payload::Payload, phone_number::PhoneNumber,
     version::Version,
 };
-use perroute_connectors::types::delivery::Delivery;
+use perroute_connectors::types::recipient::Recipient;
 use perroute_storage::models::message::{Message, Status};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashSet, ops::Deref, str::FromStr};
@@ -25,7 +25,7 @@ pub struct CreateMessageRequest {
 
     #[validate]
     #[validate(length(min = 1))]
-    deliveries: HashSet<DeliveryRest>,
+    recipients: HashSet<RecipientRest>,
 }
 
 impl CreateMessageRequest {
@@ -54,11 +54,11 @@ impl CreateMessageRequest {
             .context("invalid message type code ")
     }
 
-    pub fn deliveries(&self) -> Result<HashSet<Delivery>> {
-        self.deliveries
+    pub fn recipients(&self) -> Result<HashSet<Recipient>> {
+        self.recipients
             .clone()
             .into_iter()
-            .map(Delivery::try_from)
+            .map(Recipient::try_from)
             .collect()
     }
 }
@@ -68,7 +68,7 @@ pub struct MessageResource {
     id: Id,
     status: Status,
     payload: Payload,
-    deliveries: HashSet<Delivery>,
+    recipients: HashSet<Recipient>,
 }
 
 impl From<&Message> for MessageResource {
@@ -76,7 +76,7 @@ impl From<&Message> for MessageResource {
         Self {
             id: *value.id(),
             payload: value.payload().clone(),
-            deliveries: value.deliveries().deref().clone(),
+            recipients: value.recipients().deref().clone(),
             status: *value.status(),
         }
     }
@@ -91,41 +91,41 @@ impl ResourceBuilder<SingleResourceModel<MessageResource>> for Message {
     }
 }
 
-impl TryFrom<DeliveryRest> for Delivery {
+impl TryFrom<RecipientRest> for Recipient {
     type Error = anyhow::Error;
-    fn try_from(value: DeliveryRest) -> Result<Self, Self::Error> {
+    fn try_from(value: RecipientRest) -> Result<Self, Self::Error> {
         Ok(match value {
-            DeliveryRest::Email(d) => {
+            RecipientRest::Email(d) => {
                 Self::email(Mailbox::from_str(&d.data.unwrap().mailbox.unwrap())?)
             }
-            DeliveryRest::Sms(d) => Self::sms(PhoneNumber::from_str(
+            RecipientRest::Sms(d) => Self::sms(PhoneNumber::from_str(
                 &d.data.unwrap().phone_number.unwrap(),
             )?),
-            DeliveryRest::Push(_) => Self::push(),
+            RecipientRest::Push(_) => Self::push(),
         })
     }
 }
 
 #[derive(Debug, Deserialize, Clone, Eq, PartialEq, Hash, Serialize)]
 #[serde(untagged)]
-pub enum DeliveryRest {
-    Email(DeliveryRestData<EmailData>),
-    Sms(DeliveryRestData<SmsData>),
-    Push(DeliveryRestData<PushData>),
+pub enum RecipientRest {
+    Email(RecipientRestData<EmailData>),
+    Sms(RecipientRestData<SmsData>),
+    Push(RecipientRestData<PushData>),
 }
 
-impl Validate for DeliveryRest {
+impl Validate for RecipientRest {
     fn validate(&self) -> Result<(), validator::ValidationErrors> {
         match self {
-            DeliveryRest::Email(d) => d.validate(),
-            DeliveryRest::Sms(d) => d.validate(),
-            DeliveryRest::Push(d) => d.validate(),
+            RecipientRest::Email(d) => d.validate(),
+            RecipientRest::Sms(d) => d.validate(),
+            RecipientRest::Push(d) => d.validate(),
         }
     }
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Serialize, Deserialize, Validate)]
-pub struct DeliveryRestData<D: Validate + Serialize> {
+pub struct RecipientRestData<D: Validate + Serialize> {
     #[validate(required)]
     #[validate(custom = "perroute_connectors::types::dispatch_type::DispatchType::validate")]
     dispatch_type: Option<String>,
