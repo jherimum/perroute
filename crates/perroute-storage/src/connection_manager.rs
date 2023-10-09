@@ -1,3 +1,4 @@
+use crate::{error::StorageError, Result};
 use perroute_commons::configuration::settings::DatabaseSettings;
 use secrecy::ExposeSecret;
 use sqlx::{
@@ -6,8 +7,6 @@ use sqlx::{
 };
 use std::time::Duration;
 use tap::TapFallible;
-
-use crate::{error::StorageError, Result};
 
 pub type ConnectionPool = PgPool;
 pub type Connection = PgConnection;

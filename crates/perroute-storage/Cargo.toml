@@ -6,9 +6,11 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+
 perroute-messaging = { path = "../../crates/perroute-messaging" }
 perroute-commons = { path = "../../crates/perroute-commons" }
 perroute-connectors = { path = "../../crates/perroute-connectors" }
+
 sqlx = { workspace = true, features = [
     "postgres",
     "runtime-tokio-rustls",
