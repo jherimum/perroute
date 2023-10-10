@@ -1,19 +1,31 @@
 use crate::{command::Command, error::CommandBusError};
-use perroute_commons::types::actor::Actor;
+use perroute_commons::types::{
+    actor::Actor,
+    template::{TemplateData, TemplateRender},
+};
 use perroute_connectors::Plugins;
 use sqlx::PgPool;
-use std::marker::PhantomData;
+use std::{marker::PhantomData, sync::Arc};
 use tap::TapFallible;
 
 #[derive(Clone)]
 pub struct CommandBus {
     pool: PgPool,
     plugins: Plugins,
+    template_render: Arc<dyn TemplateRender<TemplateData>>,
 }
 
 impl CommandBus {
-    pub fn new(pool: PgPool, plugins: Plugins) -> Self {
-        Self { pool, plugins }
+    pub fn new(
+        pool: PgPool,
+        plugins: Plugins,
+        template_render: Arc<dyn TemplateRender<TemplateData>>,
+    ) -> Self {
+        Self {
+            pool,
+            plugins,
+            template_render,
+        }
     }
 }
 
@@ -22,9 +34,15 @@ impl CommandBus {
     where
         C: Command<Output = O>,
     {
-        InnerExecutor::new(self.pool.clone(), actor, command, self.plugins.clone())
-            .execute()
-            .await
+        InnerExecutor::new(
+            self.pool.clone(),
+            actor,
+            command,
+            self.plugins.clone(),
+            self.template_render.clone(),
+        )
+        .execute()
+        .await
     }
 }
 
@@ -34,19 +52,27 @@ struct InnerExecutor<C, O> {
     command: C,
     output: PhantomData<O>,
     plugins: Plugins,
+    template_render: Arc<dyn TemplateRender<TemplateData>>,
 }
 
 impl<C, O> InnerExecutor<C, O>
 where
     C: Command<Output = O>,
 {
-    pub fn new(pool: PgPool, actor: Actor, command: C, plugins: Plugins) -> Self {
+    pub fn new(
+        pool: PgPool,
+        actor: Actor,
+        command: C,
+        plugins: Plugins,
+        template_render: Arc<dyn TemplateRender<TemplateData>>,
+    ) -> Self {
         Self {
             pool,
             actor,
             command,
             output: PhantomData,
             plugins,
+            template_render,
         }
     }
 
@@ -61,7 +87,8 @@ where
             return Err(CommandBusError::ActorNotSupported);
         };
 
-        let mut ctx = Ctx::new(&self.pool, &self.actor, &self.plugins).await?;
+        let mut ctx =
+            Ctx::new(&self.pool, &self.actor, &self.plugins, self.template_render).await?;
         self.command
             .handle(&mut ctx)
             .await
@@ -74,6 +101,7 @@ pub struct Ctx<'ctx> {
     pool: &'ctx PgPool,
     actor: &'ctx Actor,
     plugins: &'ctx Plugins,
+    template_render: Arc<dyn TemplateRender<TemplateData>>,
 }
 
 impl<'ctx> Ctx<'ctx> {
@@ -81,11 +109,13 @@ impl<'ctx> Ctx<'ctx> {
         pool: &'ctx PgPool,
         actor: &'ctx Actor,
         plugins: &'ctx Plugins,
+        template_render: Arc<dyn TemplateRender<TemplateData>>,
     ) -> Result<Ctx<'ctx>, CommandBusError> {
         Ok(Self {
             pool,
             actor,
             plugins,
+            template_render,
         })
     }
     pub fn pool(&self) -> &PgPool {
@@ -98,5 +128,9 @@ impl<'ctx> Ctx<'ctx> {
 
     pub fn plugins(&self) -> &Plugins {
         self.plugins
+    }
+
+    pub fn template_render(&self) -> &Arc<dyn TemplateRender<TemplateData>> {
+        &self.template_render
     }
 }

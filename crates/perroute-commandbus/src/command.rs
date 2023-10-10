@@ -1,6 +1,8 @@
 pub mod business_unit;
 pub mod channel;
 pub mod connection;
+pub mod message;
+pub mod message_type;
 
 use crate::{bus::Ctx, error::CommandBusError};
 use perroute_commons::types::{actor::Actor, command_type::CommandType};
