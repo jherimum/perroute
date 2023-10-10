@@ -1,17 +1,10 @@
-use crate::{
-    command,
-    command_bus::{
-        bus::CommandBusContext, commands::CommandType, handlers::CommandHandler, Result,
-    },
-    into_event,
-};
+use crate::{bus::Ctx, command::Command, error::CommandBusError};
 use async_trait::async_trait;
-use perroute_commons::types::{id::Id, vars::Vars};
+use perroute_commons::types::{actor::Actor, command_type::CommandType, id::Id, vars::Vars};
 use perroute_storage::{
     models::business_unit::{BusinessUnit, BusinessUnitQuery},
     query::FetchableModel,
 };
-use sqlx::PgPool;
 use tap::TapFallible;
 
 #[derive(thiserror::Error, Debug, Clone)]
@@ -20,70 +13,59 @@ pub enum UpdateBusinessUnitError {
     BusinessUnitNotFound(Id),
 }
 
-command!(
-    UpdateBusinessUnitCommand,
-    CommandType::UpdateBusinessUnit,
+#[derive(Debug)]
+pub struct UpdateBusinessUnitCommand {
     business_unit_id: Id,
     name: Option<String>,
-    vars: Option<Vars>
-);
-into_event!(UpdateBusinessUnitCommand);
-
-#[derive(Debug)]
-pub struct UpdateBusinessUnitCommandHandler {
-    pool: PgPool,
-}
-
-impl UpdateBusinessUnitCommandHandler {
-    pub fn new(pool: PgPool) -> Self {
-        Self { pool }
-    }
+    vars: Option<Vars>,
 }
 
 #[async_trait]
-impl CommandHandler for UpdateBusinessUnitCommandHandler {
-    type Command = UpdateBusinessUnitCommand;
+impl Command for UpdateBusinessUnitCommand {
     type Output = BusinessUnit;
 
     #[tracing::instrument(name = "update_business_units_handler", skip(self, ctx))]
-    async fn handle<'ctx>(
-        &self,
-        ctx: &mut CommandBusContext,
-
-        command: Self::Command,
-    ) -> Result<BusinessUnit> {
+    async fn handle<'ctx>(&self, ctx: &mut Ctx<'ctx>) -> Result<BusinessUnit, CommandBusError> {
         let mut bu = BusinessUnit::find(
             ctx.pool(),
-            BusinessUnitQuery::with_id(command.business_unit_id),
+            BusinessUnitQuery::with_id(self.business_unit_id),
         )
         .await
         .tap_err(|e| {
             tracing::error!(
                 "Error while fetching business unit {}: {e}",
-                command.business_unit_id
+                self.business_unit_id
             );
         })?
         .ok_or(UpdateBusinessUnitError::BusinessUnitNotFound(
-            command.business_unit_id,
+            self.business_unit_id,
         ))?;
 
-        if command.name.is_none() && command.vars.is_none() {
+        if self.name.is_none() && self.vars.is_none() {
             return Ok(bu);
         }
 
-        if let Some(name) = command.name {
+        if let Some(name) = &self.name {
             bu = bu.set_name(name);
         }
 
-        if let Some(vars) = command.vars {
-            bu = bu.set_vars(vars);
+        if let Some(vars) = &self.vars {
+            bu = bu.set_vars(vars.clone());
         }
 
         Ok(bu.update(ctx.pool()).await.tap_err(|e| {
             tracing::error!(
                 "Failed to update business unit {}: {e}",
-                command.business_unit_id
+                self.business_unit_id
             );
         })?)
+    }
+
+    fn command_type(&self) -> CommandType {
+        CommandType::UpdateBusinessUnit
+    }
+
+    fn supports(&self, _actor: &Actor) -> bool {
+        true
     }
 }

@@ -1,5 +1,6 @@
 use crate::{command::Command, error::CommandBusError};
 use perroute_commons::types::actor::Actor;
+use perroute_connectors::Plugins;
 use sqlx::PgPool;
 use std::marker::PhantomData;
 use tap::TapFallible;
@@ -7,11 +8,12 @@ use tap::TapFallible;
 #[derive(Clone)]
 pub struct CommandBus {
     pool: PgPool,
+    plugins: Plugins,
 }
 
 impl CommandBus {
-    pub fn new(pool: PgPool) -> Self {
-        Self { pool }
+    pub fn new(pool: PgPool, plugins: Plugins) -> Self {
+        Self { pool, plugins }
     }
 }
 
@@ -20,7 +22,7 @@ impl CommandBus {
     where
         C: Command<Output = O>,
     {
-        InnerExecutor::new(self.pool.clone(), actor, command)
+        InnerExecutor::new(self.pool.clone(), actor, command, self.plugins.clone())
             .execute()
             .await
     }
@@ -31,18 +33,20 @@ struct InnerExecutor<C, O> {
     actor: Actor,
     command: C,
     output: PhantomData<O>,
+    plugins: Plugins,
 }
 
 impl<C, O> InnerExecutor<C, O>
 where
     C: Command<Output = O>,
 {
-    pub fn new(pool: PgPool, actor: Actor, command: C) -> Self {
+    pub fn new(pool: PgPool, actor: Actor, command: C, plugins: Plugins) -> Self {
         Self {
             pool,
             actor,
             command,
             output: PhantomData,
+            plugins,
         }
     }
 
@@ -57,7 +61,7 @@ where
             return Err(CommandBusError::ActorNotSupported);
         };
 
-        let mut ctx = Ctx::new(&self.pool, &self.actor).await?;
+        let mut ctx = Ctx::new(&self.pool, &self.actor, &self.plugins).await?;
         self.command
             .handle(&mut ctx)
             .await
@@ -69,11 +73,20 @@ where
 pub struct Ctx<'ctx> {
     pool: &'ctx PgPool,
     actor: &'ctx Actor,
+    plugins: &'ctx Plugins,
 }
 
 impl<'ctx> Ctx<'ctx> {
-    pub async fn new(pool: &'ctx PgPool, actor: &'ctx Actor) -> Result<Ctx<'ctx>, CommandBusError> {
-        Ok(Self { pool, actor })
+    pub async fn new(
+        pool: &'ctx PgPool,
+        actor: &'ctx Actor,
+        plugins: &'ctx Plugins,
+    ) -> Result<Ctx<'ctx>, CommandBusError> {
+        Ok(Self {
+            pool,
+            actor,
+            plugins,
+        })
     }
     pub fn pool(&self) -> &PgPool {
         self.pool
@@ -81,5 +94,9 @@ impl<'ctx> Ctx<'ctx> {
 
     pub fn actor(&self) -> &Actor {
         self.actor
+    }
+
+    pub fn plugins(&self) -> &Plugins {
+        self.plugins
     }
 }

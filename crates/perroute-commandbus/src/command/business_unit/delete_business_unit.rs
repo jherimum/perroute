@@ -1,12 +1,6 @@
-use crate::{
-    command,
-    command_bus::{
-        bus::CommandBusContext, commands::CommandType, handlers::CommandHandler, Result,
-    },
-    into_event,
-};
+use crate::{bus::Ctx, command::Command, error::CommandBusError};
 use async_trait::async_trait;
-use perroute_commons::types::id::Id;
+use perroute_commons::types::{actor::Actor, command_type::CommandType, id::Id};
 use perroute_storage::{
     models::{
         business_unit::{BusinessUnit, BusinessUnitQuery},
@@ -14,7 +8,6 @@ use perroute_storage::{
     },
     query::FetchableModel,
 };
-use sqlx::PgPool;
 use tap::TapFallible;
 
 #[derive(thiserror::Error, Debug, Clone)]
@@ -26,42 +19,31 @@ pub enum DeleteBusinessUnitError {
     BusinessUnitDelete(Id, &'static str),
 }
 
-command!(
-    DeleteBusinessUnitCommand,
-    CommandType::DeleteBusinessUnit,
-    business_unit_id: Id
-);
-into_event!(DeleteBusinessUnitCommand);
-
 #[derive(Debug)]
-pub struct DeleteBusinessUnitCommandHandler {
-    pool: PgPool,
-}
-
-impl DeleteBusinessUnitCommandHandler {
-    pub fn new(pool: PgPool) -> Self {
-        Self { pool }
-    }
+pub struct DeleteBusinessUnitCommand {
+    business_unit_id: Id,
 }
 
 #[async_trait]
-impl CommandHandler for DeleteBusinessUnitCommandHandler {
-    type Command = DeleteBusinessUnitCommand;
+impl Command for DeleteBusinessUnitCommand {
     type Output = bool;
 
     #[tracing::instrument(name = "delete_business_unit_handler", skip(self, ctx))]
-    async fn handle<'ctx>(&self, ctx: &mut CommandBusContext, cmd: Self::Command) -> Result<bool> {
-        let bu = BusinessUnit::find(ctx.pool(), BusinessUnitQuery::with_id(cmd.business_unit_id))
-            .await
-            .tap_err(|e| {
-                tracing::error!(
-                    "Failed to retrieve business unit {}: {e}",
-                    cmd.business_unit_id
-                )
-            })?
-            .ok_or(DeleteBusinessUnitError::BusinessUnitNotFound(
-                cmd.business_unit_id,
-            ))?;
+    async fn handle<'ctx>(&self, ctx: &mut Ctx<'ctx>) -> Result<bool, CommandBusError> {
+        let bu = BusinessUnit::find(
+            ctx.pool(),
+            BusinessUnitQuery::with_id(self.business_unit_id),
+        )
+        .await
+        .tap_err(|e| {
+            tracing::error!(
+                "Failed to retrieve business unit {}: {e}",
+                self.business_unit_id
+            )
+        })?
+        .ok_or(DeleteBusinessUnitError::BusinessUnitNotFound(
+            self.business_unit_id,
+        ))?;
 
         if Channel::exists(ctx.pool(), ChannelQuery::with_business_unit(*bu.id()))
             .await
@@ -81,5 +63,13 @@ impl CommandHandler for DeleteBusinessUnitCommandHandler {
             .delete(ctx.pool())
             .await
             .tap_err(|e| tracing::error!("Failed to delete business unit: {e}"))?)
+    }
+
+    fn command_type(&self) -> CommandType {
+        CommandType::DeleteBusinessUnit
+    }
+
+    fn supports(&self, actor: &Actor) -> bool {
+        true
     }
 }
