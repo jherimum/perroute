@@ -10,6 +10,10 @@ use crate::command::{
         create_channel::CreateChannelError, delete_channel::DeleteChannelError,
         update_channel::UpdateChannelError,
     },
+    connection::{
+        create_connection::CreateConnectionError, delete_connection::DeleteConnectionError,
+        update_connection::UpdateConnectionError,
+    },
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -34,6 +38,13 @@ pub enum CommandBusError {
 
     #[error(transparent)]
     UpdateChannel(#[from] UpdateChannelError),
+
+    #[error(transparent)]
+    CreateConnection(#[from] CreateConnectionError),
+    #[error(transparent)]
+    Updateonnection(#[from] UpdateConnectionError),
+    #[error(transparent)]
+    DeleteConnection(#[from] DeleteConnectionError),
 
     #[error(transparent)]
     Storage(#[from] StorageError),
