@@ -2543,6 +2543,34 @@ dependencies = [
 ]
 
 [[package]]
+name = "perroute-commandbus"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "chrono",
+ "derive-getters",
+ "derive-new",
+ "derive_builder",
+ "futures",
+ "once_cell",
+ "perroute-commons",
+ "perroute-connectors",
+ "perroute-messaging",
+ "perroute-storage",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "strum",
+ "strum_macros",
+ "tap",
+ "thiserror",
+ "tokio",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
 name = "perroute-commons"
 version = "0.1.0"
 dependencies = [

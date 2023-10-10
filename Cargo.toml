@@ -8,6 +8,7 @@ members = [
 
     # dependent library crates
     "crates/perroute-cqrs",
+    "crates/perroute-commandbus",
     "crates/perroute-storage",
     "crates/perroute-connectors",
     "crates/perroute-commons",
