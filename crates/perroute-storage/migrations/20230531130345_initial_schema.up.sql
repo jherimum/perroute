@@ -88,7 +88,7 @@ create table template_assignments(
     constraint template_assignments_template_fk foreign key (template_id) references templates(id),
     constraint template_assignments_message_type_fk foreign key (message_type_id) references message_types(id),
     constraint template_assignments_bu_fk foreign key (business_unit_id) references business_units(id)
-)
+);
 
 
 create table messages(

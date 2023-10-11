@@ -11,6 +11,14 @@ command = "cargo"
 args = ["watch", "-x", "clippy", "-x", "run | bunyan"]
 dependencies = ["postgres", "rabbitmq"]
 
+[tasks.migration]
+install_crate = "sqlx-cli"
+cwd = "./crates/perroute-storage"
+command = "sqlx"
+args = ["migrate", "run"]
+dependencies = ["postgres"]
+
+
 [tasks.dev-scheduler]
 install_crate = "cargo-watch"
 cwd = "./crates/perroute-scheduler"
