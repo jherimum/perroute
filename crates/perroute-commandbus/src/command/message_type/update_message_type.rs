@@ -12,7 +12,7 @@ pub enum UpdateMessageTypeError {
     MessageTypeNotFound(Id),
 }
 
-#[derive(Debug)]
+#[derive(Debug, derive_builder::Builder)]
 pub struct UpdateMessageTypeCommand {
     id: Id,
     name: Option<String>,

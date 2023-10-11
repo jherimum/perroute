@@ -7,7 +7,7 @@ impl TemplateAssignmentRouter {
     pub const SINGLE_RESOURCE_NAME: &str = "template-assignment";
     pub const COLLECTION_RESOURCE_NAME: &str = "template-assignments";
 
-    #[tracing::instrument]
+    #[tracing::instrument(skip(state))]
     pub async fn create(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
@@ -15,7 +15,7 @@ impl TemplateAssignmentRouter {
         HttpResponse::Ok().finish()
     }
 
-    #[tracing::instrument]
+    #[tracing::instrument(skip(state))]
     pub async fn update(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
@@ -23,7 +23,7 @@ impl TemplateAssignmentRouter {
         HttpResponse::Ok().finish()
     }
 
-    #[tracing::instrument]
+    #[tracing::instrument(skip(state))]
     pub async fn delete(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
@@ -31,7 +31,7 @@ impl TemplateAssignmentRouter {
         HttpResponse::Ok().finish()
     }
 
-    #[tracing::instrument]
+    #[tracing::instrument(skip(state))]
     pub async fn query(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
@@ -39,7 +39,7 @@ impl TemplateAssignmentRouter {
         HttpResponse::Ok().finish()
     }
 
-    #[tracing::instrument]
+    #[tracing::instrument(skip(state))]
     pub async fn find(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,

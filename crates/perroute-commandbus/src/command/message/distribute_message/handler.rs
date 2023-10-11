@@ -34,7 +34,7 @@ use crate::{bus::Ctx, command::Command, error::CommandBusError};
 
 use super::request::InnerDispatchRequest;
 
-#[derive(Debug)]
+#[derive(Debug, derive_builder::Builder)]
 pub struct DistributeMessageCommand {
     message_id: Id,
 }

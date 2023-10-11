@@ -1,20 +1,18 @@
 use actix_web::ResponseError;
-use perroute_commons::{rest::RestError, types::json_schema::InvalidSchemaError};
-use perroute_cqrs::{
-    command_bus::{
-        error::CommandBusError,
-        handlers::{
-            business_unit::{
-                create_business_unit::CreateBusinessUnitError,
-                update_business_unit::UpdateBusinessUnitError,
-            },
-            connection::{
-                delete_connection::DeleteConnectionError, update_connection::UpdateConnectionError,
-            },
+use perroute_commandbus::{
+    command::{
+        business_unit::{
+            create_business_unit::CreateBusinessUnitError,
+            update_business_unit::UpdateBusinessUnitError,
+        },
+        connection::{
+            delete_connection::DeleteConnectionError, update_connection::UpdateConnectionError,
         },
     },
-    query_bus::error::QueryBusError,
+    error::CommandBusError,
 };
+use perroute_commons::{rest::RestError, types::json_schema::InvalidSchemaError};
+use perroute_cqrs::query_bus::error::QueryBusError;
 use std::collections::HashMap;
 use thiserror::Error;
 use validator::{ValidationError, ValidationErrors, ValidationErrorsKind};
@@ -84,10 +82,10 @@ impl From<&ApiError> for RestError {
             },
 
             ApiError::CommandBus(CommandBusError::CreateConnection(e)) => match e {
-                perroute_cqrs::command_bus::handlers::connection::create_connection::CreateConnectionError::PluginNotFound(_) => {
+                perroute_commandbus::command::connection::create_connection::CreateConnectionError::PluginNotFound(_) => {
                     RestError::BadRequest(Some("Plugin do not exists".to_owned()), None)
                 },
-                perroute_cqrs::command_bus::handlers::connection::create_connection::CreateConnectionError::InvalidProperties(_) => {
+                perroute_commandbus::command::connection::create_connection::CreateConnectionError::InvalidProperties(_) => {
                     RestError::BadRequest(Some("Invalid properties".to_owned()), None)
                 },
             },

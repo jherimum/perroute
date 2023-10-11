@@ -37,7 +37,7 @@ pub enum CreateChannelError {
     InvalidProperties(#[from] PropertiesError),
 }
 
-#[derive(Debug, serde::Serialize, Clone, PartialEq, Eq, Builder, Getters)]
+#[derive(Debug, derive_builder::Builder)]
 pub struct CreateChannelCommand {
     id: Id,
     connection_id: Id,
@@ -77,11 +77,11 @@ impl Command for CreateChannelCommand {
             .ok_or_else(|| CreateChannelError::PluginNotFound(*conn.plugin_id()))?;
 
         let disp = plugin
-            .dispatcher(self.dispatch_type())
+            .dispatcher(&self.dispatch_type)
             .ok_or_else(|| CreateChannelError::DispatchTypeNotSupported(self.dispatch_type))?;
 
         disp.configuration()
-            .validate(self.dispatch_properties())
+            .validate(&self.dispatch_properties)
             .map_err(CreateChannelError::from)?;
 
         Ok(ChannelBuilder::default()

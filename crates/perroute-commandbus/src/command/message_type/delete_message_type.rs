@@ -6,7 +6,7 @@ use perroute_storage::{
 };
 use tap::TapFallible;
 
-#[derive(Debug)]
+#[derive(Debug, derive_builder::Builder)]
 pub struct DeleteMessageTypeCommand {
     id: Id,
 }

@@ -21,6 +21,14 @@ use crate::command::{
         create_message_type::CreateMessageTypeError, delete_message_type::DeleteMessageTypeError,
         update_message_type::UpdateMessageTypeError,
     },
+    route::{
+        create_route::CreateRouteError, delete_route::DeleteRouteError,
+        update_route::UpdateRouteError,
+    },
+    template::{
+        create_template::CreateTemplateError, delete_template::DeleteTemplateError,
+        update_template::UpdateTemplatelError,
+    },
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -49,7 +57,7 @@ pub enum CommandBusError {
     #[error(transparent)]
     CreateConnection(#[from] CreateConnectionError),
     #[error(transparent)]
-    Updateonnection(#[from] UpdateConnectionError),
+    UpdateConnection(#[from] UpdateConnectionError),
     #[error(transparent)]
     DeleteConnection(#[from] DeleteConnectionError),
 
@@ -64,6 +72,20 @@ pub enum CommandBusError {
     UpdateMessageType(#[from] UpdateMessageTypeError),
     #[error(transparent)]
     DeleteMessageType(#[from] DeleteMessageTypeError),
+
+    #[error(transparent)]
+    CreateRoute(#[from] CreateRouteError),
+    #[error(transparent)]
+    UpdateRoute(#[from] UpdateRouteError),
+    #[error(transparent)]
+    DeleteRoute(#[from] DeleteRouteError),
+
+    #[error(transparent)]
+    CreateTemplate(#[from] CreateTemplateError),
+    #[error(transparent)]
+    UpdateTemplate(#[from] UpdateTemplatelError),
+    #[error(transparent)]
+    DeleteTemplate(#[from] DeleteTemplateError),
 
     #[error(transparent)]
     Storage(#[from] StorageError),

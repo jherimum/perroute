@@ -3,6 +3,8 @@ pub mod channel;
 pub mod connection;
 pub mod message;
 pub mod message_type;
+pub mod route;
+pub mod template;
 
 use crate::{bus::Ctx, error::CommandBusError};
 use perroute_commons::types::{actor::Actor, command_type::CommandType};

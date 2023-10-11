@@ -25,7 +25,7 @@ pub enum UpdateChannelError {
     InvalidProperties(#[from] PropertiesError),
 }
 
-#[derive(Debug)]
+#[derive(Debug, derive_builder::Builder)]
 pub struct UpdateChannelCommand {
     id: Id,
     dispatch_properties: Option<Properties>,

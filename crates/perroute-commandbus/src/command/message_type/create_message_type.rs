@@ -17,7 +17,7 @@ pub enum CreateMessageTypeError {
     CodeAlreadyExists(Code),
 }
 
-#[derive(Debug, Serialize, Clone, PartialEq, Eq, Builder, Getters)]
+#[derive(Debug, derive_builder::Builder)]
 pub struct CreateMessageTypeCommand {
     #[builder(default)]
     id: Id,
@@ -33,7 +33,7 @@ impl Command for CreateMessageTypeCommand {
     #[tracing::instrument(name = "create_message_type_handler", skip(self, ctx))]
     async fn handle<'tx>(&self, ctx: &mut Ctx<'tx>) -> Result<MessageType, CommandBusError> {
         if MessageType::exists(ctx.pool(), MessageTypeQuery::with_code(self.code.clone())).await? {
-            return Err(CreateMessageTypeError::CodeAlreadyExists(self.code().clone()).into());
+            return Err(CreateMessageTypeError::CodeAlreadyExists(self.code.clone()).into());
         }
 
         let message_type = MessageTypeBuilder::default()

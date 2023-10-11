@@ -17,25 +17,17 @@ use actix_web::web::Data;
 use actix_web_validator::Json;
 use actix_web_validator::Path;
 use anyhow::Context;
+use perroute_commandbus::command::connection::{
+    create_connection::{CreateConnectionCommand, CreateConnectionCommandBuilder},
+    delete_connection::{DeleteConnectionCommand, DeleteConnectionCommandBuilder},
+    update_connection::{UpdateConnectionCommand, UpdateConnectionCommandBuilder},
+};
 use perroute_commons::types::id::Id;
-use perroute_cqrs::{
-    command_bus::handlers::connection::{
-        create_connection::{
-            CreateConnectionCommand, CreateConnectionCommandBuilder, CreateConnectionCommandHandler,
-        },
-        delete_connection::{
-            DeleteConnectionCommand, DeleteConnectionCommandBuilder, DeleteConnectionCommandHandler,
-        },
-        update_connection::{
-            UpdateConnectionCommand, UpdateConnectionCommandBuilder, UpdateConnectionCommandHandler,
-        },
+use perroute_cqrs::query_bus::handlers::connection::{
+    find_connection::{
+        FindConnectionQuery, FindConnectionQueryBuilder, FindConnectionQueryHandler,
     },
-    query_bus::handlers::connection::{
-        find_connection::{
-            FindConnectionQuery, FindConnectionQueryBuilder, FindConnectionQueryHandler,
-        },
-        query_connections::{QueryConnectionsQueryBuilder, QueryConnectionsQueryHandler},
-    },
+    query_connections::{QueryConnectionsQueryBuilder, QueryConnectionsQueryHandler},
 };
 use tap::TapFallible;
 
@@ -102,7 +94,7 @@ impl ConnectionsRouter {
     ) -> SingleResult {
         Ok(state
             .command_bus()
-            .execute::<_, CreateConnectionCommandHandler, _>(&actor, &body.try_into()?)
+            .execute::<CreateConnectionCommand, _>(actor, body.try_into()?)
             .await
             .tap_err(|e| tracing::error!("Failed to create connection: {e}"))
             .map(|c| ApiResponse::created(ResourceLink::Connection(*c.id()), c))?)
@@ -116,10 +108,7 @@ impl ConnectionsRouter {
     ) -> SingleResult {
         Ok(state
             .command_bus()
-            .execute::<_, UpdateConnectionCommandHandler, _>(
-                &actor,
-                &W((path.into_inner(), body)).try_into()?,
-            )
+            .execute::<UpdateConnectionCommand, _>(actor, W((path.into_inner(), body)).try_into()?)
             .await
             .tap_err(|e| tracing::error!("Failed to update connection: {e}"))
             .map(ApiResponse::ok)?)
@@ -132,7 +121,7 @@ impl ConnectionsRouter {
     ) -> EmptyApiResult {
         Ok(state
             .command_bus()
-            .execute::<_, DeleteConnectionCommandHandler, _>(&actor, &path.into_inner().try_into()?)
+            .execute::<DeleteConnectionCommand, _>(actor, path.into_inner().try_into()?)
             .await
             .tap_err(|e| tracing::error!("Failed to delete connection: {e}"))
             .map(|_| ApiResponse::ok_empty())?)

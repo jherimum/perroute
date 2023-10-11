@@ -19,7 +19,7 @@ pub enum CreateConnectionError {
     InvalidProperties(#[from] PropertiesError),
 }
 
-#[derive(Debug)]
+#[derive(Debug, derive_builder::Builder)]
 pub struct CreateConnectionCommand {
     id: Id,
     name: String,

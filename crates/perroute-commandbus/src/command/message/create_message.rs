@@ -17,7 +17,7 @@ use std::collections::HashSet;
 use tap::TapFallible;
 use thiserror::Error;
 
-#[derive(Debug)]
+#[derive(Debug, derive_builder::Builder)]
 pub struct CreateMessageCommand {
     id: Id,
     payload: Payload,

@@ -18,7 +18,7 @@ pub enum DeleteConnectionError {
     DeleteError(Id, String),
 }
 
-#[derive(Debug)]
+#[derive(Debug, derive_builder::Builder)]
 pub struct DeleteConnectionCommand {
     id: Id,
 }

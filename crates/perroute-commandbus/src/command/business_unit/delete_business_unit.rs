@@ -19,7 +19,7 @@ pub enum DeleteBusinessUnitError {
     BusinessUnitDelete(Id, &'static str),
 }
 
-#[derive(Debug)]
+#[derive(Debug, derive_builder::Builder)]
 pub struct DeleteBusinessUnitCommand {
     business_unit_id: Id,
 }

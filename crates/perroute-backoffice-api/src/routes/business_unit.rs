@@ -16,29 +16,22 @@ use crate::{
 };
 use actix_web::web::Data;
 use actix_web_validator::{Json, Path};
-use perroute_commons::types::id::Id;
-use perroute_cqrs::{
-    command_bus::handlers::business_unit::{
-        create_business_unit::{
-            CreateBusinessUnitCommand, CreateBusinessUnitCommandBuilder,
-            CreateBusinessUnitCommandHandler,
-        },
-        delete_business_unit::{
-            DeleteBusinessUnitCommand, DeleteBusinessUnitCommandBuilder,
-            DeleteBusinessUnitCommandHandler,
-        },
-        update_business_unit::{
-            UpdateBusinessUnitCommand, UpdateBusinessUnitCommandBuilder,
-            UpdateBusinessUnitCommandHandler,
-        },
+use perroute_commandbus::{
+    command::business_unit::{
+        create_business_unit::{CreateBusinessUnitCommand, CreateBusinessUnitCommandBuilder},
+        delete_business_unit::{DeleteBusinessUnitCommand, DeleteBusinessUnitCommandBuilder},
+        update_business_unit::{UpdateBusinessUnitCommand, UpdateBusinessUnitCommandBuilder},
     },
-    query_bus::handlers::business_unit::{
-        find_business_unit::{
-            FindBusinessUnitQuery, FindBusinessUnitQueryBuilder, FindBusinessUnitQueryHandler,
-        },
-        query_business_units::{
-            QueryBusinessUnitsQuery, QueryBusinessUnitsQueryBuilder, QueryBusinessUnitsQueryHandler,
-        },
+    error::CommandBusError,
+};
+use perroute_commons::types::id::Id;
+
+use perroute_cqrs::query_bus::handlers::business_unit::{
+    find_business_unit::{
+        FindBusinessUnitQuery, FindBusinessUnitQueryBuilder, FindBusinessUnitQueryHandler,
+    },
+    query_business_units::{
+        QueryBusinessUnitsQuery, QueryBusinessUnitsQueryBuilder, QueryBusinessUnitsQueryHandler,
     },
 };
 use tap::TapFallible;
@@ -120,7 +113,7 @@ impl BusinessUnitRouter {
     ) -> SingleResult {
         Ok(state
             .command_bus()
-            .execute::<_, CreateBusinessUnitCommandHandler, _>(&actor, &body.try_into()?)
+            .execute::<CreateBusinessUnitCommand, _>(actor, body.try_into()?)
             .await
             .tap_err(|e| tracing::error!("Failed to create bu: {e}"))
             .map(|bu| ApiResponse::created(ResourceLink::BusinessUnit(*bu.id()), bu))?)
@@ -163,7 +156,7 @@ impl BusinessUnitRouter {
     ) -> SingleResult {
         Ok(state
             .command_bus()
-            .execute::<_, UpdateBusinessUnitCommandHandler, _>(&actor, &W((path, body)).try_into()?)
+            .execute::<UpdateBusinessUnitCommand, _>(actor, W((path, body)).try_into()?)
             .await
             .tap_err(|e| tracing::error!("Failed to update BusinessUnit: {e}"))
             .map(ApiResponse::ok)?)
@@ -177,9 +170,9 @@ impl BusinessUnitRouter {
     ) -> EmptyApiResult {
         Ok(state
             .command_bus()
-            .execute::<_, DeleteBusinessUnitCommandHandler, _>(&actor, &W(path).try_into()?)
+            .execute::<DeleteBusinessUnitCommand, _>(actor, W(path).try_into()?)
             .await
-            .tap_err(|e: &perroute_cqrs::command_bus::error::CommandBusError| {
+            .tap_err(|e: &CommandBusError| {
                 tracing::error!("Failed to delete Business unit: {e}");
             })
             .map(|_| ApiResponse::ok_empty())?)

@@ -1,11 +1,11 @@
 use std::{error::Error, sync::Arc};
 
+use perroute_commandbus::bus::CommandBus;
 use perroute_commons::{
     configuration::settings::Settings, tracing::init_tracing,
     types::template::handlebars::Handlebars,
 };
 use perroute_connectors::Plugins;
-use perroute_cqrs::command_bus::bus::CommandBus;
 use perroute_messaging::{
     events::Event,
     rabbitmq::{
@@ -29,7 +29,7 @@ async fn main() -> Result<(), anyhow::Error> {
         .tap_err(|e| tracing::error!("Failed to build connection poll:{e}"))?;
     let plugins = Plugins::full();
     let template_render = Arc::new(Handlebars::default());
-    let command_bus = CommandBus::complete(pool, plugins, template_render);
+    let command_bus = CommandBus::new(pool, plugins, template_render);
     let event_handler = DistributeMessageEventHandler { command_bus };
 
     let consumer = Consumer {

@@ -13,19 +13,18 @@ use crate::{
 use actix_web::web::{Data, Path};
 use actix_web_validator::Json;
 use perroute_commons::types::{actor::Actor, id::Id};
-use perroute_cqrs::{
-    command_bus::handlers::template::{
-        create_template::{CreateTemplateCommandBuilder, CreateTemplateCommandHandler},
-        delete_template::{DeleteTemplateCommandBuilder, DeleteTemplateCommandHandler},
-        update_template::{UpdateTemplateCommandBuilder, UpdateTemplateCommandHandler},
+use perroute_cqrs::query_bus::{
+    bus::QueryBus,
+    handlers::template::{
+        find_tempate::{FindTemplateQueryBuilder, FindTemplateQueryHandler},
+        query_templates::{QueryTemplatesQueryBuilder, QueryTemplatesQueryHandler},
     },
-    query_bus::{
-        bus::QueryBus,
-        handlers::template::{
-            find_tempate::{FindTemplateQueryBuilder, FindTemplateQueryHandler},
-            query_templates::{QueryTemplatesQueryBuilder, QueryTemplatesQueryHandler},
-        },
-    },
+};
+
+use perroute_commandbus::command::template::{
+    create_template::{CreateTemplateCommand, CreateTemplateCommandBuilder},
+    delete_template::{DeleteTemplateCommand, DeleteTemplateCommandBuilder},
+    update_template::{UpdateTemplateCommand, UpdateTemplateCommandBuilder},
 };
 use perroute_storage::models::template::Template;
 use std::convert::identity;
@@ -39,7 +38,7 @@ impl TemplateRouter {
     pub const TEMPLATES_RESOURCE_NAME: &str = "templates";
     pub const TEMPLATE_RESOURCE_NAME: &str = "template";
 
-    #[tracing::instrument]
+    #[tracing::instrument(skip(state))]
     pub async fn query_templates(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
@@ -53,7 +52,7 @@ impl TemplateRouter {
             .map(ApiResponse::ok)?)
     }
 
-    #[tracing::instrument]
+    #[tracing::instrument(skip(state))]
     pub async fn create_template(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
@@ -69,7 +68,7 @@ impl TemplateRouter {
             .unwrap();
         let template = state
             .command_bus()
-            .execute::<_, CreateTemplateCommandHandler, _>(&actor, &cmd)
+            .execute::<CreateTemplateCommand, _>(actor, cmd)
             .await?;
 
         Ok(ApiResponse::created(
@@ -78,7 +77,7 @@ impl TemplateRouter {
         ))
     }
 
-    #[tracing::instrument]
+    #[tracing::instrument(skip(state))]
     pub async fn update_template(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
@@ -96,13 +95,13 @@ impl TemplateRouter {
 
         state
             .command_bus()
-            .execute::<_, UpdateTemplateCommandHandler, _>(&actor, &cmd)
+            .execute::<UpdateTemplateCommand, _>(actor, cmd)
             .await
             .map_err(ApiError::from)
             .map(ApiResponse::ok)
     }
 
-    #[tracing::instrument]
+    #[tracing::instrument(skip(state))]
     pub async fn delete_template(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,
@@ -117,13 +116,13 @@ impl TemplateRouter {
             .unwrap();
         state
             .command_bus()
-            .execute::<_, DeleteTemplateCommandHandler, _>(&actor, &cmd)
+            .execute::<DeleteTemplateCommand, _>(actor, cmd)
             .await?;
 
         Ok(ApiResponse::ok_empty())
     }
 
-    #[tracing::instrument]
+    #[tracing::instrument(skip(state))]
     pub async fn find_template(
         state: Data<AppState>,
         ActorExtractor(actor): ActorExtractor,

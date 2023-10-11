@@ -17,34 +17,17 @@ use crate::{
 use actix_web::web::{Data, Path};
 use actix_web_validator::Json;
 use actix_web_validator::Query;
-use perroute_cqrs::{
-    command_bus::handlers::message_type::create_message_type::CreateMessageTypeCommandHandler,
-    query_bus::handlers::message_type::{
-        find_message_type::FindMessageTypeQuery, query_message_types::QueryMessageTypesQueryBuilder,
-    },
+use perroute_commandbus::command::message_type::{
+    create_message_type::{CreateMessageTypeCommand, CreateMessageTypeCommandBuilder},
+    delete_message_type::{DeleteMessageTypeCommand, DeleteMessageTypeCommandBuilder},
+    update_message_type::{UpdateMessageTypeCommand, UpdateMessageTypeCommandBuilder},
 };
-use perroute_cqrs::{
-    command_bus::handlers::message_type::update_message_type::UpdateMessageTypeCommandBuilder,
-    query_bus::handlers::message_type::query_message_types::QueryMessageTypesHandler,
-};
-use perroute_cqrs::{
-    command_bus::handlers::message_type::update_message_type::UpdateMessageTypeCommandHandler,
-    query_bus::handlers::message_type::find_message_type::FindMessageTypeQueryBuilder,
-};
-use perroute_cqrs::{
-    command_bus::handlers::message_type::{
-        create_message_type::CreateMessageTypeCommand,
-        delete_message_type::{DeleteMessageTypeCommand, DeleteMessageTypeCommandHandler},
-        update_message_type::UpdateMessageTypeCommand,
-    },
-    query_bus::handlers::message_type::query_message_types::QueryMessageTypesQuery,
-};
-use perroute_cqrs::{
-    command_bus::handlers::message_type::{
-        create_message_type::CreateMessageTypeCommandBuilder,
-        delete_message_type::DeleteMessageTypeCommandBuilder,
-    },
-    query_bus::handlers::message_type::find_message_type::FindMessageTypeQueryHandler,
+use perroute_cqrs::query_bus::handlers::message_type::find_message_type::FindMessageTypeQueryBuilder;
+use perroute_cqrs::query_bus::handlers::message_type::find_message_type::FindMessageTypeQueryHandler;
+use perroute_cqrs::query_bus::handlers::message_type::query_message_types::QueryMessageTypesHandler;
+use perroute_cqrs::query_bus::handlers::message_type::query_message_types::QueryMessageTypesQuery;
+use perroute_cqrs::query_bus::handlers::message_type::{
+    find_message_type::FindMessageTypeQuery, query_message_types::QueryMessageTypesQueryBuilder,
 };
 use tap::TapFallible;
 
@@ -138,7 +121,7 @@ impl MessageTypeRouter {
     ) -> SingleResult {
         Ok(state
             .command_bus()
-            .execute::<_, CreateMessageTypeCommandHandler, _>(&actor, &body.try_into()?)
+            .execute::<CreateMessageTypeCommand, _>(actor, body.try_into()?)
             .await
             .tap_err(|e| tracing::error!("Failed to create message type: {e}"))
             .map(|message_type| {
@@ -155,7 +138,7 @@ impl MessageTypeRouter {
     ) -> SingleResult {
         Ok(state
             .command_bus()
-            .execute::<_, UpdateMessageTypeCommandHandler, _>(&actor, &W((path, body)).try_into()?)
+            .execute::<UpdateMessageTypeCommand, _>(actor, W((path, body)).try_into()?)
             .await
             .tap_err(|e| tracing::error!("Failed to update message type: {e}"))
             .map(ApiResponse::ok)?)
@@ -169,7 +152,7 @@ impl MessageTypeRouter {
     ) -> EmptyApiResult {
         Ok(state
             .command_bus()
-            .execute::<_, DeleteMessageTypeCommandHandler, _>(&actor, &W(path).try_into()?)
+            .execute::<DeleteMessageTypeCommand, _>(actor, W(path).try_into()?)
             .await
             .tap_err(|e| tracing::error!("Failed to delete message type: {e}"))
             .map(|_| ApiResponse::ok_empty())?)

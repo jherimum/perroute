@@ -16,18 +16,12 @@ use actix_web::{
 };
 use actix_web_validator::Json;
 use anyhow::Context;
-use perroute_commons::{new_id, types::id::Id};
-use perroute_cqrs::command_bus::handlers::channel::{
-    create_channel::{
-        CreateChannelCommand, CreateChannelCommandBuilder, CreateChannelCommandHandler,
-    },
-    delete_channel::{
-        DeleteChannelCommand, DeleteChannelCommandBuilder, DeleteChannelCommandHandler,
-    },
-    update_channel::{
-        UpdateChannelCommand, UpdateChannelCommandBuilder, UpdateChannelCommandHandler,
-    },
+use perroute_commandbus::command::channel::{
+    create_channel::{CreateChannelCommand, CreateChannelCommandBuilder},
+    delete_channel::{DeleteChannelCommand, DeleteChannelCommandBuilder},
+    update_channel::{UpdateChannelCommand, UpdateChannelCommandBuilder},
 };
+use perroute_commons::{new_id, types::id::Id};
 use tap::TapFallible;
 
 pub type SingleResult = ApiResult<SingleResourceModel<ChannelResource>>;
@@ -82,7 +76,7 @@ impl ChannelsRouter {
     ) -> SingleResult {
         Ok(state
             .command_bus()
-            .execute::<_, CreateChannelCommandHandler, _>(&actor, &body.try_into()?)
+            .execute::<CreateChannelCommand, _>(actor, body.try_into()?)
             .await
             .tap_err(|e| tracing::error!("Failed to create channel: {e}"))
             .map(ApiResponse::ok)?)
@@ -96,10 +90,7 @@ impl ChannelsRouter {
     ) -> SingleResult {
         Ok(state
             .command_bus()
-            .execute::<_, UpdateChannelCommandHandler, _>(
-                &actor,
-                &W((path.into_inner(), body)).try_into()?,
-            )
+            .execute::<UpdateChannelCommand, _>(actor, W((path.into_inner(), body)).try_into()?)
             .await
             .tap_err(|e| tracing::error!("Failed to update channel: {e}"))
             .map(ApiResponse::ok)?)
@@ -112,7 +103,7 @@ impl ChannelsRouter {
     ) -> EmptyApiResult {
         Ok(state
             .command_bus()
-            .execute::<_, DeleteChannelCommandHandler, _>(&actor, &path.into_inner().try_into()?)
+            .execute::<DeleteChannelCommand, _>(actor, path.into_inner().try_into()?)
             .await
             .tap_err(|e| tracing::error!("Failed to delete channel: {e}"))
             .map(|_| ApiResponse::ok_empty())?)

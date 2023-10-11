@@ -10,6 +10,7 @@ perroute-storage = { path = "../../crates/perroute-storage" }
 perroute-commons = { path = "../../crates/perroute-commons" }
 perroute-messaging = { path = "../../crates/perroute-messaging" }
 perroute-cqrs = { path = "../../crates/perroute-cqrs" }
+perroute-commandbus = { path = "../../crates/perroute-commandbus" }
 perroute-connectors = { path = "../../crates/perroute-connectors" }
 
 

@@ -9,10 +9,11 @@ use crate::{
 };
 use actix_web::web::Data;
 use actix_web_validator::Json;
-use perroute_commons::types::actor::Actor;
-use perroute_cqrs::command_bus::handlers::message::create_message::{
-    CreateMessageCommandBuilder, CreateMessageCommandHandler,
+use perroute_commandbus::command::message::create_message::{
+    CreateMessageCommand, CreateMessageCommandBuilder,
 };
+use perroute_commons::types::actor::Actor;
+
 use perroute_storage::models::message::Message;
 
 pub type SingleResult = ApiResult<SingleResourceModel<MessageResource>>;
@@ -47,7 +48,7 @@ async fn create_message(
         .unwrap();
     state
         .command_bus()
-        .execute::<_, CreateMessageCommandHandler, _>(actor, &cmd)
+        .execute::<CreateMessageCommand, _>(actor.clone(), cmd)
         .await
         .map_err(ApiError::from)
 }

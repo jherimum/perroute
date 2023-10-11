@@ -13,7 +13,7 @@ pub enum UpdateBusinessUnitError {
     BusinessUnitNotFound(Id),
 }
 
-#[derive(Debug)]
+#[derive(Debug, derive_builder::Builder)]
 pub struct UpdateBusinessUnitCommand {
     business_unit_id: Id,
     name: Option<String>,

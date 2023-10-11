@@ -21,7 +21,7 @@ pub enum UpdateConnectionError {
     InvalidProperties(#[from] PropertiesError),
 }
 
-#[derive(Debug)]
+#[derive(Debug, derive_builder::Builder)]
 pub struct UpdateConnectionCommand {
     id: Id,
     name: Option<String>,
