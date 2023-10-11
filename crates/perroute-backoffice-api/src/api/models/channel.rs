@@ -5,7 +5,7 @@ use crate::{
 use actix_web::HttpRequest;
 use anyhow::{Context, Result};
 use derive_builder::Builder;
-use perroute_commons::types::{id::Id, priority::Priority, properties::Properties};
+use perroute_commons::types::{id::Id, properties::Properties};
 use perroute_connectors::types::dispatch_type::DispatchType;
 use perroute_storage::models::channel::Channel;
 use serde::{Deserialize, Serialize};

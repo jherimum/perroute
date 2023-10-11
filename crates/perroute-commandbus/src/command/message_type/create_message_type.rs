@@ -1,6 +1,4 @@
 use crate::{bus::Ctx, command::Command, error::CommandBusError};
-use derive_builder::Builder;
-use derive_getters::Getters;
 use perroute_commons::types::{
     actor::Actor, code::Code, command_type::CommandType, id::Id, vars::Vars,
 };
@@ -8,7 +6,6 @@ use perroute_storage::{
     models::message_type::{MessageType, MessageTypeBuilder, MessageTypeQuery},
     query::FetchableModel,
 };
-use serde::Serialize;
 use tap::TapFallible;
 
 #[derive(Debug, thiserror::Error)]

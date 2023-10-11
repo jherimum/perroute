@@ -2,7 +2,7 @@ use async_recursion::async_recursion;
 use deadpool_lapin::{Config, Pool, PoolConfig, Runtime};
 use lapin::Channel;
 use perroute_commons::configuration::settings::Settings;
-use std::{fmt::Debug, sync::Arc, time::Duration};
+use std::{fmt::Debug, sync::Arc};
 use tokio::{sync::RwLock, time::error::Elapsed};
 
 #[derive(Debug, thiserror::Error)]

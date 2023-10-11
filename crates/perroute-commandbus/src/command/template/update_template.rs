@@ -1,5 +1,4 @@
 use async_trait::async_trait;
-use derive_getters::Getters;
 use perroute_commons::types::{
     actor::Actor, command_type::CommandType, id::Id, template::TemplateSnippet,
 };
@@ -7,7 +6,6 @@ use perroute_storage::{
     models::template::{Template, TemplatesQuery},
     query::FetchableModel,
 };
-use sqlx::PgPool;
 use tap::TapFallible;
 
 use crate::{bus::Ctx, command::Command, error::CommandBusError};

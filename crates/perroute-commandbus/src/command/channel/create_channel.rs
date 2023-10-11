@@ -1,7 +1,5 @@
 use crate::{bus::Ctx, command::Command, error::CommandBusError};
 use anyhow::Context;
-use derive_builder::Builder;
-use derive_getters::Getters;
 use perroute_commons::types::{
     actor::Actor,
     command_type::CommandType,

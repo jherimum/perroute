@@ -2,7 +2,6 @@ use crate::api::response::{Links, ResourceBuilder, SingleResourceModel};
 use anyhow::{Context, Result};
 use perroute_commons::types::{
     code::Code, email::Mailbox, id::Id, payload::Payload, phone_number::PhoneNumber,
-    version::Version,
 };
 use perroute_connectors::types::recipient::Recipient;
 use perroute_storage::models::message::{Message, Status};

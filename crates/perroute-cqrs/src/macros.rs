@@ -1,5 +1,4 @@
 #[macro_export]
-#[macro_export]
 macro_rules! into_event {
     ($command: ty) => {
         impl perroute_messaging::events::IntoEvent for $command {
