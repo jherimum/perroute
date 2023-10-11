@@ -1,4 +1,7 @@
-use crate::{bus::Ctx, command::Command, error::CommandBusError};
+use crate::{
+    bus::Ctx,
+    command::{Command, CommandResult},
+};
 use async_trait::async_trait;
 use perroute_commons::types::{actor::Actor, command_type::CommandType, id::Id, vars::Vars};
 use perroute_storage::{
@@ -25,7 +28,7 @@ impl Command for UpdateBusinessUnitCommand {
     type Output = BusinessUnit;
 
     #[tracing::instrument(name = "update_business_units_handler", skip(self, ctx))]
-    async fn handle<'ctx>(&self, ctx: &mut Ctx<'ctx>) -> Result<BusinessUnit, CommandBusError> {
+    async fn handle<'ctx>(&self, ctx: &mut Ctx<'ctx>) -> CommandResult<Self::Output> {
         let mut bu = BusinessUnit::find(
             ctx.pool(),
             BusinessUnitQuery::with_id(self.business_unit_id),

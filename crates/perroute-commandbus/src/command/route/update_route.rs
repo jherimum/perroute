@@ -1,6 +1,6 @@
 use crate::bus::Ctx;
 use crate::command::Command;
-use crate::error::CommandBusError;
+use crate::command::CommandResult;
 use anyhow::anyhow;
 use anyhow::Context;
 use perroute_commons::types::command_type::CommandType;
@@ -37,7 +37,7 @@ impl Command for UpdateRouteCommand {
     type Output = Route;
 
     #[tracing::instrument(name = "update_route_handler", skip(self, ctx))]
-    async fn handle<'tx>(&self, ctx: &mut Ctx<'tx>) -> Result<Self::Output, CommandBusError> {
+    async fn handle<'tx>(&self, ctx: &mut Ctx<'tx>) -> CommandResult<Self::Output> {
         let mut route = Route::find(ctx.pool(), RouteQuery::with_id(self.id))
             .await
             .tap_err(|e| tracing::error!("Failed to retrieve route {}: {e}", self.id))?

@@ -1,4 +1,7 @@
-use crate::{bus::Ctx, command::Command, error::CommandBusError};
+use crate::{
+    bus::Ctx,
+    command::{Command, CommandResult},
+};
 use anyhow::Context;
 use perroute_commons::types::{
     actor::Actor,
@@ -43,7 +46,7 @@ impl Command for CreateRouteCommand {
     type Output = Route;
 
     #[tracing::instrument(name = "create_route_handler", skip(self, ctx))]
-    async fn handle<'tx>(&self, ctx: &mut Ctx<'tx>) -> Result<Self::Output, CommandBusError> {
+    async fn handle<'tx>(&self, ctx: &mut Ctx<'tx>) -> CommandResult<Self::Output> {
         let channel = Channel::find(ctx.pool(), ChannelQuery::with_id(self.channel_id))
             .await
             .tap_err(|e| tracing::error!("Failed to retrieve channel {}: {e}", self.channel_id))?

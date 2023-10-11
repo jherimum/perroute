@@ -1,4 +1,7 @@
-use crate::{bus::Ctx, command::Command, error::CommandBusError};
+use crate::{
+    bus::Ctx,
+    command::{Command, CommandResult},
+};
 use perroute_commons::types::{
     actor::Actor, code::Code, command_type::CommandType, id::Id, vars::Vars,
 };
@@ -28,7 +31,7 @@ impl Command for CreateMessageTypeCommand {
     type Output = MessageType;
 
     #[tracing::instrument(name = "create_message_type_handler", skip(self, ctx))]
-    async fn handle<'tx>(&self, ctx: &mut Ctx<'tx>) -> Result<MessageType, CommandBusError> {
+    async fn handle<'tx>(&self, ctx: &mut Ctx<'tx>) -> CommandResult<Self::Output> {
         if MessageType::exists(ctx.pool(), MessageTypeQuery::with_code(self.code.clone())).await? {
             return Err(CreateMessageTypeError::CodeAlreadyExists(self.code.clone()).into());
         }

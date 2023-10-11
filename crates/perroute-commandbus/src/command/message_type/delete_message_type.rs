@@ -1,4 +1,7 @@
-use crate::{bus::Ctx, command::Command, error::CommandBusError};
+use crate::{
+    bus::Ctx,
+    command::{Command, CommandResult},
+};
 use perroute_commons::types::{actor::Actor, command_type::CommandType, id::Id};
 use perroute_storage::{
     models::message_type::{MessageType, MessageTypeQuery},
@@ -25,7 +28,7 @@ impl Command for DeleteMessageTypeCommand {
     type Output = bool;
 
     #[tracing::instrument(name = "delete_message_type_handler", skip(self, ctx))]
-    async fn handle<'tx>(&self, ctx: &mut Ctx<'tx>) -> Result<Self::Output, CommandBusError> {
+    async fn handle<'tx>(&self, ctx: &mut Ctx<'tx>) -> CommandResult<Self::Output> {
         let message_type = MessageType::find(ctx.pool(), MessageTypeQuery::with_id(self.id))
             .await
             .tap_err(|e| tracing::error!("Failed to retrive message type {}: {e}", self.id))?

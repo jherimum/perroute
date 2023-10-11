@@ -1,4 +1,7 @@
-use crate::{bus::Ctx, command::Command, error::CommandBusError};
+use crate::{
+    bus::Ctx,
+    command::{Command, CommandResult},
+};
 use perroute_commons::types::{actor::Actor, command_type::CommandType, id::Id};
 use perroute_storage::{
     models::{
@@ -27,7 +30,7 @@ pub struct DeleteConnectionCommand {
 impl Command for DeleteConnectionCommand {
     type Output = ();
 
-    async fn handle<'tx>(&self, ctx: &mut Ctx<'tx>) -> Result<Self::Output, CommandBusError> {
+    async fn handle<'tx>(&self, ctx: &mut Ctx<'tx>) -> CommandResult<Self::Output> {
         let conn = Connection::find(
             ctx.pool(),
             ConnectionQueryBuilder::default()

@@ -1,3 +1,7 @@
+use crate::{
+    bus::Ctx,
+    command::{Command, CommandResult},
+};
 use async_trait::async_trait;
 use perroute_commons::types::{
     actor::Actor, command_type::CommandType, id::Id, template::TemplateSnippet,
@@ -7,8 +11,6 @@ use perroute_storage::{
     query::FetchableModel,
 };
 use tap::TapFallible;
-
-use crate::{bus::Ctx, command::Command, error::CommandBusError};
 
 #[derive(Debug, derive_builder::Builder)]
 pub struct UpdateTemplateCommand {
@@ -30,7 +32,7 @@ impl Command for UpdateTemplateCommand {
     type Output = Template;
 
     #[tracing::instrument(name = "update_template_handler", skip(self, ctx))]
-    async fn handle<'tx>(&self, ctx: &mut Ctx<'tx>) -> Result<Self::Output, CommandBusError> {
+    async fn handle<'tx>(&self, ctx: &mut Ctx<'tx>) -> CommandResult<Self::Output> {
         let mut actual_template = Template::find(ctx.pool(), TemplatesQuery::with_id(self.id))
             .await
             .tap_err(|e| tracing::error!("Failed to retrieve template:{e}"))?

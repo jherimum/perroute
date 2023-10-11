@@ -1,4 +1,7 @@
-use crate::{bus::Ctx, command::Command, error::CommandBusError};
+use crate::{
+    bus::Ctx,
+    command::{Command, CommandResult},
+};
 use anyhow::Context;
 use perroute_commons::types::{
     actor::Actor,
@@ -48,7 +51,7 @@ pub struct CreateChannelCommand {
 impl Command for CreateChannelCommand {
     type Output = Channel;
 
-    async fn handle<'ctx>(&self, ctx: &mut Ctx<'ctx>) -> Result<Channel, CommandBusError> {
+    async fn handle<'ctx>(&self, ctx: &mut Ctx<'ctx>) -> CommandResult<Self::Output> {
         let _ = BusinessUnit::find(
             ctx.pool(),
             BusinessUnitQuery::with_id(self.business_unit_id),

@@ -1,4 +1,7 @@
-use crate::{bus::Ctx, command::Command, error::CommandBusError};
+use crate::{
+    bus::Ctx,
+    command::{Command, CommandResult},
+};
 use perroute_commons::types::{
     actor::Actor, code::Code, command_type::CommandType, id::Id, json_schema::InvalidPayloadError,
     payload::Payload,
@@ -43,7 +46,7 @@ impl Command for CreateMessageCommand {
     type Output = Message;
 
     #[tracing::instrument(name = "create_message_handler", skip(self, ctx))]
-    async fn handle<'tx>(&self, ctx: &mut Ctx<'tx>) -> Result<Self::Output, CommandBusError> {
+    async fn handle<'tx>(&self, ctx: &mut Ctx<'tx>) -> CommandResult<Self::Output> {
         let bu = BusinessUnit::find(
             ctx.pool(),
             BusinessUnitQuery::with_code(self.business_unit_code.clone()),

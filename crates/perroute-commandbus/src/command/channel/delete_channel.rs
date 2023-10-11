@@ -1,4 +1,8 @@
-use crate::{bus::Ctx, command::Command, error::CommandBusError};
+use crate::{
+    bus::Ctx,
+    command::{Command, CommandResult},
+    error::CommandBusError,
+};
 use perroute_commons::types::{actor::Actor, command_type::CommandType, id::Id};
 use perroute_storage::{
     error::StorageError,
@@ -25,7 +29,7 @@ pub enum DeleteChannelError {
 impl Command for DeleteChannelCommand {
     type Output = bool;
 
-    async fn handle<'ctx>(&self, ctx: &mut Ctx<'ctx>) -> Result<Self::Output, CommandBusError> {
+    async fn handle<'ctx>(&self, ctx: &mut Ctx<'ctx>) -> CommandResult<Self::Output> {
         let channel = Channel::find(ctx.pool(), ChannelQuery::with_id(self.id))
             .await
             .tap_err(|e| tracing::error!("Failed to retrieve channel {}: {e}", self.id))?

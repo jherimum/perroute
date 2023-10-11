@@ -1,4 +1,7 @@
-use crate::{bus::Ctx, command::Command, error::CommandBusError};
+use crate::{
+    bus::Ctx,
+    command::{Command, CommandResult},
+};
 use anyhow::Context;
 use async_trait::async_trait;
 use derive_builder::Builder;
@@ -32,7 +35,7 @@ impl Command for CreateBusinessUnitCommand {
     type Output = BusinessUnit;
 
     #[tracing::instrument(name = "create_business_unit_handler", skip(self, ctx))]
-    async fn handle<'ctx>(&self, ctx: &mut Ctx<'ctx>) -> Result<Self::Output, CommandBusError> {
+    async fn handle<'ctx>(&self, ctx: &mut Ctx<'ctx>) -> CommandResult<Self::Output> {
         let code_exists =
             BusinessUnit::exists(ctx.pool(), BusinessUnitQuery::with_code(self.code.clone()))
                 .await

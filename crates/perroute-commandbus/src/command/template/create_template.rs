@@ -1,4 +1,7 @@
-use crate::{bus::Ctx, command::Command, error::CommandBusError};
+use crate::{
+    bus::Ctx,
+    command::{Command, CommandResult},
+};
 use anyhow::Context;
 use async_trait::async_trait;
 use perroute_commons::types::{
@@ -24,7 +27,7 @@ impl Command for CreateTemplateCommand {
     type Output = Template;
 
     #[tracing::instrument(name = "create_template_handler", skip(self, ctx))]
-    async fn handle<'tx>(&self, ctx: &mut Ctx<'tx>) -> Result<Self::Output, CommandBusError> {
+    async fn handle<'tx>(&self, ctx: &mut Ctx<'tx>) -> CommandResult<Self::Output> {
         Ok(TemplateBuilder::default()
             .id(self.id)
             .name(self.name.clone())

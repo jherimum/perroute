@@ -1,4 +1,7 @@
-use crate::{bus::Ctx, command::Command, error::CommandBusError};
+use crate::{
+    bus::Ctx,
+    command::{Command, CommandResult},
+};
 use async_trait::async_trait;
 use perroute_commons::types::{actor::Actor, command_type::CommandType, id::Id};
 use perroute_storage::{
@@ -29,7 +32,7 @@ impl Command for DeleteBusinessUnitCommand {
     type Output = bool;
 
     #[tracing::instrument(name = "delete_business_unit_handler", skip(self, ctx))]
-    async fn handle<'ctx>(&self, ctx: &mut Ctx<'ctx>) -> Result<bool, CommandBusError> {
+    async fn handle<'ctx>(&self, ctx: &mut Ctx<'ctx>) -> CommandResult<Self::Output> {
         let bu = BusinessUnit::find(
             ctx.pool(),
             BusinessUnitQuery::with_id(self.business_unit_id),

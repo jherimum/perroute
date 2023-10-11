@@ -1,4 +1,7 @@
-use crate::{bus::Ctx, command::Command, error::CommandBusError};
+use crate::{
+    bus::Ctx,
+    command::{Command, CommandResult},
+};
 use anyhow::anyhow;
 use perroute_commons::types::{
     actor::Actor,
@@ -36,7 +39,7 @@ pub struct UpdateChannelCommand {
 impl Command for UpdateChannelCommand {
     type Output = Channel;
 
-    async fn handle<'tx>(&self, ctx: &mut Ctx<'tx>) -> Result<Self::Output, CommandBusError> {
+    async fn handle<'tx>(&self, ctx: &mut Ctx<'tx>) -> CommandResult<Self::Output> {
         let mut channel = Channel::find(ctx.pool(), ChannelQuery::with_id(self.id))
             .await
             .tap_err(|e| tracing::error!("Failed to retrieve channel: {e}"))?

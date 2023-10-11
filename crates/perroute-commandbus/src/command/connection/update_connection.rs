@@ -1,4 +1,7 @@
-use crate::{bus::Ctx, command::Command, error::CommandBusError};
+use crate::{
+    bus::Ctx,
+    command::{Command, CommandResult},
+};
 use anyhow::Context;
 use perroute_commons::types::{
     actor::Actor,
@@ -33,7 +36,7 @@ pub struct UpdateConnectionCommand {
 impl Command for UpdateConnectionCommand {
     type Output = Connection;
 
-    async fn handle<'tx>(&self, ctx: &mut Ctx<'tx>) -> Result<Self::Output, CommandBusError> {
+    async fn handle<'tx>(&self, ctx: &mut Ctx<'tx>) -> CommandResult<Self::Output> {
         let mut conn = Connection::find(ctx.pool(), ConnectionQuery::with_id(self.id))
             .await
             .tap_err(|e| tracing::error!("Failed to retrieve connection:{e}"))?

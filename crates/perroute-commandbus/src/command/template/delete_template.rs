@@ -1,4 +1,7 @@
-use crate::{bus::Ctx, command::Command, error::CommandBusError};
+use crate::{
+    bus::Ctx,
+    command::{Command, CommandResult},
+};
 use async_trait::async_trait;
 use perroute_commons::types::{actor::Actor, command_type::CommandType, id::Id};
 use perroute_storage::{
@@ -23,7 +26,7 @@ impl Command for DeleteTemplateCommand {
     type Output = bool;
 
     #[tracing::instrument(name = "delete_template_handler", skip(self, ctx))]
-    async fn handle<'tx>(&self, ctx: &mut Ctx<'tx>) -> Result<Self::Output, CommandBusError> {
+    async fn handle<'tx>(&self, ctx: &mut Ctx<'tx>) -> CommandResult<Self::Output> {
         let template = Template::find(ctx.pool(), TemplatesQuery::with_id(self.id))
             .await
             .tap_err(|e| tracing::error!("Failed to retrieve template:{e}"))?

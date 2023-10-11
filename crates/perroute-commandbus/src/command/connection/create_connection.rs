@@ -1,4 +1,8 @@
-use crate::{bus::Ctx, command::Command, error::CommandBusError};
+use crate::{
+    bus::Ctx,
+    command::{Command, CommandResult},
+    error::CommandBusError,
+};
 use anyhow::Context;
 use perroute_commons::types::{
     actor::Actor,
@@ -31,7 +35,7 @@ pub struct CreateConnectionCommand {
 impl Command for CreateConnectionCommand {
     type Output = Connection;
 
-    async fn handle<'tx>(&self, ctx: &mut Ctx<'tx>) -> Result<Self::Output, CommandBusError> {
+    async fn handle<'tx>(&self, ctx: &mut Ctx<'tx>) -> CommandResult<Self::Output> {
         let connector_plugin = ctx
             .plugins()
             .get(&self.plugin_id)

@@ -30,7 +30,11 @@ use sqlx::{types::Json, PgPool};
 use std::sync::Arc;
 use tap::{TapFallible, TapOptional};
 
-use crate::{bus::Ctx, command::Command, error::CommandBusError};
+use crate::{
+    bus::Ctx,
+    command::{Command, CommandResult},
+    error::CommandBusError,
+};
 
 use super::request::InnerDispatchRequest;
 
@@ -59,7 +63,7 @@ impl Command for DistributeMessageCommand {
     type Output = Message;
 
     #[tracing::instrument(name = "distribute_message_handler", skip(self, ctx))]
-    async fn handle<'tx>(&self, ctx: &mut Ctx<'tx>) -> Result<Self::Output, CommandBusError> {
+    async fn handle<'tx>(&self, ctx: &mut Ctx<'tx>) -> CommandResult<Self::Output> {
         // let message = retrieve_message(ctx.pool(), cmd.message_id).await?;
 
         // if Status::Pending != *message.status() {
