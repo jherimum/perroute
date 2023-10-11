@@ -9,7 +9,6 @@ edition = "2021"
 perroute-storage = { path = "../../crates/perroute-storage" }
 perroute-commons = { path = "../../crates/perroute-commons" }
 perroute-messaging = { path = "../../crates/perroute-messaging" }
-perroute-cqrs = { path = "../../crates/perroute-cqrs" }
 perroute-commandbus = { path = "../../crates/perroute-commandbus" }
 perroute-connectors = { path = "../../crates/perroute-connectors" }
 
@@ -28,5 +27,4 @@ strum_macros = { workspace = true }
 sqlx = { workspace = true, features = ["postgres", "runtime-tokio-rustls"] }
 chrono = { workspace = true }
 async-trait = { workspace = true }
-cron = { workspace = true }
 dotenv = { workspace = true }
