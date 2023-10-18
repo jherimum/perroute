@@ -49,7 +49,7 @@ pub struct CreateChannelRequest {
 }
 
 impl CreateChannelRequest {
-    pub fn into_business_id(&self) -> Result<Id> {
+    pub fn business_id(&self) -> Result<Id> {
         self.business_id
             .clone()
             .context("Missing business id")?
@@ -57,7 +57,7 @@ impl CreateChannelRequest {
             .context("Invalid Id")
     }
 
-    pub fn into_connection_id(&self) -> Result<Id> {
+    pub fn connection_id(&self) -> Result<Id> {
         self.connection_id
             .clone()
             .context("Missing connection id")?
@@ -65,7 +65,7 @@ impl CreateChannelRequest {
             .context("Invalid Id")
     }
 
-    pub fn into_dispatch_type(&self) -> Result<DispatchType> {
+    pub fn dispatch_type(&self) -> Result<DispatchType> {
         self.dispatch_type
             .clone()
             .context("Missing dispatch type")?
@@ -73,7 +73,7 @@ impl CreateChannelRequest {
             .context("Invalid dispatch type")
     }
 
-    pub fn into_properties(&self) -> Result<Properties> {
+    pub fn properties(&self) -> Result<Properties> {
         self.properties
             .clone()
             .context("Missing properties")?
@@ -93,11 +93,11 @@ pub struct UpdateChannelRequest {
 }
 
 impl UpdateChannelRequest {
-    pub fn into_properties(&self) -> Result<Option<Properties>> {
+    pub fn properties(&self) -> Result<Option<Properties>> {
         Ok(self.properties.clone().map(|p| p.try_into()).transpose()?)
     }
 
-    pub fn into_enabled(&self) -> Option<bool> {
+    pub fn enabled(&self) -> Option<bool> {
         self.enabled
     }
 }

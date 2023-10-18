@@ -11,7 +11,6 @@ use crate::{
     app::AppState,
     extractors::actor::ActorExtractor,
     links::ResourceLink,
-    W,
 };
 use actix_web::web::Data;
 use actix_web_validator::Json;
@@ -24,62 +23,13 @@ use perroute_commandbus::command::connection::{
 };
 use perroute_commons::types::id::Id;
 use perroute_cqrs::query_bus::handlers::connection::{
-    find_connection::{
-        FindConnectionQuery, FindConnectionQueryBuilder, FindConnectionQueryHandler,
-    },
+    find_connection::{FindConnectionQueryBuilder, FindConnectionQueryHandler},
     query_connections::{QueryConnectionsQueryBuilder, QueryConnectionsQueryHandler},
 };
 use tap::TapFallible;
 
 pub type SingleResult = ApiResult<SingleResourceModel<ConnectionResource>>;
 pub type CollectionResult = ApiResult<CollectionResourceModel<ConnectionResource>>;
-
-impl TryInto<CreateConnectionCommand> for CreateConnectionRequest {
-    type Error = anyhow::Error;
-
-    fn try_into(self) -> Result<CreateConnectionCommand, Self::Error> {
-        Ok(CreateConnectionCommandBuilder::default()
-            .id(Id::new())
-            .name(self.name()?)
-            .plugin_id(self.plugin_id()?)
-            .properties(self.properties()?)
-            .build()?)
-    }
-}
-
-impl TryInto<UpdateConnectionCommand> for W<(SingleIdPath, UpdateConnectionRequest)> {
-    type Error = anyhow::Error;
-
-    fn try_into(self) -> Result<UpdateConnectionCommand, Self::Error> {
-        UpdateConnectionCommandBuilder::default()
-            .id(self.0 .0.try_into()?)
-            .name(self.0 .1.name())
-            .properties(self.0 .1.properties()?)
-            .enabled(self.0 .1.enabled())
-            .build()
-            .context("Failed to build command")
-    }
-}
-
-impl TryInto<DeleteConnectionCommand> for SingleIdPath {
-    type Error = anyhow::Error;
-
-    fn try_into(self) -> Result<DeleteConnectionCommand, Self::Error> {
-        Ok(DeleteConnectionCommandBuilder::default()
-            .id(self.try_into()?)
-            .build()?)
-    }
-}
-
-impl TryInto<FindConnectionQuery> for SingleIdPath {
-    type Error = anyhow::Error;
-
-    fn try_into(self) -> Result<FindConnectionQuery, Self::Error> {
-        Ok(FindConnectionQueryBuilder::default()
-            .id(self.try_into()?)
-            .build()?)
-    }
-}
 
 pub struct ConnectionsRouter;
 
@@ -92,9 +42,17 @@ impl ConnectionsRouter {
         ActorExtractor(actor): ActorExtractor,
         Json(body): Json<CreateConnectionRequest>,
     ) -> SingleResult {
+        let command = CreateConnectionCommandBuilder::default()
+            .id(Id::new())
+            .name(body.name()?)
+            .plugin_id(body.plugin_id()?)
+            .properties(body.properties()?)
+            .build()
+            .map_err(anyhow::Error::new)?;
+
         Ok(state
             .command_bus()
-            .execute::<CreateConnectionCommand, _>(actor, body.try_into()?)
+            .execute::<CreateConnectionCommand, _>(actor, command)
             .await
             .tap_err(|e| tracing::error!("Failed to create connection: {e}"))
             .map(|c| ApiResponse::created(ResourceLink::Connection(*c.id()), c))?)
@@ -106,9 +64,17 @@ impl ConnectionsRouter {
         Json(body): Json<UpdateConnectionRequest>,
         path: Path<SingleIdPath>,
     ) -> SingleResult {
+        let command = UpdateConnectionCommandBuilder::default()
+            .id(path.into_inner().try_into()?)
+            .name(body.name())
+            .properties(body.properties()?)
+            .enabled(body.enabled())
+            .build()
+            .context("Failed to build command")?;
+
         Ok(state
             .command_bus()
-            .execute::<UpdateConnectionCommand, _>(actor, W((path.into_inner(), body)).try_into()?)
+            .execute::<UpdateConnectionCommand, _>(actor, command)
             .await
             .tap_err(|e| tracing::error!("Failed to update connection: {e}"))
             .map(ApiResponse::ok)?)
@@ -119,9 +85,13 @@ impl ConnectionsRouter {
         ActorExtractor(actor): ActorExtractor,
         path: Path<SingleIdPath>,
     ) -> EmptyApiResult {
+        let command = DeleteConnectionCommandBuilder::default()
+            .id(path.into_inner().try_into()?)
+            .build()
+            .map_err(anyhow::Error::new)?;
         Ok(state
             .command_bus()
-            .execute::<DeleteConnectionCommand, _>(actor, path.into_inner().try_into()?)
+            .execute::<DeleteConnectionCommand, _>(actor, command)
             .await
             .tap_err(|e| tracing::error!("Failed to delete connection: {e}"))
             .map(|_| ApiResponse::ok_empty())?)
@@ -132,9 +102,14 @@ impl ConnectionsRouter {
         ActorExtractor(actor): ActorExtractor,
         path: Path<SingleIdPath>,
     ) -> SingleResult {
+        let query = FindConnectionQueryBuilder::default()
+            .id(path.into_inner().try_into()?)
+            .build()
+            .map_err(anyhow::Error::new)?;
+
         Ok(state
             .query_bus()
-            .execute::<_, FindConnectionQueryHandler, _>(&actor, &path.into_inner().try_into()?)
+            .execute::<_, FindConnectionQueryHandler, _>(&actor, &query)
             .await
             .map(ApiResponse::ok)?)
     }

@@ -1,6 +1,8 @@
 use actix_web::FromRequest;
 use futures::future::{ready, Ready};
-use perroute_commons::{rest::RestError, types::actor::Actor};
+use perroute_commons::types::actor::Actor;
+
+use crate::error::RestError;
 pub struct ActorExtractor(pub Actor);
 
 impl FromRequest for ActorExtractor {

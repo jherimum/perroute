@@ -25,16 +25,19 @@ pub struct CreateBusinessUnitRequest {
 
     vars: Option<HashMap<String, String>>,
 }
+
 impl CreateBusinessUnitRequest {
-    pub fn code(&self) -> Result<Code> {
-        Code::from_str(self.code.as_ref().context("Missing code")?).context("Invalid code")
+    pub fn code(&self) -> Result<Code, anyhow::Error> {
+        Ok(Code::from_str(
+            self.code.as_ref().context("code required")?,
+        )?)
     }
 
-    pub fn name(&self) -> Result<String> {
-        self.name.clone().context("missing name")
+    pub fn name(&self) -> Result<String, anyhow::Error> {
+        self.name.clone().context("name required")
     }
 
-    pub fn vars(&self) -> Result<Vars> {
+    pub fn vars(&self) -> Result<Vars, anyhow::Error> {
         Ok(self.vars.clone().unwrap_or_default().into())
     }
 }

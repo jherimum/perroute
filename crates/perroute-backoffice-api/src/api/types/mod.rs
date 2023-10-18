@@ -1,5 +1,5 @@
 use anyhow::Result;
-use perroute_commons::types::id::{Id, ParseError};
+use perroute_commons::types::id::Id;
 use sqlx::types::chrono::NaiveDateTime;
 use std::{borrow::Cow, str::FromStr};
 use tap::TapFallible;
@@ -13,10 +13,10 @@ pub struct SingleIdPath {
 }
 
 impl TryInto<Id> for SingleIdPath {
-    type Error = ParseError;
+    type Error = anyhow::Error;
 
     fn try_into(self) -> Result<Id, Self::Error> {
-        Id::from_str(&self.id).tap_err(|e| tracing::error!("Failed to parse id: {}", e))
+        Ok(Id::from_str(&self.id).tap_err(|e| tracing::error!("Failed to parse id: {}", e))?)
     }
 }
 

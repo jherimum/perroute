@@ -1,4 +1,5 @@
-use actix_web::ResponseError;
+use actix_web::{body::BoxBody, HttpResponse, ResponseError};
+use http::StatusCode;
 use perroute_commandbus::{
     command::{
         business_unit::{
@@ -11,8 +12,9 @@ use perroute_commandbus::{
     },
     error::CommandBusError,
 };
-use perroute_commons::{rest::RestError, types::json_schema::InvalidSchemaError};
+use perroute_commons::types::json_schema::InvalidSchemaError;
 use perroute_cqrs::query_bus::error::QueryBusError;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use thiserror::Error;
 use validator::{ValidationError, ValidationErrors, ValidationErrorsKind};
@@ -44,7 +46,7 @@ impl From<&ApiError> for RestError {
             ApiError::ValidationError(error) => match error {
                 actix_web_validator::Error::Validate(e) => RestError::BadRequest(
                     Some("Invalid params".to_owned()),
-                    validation_errors_to_hashmap(e),
+                    validation_errors_to_hashmap(&e),
                 ),
                 actix_web_validator::Error::Deserialize(_) => {
                     RestError::BadRequest(Some("Deserialization error".to_owned()), None)
@@ -98,9 +100,111 @@ impl From<&ApiError> for RestError {
             //query bus
             ApiError::QueryBus(QueryBusError::EntityNotFound(e)) => {
                 RestError::NotFound(e.to_string())
-            }
+            },
+
             ApiError::Rest(e) => e.clone(),
-            _ => Self::InternalServer,
+
+            e => Self::InternalServer(Some(e.to_string())),
+        }
+    }
+}
+
+impl ResponseError for ApiError {
+    fn status_code(&self) -> actix_web::http::StatusCode {
+        let rest: RestError = self.into();
+        ResponseError::status_code(&rest)
+    }
+
+    fn error_response(&self) -> actix_web::HttpResponse<actix_web::body::BoxBody> {
+        let rest: RestError = self.into();
+        ResponseError::error_response(&rest)
+    }
+}
+
+impl ResponseError for RestError {
+    fn status_code(&self) -> StatusCode {
+        self.status_code()
+    }
+    fn error_response(&self) -> HttpResponse<BoxBody> {
+        HttpResponse::build(self.status_code()).json(self.model())
+    }
+}
+
+#[derive(Debug, thiserror::Error, Clone)]
+pub enum RestError {
+    #[error("{0}")]
+    NotFound(String),
+
+    #[error("Internal Server Error")]
+    InternalServer(Option<String>),
+
+    #[error("{0}")]
+    UnprocessableEntity(String),
+
+    #[error("Unauthorized")]
+    Unauthorized,
+
+    #[error("Forbidden")]
+    Forbidden,
+
+    #[error("BadRequest")]
+    BadRequest(Option<String>, Option<HashMap<String, String>>),
+}
+
+impl RestError {
+    fn status_code(&self) -> StatusCode {
+        match self {
+            RestError::NotFound(_) => StatusCode::NOT_FOUND,
+            RestError::InternalServer(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            RestError::UnprocessableEntity(_) => StatusCode::UNPROCESSABLE_ENTITY,
+            RestError::Unauthorized => StatusCode::UNAUTHORIZED,
+            RestError::Forbidden => StatusCode::FORBIDDEN,
+            RestError::BadRequest(_, _) => StatusCode::BAD_REQUEST,
+        }
+    }
+
+    fn model(&self) -> ErrorModel {
+        let message = self.to_string();
+        let status_code = self.status_code();
+        match self {
+            RestError::NotFound(detail) => {
+                ErrorModel::new(status_code, message, Some(detail.to_owned()), None)
+            }
+            RestError::InternalServer(e) => {
+                ErrorModel::new(status_code, message, e.to_owned(), None)
+            }
+            RestError::UnprocessableEntity(detail) => {
+                ErrorModel::new(status_code, message, Some(detail.to_owned()), None)
+            }
+            RestError::Unauthorized => ErrorModel::new(status_code, message, None, None),
+            RestError::Forbidden => ErrorModel::new(status_code, message, None, None),
+            RestError::BadRequest(detail, errors) => {
+                ErrorModel::new(status_code, message.clone(), detail.clone(), errors.clone())
+            }
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ErrorModel {
+    pub status: u16,
+    pub message: String,
+    pub detail: Option<String>,
+    pub errors: Option<HashMap<String, String>>,
+}
+
+impl ErrorModel {
+    pub fn new(
+        status: StatusCode,
+        message: String,
+        detail: Option<String>,
+        errors: Option<HashMap<String, String>>,
+    ) -> Self {
+        Self {
+            status: status.into(),
+            message,
+            detail,
+            errors,
         }
     }
 }
@@ -146,16 +250,4 @@ fn build_kind(key: String, kind: &ValidationErrorsKind) -> Vec<(String, String)>
     }
 
     errors
-}
-
-impl ResponseError for ApiError {
-    fn status_code(&self) -> actix_web::http::StatusCode {
-        let rest: RestError = self.into();
-        ResponseError::status_code(&rest)
-    }
-
-    fn error_response(&self) -> actix_web::HttpResponse<actix_web::body::BoxBody> {
-        let rest: RestError = self.into();
-        ResponseError::error_response(&rest)
-    }
 }
