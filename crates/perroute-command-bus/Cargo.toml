@@ -1,0 +1,9 @@
+[package]
+name = "perroute-command-bus"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+perroute-storage = { path = "../perroute-storage" }
+serde = { workspace = true }
+thiserror = { workspace = true }
