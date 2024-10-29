@@ -21,10 +21,22 @@ pub enum ApiError {
     BadRequest,
 
     #[error("Command bus error: {0}")]
-    CommandBusError(CommandBusError),
+    CommandBusError(#[from] CommandBusError),
 
     #[error("Query bus error: {0}")]
-    QueryBusError(QueryBusError),
+    QueryBusError(#[from] QueryBusError),
+
+    #[error("Json payload error: {0}")]
+    JsonPayloadError(#[from] actix_web::error::JsonPayloadError),
+
+    #[error("Path error: {0}")]
+    PathError(#[from] actix_web::error::PathError),
+
+    #[error("Query payload error: {0}")]
+    QueryPayloadError(#[from] actix_web::error::QueryPayloadError),
+
+    #[error("Form error: {0}")]
+    ActixValidationError(#[from] actix_web_validator::Error),
 }
 
 impl ResponseError for ApiError {
@@ -47,6 +59,20 @@ impl From<&ApiError> for RestError {
             ApiError::BadRequest => RestError::bad_request("Bad request", Default::default()),
             ApiError::CommandBusError(e) => RestError::internal_server(e.to_string()),
             ApiError::QueryBusError(e) => RestError::internal_server(e.to_string()),
+            ApiError::JsonPayloadError(ref e) => {
+                RestError::bad_request(e.to_string(), Default::default())
+            }
+            ApiError::PathError(ref e) => RestError::bad_request(e.to_string(), Default::default()),
+            ApiError::QueryPayloadError(ref e) => {
+                RestError::bad_request(e.to_string(), Default::default())
+            }
+            ApiError::ActixValidationError(error) => match error {
+                actix_web_validator::Error::Validate(validation_errors) => todo!(),
+                actix_web_validator::Error::Deserialize(deserialize_errors) => todo!(),
+                actix_web_validator::Error::JsonPayloadError(json_payload_error) => todo!(),
+                actix_web_validator::Error::UrlEncodedError(urlencoded_error) => todo!(),
+                actix_web_validator::Error::QsError(error) => todo!(),
+            },
         }
     }
 }

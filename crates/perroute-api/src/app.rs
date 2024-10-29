@@ -1,5 +1,6 @@
-use crate::rest::{routes::routes, services::RestService};
+use crate::rest::{error::ApiError, routes::routes, services::RestService};
 use actix_web::{dev::Server, web::Data, App, HttpServer};
+use actix_web_validator::{JsonConfig, PathConfig, QueryConfig};
 use std::{error::Error, net::TcpListener};
 
 pub struct Application {
@@ -13,6 +14,9 @@ impl Application {
     ) -> Result<Self, Box<dyn Error>> {
         let server = HttpServer::new(move || {
             App::new()
+                .app_data(json_config())
+                .app_data(path_config())
+                .app_data(query_config())
                 .app_data(Data::new(rest_service.clone()))
                 .service(routes::<RS>())
         })
@@ -24,4 +28,18 @@ impl Application {
     pub async fn start(self) -> Result<(), std::io::Error> {
         self.server.await
     }
+}
+
+fn json_config() -> JsonConfig {
+    JsonConfig::default()
+        .limit(4096)
+        .error_handler(|err, _| actix_web::Error::from(ApiError::from(err)))
+}
+
+fn path_config() -> PathConfig {
+    PathConfig::default().error_handler(|err, _| actix_web::Error::from(ApiError::from(err)))
+}
+
+fn query_config() -> QueryConfig {
+    QueryConfig::default().error_handler(|err, _| actix_web::Error::from(ApiError::from(err)))
 }

@@ -9,7 +9,7 @@ use crate::rest::{
     RestServiceResult,
 };
 use perroute_command_bus::CommandBus;
-use perroute_commons::types::{actor::Actor, id::Id};
+use perroute_commons::types::actor::Actor;
 use perroute_query_bus::{queries::business_unit::QueryBusinessUnitsHandler, QueryBus};
 use perroute_storage::{
     models::business_unit::BusinessUnit, repository::business_units::BusinessUnitQuery,

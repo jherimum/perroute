@@ -13,10 +13,7 @@ pub async fn get<RS: BusinessUnitRestService>(
     service: Data<RS>,
     path: Path<BusinessUnitPath>,
 ) -> ApiResult<ResourceModel<BusinessUnitModel>> {
-    service
-        .get(&path.into_inner().into())
-        .await
-        .map(ApiResponse::Ok)
+    service.get(&path).await.map(ApiResponse::Ok)
 }
 
 pub async fn query<RS: BusinessUnitRestService>(
@@ -29,10 +26,7 @@ pub async fn delete<RS: BusinessUnitRestService>(
     service: Data<RS>,
     path: Path<BusinessUnitPath>,
 ) -> ApiResult<()> {
-    service
-        .delete(&path.into_inner().into())
-        .await
-        .map(ApiResponse::Ok)
+    service.delete(&path).await.map(ApiResponse::Ok)
 }
 
 pub async fn update<RS: BusinessUnitRestService>(
@@ -40,10 +34,7 @@ pub async fn update<RS: BusinessUnitRestService>(
     path: Path<BusinessUnitPath>,
     payload: Json<UpdateBusinessUnitRequest>,
 ) -> ApiResult<ResourceModel<BusinessUnitModel>> {
-    service
-        .update(&path.into_inner().into(), &payload)
-        .await
-        .map(ApiResponse::Ok)
+    service.update(&path, &payload).await.map(ApiResponse::Ok)
 }
 
 pub async fn create<RS: BusinessUnitRestService>(
