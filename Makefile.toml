@@ -7,14 +7,14 @@ default_to_workspace = false
 
 [tasks.dev-api]
 install_crate = "cargo-watch"
-cwd = "./backend/crates/perroute-api"
+cwd = "./crates/perroute-api"
 command = "cargo"
 args = ["watch", "-x", "clippy", "-x", "run | bunyan"]
 dependencies = ["db-reset"]
 
 [tasks.db-reset]
 install_crate = "sqlx-cli"
-cwd = "./backend/crates/perroute-storage"
+cwd = "./crates/perroute-storage"
 command = "sqlx"
 args = ["database", "reset"]
 dependencies = ["postgres"]

@@ -2,9 +2,6 @@ use strum::EnumString;
 use tap::TapFallible;
 
 const RUN_ENV: &str = "RUN_ENV";
-const CONFIG_DIR: &str = "CONFIG_DIR";
-const CARGO_MANIFEST_DIR: &str = "CARGO_MANIFEST_DIR";
-const DEFAULT_CONFIG_FOLDER: &str = "configuration";
 
 #[derive(Debug, Default, PartialEq, Eq, EnumString, strum::Display, Clone, Copy)]
 #[strum(ascii_case_insensitive)]

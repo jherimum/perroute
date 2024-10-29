@@ -7,8 +7,16 @@ edition = "2021"
 perroute-commons = { path = "../perroute-commons" }
 perroute-storage = { path = "../perroute-storage" }
 perroute-command-bus = { path = "../perroute-command-bus" }
+perroute-query-bus = { path = "../perroute-query-bus" }
 
 tokio = { workspace = true, features = ["full"] }
 actix-web = { workspace = true }
 dotenvy = { workspace = true }
 env_logger = { version = "0.11" }
+chrono = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+validator = { workspace = true, features = ["derive"] }
+actix-web-validator = { workspace = true }
+url = { workspace = true }

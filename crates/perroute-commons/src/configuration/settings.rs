@@ -5,6 +5,9 @@ use serde::Deserialize;
 use std::path::PathBuf;
 use tap::{Tap, TapFallible};
 
+const CONFIG_DIR_KEY: &str = "CONFIG_DIR";
+const CARGO_MANIFEST_DIR_KEY: &str = "CARGO_MANIFEST_DIR";
+const DEFAULT_CONFIG_FOLDER: &str = "configuration";
 const BASE_CONFIG_FILENAME: &str = "base.yaml";
 
 #[derive(Debug, thiserror::Error)]
@@ -62,21 +65,22 @@ pub struct RabbitMqSettings {
     pub uri: String,
 }
 fn config_dir() -> PathBuf {
-    std::env::var("CONFIG_DIR").map_or_else(
+    std::env::var(CONFIG_DIR_KEY).map_or_else(
         |_| {
-            std::env::var("CARGO_MANIFEST_DIR")
+            std::env::var(CARGO_MANIFEST_DIR_KEY)
                 .map_or_else(
                     |_| std::env::current_dir().unwrap(),
-                    |v| std::path::PathBuf::from(v),
+                    std::path::PathBuf::from,
                 )
-                .join("configuration")
+                .join(DEFAULT_CONFIG_FOLDER)
         },
-        |v| std::path::PathBuf::from(v),
+        std::path::PathBuf::from,
     )
 }
 
 impl Settings {
-    pub fn load(env: Environment) -> Result<Self, SettingsError> {
+    pub fn load() -> Result<Self, SettingsError> {
+        let env = Environment::which();
         log::info!("Starting to loading configuration from {} environment", env);
         let config_dir = config_dir();
         let environment_filename = format!("{}.yaml", env).to_lowercase();

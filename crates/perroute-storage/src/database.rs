@@ -32,7 +32,7 @@ pub async fn migrate(pool: &PgPool) -> Result<(), sqlx::Error> {
 
 async fn new_connection(database_settings: &DatabaseSettings) -> Result<PgConnection, sqlx::Error> {
     let options = connection_options(database_settings);
-    Ok(PgConnection::connect_with(&options).await?)
+    PgConnection::connect_with(&options).await
 }
 
 fn connection_options(database_settings: &DatabaseSettings) -> PgConnectOptions {

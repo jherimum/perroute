@@ -1,25 +1,49 @@
+pub mod actor;
 pub mod id;
 
-use chrono::{DateTime, Utc};
+use chrono::NaiveDateTime;
 use serde_json::Value;
 use sqlx::prelude::Type;
-use std::collections::{HashMap, HashSet};
-use uuid::Uuid;
+use std::{
+    collections::{HashMap, HashSet},
+    fmt::Display,
+    ops::Deref,
+};
 
 #[derive(Debug, Clone, PartialEq, Eq, Type)]
 #[sqlx(transparent)]
 pub struct Name(String);
 
+impl Display for Name {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Type)]
 #[sqlx(transparent)]
 pub struct Code(String);
+
+impl Display for Code {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Vars(HashMap<String, String>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Type)]
 #[sqlx(transparent)]
-pub struct Timestamp(DateTime<Utc>);
+pub struct Timestamp(NaiveDateTime);
+
+impl Deref for Timestamp {
+    type Target = NaiveDateTime;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Schema(Value);
