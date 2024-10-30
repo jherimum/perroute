@@ -4,7 +4,7 @@ pub mod models;
 pub mod routes;
 pub mod template_assignments;
 
-use crate::rest::services::{business_units::BusinessUnitRestService, RestService};
+use crate::rest::services::business_units::BusinessUnitRestService;
 use actix_web::{web, Scope};
 
 pub fn scope<RS: BusinessUnitRestService + 'static>() -> Scope {

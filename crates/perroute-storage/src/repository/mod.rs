@@ -41,29 +41,49 @@ impl Source {
                 let tx = pool.begin().await?;
                 Ok(Source::Tx(Arc::new(Mutex::new(tx))))
             }
-            _ => Err(Error::InvalidRepositoryState("Invalid repository state")),
+            _ => Err(Error::InvalidRepositoryState(
+                "A transaction is already in progress",
+            )),
         }
     }
 
-    async fn commit(&self) -> RepositoryResult<()> {
+    async fn commit(self) -> RepositoryResult<()> {
         match self {
-            Source::Tx(tx) => {
-                let tx = Arc::try_unwrap(tx.clone()).unwrap().into_inner();
-                tx.commit().await?;
-                Ok(())
-            }
-            _ => Err(Error::InvalidRepositoryState("Invalid repository state")),
+            Source::Tx(tx) => match Arc::try_unwrap(tx) {
+                Ok(tx) => {
+                    let tx = tx.into_inner();
+                    tx.commit().await?;
+                    Ok(())
+                }
+                Err(_) => {
+                    return Err(Error::InvalidRepositoryState(
+                        "Unexpected error when unwrapping transaction",
+                    ));
+                }
+            },
+            _ => Err(Error::InvalidRepositoryState(
+                "There is no transaction to commit",
+            )),
         }
     }
 
-    async fn rollback(&self) -> RepositoryResult<()> {
+    async fn rollback(self) -> RepositoryResult<()> {
         match self {
-            Source::Tx(tx) => {
-                let tx = Arc::try_unwrap(tx.clone()).unwrap().into_inner();
-                tx.rollback().await?;
-                Ok(())
-            }
-            _ => Err(Error::InvalidRepositoryState("Invalid repository state")),
+            Source::Tx(tx) => match Arc::try_unwrap(tx) {
+                Ok(tx) => {
+                    let tx = tx.into_inner();
+                    tx.rollback().await?;
+                    Ok(())
+                }
+                Err(_) => {
+                    return Err(Error::InvalidRepositoryState(
+                        "Unexpected error when unwrapping transaction",
+                    ));
+                }
+            },
+            _ => Err(Error::InvalidRepositoryState(
+                "There is no transaction to commit",
+            )),
         }
     }
 }

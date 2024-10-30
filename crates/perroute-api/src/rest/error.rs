@@ -67,12 +67,13 @@ impl From<&ApiError> for RestError {
                 RestError::bad_request(e.to_string(), Default::default())
             }
             ApiError::ActixValidationError(error) => match error {
-                actix_web_validator::Error::Validate(validation_errors) => todo!(),
-                actix_web_validator::Error::Deserialize(deserialize_errors) => todo!(),
-                actix_web_validator::Error::JsonPayloadError(json_payload_error) => todo!(),
-                actix_web_validator::Error::UrlEncodedError(urlencoded_error) => todo!(),
-                actix_web_validator::Error::QsError(error) => todo!(),
+                actix_web_validator::Error::Validate(_) => todo!(),
+                actix_web_validator::Error::Deserialize(_) => todo!(),
+                actix_web_validator::Error::JsonPayloadError(_) => todo!(),
+                actix_web_validator::Error::UrlEncodedError(_) => todo!(),
+                actix_web_validator::Error::QsError(_) => todo!(),
             },
+            _ => RestError::internal_server("Unknown error"),
         }
     }
 }

@@ -45,7 +45,11 @@ pub trait QueryHandler {
 pub trait Query {}
 
 pub trait QueryBus {
-    fn execute<Q, H, O>(&self, actor: &Actor, query: &Q) -> impl Future<Output = QueryBusResult<O>>
+    fn execute<'q, Q, H, O>(
+        &self,
+        actor: &Actor,
+        query: &'q Q,
+    ) -> impl Future<Output = QueryBusResult<O>>
     where
         Q: Query + 'static,
         H: QueryHandler<Query = Q, Output = O> + 'static;
@@ -65,7 +69,7 @@ impl<R: Repository> DefaultQueryBus<R> {
         }
     }
 
-    pub fn register<Q, H>(mut self, handler: H) -> Self
+    pub fn register<'q, Q, H>(mut self, handler: H) -> Self
     where
         Q: Query + 'static,
         H: QueryHandler<Query = Q> + 'static + Sync + Send,

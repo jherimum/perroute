@@ -8,3 +8,8 @@ perroute-storage = { path = "../perroute-storage" }
 perroute-commons = { path = "../perroute-commons" }
 serde = { workspace = true }
 thiserror = { workspace = true }
+derive-getters = { workspace = true }
+derive_setters = { workspace = true }
+bon = { workspace = true }
+tap = { workspace = true }
+log = { workspace = true }

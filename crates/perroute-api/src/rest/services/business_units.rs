@@ -5,10 +5,16 @@ use crate::rest::{
     routes::business_units::models::{
         BusinessUnitModel, BusinessUnitPath, CreateBusinessUnitRequest, UpdateBusinessUnitRequest,
     },
-    EmptyResourceModelResult, ResourceModelCollectionResult, ResourceModelResult,
-    RestServiceResult,
+    ResourceModelCollectionResult, ResourceModelResult, RestServiceResult,
 };
-use perroute_command_bus::CommandBus;
+use perroute_command_bus::{
+    commands::business_unit::{
+        create::{CreateBusinessUnitCommand, CreateBusinessUnitCommandHandler},
+        delete::{DeleteBusinessUnitCommand, DeleteBusinessUnitCommandHandler},
+        update::{UpdateBusinessUnitCommand, UpdateBusinessUnitCommandHandler},
+    },
+    CommandBus, CommandBusError,
+};
 use perroute_commons::types::actor::Actor;
 use perroute_query_bus::{queries::business_unit::QueryBusinessUnitsHandler, QueryBus};
 use perroute_storage::{
@@ -19,21 +25,31 @@ use std::future::Future;
 pub trait BusinessUnitRestService {
     fn get(
         &self,
+        actor: &Actor,
         id: &BusinessUnitPath,
     ) -> impl Future<Output = ResourceModelResult<BusinessUnitModel>>;
 
-    fn query(&self) -> impl Future<Output = ResourceModelCollectionResult<BusinessUnitModel>>;
+    fn query(
+        &self,
+        actor: &Actor,
+    ) -> impl Future<Output = ResourceModelCollectionResult<BusinessUnitModel>>;
 
-    fn delete(&self, id: &BusinessUnitPath) -> impl Future<Output = EmptyResourceModelResult>;
+    fn delete(
+        &self,
+        actor: &Actor,
+        id: &BusinessUnitPath,
+    ) -> impl Future<Output = RestServiceResult<bool>>;
 
     fn update(
         &self,
+        actor: &Actor,
         id: &BusinessUnitPath,
         payload: &UpdateBusinessUnitRequest,
     ) -> impl Future<Output = ResourceModelResult<BusinessUnitModel>>;
 
     fn create(
         &self,
+        actor: &Actor,
         payload: &CreateBusinessUnitRequest,
     ) -> impl Future<Output = ResourceModelResult<BusinessUnitModel>>;
 }
@@ -49,13 +65,17 @@ async fn query<QB: QueryBus>(
 }
 
 impl<CB: CommandBus, QB: QueryBus> BusinessUnitRestService for DefaultRestService<CB, QB> {
-    async fn get(&self, id: &BusinessUnitPath) -> ResourceModelResult<BusinessUnitModel> {
-        let query_result = query(&self.query_bus, &BusinessUnitQuery::ById(id.into())).await?;
+    async fn get(
+        &self,
+        actor: &Actor,
+        path: &BusinessUnitPath,
+    ) -> ResourceModelResult<BusinessUnitModel> {
+        let query_result = query(&self.query_bus, &BusinessUnitQuery::ById(path.id())).await?;
         let bu = query_result.first().ok_or_else(|| ApiError::NotFound)?;
         Ok(ResourceModel::new(BusinessUnitModel::from(bu)))
     }
 
-    async fn query(&self) -> ResourceModelCollectionResult<BusinessUnitModel> {
+    async fn query(&self, actor: &Actor) -> ResourceModelCollectionResult<BusinessUnitModel> {
         let query_result = query(&self.query_bus, &BusinessUnitQuery::All).await?;
 
         Ok(ResourceModelCollection {
@@ -67,22 +87,53 @@ impl<CB: CommandBus, QB: QueryBus> BusinessUnitRestService for DefaultRestServic
         })
     }
 
-    async fn delete(&self, id: &BusinessUnitPath) -> EmptyResourceModelResult {
-        todo!()
+    async fn delete(&self, actor: &Actor, path: &BusinessUnitPath) -> RestServiceResult<bool> {
+        Ok(self
+            .command_bus
+            .execute::<_, DeleteBusinessUnitCommandHandler, _>(
+                actor,
+                &DeleteBusinessUnitCommand::builder().id(path.id()).build(),
+            )
+            .await?)
     }
 
     async fn update(
         &self,
+        actor: &Actor,
         id: &BusinessUnitPath,
         payload: &UpdateBusinessUnitRequest,
     ) -> ResourceModelResult<BusinessUnitModel> {
-        todo!()
+        let cmd = UpdateBusinessUnitCommand::builder()
+            .id(id.id())
+            .name(payload.name()?)
+            .maybe_vars(payload.vars())
+            .build();
+
+        let bu = self
+            .command_bus
+            .execute::<_, UpdateBusinessUnitCommandHandler, _>(actor, &cmd)
+            .await
+            .map_err(CommandBusError::from)?;
+
+        Ok(ResourceModel::new(BusinessUnitModel::from(&bu)))
     }
 
     async fn create(
         &self,
+        actor: &Actor,
         payload: &CreateBusinessUnitRequest,
     ) -> ResourceModelResult<BusinessUnitModel> {
-        todo!()
+        let cmd = CreateBusinessUnitCommand::builder()
+            .name(payload.name()?)
+            .code(payload.code()?)
+            .maybe_vars(payload.vars())
+            .build();
+
+        Ok(self
+            .command_bus
+            .execute::<_, CreateBusinessUnitCommandHandler, BusinessUnit>(actor, &cmd)
+            .await
+            .map(|bu| BusinessUnitModel::from(&bu))
+            .map(ResourceModel::new)?)
     }
 }

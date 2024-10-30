@@ -1,4 +1,5 @@
 mod bus;
+pub mod commands;
 mod error;
 
 pub use bus::create_command_bus;

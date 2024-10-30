@@ -1,17 +1,18 @@
-use std::fmt::Debug;
-
 use chrono::NaiveDateTime;
-use perroute_commons::types::id::Id;
+use perroute_commons::types::{id::Id, vars::Vars, Code, Name};
 use perroute_storage::models::business_unit::BusinessUnit;
 use serde::{Deserialize, Serialize};
+use std::{collections::HashMap, fmt::Debug};
 use validator::Validate;
+
+use crate::rest::error::ApiError;
 
 #[derive(Debug, Deserialize)]
 pub struct BusinessUnitPath(String);
 
-impl From<&BusinessUnitPath> for Id {
-    fn from(value: &BusinessUnitPath) -> Self {
-        Id::from(value.0.clone())
+impl BusinessUnitPath {
+    pub fn id(&self) -> Id {
+        Id::from(self.0.clone())
     }
 }
 
@@ -40,9 +41,35 @@ impl From<&BusinessUnit> for BusinessUnitModel {
 pub struct CreateBusinessUnitRequest {
     pub code: String,
     pub name: String,
+    pub vars: Option<HashMap<String, String>>,
+}
+
+impl CreateBusinessUnitRequest {
+    pub fn code(&self) -> Result<Code, ApiError> {
+        Code::try_from(self.code.clone()).map_err(|_| ApiError::BadRequest)
+    }
+
+    pub fn name(&self) -> Result<Name, ApiError> {
+        Name::try_from(self.name.clone()).map_err(|_| ApiError::BadRequest)
+    }
+
+    pub fn vars(&self) -> Option<Vars> {
+        self.vars.as_ref().map(|v| Vars::new(v.clone()))
+    }
 }
 
 #[derive(Debug, Deserialize, Validate)]
 pub struct UpdateBusinessUnitRequest {
-    pub code: String,
+    pub name: String,
+    pub vars: Option<HashMap<String, String>>,
+}
+
+impl UpdateBusinessUnitRequest {
+    pub fn name(&self) -> Result<Name, ApiError> {
+        Name::try_from(self.name.clone()).map_err(|_| ApiError::BadRequest)
+    }
+
+    pub fn vars(&self) -> Option<Vars> {
+        self.vars.as_ref().map(|v| Vars::new(v.clone()))
+    }
 }

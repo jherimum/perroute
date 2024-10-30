@@ -1,7 +1,8 @@
 pub mod actor;
 pub mod id;
+pub mod vars;
 
-use chrono::NaiveDateTime;
+use chrono::{NaiveDateTime, Utc};
 use serde_json::Value;
 use sqlx::prelude::Type;
 use std::{
@@ -14,6 +15,18 @@ use std::{
 #[sqlx(transparent)]
 pub struct Name(String);
 
+impl TryFrom<String> for Name {
+    type Error = String;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        if value.is_empty() {
+            Err("Name cannot be empty".to_string())
+        } else {
+            Ok(Self(value))
+        }
+    }
+}
+
 impl Display for Name {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0)
@@ -24,18 +37,33 @@ impl Display for Name {
 #[sqlx(transparent)]
 pub struct Code(String);
 
+impl TryFrom<String> for Code {
+    type Error = String;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        if value.is_empty() {
+            Err("Code cannot be empty".to_string())
+        } else {
+            Ok(Self(value))
+        }
+    }
+}
+
 impl Display for Code {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Vars(HashMap<String, String>);
-
 #[derive(Debug, Clone, PartialEq, Eq, Type)]
 #[sqlx(transparent)]
 pub struct Timestamp(NaiveDateTime);
+
+impl Timestamp {
+    pub fn now() -> Self {
+        Self(Utc::now().naive_utc())
+    }
+}
 
 impl Deref for Timestamp {
     type Target = NaiveDateTime;

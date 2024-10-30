@@ -1,5 +1,5 @@
 use crate::rest::{error::ApiError, routes::routes, services::RestService};
-use actix_web::{dev::Server, web::Data, App, HttpServer};
+use actix_web::{dev::Server, middleware::Logger, web::Data, App, HttpServer};
 use actix_web_validator::{JsonConfig, PathConfig, QueryConfig};
 use std::{error::Error, net::TcpListener};
 
@@ -14,6 +14,7 @@ impl Application {
     ) -> Result<Self, Box<dyn Error>> {
         let server = HttpServer::new(move || {
             App::new()
+                .wrap(Logger::default())
                 .app_data(json_config())
                 .app_data(path_config())
                 .app_data(query_config())

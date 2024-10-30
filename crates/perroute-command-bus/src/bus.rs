@@ -1,4 +1,10 @@
-use crate::{CommandBusError, CommandBusResult};
+use crate::{
+    commands::business_unit::{
+        create::CreateBusinessUnitCommandHandler, delete::DeleteBusinessUnitCommandHandler,
+        update::UpdateBusinessUnitCommandHandler,
+    },
+    CommandBusError, CommandBusResult,
+};
 use perroute_commons::types::actor::Actor;
 use perroute_storage::repository::{Repository, TransactedRepository};
 use std::{
@@ -11,6 +17,9 @@ use std::{
 
 pub fn create_command_bus<R: Repository + Clone>(repository: R) -> impl CommandBus + Clone {
     DefaultCommandBus::new(repository)
+        .register(CreateBusinessUnitCommandHandler)
+        .register(DeleteBusinessUnitCommandHandler)
+        .register(UpdateBusinessUnitCommandHandler)
 }
 
 pub trait Command {}
@@ -26,7 +35,7 @@ pub trait CommandHandler {
     type Command: Command;
     type Output: Debug;
 
-    fn handle<R: TransactedRepository + Clone>(
+    fn handle<R: TransactedRepository>(
         &self,
         cmd: &Self::Command,
         ctx: CommandBusContext<R>,
@@ -97,7 +106,17 @@ impl<R: Repository> CommandBus for DefaultCommandBus<R> {
     }
 }
 
-pub struct CommandBusContext<'a, R: TransactedRepository + Clone> {
+pub struct CommandBusContext<'a, R: TransactedRepository> {
     repository: R,
     actor: &'a Actor,
+}
+
+impl<'a, R: TransactedRepository> CommandBusContext<'a, R> {
+    pub fn repository(&self) -> &R {
+        &self.repository
+    }
+
+    pub fn actor(&self) -> &'a Actor {
+        self.actor
+    }
 }

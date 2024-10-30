@@ -13,3 +13,6 @@ tokio = { workspace = true }
 thiserror = { workspace = true }
 async-trait = { workspace = true }
 secrecy = { workspace = true }
+derive-getters = { workspace = true }
+derive_setters = { workspace = true }
+bon = { workspace = true }

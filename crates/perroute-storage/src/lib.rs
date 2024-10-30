@@ -6,16 +6,11 @@ use perroute_commons::configuration::settings::DatabaseSettings;
 use repository::PgRepository;
 use repository::Repository;
 use repository::RepositoryResult;
-use sqlx::PgPool;
 
 pub async fn create_repository(
     settings: &DatabaseSettings,
 ) -> RepositoryResult<impl Repository + Clone> {
     PgRepository::from_settings(settings).await
-}
-
-pub fn pool() -> PgPool {
-    todo!()
 }
 
 #[macro_export]
