@@ -16,6 +16,9 @@ impl BusinessUnitPath {
     }
 }
 
+#[derive(Debug, Deserialize)]
+pub struct BusinessUnitCollectionPath;
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct BusinessUnitModel {
     pub id: String,

@@ -1,4 +1,5 @@
 pub mod business_units;
+pub mod message_types;
 
 use business_units::BusinessUnitRepository;
 use perroute_commons::configuration::settings::DatabaseSettings;

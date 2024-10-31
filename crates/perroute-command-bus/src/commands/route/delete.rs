@@ -1,0 +1,38 @@
+use bon::Builder;
+use perroute_commons::types::{id::Id, Configuration, Priority};
+use perroute_storage::{models::route::Route, repository::TransactedRepository};
+use crate::{bus::{Command, CommandBusContext, CommandHandler}, CommandBusResult};
+
+
+#[derive(Debug, thiserror::Error)]
+pub enum DeleteRouteCommandError{
+}
+
+#[derive(Debug, Clone, Builder)]
+pub struct DeleteRouteCommand {
+     id: Id,
+    
+}
+
+impl Command for DeleteRouteCommand {
+}
+
+
+pub struct DeleteRouteCommandHandler;
+
+impl CommandHandler for DeleteRouteCommandHandler {
+    type Command = DeleteRouteCommand;
+    type Output = bool;
+
+    async fn handle<R: TransactedRepository>(
+        &self,
+        cmd: &Self::Command,
+        ctx: CommandBusContext<'_, R>,
+    ) -> CommandBusResult<Self::Output> {
+        todo!()
+    }
+
+}
+
+
+

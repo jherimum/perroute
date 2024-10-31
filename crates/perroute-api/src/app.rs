@@ -1,4 +1,10 @@
-use crate::rest::{error::ApiError, routes::routes, services::RestService};
+use crate::rest::{
+    error::ApiError,
+    routes::{
+        business_units::service::BusinessUnitRestService,
+        message_types::service::MessageTypeRestService, routes,
+    },
+};
 use actix_web::{dev::Server, middleware::Logger, web::Data, App, HttpServer};
 use actix_web_validator::{JsonConfig, PathConfig, QueryConfig};
 use std::{error::Error, net::TcpListener};
@@ -8,7 +14,9 @@ pub struct Application {
 }
 
 impl Application {
-    pub fn new<RS: RestService + Clone + Send + Sync + 'static>(
+    pub fn new<
+        RS: BusinessUnitRestService + MessageTypeRestService + Clone + Send + Sync + 'static,
+    >(
         listener: TcpListener,
         rest_service: RS,
     ) -> Result<Self, Box<dyn Error>> {

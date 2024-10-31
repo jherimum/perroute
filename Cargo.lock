@@ -1819,6 +1819,7 @@ version = "0.1.0"
 dependencies = [
  "actix-web",
  "actix-web-validator",
+ "bon",
  "chrono",
  "dotenvy",
  "env_logger",

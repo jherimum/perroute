@@ -1,4 +1,4 @@
-use perroute_api::{app::Application, rest::services::DefaultRestService};
+use perroute_api::{app::Application, rest::RestService};
 use perroute_command_bus::create_command_bus;
 use perroute_commons::configuration::settings::Settings;
 use perroute_query_bus::create_query_bus;
@@ -17,7 +17,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let repository = create_repository(&settings.database).await?;
     let command_bus = create_command_bus(repository.clone());
     let query_bus = create_query_bus(repository);
-    let rest_service = DefaultRestService::new(command_bus, query_bus);
+    let rest_service = RestService::new(command_bus, query_bus);
 
     let app = Application::new(listener, rest_service)?;
 

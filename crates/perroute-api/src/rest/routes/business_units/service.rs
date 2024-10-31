@@ -1,11 +1,10 @@
-use super::DefaultRestService;
 use crate::rest::{
     error::ApiError,
     models::{ResourceModel, ResourceModelCollection},
     routes::business_units::models::{
         BusinessUnitModel, BusinessUnitPath, CreateBusinessUnitRequest, UpdateBusinessUnitRequest,
     },
-    ResourceModelCollectionResult, ResourceModelResult, RestServiceResult,
+    ResourceModelCollectionResult, ResourceModelResult, RestService, RestServiceResult,
 };
 use perroute_command_bus::{
     commands::business_unit::{
@@ -22,34 +21,38 @@ use perroute_storage::{
 };
 use std::future::Future;
 
+use super::models::BusinessUnitCollectionPath;
+
 pub trait BusinessUnitRestService {
     fn get(
         &self,
         actor: &Actor,
-        id: &BusinessUnitPath,
+        path: &BusinessUnitPath,
     ) -> impl Future<Output = ResourceModelResult<BusinessUnitModel>>;
 
     fn query(
         &self,
         actor: &Actor,
+        path: &BusinessUnitCollectionPath,
     ) -> impl Future<Output = ResourceModelCollectionResult<BusinessUnitModel>>;
 
     fn delete(
         &self,
         actor: &Actor,
-        id: &BusinessUnitPath,
+        path: &BusinessUnitPath,
     ) -> impl Future<Output = RestServiceResult<bool>>;
 
     fn update(
         &self,
         actor: &Actor,
-        id: &BusinessUnitPath,
+        path: &BusinessUnitPath,
         payload: &UpdateBusinessUnitRequest,
     ) -> impl Future<Output = ResourceModelResult<BusinessUnitModel>>;
 
     fn create(
         &self,
         actor: &Actor,
+        path: &BusinessUnitCollectionPath,
         payload: &CreateBusinessUnitRequest,
     ) -> impl Future<Output = ResourceModelResult<BusinessUnitModel>>;
 }
@@ -64,19 +67,23 @@ async fn query<QB: QueryBus>(
         .map_err(|e| ApiError::InternalServerError(e.into()))
 }
 
-impl<CB: CommandBus, QB: QueryBus> BusinessUnitRestService for DefaultRestService<CB, QB> {
+impl<CB: CommandBus, QB: QueryBus> BusinessUnitRestService for RestService<CB, QB> {
     async fn get(
         &self,
         actor: &Actor,
         path: &BusinessUnitPath,
     ) -> ResourceModelResult<BusinessUnitModel> {
-        let query_result = query(&self.query_bus, &BusinessUnitQuery::ById(path.id())).await?;
+        let query_result = query(self.query_bus(), &BusinessUnitQuery::ById(path.id())).await?;
         let bu = query_result.first().ok_or_else(|| ApiError::NotFound)?;
         Ok(ResourceModel::new(BusinessUnitModel::from(bu)))
     }
 
-    async fn query(&self, actor: &Actor) -> ResourceModelCollectionResult<BusinessUnitModel> {
-        let query_result = query(&self.query_bus, &BusinessUnitQuery::All).await?;
+    async fn query(
+        &self,
+        actor: &Actor,
+        path: &BusinessUnitCollectionPath,
+    ) -> ResourceModelCollectionResult<BusinessUnitModel> {
+        let query_result = query(self.query_bus(), &BusinessUnitQuery::All).await?;
 
         Ok(ResourceModelCollection {
             data: query_result
@@ -89,7 +96,7 @@ impl<CB: CommandBus, QB: QueryBus> BusinessUnitRestService for DefaultRestServic
 
     async fn delete(&self, actor: &Actor, path: &BusinessUnitPath) -> RestServiceResult<bool> {
         Ok(self
-            .command_bus
+            .command_bus()
             .execute::<_, DeleteBusinessUnitCommandHandler, _>(
                 actor,
                 &DeleteBusinessUnitCommand::builder().id(path.id()).build(),
@@ -110,7 +117,7 @@ impl<CB: CommandBus, QB: QueryBus> BusinessUnitRestService for DefaultRestServic
             .build();
 
         let bu = self
-            .command_bus
+            .command_bus()
             .execute::<_, UpdateBusinessUnitCommandHandler, _>(actor, &cmd)
             .await
             .map_err(CommandBusError::from)?;
@@ -121,6 +128,7 @@ impl<CB: CommandBus, QB: QueryBus> BusinessUnitRestService for DefaultRestServic
     async fn create(
         &self,
         actor: &Actor,
+        _path: &BusinessUnitCollectionPath,
         payload: &CreateBusinessUnitRequest,
     ) -> ResourceModelResult<BusinessUnitModel> {
         let cmd = CreateBusinessUnitCommand::builder()
@@ -130,7 +138,7 @@ impl<CB: CommandBus, QB: QueryBus> BusinessUnitRestService for DefaultRestServic
             .build();
 
         Ok(self
-            .command_bus
+            .command_bus()
             .execute::<_, CreateBusinessUnitCommandHandler, BusinessUnit>(actor, &cmd)
             .await
             .map(|bu| BusinessUnitModel::from(&bu))

@@ -1,10 +1,13 @@
-use super::models::{
-    BusinessUnitModel, BusinessUnitPath, CreateBusinessUnitRequest, UpdateBusinessUnitRequest,
+use super::{
+    models::{
+        BusinessUnitCollectionPath, BusinessUnitModel, BusinessUnitPath, CreateBusinessUnitRequest,
+        UpdateBusinessUnitRequest,
+    },
+    service::BusinessUnitRestService,
 };
 use crate::rest::{
     models::{ApiResponse, ResourceModel, ResourceModelCollection},
     routes::ApiResult,
-    services::business_units::BusinessUnitRestService,
 };
 use actix_web::web::{Data, Path};
 use actix_web_validator::Json;
@@ -23,9 +26,10 @@ pub async fn get<RS: BusinessUnitRestService>(
 
 pub async fn query<RS: BusinessUnitRestService>(
     service: Data<RS>,
+    path: Path<BusinessUnitCollectionPath>,
 ) -> ApiResult<ResourceModelCollection<BusinessUnitModel>> {
     service
-        .query(&Actor::System)
+        .query(&Actor::System, &path)
         .await
         .map(|bus| ApiResponse::ok(bus))
 }
@@ -53,9 +57,10 @@ pub async fn update<RS: BusinessUnitRestService>(
 
 pub async fn create<RS: BusinessUnitRestService>(
     service: Data<RS>,
+    path: Path<BusinessUnitCollectionPath>,
     payload: Json<CreateBusinessUnitRequest>,
 ) -> ApiResult<()> {
-    service.create(&Actor::System, &payload).await?;
+    service.create(&Actor::System, &path, &payload).await?;
     Ok(ApiResponse::created_empty(
         Url::parse("http://wine.com.br").unwrap(),
     ))

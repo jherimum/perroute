@@ -11,3 +11,9 @@ impl Vars {
         Vars(Json(vars))
     }
 }
+
+impl Into<HashMap<String, String>> for &Vars {
+    fn into(self) -> HashMap<String, String> {
+        (*self.0).clone()
+    }
+}

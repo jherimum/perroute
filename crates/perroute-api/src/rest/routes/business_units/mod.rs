@@ -2,10 +2,11 @@ pub mod channels;
 pub mod message_routes;
 pub mod models;
 pub mod routes;
+pub mod service;
 pub mod template_assignments;
 
-use crate::rest::services::business_units::BusinessUnitRestService;
 use actix_web::{web, Scope};
+use service::BusinessUnitRestService;
 
 pub fn scope<RS: BusinessUnitRestService + 'static>() -> Scope {
     web::scope("/business_units")
