@@ -1,22 +1,20 @@
+use crate::{
+    bus::{Command, CommandBusContext, CommandHandler},
+    CommandBusResult,
+};
 use bon::Builder;
 use perroute_commons::types::id::Id;
 use perroute_storage::repository::TransactedRepository;
-use crate::{bus::{Command, CommandBusContext, CommandHandler}, CommandBusResult};
-
 
 #[derive(Debug, thiserror::Error)]
-pub enum DeleteChannelCommandError{
-}
+pub enum DeleteChannelCommandError {}
 
 #[derive(Debug, Clone, Builder)]
 pub struct DeleteChannelCommand {
     id: Id,
-    
 }
 
-impl Command for DeleteChannelCommand {
-}
-
+impl Command for DeleteChannelCommand {}
 
 pub struct DeleteChannelCommandHandler;
 
@@ -31,8 +29,4 @@ impl CommandHandler for DeleteChannelCommandHandler {
     ) -> CommandBusResult<Self::Output> {
         todo!()
     }
-
 }
-
-
-

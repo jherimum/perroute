@@ -1,6 +1,9 @@
 use crate::rest::{
-    error::ApiError, modules::{business_unit::service::BusinessUnitRestService, channel::service::ChannelRestService, message_type::service::MessageTypeRestService, routes},
-    
+    error::ApiError,
+    modules::{
+        business_unit::service::BusinessUnitRestService, channel::service::ChannelRestService,
+        message_type::service::MessageTypeRestService, route::service::RouteRestService, routes,
+    },
 };
 use actix_web::{dev::Server, middleware::Logger, web::Data, App, HttpServer};
 use actix_web_validator::{JsonConfig, PathConfig, QueryConfig};
@@ -12,7 +15,14 @@ pub struct Application {
 
 impl Application {
     pub fn new<
-        RS: BusinessUnitRestService + MessageTypeRestService + ChannelRestService + Clone + Send + Sync + 'static,
+        RS: BusinessUnitRestService
+            + MessageTypeRestService
+            + ChannelRestService
+            + RouteRestService
+            + Clone
+            + Send
+            + Sync
+            + 'static,
     >(
         listener: TcpListener,
         rest_service: RS,

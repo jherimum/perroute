@@ -12,17 +12,17 @@ pub struct MessageType {
     pub id: Id,
     #[setters(skip)]
     pub code: Code,
-    
+
     pub name: Name,
-        
+
     pub vars: Option<Vars>,
-    
+
     pub schema: Schema,
-    
+
     pub enabled: bool,
 
     #[setters(skip)]
     pub created_at: Timestamp,
-    
+
     pub updated_at: Timestamp,
 }

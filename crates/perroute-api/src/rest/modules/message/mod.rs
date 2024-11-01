@@ -1,5 +1,5 @@
-mod models;
 mod controller;
+mod models;
 
 use actix_web::{web, Scope};
 

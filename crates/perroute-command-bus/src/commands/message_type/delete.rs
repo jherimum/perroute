@@ -1,20 +1,20 @@
+use crate::{
+    bus::{Command, CommandBusContext, CommandHandler},
+    CommandBusResult,
+};
 use bon::Builder;
 use perroute_commons::types::id::Id;
 use perroute_storage::repository::TransactedRepository;
-use crate::{bus::{Command, CommandBusContext, CommandHandler}, CommandBusResult};
 
 #[derive(Debug, thiserror::Error)]
-pub enum DeleteMessageTypeCommandError{
-}
+pub enum DeleteMessageTypeCommandError {}
 
 #[derive(Debug, Clone, Builder)]
 pub struct DeleteMessageTypeCommand {
-    id: Id
+    id: Id,
 }
 
-impl Command for DeleteMessageTypeCommand {
-}
-
+impl Command for DeleteMessageTypeCommand {}
 
 pub struct DeleteMessageTypeCommandHandler;
 
@@ -29,8 +29,4 @@ impl CommandHandler for DeleteMessageTypeCommandHandler {
     ) -> CommandBusResult<Self::Output> {
         todo!()
     }
-
 }
-
-
-

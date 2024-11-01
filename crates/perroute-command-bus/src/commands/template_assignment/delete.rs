@@ -1,22 +1,20 @@
+use crate::{
+    bus::{Command, CommandBusContext, CommandHandler},
+    CommandBusResult,
+};
 use bon::Builder;
 use perroute_commons::types::id::Id;
 use perroute_storage::repository::TransactedRepository;
-use crate::{bus::{Command, CommandBusContext, CommandHandler}, CommandBusResult};
-
 
 #[derive(Debug, thiserror::Error)]
-pub enum DeleteTemplateAssignmentCommandError{
-}
+pub enum DeleteTemplateAssignmentCommandError {}
 
 #[derive(Debug, Clone, Builder)]
 pub struct DeleteTemplateAssignmentCommand {
     id: Id,
-    
 }
 
-impl Command for DeleteTemplateAssignmentCommand {
-}
-
+impl Command for DeleteTemplateAssignmentCommand {}
 
 pub struct DeleteTemplateAssignmentCommandHandler;
 
@@ -31,8 +29,4 @@ impl CommandHandler for DeleteTemplateAssignmentCommandHandler {
     ) -> CommandBusResult<Self::Output> {
         todo!()
     }
-
 }
-
-
-

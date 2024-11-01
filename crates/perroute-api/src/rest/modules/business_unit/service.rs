@@ -1,3 +1,4 @@
+use super::models::BusinessUnitCollectionPath;
 use crate::rest::{
     error::ApiError,
     models::{ResourceModel, ResourceModelCollection},
@@ -20,7 +21,6 @@ use perroute_storage::{
     models::business_unit::BusinessUnit, repository::business_units::BusinessUnitQuery,
 };
 use std::future::Future;
-use super::models::BusinessUnitCollectionPath;
 
 pub trait BusinessUnitRestService {
     fn get(

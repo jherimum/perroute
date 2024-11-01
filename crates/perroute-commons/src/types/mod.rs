@@ -94,8 +94,6 @@ impl Display for ProviderId {
     }
 }
 
-
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum DispatchType {
     Email,
@@ -113,8 +111,6 @@ impl Display for DispatchType {
     }
 }
 
-
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Configuration(HashMap<String, String>);
 
@@ -125,8 +121,6 @@ impl Deref for Configuration {
         &self.0
     }
 }
-
-
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Priority(i64);

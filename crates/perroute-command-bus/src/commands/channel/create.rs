@@ -1,12 +1,13 @@
+use crate::{
+    bus::{Command, CommandBusContext, CommandHandler},
+    CommandBusResult,
+};
 use bon::Builder;
-use perroute_commons::types::{id::Id,  Configuration, DispatchType, Name, ProviderId};
+use perroute_commons::types::{id::Id, Configuration, DispatchType, Name, ProviderId};
 use perroute_storage::{models::channel::Channel, repository::TransactedRepository};
-use crate::{bus::{Command, CommandBusContext, CommandHandler}, CommandBusResult};
-
 
 #[derive(Debug, thiserror::Error)]
-pub enum CreateChannelCommandError{
-}
+pub enum CreateChannelCommandError {}
 
 #[derive(Debug, Clone, Builder)]
 pub struct CreateChannelCommand {
@@ -16,12 +17,9 @@ pub struct CreateChannelCommand {
     dispatch_type: DispatchType,
     configuration: Configuration,
     enabled: bool,
-    
 }
 
-impl Command for CreateChannelCommand {
-}
-
+impl Command for CreateChannelCommand {}
 
 pub struct CreateChannelCommandHandler;
 
@@ -36,8 +34,4 @@ impl CommandHandler for CreateChannelCommandHandler {
     ) -> CommandBusResult<Self::Output> {
         todo!()
     }
-
 }
-
-
-

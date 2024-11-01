@@ -40,7 +40,7 @@ impl From<&BusinessUnit> for BusinessUnitModel {
     }
 }
 
-impl From<&BusinessUnit> for ResourceModel<BusinessUnitModel>{
+impl From<&BusinessUnit> for ResourceModel<BusinessUnitModel> {
     fn from(value: &BusinessUnit) -> Self {
         ResourceModel::new(value.into())
     }

@@ -1,24 +1,22 @@
+use crate::{
+    bus::{Command, CommandBusContext, CommandHandler},
+    CommandBusResult,
+};
 use bon::Builder;
-use perroute_commons::types::{ Configuration, Name};
+use perroute_commons::types::{Configuration, Name};
 use perroute_storage::{models::channel::Channel, repository::TransactedRepository};
-use crate::{bus::{Command, CommandBusContext, CommandHandler}, CommandBusResult};
-
 
 #[derive(Debug, thiserror::Error)]
-pub enum UpdateChannelCommandError{
-}
+pub enum UpdateChannelCommandError {}
 
 #[derive(Debug, Clone, Builder)]
 pub struct UpdateChannelCommand {
     name: Name,
     configuration: Configuration,
     enabled: bool,
-    
 }
 
-impl Command for UpdateChannelCommand {
-}
-
+impl Command for UpdateChannelCommand {}
 
 pub struct UpdateChannelCommandHandler;
 
@@ -33,8 +31,4 @@ impl CommandHandler for UpdateChannelCommandHandler {
     ) -> CommandBusResult<Self::Output> {
         todo!()
     }
-
 }
-
-
-

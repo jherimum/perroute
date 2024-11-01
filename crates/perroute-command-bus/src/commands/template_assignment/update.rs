@@ -1,12 +1,15 @@
+use crate::{
+    bus::{Command, CommandBusContext, CommandHandler},
+    CommandBusResult,
+};
 use bon::Builder;
 use perroute_commons::types::{vars::Vars, Priority, Timestamp};
-use perroute_storage::{models::template_assignment::TemplateAssignment, repository::TransactedRepository};
-use crate::{bus::{Command, CommandBusContext, CommandHandler}, CommandBusResult};
-
+use perroute_storage::{
+    models::template_assignment::TemplateAssignment, repository::TransactedRepository,
+};
 
 #[derive(Debug, thiserror::Error)]
-pub enum UpdateTemplateAssignmentCommandError{
-}
+pub enum UpdateTemplateAssignmentCommandError {}
 
 #[derive(Debug, Clone, Builder)]
 pub struct UpdateTemplateAssignmentCommand {
@@ -15,12 +18,9 @@ pub struct UpdateTemplateAssignmentCommand {
     pub start_at: Timestamp,
     pub end_at: Option<Timestamp>,
     pub enabled: bool,
-    
 }
 
-impl Command for UpdateTemplateAssignmentCommand {
-}
-
+impl Command for UpdateTemplateAssignmentCommand {}
 
 pub struct UpdateTemplateAssignmentCommandHandler;
 
@@ -35,8 +35,4 @@ impl CommandHandler for UpdateTemplateAssignmentCommandHandler {
     ) -> CommandBusResult<Self::Output> {
         todo!()
     }
-
 }
-
-
-

@@ -1,12 +1,13 @@
+use crate::{
+    bus::{Command, CommandBusContext, CommandHandler},
+    CommandBusResult,
+};
 use bon::Builder;
 use perroute_commons::types::{vars::Vars, Code, Name, Schema};
 use perroute_storage::{models::message_type::MessageType, repository::TransactedRepository};
-use crate::{bus::{Command, CommandBusContext, CommandHandler}, CommandBusResult};
-
 
 #[derive(Debug, thiserror::Error)]
-pub enum CreateMessageTypeCommandError{
-}
+pub enum CreateMessageTypeCommandError {}
 
 #[derive(Debug, Clone, Builder)]
 pub struct CreateMessageTypeCommand {
@@ -17,9 +18,7 @@ pub struct CreateMessageTypeCommand {
     enabled: bool,
 }
 
-impl Command for CreateMessageTypeCommand {
-}
-
+impl Command for CreateMessageTypeCommand {}
 
 pub struct CreateMessageTypeCommandHandler;
 
@@ -34,8 +33,4 @@ impl CommandHandler for CreateMessageTypeCommandHandler {
     ) -> CommandBusResult<Self::Output> {
         todo!()
     }
-
 }
-
-
-

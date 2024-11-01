@@ -1,21 +1,43 @@
-use actix_web::{HttpResponse, Responder};
+use std::marker::PhantomData;
 
-pub async fn get() -> impl Responder {
-    HttpResponse::Ok().finish()
-}
+use super::{
+    models::{CreateRouteRequest, RouteCollectionPath, RoutePath, UpdateRouteRequest},
+    service::RouteRestService,
+};
+use actix_web::{
+    web::{Data, Json},
+    HttpResponse, Responder,
+};
+use actix_web_validator::Path;
 
-pub async fn query() -> impl Responder {
-    HttpResponse::Ok().finish()
-}
+pub struct RouteController<RS>(PhantomData<RS>);
 
-pub async fn delete() -> impl Responder {
-    HttpResponse::Ok().finish()
-}
+impl<RS: RouteRestService> RouteController<RS> {
+    pub async fn get(service: Data<RS>, path: Path<RoutePath>) -> impl Responder {
+        HttpResponse::Ok().finish()
+    }
 
-pub async fn update() -> impl Responder {
-    HttpResponse::Ok().finish()
-}
+    pub async fn query(service: Data<RS>, path: Path<RouteCollectionPath>) -> impl Responder {
+        HttpResponse::Ok().finish()
+    }
 
-pub async fn create() -> impl Responder {
-    HttpResponse::Ok().finish()
+    pub async fn delete(service: Data<RS>, path: Path<RoutePath>) -> impl Responder {
+        HttpResponse::Ok().finish()
+    }
+
+    pub async fn update(
+        service: Data<RS>,
+        path: Path<RoutePath>,
+        payload: Json<UpdateRouteRequest>,
+    ) -> impl Responder {
+        HttpResponse::Ok().finish()
+    }
+
+    pub async fn create(
+        service: Data<RS>,
+        path: Path<RouteCollectionPath>,
+        payload: Json<CreateRouteRequest>,
+    ) -> impl Responder {
+        HttpResponse::Ok().finish()
+    }
 }

@@ -1,3 +1,29 @@
+use crate::{
+    commands::{
+        business_unit::{
+            create::CreateBusinessUnitCommandHandler, delete::DeleteBusinessUnitCommandHandler,
+            update::UpdateBusinessUnitCommandHandler,
+        },
+        channel::{
+            create::CreateChannelCommandHandler, delete::DeleteChannelCommandHandler,
+            update::UpdateChannelCommandHandler,
+        },
+        message::create::CreateMessageCommandHandler,
+        message_type::{
+            create::CreateMessageTypeCommandHandler, update::UpdateMessageTypeCommandHandler,
+        },
+        route::{
+            create::CreateRouteCommandHandler, delete::DeleteRouteCommandHandler,
+            update::UpdateRouteCommandHandler,
+        },
+        template_assignment::{
+            create::CreateTemplateAssignmentCommandHandler,
+            delete::DeleteTemplateAssignmentCommandHandler,
+            update::UpdateTemplateAssignmentCommandHandler,
+        },
+    },
+    CommandBusError, CommandBusResult,
+};
 use perroute_commons::types::actor::Actor;
 use perroute_storage::repository::{Repository, TransactedRepository};
 use std::{
@@ -7,7 +33,6 @@ use std::{
     future::Future,
     sync::Arc,
 };
-use crate::{commands::{business_unit::{create::CreateBusinessUnitCommandHandler, delete::DeleteBusinessUnitCommandHandler, update::UpdateBusinessUnitCommandHandler}, channel::{create::CreateChannelCommandHandler, delete::DeleteChannelCommandHandler, update::UpdateChannelCommandHandler}, message::create::CreateMessageCommandHandler, message_type::{create::CreateMessageTypeCommandHandler, update::UpdateMessageTypeCommandHandler}, route::{create::CreateRouteCommandHandler, delete::DeleteRouteCommandHandler, update::UpdateRouteCommandHandler}, template_assignment::{create::CreateTemplateAssignmentCommandHandler, delete::DeleteTemplateAssignmentCommandHandler, update::UpdateTemplateAssignmentCommandHandler}}, CommandBusError, CommandBusResult};
 
 pub fn create_command_bus<R: Repository + Clone>(repository: R) -> impl CommandBus + Clone {
     DefaultCommandBus::new(repository)
@@ -22,7 +47,7 @@ pub fn create_command_bus<R: Repository + Clone>(repository: R) -> impl CommandB
         .register(DeleteRouteCommandHandler)
         .register(CreateChannelCommandHandler)
         .register(UpdateChannelCommandHandler)
-        .register(DeleteChannelCommandHandler)        
+        .register(DeleteChannelCommandHandler)
         .register(CreateTemplateAssignmentCommandHandler)
         .register(UpdateTemplateAssignmentCommandHandler)
         .register(DeleteTemplateAssignmentCommandHandler)

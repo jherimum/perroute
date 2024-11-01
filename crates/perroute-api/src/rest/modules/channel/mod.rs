@@ -1,5 +1,5 @@
-pub mod models;
 pub mod controller;
+pub mod models;
 pub mod service;
 
 use actix_web::{web, Scope};
