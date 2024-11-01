@@ -1,5 +1,5 @@
 use chrono::NaiveDateTime;
-use perroute_commons::types::{id::Id, vars::Vars, Code, Name};
+use perroute_commons::types::{id::Id, name::Name, vars::Vars, Code};
 use perroute_storage::models::business_unit::BusinessUnit;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, fmt::Debug};
@@ -58,9 +58,9 @@ impl CreateBusinessUnitRequest {
         Code::try_from(self.code.clone()).map_err(|_| ApiError::BadRequest)
     }
 
-    pub fn name(&self) -> Result<Name, ApiError> {
-        Name::try_from(self.name.clone()).map_err(|_| ApiError::BadRequest)
-    }
+    // pub fn name(&self) -> Result<Name, ApiError> {
+    //     Name::try_from(self.name.clone()).map_err(|_| ApiError::BadRequest)
+    // }
 
     pub fn vars(&self) -> Option<Vars> {
         self.vars.as_ref().map(|v| Vars::new(v.clone()))
@@ -74,10 +74,6 @@ pub struct UpdateBusinessUnitRequest {
 }
 
 impl UpdateBusinessUnitRequest {
-    pub fn name(&self) -> Result<Name, ApiError> {
-        Name::try_from(self.name.clone()).map_err(|_| ApiError::BadRequest)
-    }
-
     pub fn vars(&self) -> Option<Vars> {
         self.vars.as_ref().map(|v| Vars::new(v.clone()))
     }

@@ -1,5 +1,6 @@
 use actix_web::{body::BoxBody, http::StatusCode, HttpResponse, Responder, ResponseError};
 use perroute_command_bus::CommandBusError;
+use perroute_commons::types::name::InvalidNameError;
 use perroute_query_bus::QueryBusError;
 use serde::{ser::SerializeStruct, Serialize};
 use serde_json::Value;
@@ -37,6 +38,9 @@ pub enum ApiError {
 
     #[error("Form error: {0}")]
     ActixValidationError(#[from] actix_web_validator::Error),
+
+    #[error("Invalid name error: {0}")]
+    InvalidNameError(#[from] InvalidNameError),
 }
 
 impl ResponseError for ApiError {

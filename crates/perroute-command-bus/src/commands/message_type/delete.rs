@@ -4,7 +4,7 @@ use crate::{
 };
 use bon::Builder;
 use perroute_commons::types::id::Id;
-use perroute_storage::repository::TransactedRepository;
+use perroute_storage::repository::{message_types::MessageTypeRepository, TransactedRepository};
 
 #[derive(Debug, thiserror::Error)]
 pub enum DeleteMessageTypeCommandError {}
@@ -27,6 +27,6 @@ impl CommandHandler for DeleteMessageTypeCommandHandler {
         cmd: &Self::Command,
         ctx: CommandBusContext<'_, R>,
     ) -> CommandBusResult<Self::Output> {
-        todo!()
+        Ok(MessageTypeRepository::delete_message_type(ctx.repository(), &cmd.id).await?)
     }
 }

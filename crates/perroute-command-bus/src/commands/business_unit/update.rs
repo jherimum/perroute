@@ -3,7 +3,7 @@ use crate::{
     CommandBusError, CommandBusResult,
 };
 use bon::Builder;
-use perroute_commons::types::{id::Id, vars::Vars, Name};
+use perroute_commons::types::{id::Id, name::Name, vars::Vars};
 use perroute_storage::{
     models::business_unit::BusinessUnit,
     repository::{business_units::BusinessUnitRepository, TransactedRepository},

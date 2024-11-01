@@ -3,6 +3,7 @@ pub mod models;
 pub mod service;
 
 use actix_web::{web, Scope};
+use controller::ChannelController;
 use service::ChannelRestService;
 
 pub fn scope<RS: ChannelRestService + 'static>() -> Scope {
@@ -10,16 +11,16 @@ pub fn scope<RS: ChannelRestService + 'static>() -> Scope {
         .service(
             web::resource("")
                 .name("channels_resource")
-                .route(web::get().to(controller::query::<RS>))
-                .route(web::post().to(controller::create::<RS>)),
+                .route(web::get().to(ChannelController::<RS>::query))
+                .route(web::post().to(ChannelController::<RS>::create)),
         )
         .service(
             web::scope("/{channel_id}").service(
                 web::resource("")
                     .name("channel_resource")
-                    .route(web::get().to(controller::get::<RS>))
-                    .route(web::put().to(controller::update::<RS>))
-                    .route(web::delete().to(controller::delete::<RS>)),
+                    .route(web::get().to(ChannelController::<RS>::get))
+                    .route(web::put().to(ChannelController::<RS>::update))
+                    .route(web::delete().to(ChannelController::<RS>::delete)),
             ),
         )
 }

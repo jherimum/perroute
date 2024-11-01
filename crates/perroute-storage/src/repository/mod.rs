@@ -2,6 +2,7 @@ pub mod business_units;
 pub mod message_types;
 
 use business_units::BusinessUnitRepository;
+use message_types::{MessageTypeRepository, PayloadExampleRepository};
 use perroute_commons::configuration::settings::DatabaseSettings;
 use sqlx::{PgPool, Postgres, Transaction};
 use std::{future::Future, sync::Arc};
@@ -25,7 +26,9 @@ pub trait TransactedRepository: Repository {
     fn rollback(self) -> impl Future<Output = RepositoryResult<()>>;
 }
 
-pub trait Repository: BusinessUnitRepository {
+pub trait Repository:
+    BusinessUnitRepository + MessageTypeRepository + PayloadExampleRepository
+{
     fn begin(&self) -> impl Future<Output = RepositoryResult<impl TransactedRepository + Clone>>;
 }
 

@@ -1,11 +1,19 @@
 use crate::rest::{
+    models::ResourceModel,
     modules::message_type::models::{
         CreateMessageTypeRequest, MessageTypeModel, MessageTypePath, UpdateMessageTypeRequest,
     },
     ResourceModelCollectionResult, ResourceModelResult, RestService, RestServiceResult,
 };
-use perroute_command_bus::CommandBus;
-use perroute_commons::types::actor::Actor;
+use perroute_command_bus::{
+    commands::message_type::{
+        create::{CreateMessageTypeCommand, CreateMessageTypeCommandHandler},
+        delete::{DeleteMessageTypeCommand, DeleteMessageTypeCommandHandler},
+        update::{UpdateMessageTypeCommand, UpdateMessageTypeCommandHandler},
+    },
+    CommandBus,
+};
+use perroute_commons::types::{actor::Actor, name::Name};
 use perroute_query_bus::QueryBus;
 use std::future::Future;
 
@@ -62,8 +70,14 @@ impl<CB: CommandBus, QB: QueryBus> MessageTypeRestService for RestService<CB, QB
         todo!()
     }
 
-    async fn delete(&self, actor: &Actor, id: &MessageTypePath) -> RestServiceResult<bool> {
-        todo!()
+    async fn delete(&self, actor: &Actor, path: &MessageTypePath) -> RestServiceResult<bool> {
+        Ok(self
+            .command_bus()
+            .execute::<_, DeleteMessageTypeCommandHandler, _>(
+                actor,
+                &DeleteMessageTypeCommand::builder().id(path.id()).build(),
+            )
+            .await?)
     }
 
     async fn update(
@@ -72,7 +86,21 @@ impl<CB: CommandBus, QB: QueryBus> MessageTypeRestService for RestService<CB, QB
         path: &MessageTypePath,
         payload: &UpdateMessageTypeRequest,
     ) -> ResourceModelResult<MessageTypeModel> {
-        todo!()
+        let cmd = UpdateMessageTypeCommand::builder()
+            .id(path.id())
+            .name(Name::try_from(&payload.name)?)
+            .enabled(payload.enabled())
+            .maybe_vars(payload.vars())
+            .schema(payload.schema())
+            .payload_examples(payload.examples()?)
+            .build();
+
+        let mt = self
+            .command_bus()
+            .execute::<_, UpdateMessageTypeCommandHandler, _>(actor, &cmd)
+            .await?;
+
+        Ok(ResourceModel::new(MessageTypeModel::from(&mt)))
     }
 
     async fn create(
@@ -81,6 +109,20 @@ impl<CB: CommandBus, QB: QueryBus> MessageTypeRestService for RestService<CB, QB
         path: &MessageTypeCollectionPath,
         payload: &CreateMessageTypeRequest,
     ) -> ResourceModelResult<MessageTypeModel> {
-        todo!()
+        let cmd = CreateMessageTypeCommand::builder()
+            .code(payload.code()?)
+            .name(Name::try_from(&payload.name)?)
+            .enabled(payload.enabled())
+            .maybe_vars(payload.vars())
+            .schema(payload.schema())
+            .payload_examples(payload.examples()?)
+            .build();
+
+        let mt = self
+            .command_bus()
+            .execute::<_, CreateMessageTypeCommandHandler, _>(actor, &cmd)
+            .await?;
+
+        Ok(ResourceModel::new(MessageTypeModel::from(&mt)))
     }
 }

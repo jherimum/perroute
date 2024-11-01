@@ -1,4 +1,8 @@
+use std::marker::PhantomData;
+
 use actix_web::{HttpResponse, Responder};
+
+pub struct TemplateAssignmentController<RS>(PhantomData<RS>);
 
 pub async fn get() -> impl Responder {
     HttpResponse::Ok().finish()

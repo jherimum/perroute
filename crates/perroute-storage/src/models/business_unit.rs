@@ -1,7 +1,7 @@
 use bon::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
-use perroute_commons::types::{id::Id, vars::Vars, Code, Name, Timestamp};
+use perroute_commons::types::{id::Id, name::Name, vars::Vars, Code, Timestamp};
 use sqlx::prelude::FromRow;
 
 #[derive(Debug, Clone, PartialEq, Eq, FromRow, Builder, Getters, Setters)]

@@ -1,7 +1,10 @@
+use std::ops::Deref;
+
 use bon::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
-use perroute_commons::types::{id::Id, vars::Vars, Code, Name, Schema, Timestamp};
+use perroute_commons::types::{id::Id, name::Name, vars::Vars, Code, Payload, Schema, Timestamp};
+use serde_json::Value;
 use sqlx::prelude::FromRow;
 
 #[derive(Debug, Clone, PartialEq, Eq, FromRow, Builder, Getters, Setters)]
@@ -9,20 +12,36 @@ use sqlx::prelude::FromRow;
 #[setters(into)]
 pub struct MessageType {
     #[setters(skip)]
-    pub id: Id,
+    id: Id,
     #[setters(skip)]
-    pub code: Code,
+    code: Code,
 
-    pub name: Name,
+    name: Name,
 
-    pub vars: Option<Vars>,
+    vars: Option<Vars>,
 
-    pub schema: Schema,
+    schema: Schema,
 
-    pub enabled: bool,
+    enabled: bool,
 
     #[setters(skip)]
-    pub created_at: Timestamp,
+    created_at: Timestamp,
 
-    pub updated_at: Timestamp,
+    updated_at: Timestamp,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, FromRow, Builder, Getters, Setters)]
+#[setters(prefix = "set_")]
+#[setters(into)]
+pub struct PayloadExample {
+    id: Id,
+    message_type_id: Id,
+    name: Name,
+    payload: Payload,
+}
+
+impl From<&PayloadExample> for (String, Value) {
+    fn from(value: &PayloadExample) -> Self {
+        (value.name().to_string(), value.payload().deref().clone())
+    }
 }

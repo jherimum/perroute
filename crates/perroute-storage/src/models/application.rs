@@ -1,4 +1,4 @@
-use perroute_commons::types::{id::Id, Name};
+use perroute_commons::types::{id::Id, name::Name};
 
 pub struct Application {
     pub id: Id,
