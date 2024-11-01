@@ -1,7 +1,7 @@
 use crate::rest::{
     error::ApiError,
     models::{ResourceModel, ResourceModelCollection},
-    routes::business_units::models::{
+    modules::business_unit::models::{
         BusinessUnitModel, BusinessUnitPath, CreateBusinessUnitRequest, UpdateBusinessUnitRequest,
     },
     ResourceModelCollectionResult, ResourceModelResult, RestService, RestServiceResult,
@@ -20,7 +20,6 @@ use perroute_storage::{
     models::business_unit::BusinessUnit, repository::business_units::BusinessUnitQuery,
 };
 use std::future::Future;
-
 use super::models::BusinessUnitCollectionPath;
 
 pub trait BusinessUnitRestService {

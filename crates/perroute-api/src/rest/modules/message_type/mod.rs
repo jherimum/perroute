@@ -1,5 +1,5 @@
 pub mod models;
-pub mod routes;
+pub mod controller;
 pub mod service;
 
 use actix_web::{web, Scope};
@@ -10,16 +10,16 @@ pub fn scope<MTS: MessageTypeRestService + 'static>() -> Scope {
         .service(
             web::resource("")
                 .name("message_types_resource")
-                .route(web::get().to(routes::query::<MTS>))
-                .route(web::post().to(routes::create::<MTS>)),
+                .route(web::get().to(controller::query::<MTS>))
+                .route(web::post().to(controller::create::<MTS>)),
         )
         .service(
             web::scope("/{message_type_id}").service(
                 web::resource("")
                     .name("message_type_resource")
-                    .route(web::get().to(routes::get::<MTS>))
-                    .route(web::put().to(routes::update::<MTS>))
-                    .route(web::delete().to(routes::delete::<MTS>)),
+                    .route(web::get().to(controller::get::<MTS>))
+                    .route(web::put().to(controller::update::<MTS>))
+                    .route(web::delete().to(controller::delete::<MTS>)),
             ),
         )
 }

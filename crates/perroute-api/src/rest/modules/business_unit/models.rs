@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, fmt::Debug};
 use validator::Validate;
 
-use crate::rest::error::ApiError;
+use crate::rest::{error::ApiError, models::ResourceModel};
 
 #[derive(Debug, Deserialize)]
 pub struct BusinessUnitPath(String);
@@ -37,6 +37,12 @@ impl From<&BusinessUnit> for BusinessUnitModel {
             created_at: *bu.created_at,
             updated_at: *bu.updated_at,
         }
+    }
+}
+
+impl From<&BusinessUnit> for ResourceModel<BusinessUnitModel>{
+    fn from(value: &BusinessUnit) -> Self {
+        ResourceModel::new(value.into())
     }
 }
 

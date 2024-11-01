@@ -1,5 +1,5 @@
 use crate::rest::{
-    routes::message_types::models::{
+    modules::message_type::models::{
         CreateMessageTypeRequest, MessageTypeModel, MessageTypePath, UpdateMessageTypeRequest,
     },
     ResourceModelCollectionResult, ResourceModelResult, RestService, RestServiceResult,

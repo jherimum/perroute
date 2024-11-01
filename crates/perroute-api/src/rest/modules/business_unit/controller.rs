@@ -7,7 +7,7 @@ use super::{
 };
 use crate::rest::{
     models::{ApiResponse, ResourceModel, ResourceModelCollection},
-    routes::ApiResult,
+    modules::ApiResult,
 };
 use actix_web::web::{Data, Path};
 use actix_web_validator::Json;

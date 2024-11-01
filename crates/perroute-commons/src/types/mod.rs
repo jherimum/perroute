@@ -88,6 +88,14 @@ impl Deref for Schema {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ProviderId(String);
 
+impl Display for ProviderId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum DispatchType {
     Email,
@@ -95,8 +103,30 @@ pub enum DispatchType {
     Push,
 }
 
+impl Display for DispatchType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            DispatchType::Email => write!(f, "email"),
+            DispatchType::Sms => write!(f, "sms"),
+            DispatchType::Push => write!(f, "push"),
+        }
+    }
+}
+
+
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Configuration(HashMap<String, String>);
+
+impl Deref for Configuration {
+    type Target = HashMap<String, String>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Priority(i64);

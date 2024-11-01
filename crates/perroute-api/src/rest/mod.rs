@@ -5,7 +5,7 @@ use perroute_query_bus::QueryBus;
 
 pub mod error;
 pub mod models;
-pub mod routes;
+pub mod modules;
 
 pub type RestServiceResult<T> = Result<T, ApiError>;
 pub type ResourceModelResult<T> = RestServiceResult<ResourceModel<T>>;
