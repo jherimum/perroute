@@ -1,5 +1,6 @@
-use crate::bus::{
-    Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult,
+use crate::{
+    bus::{Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult},
+    commands::CommandType,
 };
 use bon::Builder;
 use perroute_commons::types::id::Id;
@@ -13,7 +14,11 @@ pub struct DeleteBusinessUnitCommand {
     pub id: Id,
 }
 
-impl Command for DeleteBusinessUnitCommand {}
+impl Command for DeleteBusinessUnitCommand {
+    fn command_type(&self) -> CommandType {
+        CommandType::DeleteBusinessUnit
+    }
+}
 
 pub struct DeleteBusinessUnitCommandHandler;
 
@@ -29,6 +34,10 @@ impl CommandHandler for DeleteBusinessUnitCommandHandler {
         let deleted =
             BusinessUnitRepository::delete_business_unit(ctx.repository(), &cmd.id).await?;
 
-        Ok(CommandHandlerOutput::new(deleted, None))
+        CommandHandlerOutput::new(deleted)
+            .with_event(perroute_events::event::Event::BusinessUnitDeleted(
+                cmd.id.clone(),
+            ))
+            .ok()
     }
 }

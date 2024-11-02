@@ -58,15 +58,15 @@ pub struct ChannelModel {
 impl From<&Channel> for ChannelModel {
     fn from(value: &Channel) -> Self {
         ChannelModel::builder()
-            .id(value.id.to_string())
-            .business_unit_id(value.business_unit_id.to_string())
-            .name(value.name.to_string())
-            .provider_id(value.provider_id.to_string())
-            .dispatch_type(value.dispatch_type.to_string())
-            .configuration((*value.configuration).clone())
-            .enabled(value.enabled)
-            .created_at(*value.created_at)
-            .updated_at(*value.updated_at)
+            .id(value.id().to_string())
+            .business_unit_id(value.business_unit_id().to_string())
+            .name(value.name().to_string())
+            .provider_id(value.provider_id().to_string())
+            .dispatch_type(value.dispatch_type().to_string())
+            .configuration((**value.configuration()).clone())
+            .enabled(*value.enabled())
+            .created_at(**value.created_at())
+            .updated_at(**value.updated_at())
             .build()
     }
 }

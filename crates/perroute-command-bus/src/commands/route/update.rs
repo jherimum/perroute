@@ -1,6 +1,6 @@
 use crate::{
     bus::{Command, CommandBusContext, CommandHandler, CommandHandlerResult},
-    CommandBusResult,
+    commands::CommandType,
 };
 use bon::Builder;
 use perroute_commons::types::{priority::Priority, Configuration};
@@ -16,7 +16,11 @@ pub struct UpdateRouteCommand {
     enabled: bool,
 }
 
-impl Command for UpdateRouteCommand {}
+impl Command for UpdateRouteCommand {
+    fn command_type(&self) -> CommandType {
+        CommandType::UpdateRoute
+    }
+}
 
 pub struct UpdateRouteCommandHandler;
 

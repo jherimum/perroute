@@ -1,8 +1,10 @@
-use crate::bus::{
-    Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult,
+use crate::{
+    bus::{Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult},
+    commands::CommandType,
 };
 use bon::Builder;
 use perroute_commons::types::{code::Code, id::Id, name::Name, vars::Vars, Timestamp};
+use perroute_events::event::Event;
 use perroute_storage::{
     models::business_unit::BusinessUnit,
     repository::{
@@ -25,7 +27,11 @@ pub struct CreateBusinessUnitCommand {
     vars: Option<Vars>,
 }
 
-impl Command for CreateBusinessUnitCommand {}
+impl Command for CreateBusinessUnitCommand {
+    fn command_type(&self) -> CommandType {
+        CommandType::CreateBusinessUnit
+    }
+}
 
 pub struct CreateBusinessUnitCommandHandler;
 
@@ -62,6 +68,8 @@ impl CommandHandler for CreateBusinessUnitCommandHandler {
             .await
             .tap_err(|e| log::error!("Error saving business unit: {:?}", e))?;
 
-        Ok(CommandHandlerOutput::new(bu, None))
+        CommandHandlerOutput::new(bu.clone())
+            .with_event(Event::BusinessUnitCreated(bu.id().clone()))
+            .ok()
     }
 }

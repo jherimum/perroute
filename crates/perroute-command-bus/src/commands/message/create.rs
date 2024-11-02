@@ -1,6 +1,6 @@
 use crate::{
     bus::{Command, CommandBusContext, CommandHandler, CommandHandlerResult},
-    CommandBusResult,
+    commands::CommandType,
 };
 use bon::Builder;
 use perroute_commons::types::{id::Id, DispatchType, Payload, Recipient, Tags, Timestamp};
@@ -20,7 +20,11 @@ pub struct CreateMessageCommand {
     pub tags: Tags,
 }
 
-impl Command for CreateMessageCommand {}
+impl Command for CreateMessageCommand {
+    fn command_type(&self) -> CommandType {
+        CommandType::CreateMessage
+    }
+}
 
 pub struct CreateMessageCommandHandler;
 

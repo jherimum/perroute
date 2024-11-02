@@ -5,3 +5,6 @@ edition = "2021"
 
 [dependencies]
 perroute-commons = { path = "../perroute-commons" }
+sqlx = { workspace = true, features = ["postgres"] }
+strum = { workspace = true }
+strum_macros = { workspace = true }

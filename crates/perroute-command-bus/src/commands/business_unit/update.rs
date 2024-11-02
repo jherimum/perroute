@@ -1,9 +1,11 @@
 use crate::{
     bus::{Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult},
-    CommandBusError, CommandBusResult,
+    commands::CommandType,
+    CommandBusError,
 };
 use bon::Builder;
 use perroute_commons::types::{id::Id, name::Name, vars::Vars};
+use perroute_events::event::Event;
 use perroute_storage::{
     models::business_unit::BusinessUnit,
     repository::{business_units::BusinessUnitRepository, TransactedRepository},
@@ -22,7 +24,11 @@ pub struct UpdateBusinessUnitCommand {
     pub vars: Option<Vars>,
 }
 
-impl Command for UpdateBusinessUnitCommand {}
+impl Command for UpdateBusinessUnitCommand {
+    fn command_type(&self) -> CommandType {
+        CommandType::UpdateBusinessUnit
+    }
+}
 
 pub struct UpdateBusinessUnitCommandHandler;
 
@@ -50,6 +56,8 @@ impl CommandHandler for UpdateBusinessUnitCommandHandler {
             )),
         }?;
 
-        Ok(CommandHandlerOutput::new(bu, None))
+        CommandHandlerOutput::new(bu.clone())
+            .with_event(Event::BusinessUnitUpdated(bu.id().clone()))
+            .ok()
     }
 }

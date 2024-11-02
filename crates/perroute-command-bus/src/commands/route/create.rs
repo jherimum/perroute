@@ -1,8 +1,10 @@
-use crate::bus::{
-    Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult,
+use crate::{
+    bus::{Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult},
+    commands::CommandType,
 };
 use bon::Builder;
 use perroute_commons::types::{id::Id, priority::Priority, Configuration, Timestamp};
+use perroute_events::event::Event;
 use perroute_storage::{
     models::route::Route,
     repository::{
@@ -31,7 +33,11 @@ pub struct CreateRouteCommand {
     enabled: bool,
 }
 
-impl Command for CreateRouteCommand {}
+impl Command for CreateRouteCommand {
+    fn command_type(&self) -> CommandType {
+        CommandType::CreateRoute
+    }
+}
 
 pub struct CreateRouteCommandHandler;
 
@@ -77,6 +83,8 @@ impl CommandHandler for CreateRouteCommandHandler {
 
         let route = RouteRepository::save(ctx.repository(), route.clone()).await?;
 
-        Ok(CommandHandlerOutput::new(route, None))
+        CommandHandlerOutput::new(route.clone())
+            .with_event(Event::RouteCreated(route.id().clone()))
+            .ok()
     }
 }

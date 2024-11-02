@@ -1,10 +1,12 @@
-use crate::bus::{
-    Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult,
+use crate::{
+    bus::{Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult},
+    commands::CommandType,
 };
 use bon::Builder;
 use perroute_commons::types::{
     code::Code, id::Id, name::Name, schema::Schema, vars::Vars, Payload, Timestamp,
 };
+use perroute_events::event::Event;
 use perroute_storage::{
     models::message_type::{MessageType, PayloadExample},
     repository::{
@@ -31,7 +33,11 @@ pub struct CreateMessageTypeCommand {
     payload_examples: Vec<(Name, Payload)>,
 }
 
-impl Command for CreateMessageTypeCommand {}
+impl Command for CreateMessageTypeCommand {
+    fn command_type(&self) -> CommandType {
+        CommandType::CreateMessageType
+    }
+}
 
 pub struct CreateMessageTypeCommandHandler;
 
@@ -74,6 +80,8 @@ impl CommandHandler for CreateMessageTypeCommandHandler {
         let examples =
             PayloadExampleRepository::save_payload_examples(ctx.repository(), &examples).await?;
 
-        Ok(CommandHandlerOutput::new((message_type, examples), None))
+        CommandHandlerOutput::new((message_type.clone(), examples))
+            .with_event(Event::MessageTypeCreated(message_type.id().clone()))
+            .ok()
     }
 }

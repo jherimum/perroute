@@ -30,11 +30,11 @@ pub struct BusinessUnitModel {
 impl From<&BusinessUnit> for BusinessUnitModel {
     fn from(bu: &BusinessUnit) -> Self {
         BusinessUnitModel {
-            id: bu.id.to_string(),
-            code: bu.code.to_string(),
-            name: bu.name.to_string(),
-            created_at: *bu.created_at,
-            updated_at: *bu.updated_at,
+            id: bu.id().to_string(),
+            code: bu.code().to_string(),
+            name: bu.name().to_string(),
+            created_at: **bu.created_at(),
+            updated_at: **bu.updated_at(),
         }
     }
 }

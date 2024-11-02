@@ -1,6 +1,6 @@
 use crate::{
     bus::{Command, CommandBusContext, CommandHandler, CommandHandlerResult},
-    CommandBusResult,
+    commands::CommandType,
 };
 use bon::Builder;
 use perroute_commons::types::id::Id;
@@ -14,7 +14,11 @@ pub struct DeleteRouteCommand {
     id: Id,
 }
 
-impl Command for DeleteRouteCommand {}
+impl Command for DeleteRouteCommand {
+    fn command_type(&self) -> CommandType {
+        CommandType::DeleteRoute
+    }
+}
 
 pub struct DeleteRouteCommandHandler;
 

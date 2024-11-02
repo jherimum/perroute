@@ -53,10 +53,10 @@ impl BusinessUnitRepository for PgRepository {
         business_unit: BusinessUnit,
     ) -> RepositoryResult<BusinessUnit> {
         let query = query_as("update business_units set name = $1, vars = $2, updated_at = $3 where id = $4 returning *")
-            .bind(&business_unit.name)
-            .bind(&business_unit.vars)
-            .bind(&business_unit.updated_at)
-            .bind(&business_unit.id);
+            .bind(business_unit.name())
+            .bind(business_unit.vars())
+            .bind(business_unit.updated_at())
+            .bind(business_unit.id());
         Ok(fetch_one!(&self.source, query)?)
     }
 
@@ -73,12 +73,12 @@ impl BusinessUnitRepository for PgRepository {
         business_unit: BusinessUnit,
     ) -> RepositoryResult<BusinessUnit> {
         let query = query_as("insert into business_units (id, code, name, vars, created_at, updated_at) values ($1, $2, $3, $4, $5, $6) returning *")
-                .bind(&business_unit.id)
-                .bind(&business_unit.code)
-                .bind(&business_unit.name)
-                .bind(&business_unit.vars)
-                .bind(&business_unit.created_at)
-                .bind(&business_unit.updated_at);
+                .bind(business_unit.id())
+                .bind(business_unit.code())
+                .bind(business_unit.name())
+                .bind(business_unit.vars())
+                .bind(business_unit.created_at())
+                .bind(business_unit.updated_at());
 
         Ok(fetch_one!(&self.source, query)?)
     }

@@ -39,6 +39,7 @@ pub trait Repository:
     + ChannelRepository
     + EventRepository
     + RouteRepository
+    + EventRepository
 {
     fn begin(&self) -> impl Future<Output = RepositoryResult<impl TransactedRepository + Clone>>;
 }

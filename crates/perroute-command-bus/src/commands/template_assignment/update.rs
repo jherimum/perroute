@@ -1,6 +1,6 @@
 use crate::{
     bus::{Command, CommandBusContext, CommandHandler, CommandHandlerResult},
-    CommandBusResult,
+    commands::CommandType,
 };
 use bon::Builder;
 use perroute_commons::types::{priority::Priority, vars::Vars, Timestamp};
@@ -20,7 +20,11 @@ pub struct UpdateTemplateAssignmentCommand {
     pub enabled: bool,
 }
 
-impl Command for UpdateTemplateAssignmentCommand {}
+impl Command for UpdateTemplateAssignmentCommand {
+    fn command_type(&self) -> CommandType {
+        CommandType::UpdateTemplateAssignment
+    }
+}
 
 pub struct UpdateTemplateAssignmentCommandHandler;
 

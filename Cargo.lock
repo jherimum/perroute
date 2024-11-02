@@ -1880,6 +1880,9 @@ name = "perroute-events"
 version = "0.1.0"
 dependencies = [
  "perroute-commons",
+ "sqlx",
+ "strum",
+ "strum_macros",
 ]
 
 [[package]]

@@ -9,14 +9,14 @@ use sqlx::prelude::FromRow;
 #[setters(into)]
 pub struct BusinessUnit {
     #[setters(skip)]
-    pub id: Id,
+    id: Id,
     #[setters(skip)]
-    pub code: Code,
-    pub name: Name,
+    code: Code,
+    name: Name,
 
-    pub vars: Option<Vars>,
+    vars: Option<Vars>,
 
     #[setters(skip)]
-    pub created_at: Timestamp,
-    pub updated_at: Timestamp,
+    created_at: Timestamp,
+    updated_at: Timestamp,
 }

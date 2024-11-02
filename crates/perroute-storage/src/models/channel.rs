@@ -12,17 +12,17 @@ use sqlx::prelude::FromRow;
 
 pub struct Channel {
     #[setters(skip)]
-    pub id: Id,
+    id: Id,
     #[setters(skip)]
-    pub business_unit_id: Id,
-    pub name: Name,
+    business_unit_id: Id,
+    name: Name,
     #[setters(skip)]
-    pub provider_id: ProviderId,
+    provider_id: ProviderId,
     #[setters(skip)]
-    pub dispatch_type: DispatchType,
-    pub configuration: Configuration,
-    pub enabled: bool,
+    dispatch_type: DispatchType,
+    configuration: Configuration,
+    enabled: bool,
     #[setters(skip)]
-    pub created_at: Timestamp,
-    pub updated_at: Timestamp,
+    created_at: Timestamp,
+    updated_at: Timestamp,
 }

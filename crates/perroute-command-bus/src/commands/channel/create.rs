@@ -1,10 +1,12 @@
-use crate::bus::{
-    Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult,
+use crate::{
+    bus::{Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult},
+    commands::CommandType,
 };
 use bon::Builder;
 use perroute_commons::types::{
     id::Id, name::Name, Configuration, DispatchType, ProviderId, Timestamp,
 };
+use perroute_events::event::Event;
 use perroute_storage::{
     models::channel::Channel,
     repository::{
@@ -30,7 +32,11 @@ pub struct CreateChannelCommand {
     enabled: bool,
 }
 
-impl Command for CreateChannelCommand {}
+impl Command for CreateChannelCommand {
+    fn command_type(&self) -> CommandType {
+        CommandType::CreateChannel
+    }
+}
 
 pub struct CreateChannelCommandHandler;
 
@@ -67,6 +73,8 @@ impl CommandHandler for CreateChannelCommandHandler {
 
         let channel = ChannelRepository::save(ctx.repository(), channel).await?;
 
-        Ok(CommandHandlerOutput::new(channel, None))
+        CommandHandlerOutput::new(channel.clone())
+            .with_event(Event::ChannelCreated(channel.id().clone()))
+            .ok()
     }
 }

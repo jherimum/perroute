@@ -118,8 +118,8 @@ create table command_audit(
 
 create table event_messages(
     id              varchar(21) primary key,
-    event           json not null,
-    created_at      timestamp not null,
-    scheduled_to    timestamp not null,
+    event_type      varchar(100) not null,
+    entity_id       varchar(21) not null,
+    created_at      timestamp not null,    
     consumed_at     timestamp null
 );

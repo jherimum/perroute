@@ -1,8 +1,10 @@
-use crate::bus::{
-    Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult,
+use crate::{
+    bus::{Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult},
+    commands::CommandType,
 };
 use bon::Builder;
 use perroute_commons::types::id::Id;
+use perroute_events::event::Event;
 use perroute_storage::repository::{
     channels::{ChannelQuery, ChannelRepository},
     TransactedRepository,
@@ -16,7 +18,11 @@ pub struct DeleteChannelCommand {
     id: Id,
 }
 
-impl Command for DeleteChannelCommand {}
+impl Command for DeleteChannelCommand {
+    fn command_type(&self) -> CommandType {
+        CommandType::DeleteChannel
+    }
+}
 
 pub struct DeleteChannelCommandHandler;
 
@@ -33,6 +39,8 @@ impl CommandHandler for DeleteChannelCommandHandler {
             ChannelRepository::delete(ctx.repository(), &ChannelQuery::ById(cmd.id.clone()))
                 .await?;
 
-        Ok(CommandHandlerOutput::new(result > 0, None))
+        CommandHandlerOutput::new(result > 0)
+            .with_event(Event::ChannelDeleted(cmd.id.clone()))
+            .ok()
     }
 }

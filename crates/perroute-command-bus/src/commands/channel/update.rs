@@ -1,9 +1,11 @@
 use crate::{
     bus::{Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult},
+    commands::CommandType,
     CommandBusError,
 };
 use bon::Builder;
 use perroute_commons::types::{id::Id, name::Name, Configuration, Timestamp};
+use perroute_events::event::Event;
 use perroute_storage::{
     models::channel::Channel,
     repository::{
@@ -26,7 +28,11 @@ pub struct UpdateChannelCommand {
     enabled: bool,
 }
 
-impl Command for UpdateChannelCommand {}
+impl Command for UpdateChannelCommand {
+    fn command_type(&self) -> CommandType {
+        CommandType::UpdateChannel
+    }
+}
 
 pub struct UpdateChannelCommandHandler;
 
@@ -50,6 +56,8 @@ impl CommandHandler for UpdateChannelCommandHandler {
 
         let channel = ChannelRepository::update(ctx.repository(), channel).await?;
 
-        Ok(CommandHandlerOutput::new(channel, None))
+        CommandHandlerOutput::new(channel.clone())
+            .with_event(Event::ChannelUpdated(channel.id().clone()))
+            .ok()
     }
 }
