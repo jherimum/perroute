@@ -1,6 +1,8 @@
 pub mod actor;
+pub mod code;
 pub mod id;
 pub mod name;
+pub mod schema;
 pub mod vars;
 
 use chrono::{NaiveDateTime, Utc};
@@ -14,28 +16,6 @@ use std::{
 
 #[derive(Debug, Clone, PartialEq, Eq, Type)]
 #[sqlx(transparent)]
-pub struct Code(String);
-
-impl TryFrom<String> for Code {
-    type Error = String;
-
-    fn try_from(value: String) -> Result<Self, Self::Error> {
-        if value.is_empty() {
-            Err("Code cannot be empty".to_string())
-        } else {
-            Ok(Self(value))
-        }
-    }
-}
-
-impl Display for Code {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Type)]
-#[sqlx(transparent)]
 pub struct Timestamp(NaiveDateTime);
 
 impl Timestamp {
@@ -46,24 +26,6 @@ impl Timestamp {
 
 impl Deref for Timestamp {
     type Target = NaiveDateTime;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Type)]
-#[sqlx(transparent)]
-pub struct Schema(Value);
-
-impl Schema {
-    pub fn new(value: Value) -> Self {
-        Self(value)
-    }
-}
-
-impl Deref for Schema {
-    type Target = Value;
 
     fn deref(&self) -> &Self::Target {
         &self.0

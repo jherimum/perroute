@@ -3,7 +3,7 @@ use crate::{
     execute, fetch_all, fetch_one, fetch_optional,
     models::message_type::{MessageType, PayloadExample},
 };
-use perroute_commons::types::{id::Id, Code};
+use perroute_commons::types::{code::Code, id::Id};
 use sqlx::{postgres::PgQueryResult, query, query_as};
 use std::future::Future;
 

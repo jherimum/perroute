@@ -15,7 +15,7 @@ use perroute_command_bus::{
     },
     CommandBus, CommandBusError,
 };
-use perroute_commons::types::{actor::Actor, name::Name};
+use perroute_commons::types::{actor::Actor, code::Code, name::Name};
 use perroute_query_bus::{queries::business_unit::QueryBusinessUnitsHandler, QueryBus};
 use perroute_storage::{
     models::business_unit::BusinessUnit, repository::business_units::BusinessUnitQuery,
@@ -112,7 +112,7 @@ impl<CB: CommandBus, QB: QueryBus> BusinessUnitRestService for RestService<CB, Q
         let cmd = UpdateBusinessUnitCommand::builder()
             .id(id.id())
             .name(Name::try_from(&payload.name)?)
-            .maybe_vars(payload.vars())
+            .maybe_vars(payload.vars.as_ref().map(From::from))
             .build();
 
         let bu = self
@@ -132,8 +132,8 @@ impl<CB: CommandBus, QB: QueryBus> BusinessUnitRestService for RestService<CB, Q
     ) -> ResourceModelResult<BusinessUnitModel> {
         let cmd = CreateBusinessUnitCommand::builder()
             .name(Name::try_from(&payload.name)?)
-            .code(payload.code()?)
-            .maybe_vars(payload.vars())
+            .code(Code::try_from(&payload.code)?)
+            .maybe_vars(payload.vars.as_ref().map(From::from))
             .build();
 
         Ok(self

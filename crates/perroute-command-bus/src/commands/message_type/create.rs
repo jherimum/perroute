@@ -3,7 +3,9 @@ use crate::{
     CommandBusResult,
 };
 use bon::Builder;
-use perroute_commons::types::{id::Id, name::Name, vars::Vars, Code, Payload, Schema, Timestamp};
+use perroute_commons::types::{
+    code::Code, id::Id, name::Name, schema::Schema, vars::Vars, Payload, Timestamp,
+};
 use perroute_storage::{
     models::message_type::{MessageType, PayloadExample},
     repository::{

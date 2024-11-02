@@ -1,6 +1,8 @@
 use actix_web::{body::BoxBody, http::StatusCode, HttpResponse, Responder, ResponseError};
 use perroute_command_bus::CommandBusError;
-use perroute_commons::types::name::InvalidNameError;
+use perroute_commons::types::{
+    code::InvalidCodeError, name::InvalidNameError, schema::InvalidSchemaError,
+};
 use perroute_query_bus::QueryBusError;
 use serde::{ser::SerializeStruct, Serialize};
 use serde_json::Value;
@@ -41,6 +43,12 @@ pub enum ApiError {
 
     #[error("Invalid name error: {0}")]
     InvalidNameError(#[from] InvalidNameError),
+
+    #[error("Invalid code error: {0}")]
+    InvalidCodeError(#[from] InvalidCodeError),
+
+    #[error("Invalid schema error: {0}")]
+    InvalidSchemaError(#[from] InvalidSchemaError),
 }
 
 impl ResponseError for ApiError {

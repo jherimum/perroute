@@ -6,9 +6,9 @@ use std::collections::HashMap;
 #[sqlx(transparent)]
 pub struct Vars(Json<HashMap<String, String>>);
 
-impl Vars {
-    pub fn new(vars: HashMap<String, String>) -> Self {
-        Vars(Json(vars))
+impl From<&HashMap<String, String>> for Vars {
+    fn from(value: &HashMap<String, String>) -> Self {
+        Vars(Json(value.clone()))
     }
 }
 

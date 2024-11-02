@@ -1,11 +1,10 @@
+use crate::rest::models::ResourceModel;
 use chrono::NaiveDateTime;
-use perroute_commons::types::{id::Id, name::Name, vars::Vars, Code};
+use perroute_commons::types::id::Id;
 use perroute_storage::models::business_unit::BusinessUnit;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, fmt::Debug};
 use validator::Validate;
-
-use crate::rest::{error::ApiError, models::ResourceModel};
 
 #[derive(Debug, Deserialize)]
 pub struct BusinessUnitPath(String);
@@ -53,28 +52,8 @@ pub struct CreateBusinessUnitRequest {
     pub vars: Option<HashMap<String, String>>,
 }
 
-impl CreateBusinessUnitRequest {
-    pub fn code(&self) -> Result<Code, ApiError> {
-        Code::try_from(self.code.clone()).map_err(|_| ApiError::BadRequest)
-    }
-
-    // pub fn name(&self) -> Result<Name, ApiError> {
-    //     Name::try_from(self.name.clone()).map_err(|_| ApiError::BadRequest)
-    // }
-
-    pub fn vars(&self) -> Option<Vars> {
-        self.vars.as_ref().map(|v| Vars::new(v.clone()))
-    }
-}
-
 #[derive(Debug, Deserialize, Validate)]
 pub struct UpdateBusinessUnitRequest {
     pub name: String,
     pub vars: Option<HashMap<String, String>>,
-}
-
-impl UpdateBusinessUnitRequest {
-    pub fn vars(&self) -> Option<Vars> {
-        self.vars.as_ref().map(|v| Vars::new(v.clone()))
-    }
 }
