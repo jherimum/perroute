@@ -1,11 +1,14 @@
 use crate::{
     bus::{Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult},
-    commands::{message_type::PayloadExamplesInput, CommandType},
+    commands::message_type::PayloadExamplesInput,
     CommandBusError,
 };
 use bon::Builder;
-use perroute_commons::types::{id::Id, name::Name, schema::Schema, vars::Vars, Payload, Timestamp};
-use perroute_events::event::Event;
+use perroute_commons::{
+    commands::CommandType,
+    events::Event,
+    types::{id::Id, name::Name, schema::Schema, vars::Vars, Payload, Timestamp},
+};
 use perroute_storage::{
     models::message_type::{MessageType, PayloadExample},
     repository::{
@@ -13,6 +16,7 @@ use perroute_storage::{
         TransactedRepository,
     },
 };
+use serde::Serialize;
 
 #[derive(Debug, thiserror::Error)]
 pub enum UpdateMessageTypeCommandError {
@@ -20,7 +24,7 @@ pub enum UpdateMessageTypeCommandError {
     NotFound,
 }
 
-#[derive(Debug, Clone, Builder)]
+#[derive(Debug, Clone, Builder, Serialize)]
 pub struct UpdateMessageTypeCommand {
     id: Id,
     name: Name,

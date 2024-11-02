@@ -1845,9 +1845,9 @@ dependencies = [
  "derive_setters",
  "log",
  "perroute-commons",
- "perroute-events",
  "perroute-storage",
  "serde",
+ "serde_json",
  "tap",
  "thiserror",
 ]
@@ -1876,16 +1876,6 @@ name = "perroute-connectors"
 version = "0.1.0"
 
 [[package]]
-name = "perroute-events"
-version = "0.1.0"
-dependencies = [
- "perroute-commons",
- "sqlx",
- "strum",
- "strum_macros",
-]
-
-[[package]]
 name = "perroute-events-pooling"
 version = "0.1.0"
 
@@ -1908,8 +1898,8 @@ dependencies = [
  "derive-getters",
  "derive_setters",
  "perroute-commons",
- "perroute-events",
  "secrecy",
+ "serde",
  "serde_json",
  "sqlx",
  "thiserror",

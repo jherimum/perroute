@@ -1,11 +1,13 @@
 use crate::{
     bus::{Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult},
-    commands::CommandType,
     CommandBusError,
 };
 use bon::Builder;
-use perroute_commons::types::{id::Id, name::Name, Configuration, Timestamp};
-use perroute_events::event::Event;
+use perroute_commons::{
+    commands::CommandType,
+    events::Event,
+    types::{id::Id, name::Name, Configuration, Timestamp},
+};
 use perroute_storage::{
     models::channel::Channel,
     repository::{

@@ -1,8 +1,10 @@
 use bon::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
-use perroute_commons::types::{id::Id, Timestamp};
-use perroute_events::event::{Event, EventType};
+use perroute_commons::{
+    events::{Event, EventType},
+    types::{id::Id, Timestamp},
+};
 use sqlx::prelude::FromRow;
 
 #[derive(Debug, Clone, PartialEq, Eq, FromRow, Builder, Getters, Setters)]

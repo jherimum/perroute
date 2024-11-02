@@ -1,19 +1,19 @@
-use crate::{
-    bus::{Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult},
-    commands::CommandType,
+use crate::bus::{
+    Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult,
 };
 use bon::Builder;
-use perroute_commons::types::id::Id;
-use perroute_events::event::Event;
+use perroute_commons::events::Event;
+use perroute_commons::{commands::CommandType, types::id::Id};
 use perroute_storage::repository::{
     channels::{ChannelQuery, ChannelRepository},
     TransactedRepository,
 };
+use serde::Serialize;
 
 #[derive(Debug, thiserror::Error)]
 pub enum DeleteChannelCommandError {}
 
-#[derive(Debug, Clone, Builder)]
+#[derive(Debug, Clone, Builder, Serialize)]
 pub struct DeleteChannelCommand {
     id: Id,
 }

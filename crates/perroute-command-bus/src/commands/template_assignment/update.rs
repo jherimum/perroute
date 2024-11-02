@@ -1,9 +1,9 @@
-use crate::{
-    bus::{Command, CommandBusContext, CommandHandler, CommandHandlerResult},
-    commands::CommandType,
-};
+use crate::bus::{Command, CommandBusContext, CommandHandler, CommandHandlerResult};
 use bon::Builder;
-use perroute_commons::types::{priority::Priority, vars::Vars, Timestamp};
+use perroute_commons::{
+    commands::CommandType,
+    types::{priority::Priority, vars::Vars, Timestamp},
+};
 use perroute_storage::{
     models::template_assignment::TemplateAssignment, repository::TransactedRepository,
 };

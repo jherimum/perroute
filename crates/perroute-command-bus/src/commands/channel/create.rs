@@ -1,12 +1,12 @@
-use crate::{
-    bus::{Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult},
-    commands::CommandType,
+use crate::bus::{
+    Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult,
 };
 use bon::Builder;
-use perroute_commons::types::{
-    id::Id, name::Name, Configuration, DispatchType, ProviderId, Timestamp,
+use perroute_commons::{
+    commands::CommandType,
+    events::Event,
+    types::{id::Id, name::Name, Configuration, DispatchType, ProviderId, Timestamp},
 };
-use perroute_events::event::Event;
 use perroute_storage::{
     models::channel::Channel,
     repository::{
@@ -15,6 +15,7 @@ use perroute_storage::{
         TransactedRepository,
     },
 };
+use serde::Serialize;
 
 #[derive(Debug, thiserror::Error)]
 pub enum CreateChannelCommandError {
@@ -22,7 +23,7 @@ pub enum CreateChannelCommandError {
     BusinessUnitNotFound,
 }
 
-#[derive(Debug, Clone, Builder)]
+#[derive(Debug, Clone, Builder, Serialize)]
 pub struct CreateChannelCommand {
     business_unit_id: Id,
     name: Name,

@@ -3,7 +3,8 @@ resolver = "2"
 members = [
     "crates/perroute-api",
     "crates/perroute-command-bus",
-    "crates/perroute-commons", "crates/perroute-connectors", "crates/perroute-events",
+    "crates/perroute-commons",
+    "crates/perroute-connectors",
     "crates/perroute-events-pooling",
     "crates/perroute-query-bus",
     "crates/perroute-storage",

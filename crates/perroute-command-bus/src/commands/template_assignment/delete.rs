@@ -1,9 +1,6 @@
-use crate::{
-    bus::{Command, CommandBusContext, CommandHandler, CommandHandlerResult},
-    commands::CommandType,
-};
+use crate::bus::{Command, CommandBusContext, CommandHandler, CommandHandlerResult};
 use bon::Builder;
-use perroute_commons::types::id::Id;
+use perroute_commons::{commands::CommandType, types::id::Id};
 use perroute_storage::repository::TransactedRepository;
 
 #[derive(Debug, thiserror::Error)]

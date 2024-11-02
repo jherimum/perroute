@@ -1,15 +1,15 @@
-use crate::{
-    bus::{Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult},
-    commands::CommandType,
+use crate::bus::{
+    Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult,
 };
 use bon::Builder;
-use perroute_commons::types::id::Id;
+use perroute_commons::{commands::CommandType, events::Event, types::id::Id};
 use perroute_storage::repository::{business_units::BusinessUnitRepository, TransactedRepository};
+use serde::Serialize;
 
 #[derive(Debug, thiserror::Error)]
 pub enum DeleteBusinessUnitCommandError {}
 
-#[derive(Debug, Clone, Builder)]
+#[derive(Debug, Clone, Builder, Serialize)]
 pub struct DeleteBusinessUnitCommand {
     pub id: Id,
 }
@@ -35,9 +35,7 @@ impl CommandHandler for DeleteBusinessUnitCommandHandler {
             BusinessUnitRepository::delete_business_unit(ctx.repository(), &cmd.id).await?;
 
         CommandHandlerOutput::new(deleted)
-            .with_event(perroute_events::event::Event::BusinessUnitDeleted(
-                cmd.id.clone(),
-            ))
+            .with_event(Event::BusinessUnitDeleted(cmd.id.clone()))
             .ok()
     }
 }

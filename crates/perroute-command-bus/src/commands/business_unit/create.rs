@@ -1,10 +1,12 @@
-use crate::{
-    bus::{Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult},
-    commands::CommandType,
+use crate::bus::{
+    Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult,
 };
 use bon::Builder;
-use perroute_commons::types::{code::Code, id::Id, name::Name, vars::Vars, Timestamp};
-use perroute_events::event::Event;
+use perroute_commons::{
+    commands::CommandType,
+    events::Event,
+    types::{code::Code, id::Id, name::Name, vars::Vars, Timestamp},
+};
 use perroute_storage::{
     models::business_unit::BusinessUnit,
     repository::{
@@ -12,6 +14,7 @@ use perroute_storage::{
         TransactedRepository,
     },
 };
+use serde::Serialize;
 use tap::TapFallible;
 
 #[derive(Debug, thiserror::Error)]
@@ -20,7 +23,7 @@ pub enum CreateBusinessUnitCommandError {
     CodeAlreadyExists(Code),
 }
 
-#[derive(Debug, Clone, Builder)]
+#[derive(Debug, Clone, Builder, Serialize)]
 pub struct CreateBusinessUnitCommand {
     name: Name,
     code: Code,

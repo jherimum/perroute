@@ -110,7 +110,8 @@ create table message_dispatches(
 
 create table command_audit(
     id              varchar(21) primary key,
-    command         jsonb not null,
+    command_type    varchar(100) not null,
+    command_data    jsonb not null,
     actor           json not null,
     created_at      timestamp not null
 );

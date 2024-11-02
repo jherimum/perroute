@@ -7,6 +7,7 @@ pub mod schema;
 pub mod vars;
 
 use chrono::{NaiveDateTime, Utc};
+use serde::Serialize;
 use serde_json::Value;
 use sqlx::prelude::Type;
 use std::{
@@ -33,7 +34,8 @@ impl Deref for Timestamp {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(transparent)]
 pub struct ProviderId(String);
 
 impl ProviderId {
@@ -48,14 +50,15 @@ impl Display for ProviderId {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, strum::EnumString, strum::Display)]
+#[derive(Debug, Clone, PartialEq, Eq, strum::EnumString, strum::Display, Serialize)]
 pub enum DispatchType {
     Email,
     Sms,
     Push,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(transparent)]
 pub struct Configuration(HashMap<String, String>);
 
 impl Configuration {
@@ -72,8 +75,9 @@ impl Deref for Configuration {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Type)]
+#[derive(Debug, Clone, PartialEq, Eq, Type, Serialize)]
 #[sqlx(transparent)]
+#[serde(transparent)]
 pub struct Payload(Value);
 
 impl Payload {

@@ -1,11 +1,13 @@
 pub mod business_units;
 pub mod channels;
+pub mod command_audit;
 pub mod events;
 pub mod message_types;
 pub mod routes;
 
 use business_units::BusinessUnitRepository;
 use channels::ChannelRepository;
+use command_audit::CommandAuditRepository;
 use events::EventRepository;
 use message_types::{MessageTypeRepository, PayloadExampleRepository};
 use perroute_commons::configuration::settings::DatabaseSettings;
@@ -40,6 +42,7 @@ pub trait Repository:
     + EventRepository
     + RouteRepository
     + EventRepository
+    + CommandAuditRepository
 {
     fn begin(&self) -> impl Future<Output = RepositoryResult<impl TransactedRepository + Clone>>;
 }

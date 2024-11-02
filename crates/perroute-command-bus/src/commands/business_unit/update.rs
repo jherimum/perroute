@@ -1,15 +1,18 @@
 use crate::{
     bus::{Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult},
-    commands::CommandType,
     CommandBusError,
 };
 use bon::Builder;
-use perroute_commons::types::{id::Id, name::Name, vars::Vars};
-use perroute_events::event::Event;
+use perroute_commons::events::Event;
+use perroute_commons::{
+    commands::CommandType,
+    types::{id::Id, name::Name, vars::Vars},
+};
 use perroute_storage::{
     models::business_unit::BusinessUnit,
     repository::{business_units::BusinessUnitRepository, TransactedRepository},
 };
+use serde::Serialize;
 
 #[derive(Debug, thiserror::Error)]
 pub enum UpdateBusinessUnitCommandError {
@@ -17,7 +20,7 @@ pub enum UpdateBusinessUnitCommandError {
     NotFound,
 }
 
-#[derive(Debug, Clone, Builder)]
+#[derive(Debug, Clone, Builder, Serialize)]
 pub struct UpdateBusinessUnitCommand {
     pub id: Id,
     pub name: Name,

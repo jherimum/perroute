@@ -1,13 +1,15 @@
 use std::fmt::Display;
 
+use serde::Serialize;
 use sqlx::prelude::Type;
 
 #[derive(Debug, thiserror::Error)]
 #[error("Invalid name: {0}")]
 pub struct InvalidNameError(&'static str);
 
-#[derive(Debug, Clone, PartialEq, Eq, Type)]
+#[derive(Debug, Clone, PartialEq, Eq, Type, Serialize)]
 #[sqlx(transparent)]
+#[serde(transparent)]
 pub struct Name(String);
 
 impl TryFrom<&String> for Name {

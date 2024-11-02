@@ -1,12 +1,12 @@
-use crate::{
-    bus::{Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult},
-    commands::CommandType,
+use crate::bus::{
+    Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult,
 };
 use bon::Builder;
-use perroute_commons::types::{
-    code::Code, id::Id, name::Name, schema::Schema, vars::Vars, Payload, Timestamp,
+use perroute_commons::{
+    commands::CommandType,
+    events::Event,
+    types::{code::Code, id::Id, name::Name, schema::Schema, vars::Vars, Payload, Timestamp},
 };
-use perroute_events::event::Event;
 use perroute_storage::{
     models::message_type::{MessageType, PayloadExample},
     repository::{
@@ -14,6 +14,7 @@ use perroute_storage::{
         TransactedRepository,
     },
 };
+use serde::Serialize;
 
 use super::PayloadExamplesInput;
 
@@ -23,7 +24,7 @@ pub enum CreateMessageTypeCommandError {
     AlreadyExists,
 }
 
-#[derive(Debug, Clone, Builder)]
+#[derive(Debug, Clone, Builder, Serialize)]
 pub struct CreateMessageTypeCommand {
     code: Code,
     name: Name,

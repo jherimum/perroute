@@ -1,16 +1,15 @@
-use crate::{
-    bus::{Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult},
-    commands::CommandType,
+use crate::bus::{
+    Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult,
 };
 use bon::Builder;
-use perroute_commons::types::id::Id;
-use perroute_events::event::Event;
+use perroute_commons::{commands::CommandType, events::Event, types::id::Id};
 use perroute_storage::repository::{message_types::MessageTypeRepository, TransactedRepository};
+use serde::Serialize;
 
 #[derive(Debug, thiserror::Error)]
 pub enum DeleteMessageTypeCommandError {}
 
-#[derive(Debug, Clone, Builder)]
+#[derive(Debug, Clone, Builder, Serialize)]
 pub struct DeleteMessageTypeCommand {
     id: Id,
 }

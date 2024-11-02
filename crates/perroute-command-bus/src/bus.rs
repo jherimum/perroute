@@ -21,16 +21,19 @@ use crate::{
             delete::DeleteTemplateAssignmentCommandHandler,
             update::UpdateTemplateAssignmentCommandHandler,
         },
-        CommandType,
     },
     CommandBusError, CommandBusResult,
 };
-use perroute_commons::types::actor::Actor;
-use perroute_events::event::Event;
+use perroute_commons::events::Event;
+use perroute_commons::{commands::CommandType, types::actor::Actor};
 use perroute_storage::{
-    models::event::DbEvent,
-    repository::{events::EventRepository, Repository, TransactedRepository},
+    models::{command_audit::command_audit_builder, event::DbEvent},
+    repository::{
+        command_audit::CommandAuditRepository, events::EventRepository, Repository,
+        TransactedRepository,
+    },
 };
+use serde::Serialize;
 use std::{
     any::{Any, TypeId},
     collections::HashMap,
@@ -95,7 +98,7 @@ pub trait Command {
 pub trait CommandBus {
     fn execute<C, H, O>(&self, actor: &Actor, cmd: &C) -> impl Future<Output = CommandBusResult<O>>
     where
-        C: Command + 'static,
+        C: Command + 'static + Serialize,
         H: CommandHandler<Command = C, Output = O> + 'static;
 }
 
@@ -152,11 +155,20 @@ impl<R: Repository> DefaultCommandBus<R> {
 impl<R: Repository> CommandBus for DefaultCommandBus<R> {
     async fn execute<C, H, O>(&self, actor: &Actor, cmd: &C) -> CommandBusResult<O>
     where
-        C: Command + 'static,
+        C: Command + 'static + Serialize,
         H: CommandHandler<Command = C, Output = O> + 'static,
     {
         let handler = self.get_handler::<C, H, O>()?;
         let tx = self.repository.begin().await?;
+
+        let command_audit = command_audit_builder()
+            .actor(&actor)
+            .command_data(cmd)
+            .command_type(&cmd.command_type())
+            .call();
+
+        CommandAuditRepository::save(&tx, command_audit).await?;
+
         let ctx = CommandBusContext {
             repository: tx.clone(),
             actor,
