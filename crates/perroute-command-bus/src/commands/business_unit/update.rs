@@ -29,13 +29,12 @@ pub struct UpdateBusinessUnitCommandHandler;
 impl CommandHandler for UpdateBusinessUnitCommandHandler {
     type Command = UpdateBusinessUnitCommand;
     type Output = BusinessUnit;
-    type Event = ();
 
     async fn handle<R: TransactedRepository>(
         &self,
         cmd: &Self::Command,
         ctx: CommandBusContext<'_, R>,
-    ) -> CommandHandlerResult<Self::Output, Self::Event> {
+    ) -> CommandHandlerResult<Self::Output> {
         let bu = match BusinessUnitRepository::find_business_unit(ctx.repository(), &cmd.id).await?
         {
             Some(bu) => {

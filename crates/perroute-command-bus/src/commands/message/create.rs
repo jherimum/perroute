@@ -27,13 +27,12 @@ pub struct CreateMessageCommandHandler;
 impl CommandHandler for CreateMessageCommandHandler {
     type Command = CreateMessageCommand;
     type Output = Message;
-    type Event = ();
 
     async fn handle<R: TransactedRepository>(
         &self,
         cmd: &Self::Command,
         ctx: CommandBusContext<'_, R>,
-    ) -> CommandHandlerResult<Self::Output, Self::Event> {
+    ) -> CommandHandlerResult<Self::Output> {
         todo!()
     }
 }

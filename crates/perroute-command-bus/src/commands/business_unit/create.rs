@@ -31,14 +31,13 @@ pub struct CreateBusinessUnitCommandHandler;
 
 impl CommandHandler for CreateBusinessUnitCommandHandler {
     type Command = CreateBusinessUnitCommand;
-    type Event = ();
     type Output = BusinessUnit;
 
     async fn handle<R: TransactedRepository>(
         &self,
         cmd: &Self::Command,
         ctx: CommandBusContext<'_, R>,
-    ) -> CommandHandlerResult<Self::Output, Self::Event> {
+    ) -> CommandHandlerResult<Self::Output> {
         let exists = BusinessUnitRepository::exists_business_unit(
             ctx.repository(),
             &BusinessUnitQuery::ByCode(cmd.code.clone()),

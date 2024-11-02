@@ -38,13 +38,12 @@ pub struct CreateMessageTypeCommandHandler;
 impl CommandHandler for CreateMessageTypeCommandHandler {
     type Command = CreateMessageTypeCommand;
     type Output = (MessageType, Vec<PayloadExample>);
-    type Event = ();
 
     async fn handle<R: TransactedRepository>(
         &self,
         cmd: &Self::Command,
         ctx: CommandBusContext<'_, R>,
-    ) -> CommandHandlerResult<Self::Output, Self::Event> {
+    ) -> CommandHandlerResult<Self::Output> {
         let exists = MessageTypeRepository::exists_message_type(
             ctx.repository(),
             &MessageTypeQuery::ByCode(cmd.code.clone()),

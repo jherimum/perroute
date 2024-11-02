@@ -20,13 +20,12 @@ pub struct DeleteMessageTypeCommandHandler;
 impl CommandHandler for DeleteMessageTypeCommandHandler {
     type Command = DeleteMessageTypeCommand;
     type Output = bool;
-    type Event = ();
 
     async fn handle<R: TransactedRepository>(
         &self,
         cmd: &Self::Command,
         ctx: CommandBusContext<'_, R>,
-    ) -> CommandHandlerResult<Self::Output, Self::Event> {
+    ) -> CommandHandlerResult<Self::Output> {
         Ok(CommandHandlerOutput::new(
             MessageTypeRepository::delete_message_type(ctx.repository(), &cmd.id).await?,
             None,

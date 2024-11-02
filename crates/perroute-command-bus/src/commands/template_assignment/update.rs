@@ -27,13 +27,12 @@ pub struct UpdateTemplateAssignmentCommandHandler;
 impl CommandHandler for UpdateTemplateAssignmentCommandHandler {
     type Command = UpdateTemplateAssignmentCommand;
     type Output = TemplateAssignment;
-    type Event = ();
 
     async fn handle<R: TransactedRepository>(
         &self,
         cmd: &Self::Command,
         ctx: CommandBusContext<'_, R>,
-    ) -> CommandHandlerResult<Self::Output, Self::Event> {
+    ) -> CommandHandlerResult<Self::Output> {
         todo!()
     }
 }

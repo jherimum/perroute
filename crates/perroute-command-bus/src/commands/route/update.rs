@@ -23,13 +23,12 @@ pub struct UpdateRouteCommandHandler;
 impl CommandHandler for UpdateRouteCommandHandler {
     type Command = UpdateRouteCommand;
     type Output = Route;
-    type Event = ();
 
     async fn handle<R: TransactedRepository>(
         &self,
         cmd: &Self::Command,
         ctx: CommandBusContext<'_, R>,
-    ) -> CommandHandlerResult<Self::Output, Self::Event> {
+    ) -> CommandHandlerResult<Self::Output> {
         todo!()
     }
 }

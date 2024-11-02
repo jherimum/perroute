@@ -36,13 +36,12 @@ pub struct UpdateMessageTypeCommandHandler;
 impl CommandHandler for UpdateMessageTypeCommandHandler {
     type Command = UpdateMessageTypeCommand;
     type Output = (MessageType, Vec<PayloadExample>);
-    type Event = ();
 
     async fn handle<R: TransactedRepository>(
         &self,
         cmd: &Self::Command,
         ctx: CommandBusContext<'_, R>,
-    ) -> CommandHandlerResult<Self::Output, Self::Event> {
+    ) -> CommandHandlerResult<Self::Output> {
         let message_type = MessageTypeRepository::find_message_type(ctx.repository(), &cmd.id)
             .await?
             .ok_or(CommandBusError::from(

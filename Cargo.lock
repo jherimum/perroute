@@ -1878,6 +1878,9 @@ version = "0.1.0"
 [[package]]
 name = "perroute-events"
 version = "0.1.0"
+dependencies = [
+ "perroute-commons",
+]
 
 [[package]]
 name = "perroute-events-pooling"

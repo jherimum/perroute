@@ -74,7 +74,7 @@ impl<CB: CommandBus, QB: QueryBus> MessageTypeRestService for RestService<CB, QB
     async fn delete(&self, actor: &Actor, path: &MessageTypePath) -> RestServiceResult<bool> {
         Ok(self
             .command_bus()
-            .execute::<_, DeleteMessageTypeCommandHandler, _, _>(
+            .execute::<_, DeleteMessageTypeCommandHandler, _>(
                 actor,
                 &DeleteMessageTypeCommand::builder().id(path.id()).build(),
             )
@@ -98,7 +98,7 @@ impl<CB: CommandBus, QB: QueryBus> MessageTypeRestService for RestService<CB, QB
 
         let mt = self
             .command_bus()
-            .execute::<_, UpdateMessageTypeCommandHandler, _, _>(actor, &cmd)
+            .execute::<_, UpdateMessageTypeCommandHandler, _>(actor, &cmd)
             .await?;
 
         Ok(ResourceModel::new(MessageTypeModel::from(&mt)))
@@ -121,7 +121,7 @@ impl<CB: CommandBus, QB: QueryBus> MessageTypeRestService for RestService<CB, QB
 
         let mt = self
             .command_bus()
-            .execute::<_, CreateMessageTypeCommandHandler, _, _>(actor, &cmd)
+            .execute::<_, CreateMessageTypeCommandHandler, _>(actor, &cmd)
             .await?;
 
         Ok(ResourceModel::new(MessageTypeModel::from(&mt)))

@@ -1,7 +1,7 @@
 use actix_web::{body::BoxBody, http::StatusCode, HttpResponse, Responder, ResponseError};
 use perroute_command_bus::CommandBusError;
 use perroute_commons::types::{
-    code::InvalidCodeError, name::InvalidNameError, schema::InvalidSchemaError, DispatchType,
+    code::InvalidCodeError, name::InvalidNameError, schema::InvalidSchemaError,
 };
 use perroute_query_bus::QueryBusError;
 use serde::{ser::SerializeStruct, Serialize};

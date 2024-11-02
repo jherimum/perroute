@@ -20,13 +20,12 @@ pub struct DeleteBusinessUnitCommandHandler;
 impl CommandHandler for DeleteBusinessUnitCommandHandler {
     type Command = DeleteBusinessUnitCommand;
     type Output = bool;
-    type Event = ();
 
     async fn handle<R: TransactedRepository>(
         &self,
         cmd: &Self::Command,
         ctx: CommandBusContext<'_, R>,
-    ) -> CommandHandlerResult<Self::Output, Self::Event> {
+    ) -> CommandHandlerResult<Self::Output> {
         let deleted =
             BusinessUnitRepository::delete_business_unit(ctx.repository(), &cmd.id).await?;
 

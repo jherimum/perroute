@@ -1,10 +1,12 @@
-use crate::{
-    bus::{Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult},
-    CommandBusResult,
+use crate::bus::{
+    Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult,
 };
 use bon::Builder;
 use perroute_commons::types::id::Id;
-use perroute_storage::repository::TransactedRepository;
+use perroute_storage::repository::{
+    channels::{ChannelQuery, ChannelRepository},
+    TransactedRepository,
+};
 
 #[derive(Debug, thiserror::Error)]
 pub enum DeleteChannelCommandError {}
@@ -21,13 +23,16 @@ pub struct DeleteChannelCommandHandler;
 impl CommandHandler for DeleteChannelCommandHandler {
     type Command = DeleteChannelCommand;
     type Output = bool;
-    type Event = ();
 
     async fn handle<R: TransactedRepository>(
         &self,
         cmd: &Self::Command,
         ctx: CommandBusContext<'_, R>,
-    ) -> CommandHandlerResult<Self::Output, Self::Event> {
-        todo!()
+    ) -> CommandHandlerResult<Self::Output> {
+        let result =
+            ChannelRepository::delete(ctx.repository(), &ChannelQuery::ById(cmd.id.clone()))
+                .await?;
+
+        Ok(CommandHandlerOutput::new(result > 0, None))
     }
 }
