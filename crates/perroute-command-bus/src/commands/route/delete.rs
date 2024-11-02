@@ -3,8 +3,8 @@ use crate::{
     CommandBusResult,
 };
 use bon::Builder;
-use perroute_commons::types::{id::Id, Configuration, Priority};
-use perroute_storage::{models::route::Route, repository::TransactedRepository};
+use perroute_commons::types::id::Id;
+use perroute_storage::repository::TransactedRepository;
 
 #[derive(Debug, thiserror::Error)]
 pub enum DeleteRouteCommandError {}

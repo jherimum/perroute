@@ -25,7 +25,7 @@ impl<RS: BusinessUnitRestService> BusinessUnitController<RS> {
         service
             .get(&Actor::System, &path)
             .await
-            .map(|b| ApiResponse::ok(b))
+            .map(ApiResponse::ok)
     }
 
     pub async fn query(
@@ -35,7 +35,7 @@ impl<RS: BusinessUnitRestService> BusinessUnitController<RS> {
         service
             .query(&Actor::System, &path)
             .await
-            .map(|bus| ApiResponse::ok(bus))
+            .map(ApiResponse::ok)
     }
 
     pub async fn delete(service: Data<RS>, path: Path<BusinessUnitPath>) -> ApiResult<()> {

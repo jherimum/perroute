@@ -69,7 +69,7 @@ impl<R: Repository> DefaultQueryBus<R> {
         }
     }
 
-    pub fn register<'q, Q, H>(mut self, handler: H) -> Self
+    pub fn register<Q, H>(mut self, handler: H) -> Self
     where
         Q: Query + 'static,
         H: QueryHandler<Query = Q> + 'static + Sync + Send,

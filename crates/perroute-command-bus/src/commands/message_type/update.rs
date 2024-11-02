@@ -60,7 +60,7 @@ impl CommandHandler for UpdateMessageTypeCommandHandler {
             .await?;
 
         let examples: Vec<PayloadExample> =
-            PayloadExamplesInput::new(&message_type.id(), &cmd.payload_examples).into();
+            PayloadExamplesInput::new(message_type.id(), &cmd.payload_examples).into();
 
         let examples =
             PayloadExampleRepository::save_payload_examples(ctx.repository(), &examples).await?;

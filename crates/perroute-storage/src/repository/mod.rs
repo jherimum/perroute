@@ -59,11 +59,9 @@ impl Source {
                     tx.commit().await?;
                     Ok(())
                 }
-                Err(_) => {
-                    return Err(Error::InvalidRepositoryState(
-                        "Unexpected error when unwrapping transaction",
-                    ));
-                }
+                Err(_) => Err(Error::InvalidRepositoryState(
+                    "Unexpected error when unwrapping transaction",
+                )),
             },
             _ => Err(Error::InvalidRepositoryState(
                 "There is no transaction to commit",
@@ -79,11 +77,9 @@ impl Source {
                     tx.rollback().await?;
                     Ok(())
                 }
-                Err(_) => {
-                    return Err(Error::InvalidRepositoryState(
-                        "Unexpected error when unwrapping transaction",
-                    ));
-                }
+                Err(_) => Err(Error::InvalidRepositoryState(
+                    "Unexpected error when unwrapping transaction",
+                )),
             },
             _ => Err(Error::InvalidRepositoryState(
                 "There is no transaction to commit",
