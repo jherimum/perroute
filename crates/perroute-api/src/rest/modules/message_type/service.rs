@@ -3,7 +3,8 @@ use crate::rest::{
     modules::message_type::models::{
         CreateMessageTypeRequest, MessageTypeModel, MessageTypePath, UpdateMessageTypeRequest,
     },
-    ResourceModelCollectionResult, ResourceModelResult, RestService, RestServiceResult,
+    service::RestService,
+    ResourceModelCollectionResult, ResourceModelResult, RestServiceResult,
 };
 use perroute_command_bus::{
     commands::message_type::{
@@ -13,11 +14,11 @@ use perroute_command_bus::{
     },
     CommandBus,
 };
-use perroute_commons::types::{actor::Actor, code::Code, name::Name, schema::Schema};
+use perroute_commons::types::actor::Actor;
 use perroute_query_bus::QueryBus;
 use std::future::Future;
 
-use super::models::{MessageTypeCollectionPath, PayloadExampleModel};
+use super::models::MessageTypeCollectionPath;
 
 pub trait MessageTypeRestService {
     fn get(
@@ -88,11 +89,11 @@ impl<CB: CommandBus, QB: QueryBus> MessageTypeRestService for RestService<CB, QB
     ) -> ResourceModelResult<MessageTypeModel> {
         let cmd = UpdateMessageTypeCommand::builder()
             .id(path.id())
-            .name(Name::try_from(&payload.name)?)
-            .enabled(payload.enabled)
-            .maybe_vars(payload.vars.as_ref().map(From::from))
-            .schema(Schema::try_from(&payload.schema)?)
-            .payload_examples(PayloadExampleModel::from_model(&payload.payload_examples)?)
+            .name(payload.name()?)
+            .enabled(payload.enabled())
+            .maybe_vars(payload.vars()?)
+            .schema(payload.schema()?)
+            .payload_examples(payload.payload_examples()?)
             .build();
 
         let mt = self
@@ -110,12 +111,12 @@ impl<CB: CommandBus, QB: QueryBus> MessageTypeRestService for RestService<CB, QB
         payload: &CreateMessageTypeRequest,
     ) -> ResourceModelResult<MessageTypeModel> {
         let cmd = CreateMessageTypeCommand::builder()
-            .code(Code::try_from(&payload.code)?)
-            .name(Name::try_from(&payload.name)?)
-            .enabled(payload.enabled)
-            .maybe_vars(payload.vars.as_ref().map(From::from))
-            .schema(Schema::try_from(&payload.schema)?)
-            .payload_examples(PayloadExampleModel::from_model(&payload.payload_examples)?)
+            .code(payload.code()?)
+            .name(payload.name()?)
+            .enabled(payload.enabled())
+            .maybe_vars(payload.vars()?)
+            .schema(payload.schema()?)
+            .payload_examples(payload.payload_examples()?)
             .build();
 
         let mt = self

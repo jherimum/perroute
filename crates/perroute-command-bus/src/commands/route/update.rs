@@ -3,7 +3,7 @@ use crate::{
     CommandBusResult,
 };
 use bon::Builder;
-use perroute_commons::types::{Configuration, Priority};
+use perroute_commons::types::{priority::Priority, Configuration};
 use perroute_storage::{models::route::Route, repository::TransactedRepository};
 
 #[derive(Debug, thiserror::Error)]

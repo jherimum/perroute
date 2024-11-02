@@ -4,6 +4,7 @@ use crate::commands::{
     business_unit::{
         create::CreateBusinessUnitCommandError, update::UpdateBusinessUnitCommandError,
     },
+    channel::create::CreateChannelCommandError,
     message_type::{create::CreateMessageTypeCommandError, update::UpdateMessageTypeCommandError},
 };
 
@@ -26,4 +27,7 @@ pub enum CommandBusError {
 
     #[error("Update message type command error: {0}")]
     UpdateMessageTypeCommandError(#[from] UpdateMessageTypeCommandError),
+
+    #[error("Create channel command error: {0}")]
+    CreateChannelCommandError(#[from] CreateChannelCommandError),
 }

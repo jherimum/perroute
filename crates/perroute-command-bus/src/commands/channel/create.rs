@@ -3,11 +3,23 @@ use crate::{
     CommandBusResult,
 };
 use bon::Builder;
-use perroute_commons::types::{id::Id, name::Name, Configuration, DispatchType, ProviderId};
-use perroute_storage::{models::channel::Channel, repository::TransactedRepository};
+use perroute_commons::types::{
+    id::Id, name::Name, Configuration, DispatchType, ProviderId, Timestamp,
+};
+use perroute_storage::{
+    models::channel::Channel,
+    repository::{
+        business_units::{BusinessUnitQuery, BusinessUnitRepository},
+        channels::ChannelRepository,
+        TransactedRepository,
+    },
+};
 
 #[derive(Debug, thiserror::Error)]
-pub enum CreateChannelCommandError {}
+pub enum CreateChannelCommandError {
+    #[error("Business unit not found")]
+    BusinessUnitNotFound,
+}
 
 #[derive(Debug, Clone, Builder)]
 pub struct CreateChannelCommand {
@@ -32,6 +44,28 @@ impl CommandHandler for CreateChannelCommandHandler {
         cmd: &Self::Command,
         ctx: CommandBusContext<'_, R>,
     ) -> CommandBusResult<Self::Output> {
-        todo!()
+        let exists_bu = BusinessUnitRepository::exists_business_unit(
+            ctx.repository(),
+            &BusinessUnitQuery::ById(cmd.business_unit_id.clone()),
+        )
+        .await?;
+
+        if !exists_bu {
+            return Err(CreateChannelCommandError::BusinessUnitNotFound.into());
+        }
+
+        let channel = Channel::builder()
+            .id(Id::new())
+            .business_unit_id(cmd.business_unit_id.clone())
+            .name(cmd.name.clone())
+            .provider_id(cmd.provider_id.clone())
+            .dispatch_type(cmd.dispatch_type.clone())
+            .configuration(cmd.configuration.clone())
+            .enabled(cmd.enabled)
+            .created_at(Timestamp::now())
+            .updated_at(Timestamp::now())
+            .build();
+
+        Ok(ChannelRepository::save(ctx.repository(), channel).await?)
     }
 }

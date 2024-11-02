@@ -25,8 +25,8 @@ impl Display for Id {
     }
 }
 
-impl From<String> for Id {
-    fn from(s: String) -> Self {
-        Self(s)
+impl From<&String> for Id {
+    fn from(s: &String) -> Self {
+        Self(s.to_string())
     }
 }

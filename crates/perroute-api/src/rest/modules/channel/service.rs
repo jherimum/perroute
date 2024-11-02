@@ -1,6 +1,7 @@
-use crate::rest::RestService;
 use perroute_command_bus::CommandBus;
 use perroute_query_bus::QueryBus;
+
+use crate::rest::service::RestService;
 
 pub trait ChannelRestService {}
 

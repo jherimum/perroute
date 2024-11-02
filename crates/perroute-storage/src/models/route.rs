@@ -1,14 +1,15 @@
-use perroute_commons::types::{id::Id, Configuration, Priority, Timestamp};
+use derive_getters::Getters;
+use perroute_commons::types::{id::Id, priority::Priority, Configuration, Timestamp};
 use sqlx::prelude::FromRow;
 
-#[derive(Debug, Clone, PartialEq, Eq, FromRow)]
+#[derive(Debug, Clone, PartialEq, Eq, FromRow, Getters)]
 pub struct Route {
-    pub id: Id,
-    pub channel_id: Id,
-    pub message_type_id: Id,
-    pub configuration: Configuration,
-    pub priority: Priority,
-    pub enabled: bool,
-    pub created_at: Timestamp,
-    pub updated_at: Timestamp,
+    id: Id,
+    channel_id: Id,
+    message_type_id: Id,
+    configuration: Configuration,
+    priority: Priority,
+    enabled: bool,
+    created_at: Timestamp,
+    updated_at: Timestamp,
 }

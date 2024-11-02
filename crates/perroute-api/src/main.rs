@@ -1,4 +1,4 @@
-use perroute_api::{app::Application, rest::RestService};
+use perroute_api::{app::Application, rest::service::RestService};
 use perroute_command_bus::create_command_bus;
 use perroute_commons::configuration::settings::Settings;
 use perroute_query_bus::create_query_bus;

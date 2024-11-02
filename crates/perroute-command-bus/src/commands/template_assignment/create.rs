@@ -3,7 +3,7 @@ use crate::{
     CommandBusResult,
 };
 use bon::Builder;
-use perroute_commons::types::{id::Id, vars::Vars, Priority, Timestamp};
+use perroute_commons::types::{id::Id, priority::Priority, vars::Vars, Timestamp};
 use perroute_storage::{
     models::template_assignment::TemplateAssignment, repository::TransactedRepository,
 };

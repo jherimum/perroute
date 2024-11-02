@@ -53,7 +53,7 @@ impl<RS: BusinessUnitRestService> BusinessUnitController<RS> {
         service
             .update(&Actor::System, &path, &payload)
             .await
-            .map(|_| ApiResponse::ok_empty())
+            .map(ApiResponse::ok)
     }
 
     pub async fn create(

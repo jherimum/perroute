@@ -3,7 +3,7 @@ use crate::{
     CommandBusResult,
 };
 use bon::Builder;
-use perroute_commons::types::{name::Name, Configuration};
+use perroute_commons::types::{id::Id, name::Name, Configuration};
 use perroute_storage::{models::channel::Channel, repository::TransactedRepository};
 
 #[derive(Debug, thiserror::Error)]
@@ -11,6 +11,7 @@ pub enum UpdateChannelCommandError {}
 
 #[derive(Debug, Clone, Builder)]
 pub struct UpdateChannelCommand {
+    id: Id,
     name: Name,
     configuration: Configuration,
     enabled: bool,

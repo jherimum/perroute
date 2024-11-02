@@ -1,9 +1,10 @@
-use crate::rest::models::ResourceModel;
+use crate::rest::{error::ApiError, models::ResourceModel};
 use bon::Builder;
 use chrono::NaiveDateTime;
+use perroute_commons::types::{id::Id, name::Name, Configuration, DispatchType, ProviderId};
 use perroute_storage::models::channel::Channel;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::{collections::HashMap, str::FromStr};
 use validator::Validate;
 
 #[derive(Debug, Deserialize, Validate)]
@@ -13,9 +14,19 @@ pub struct ChannelPath {
 }
 
 impl ChannelPath {
+    pub fn business_unit_id(&self) -> Id {
+        Id::from(&self.business_unit_id)
+    }
+
+    pub fn channel_id(&self) -> Id {
+        Id::from(&self.channel_id)
+    }
+}
+
+impl ChannelPath {
     pub fn parent(&self) -> ChannelCollectionPath {
         ChannelCollectionPath {
-            business_unit_id: self.business_unit_id.clone(),
+            business_unit_id: self.business_unit_id.to_string(),
         }
     }
 }
@@ -25,17 +36,23 @@ pub struct ChannelCollectionPath {
     business_unit_id: String,
 }
 
+impl ChannelCollectionPath {
+    pub fn business_unit_id(&self) -> Id {
+        Id::from(&self.business_unit_id)
+    }
+}
+
 #[derive(Debug, Serialize, Builder)]
 pub struct ChannelModel {
-    pub id: String,
-    pub business_unit_id: String,
-    pub name: String,
-    pub provider_id: String,
-    pub dispatch_type: String,
-    pub configuration: HashMap<String, String>,
-    pub enabled: bool,
-    pub created_at: NaiveDateTime,
-    pub updated_at: NaiveDateTime,
+    id: String,
+    business_unit_id: String,
+    name: String,
+    provider_id: String,
+    dispatch_type: String,
+    configuration: HashMap<String, String>,
+    enabled: bool,
+    created_at: NaiveDateTime,
+    updated_at: NaiveDateTime,
 }
 
 impl From<&Channel> for ChannelModel {
@@ -62,16 +79,52 @@ impl From<&Channel> for ResourceModel<ChannelModel> {
 
 #[derive(Debug, Deserialize, Validate)]
 pub struct CreateChannelRequest {
-    pub name: String,
-    pub provider_id: String,
-    pub dispatch_type: String,
-    pub configuration: HashMap<String, String>,
-    pub enabled: bool,
+    name: String,
+    provider_id: String,
+    dispatch_type: String,
+    configuration: HashMap<String, String>,
+    enabled: bool,
+}
+
+impl CreateChannelRequest {
+    pub fn enabled(&self) -> bool {
+        self.enabled
+    }
+
+    pub fn name(&self) -> Result<Name, ApiError> {
+        Ok(Name::try_from(&self.name)?)
+    }
+
+    pub fn provider_id(&self) -> ProviderId {
+        ProviderId::new(&self.provider_id)
+    }
+
+    pub fn dispatch_type(&self) -> Result<DispatchType, ApiError> {
+        Ok(DispatchType::from_str(&self.dispatch_type)?)
+    }
+
+    pub fn configuration(&self) -> Configuration {
+        Configuration::new(&self.configuration)
+    }
 }
 
 #[derive(Debug, Deserialize, Validate)]
 pub struct UpdateChannelRequest {
-    pub name: String,
-    pub configuration: HashMap<String, String>,
-    pub enabled: bool,
+    name: String,
+    configuration: HashMap<String, String>,
+    enabled: bool,
+}
+
+impl UpdateChannelRequest {
+    pub fn enabled(&self) -> bool {
+        self.enabled
+    }
+
+    pub fn name(&self) -> Result<Name, ApiError> {
+        Ok(Name::try_from(&self.name)?)
+    }
+
+    pub fn configuration(&self) -> Configuration {
+        Configuration::new(&self.configuration)
+    }
 }

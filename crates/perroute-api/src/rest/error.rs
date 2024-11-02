@@ -1,12 +1,13 @@
 use actix_web::{body::BoxBody, http::StatusCode, HttpResponse, Responder, ResponseError};
 use perroute_command_bus::CommandBusError;
 use perroute_commons::types::{
-    code::InvalidCodeError, name::InvalidNameError, schema::InvalidSchemaError,
+    code::InvalidCodeError, name::InvalidNameError, schema::InvalidSchemaError, DispatchType,
 };
 use perroute_query_bus::QueryBusError;
 use serde::{ser::SerializeStruct, Serialize};
 use serde_json::Value;
 use std::{collections::HashMap, error::Error};
+use strum::ParseError;
 use validator::{ValidationError, ValidationErrors, ValidationErrorsKind};
 
 #[derive(Debug, thiserror::Error)]
@@ -49,6 +50,9 @@ pub enum ApiError {
 
     #[error("Invalid schema error: {0}")]
     InvalidSchemaError(#[from] InvalidSchemaError),
+
+    #[error("Enum parser error: {0}")]
+    EnumParserError(#[from] ParseError),
 }
 
 impl ResponseError for ApiError {

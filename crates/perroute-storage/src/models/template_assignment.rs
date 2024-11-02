@@ -1,4 +1,4 @@
-use perroute_commons::types::{id::Id, vars::Vars, Priority, Timestamp};
+use perroute_commons::types::{id::Id, priority::Priority, vars::Vars, Timestamp};
 use sqlx::prelude::FromRow;
 
 #[derive(Debug, Clone, PartialEq, Eq, FromRow)]

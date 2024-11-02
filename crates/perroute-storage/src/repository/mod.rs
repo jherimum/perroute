@@ -1,7 +1,9 @@
 pub mod business_units;
+pub mod channels;
 pub mod message_types;
 
 use business_units::BusinessUnitRepository;
+use channels::ChannelRepository;
 use message_types::{MessageTypeRepository, PayloadExampleRepository};
 use perroute_commons::configuration::settings::DatabaseSettings;
 use sqlx::{PgPool, Postgres, Transaction};
@@ -27,7 +29,7 @@ pub trait TransactedRepository: Repository {
 }
 
 pub trait Repository:
-    BusinessUnitRepository + MessageTypeRepository + PayloadExampleRepository
+    BusinessUnitRepository + MessageTypeRepository + PayloadExampleRepository + ChannelRepository
 {
     fn begin(&self) -> impl Future<Output = RepositoryResult<impl TransactedRepository + Clone>>;
 }

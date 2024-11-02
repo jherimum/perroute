@@ -1,7 +1,9 @@
 use crate::rest::{error::ApiError, models::ResourceModel};
 use bon::Builder;
 use chrono::NaiveDateTime;
-use perroute_commons::types::{id::Id, name::Name, Payload};
+use perroute_commons::types::{
+    code::Code, id::Id, name::Name, schema::Schema, vars::Vars, Payload,
+};
 use perroute_storage::models::message_type::{MessageType, PayloadExample};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -13,7 +15,7 @@ pub struct MessageTypePath(String);
 
 impl MessageTypePath {
     pub fn id(&self) -> Id {
-        Id::from(self.0.clone())
+        Id::from(&self.0)
     }
 
     pub fn parent(self) -> MessageTypeCollectionPath {
@@ -88,19 +90,66 @@ impl TryInto<(Name, Payload)> for &PayloadExampleModel {
 
 #[derive(Debug, Deserialize, Validate)]
 pub struct CreateMessageTypeRequest {
-    pub code: String,
-    pub name: String,
-    pub vars: Option<HashMap<String, String>>,
-    pub schema: Value,
-    pub enabled: bool,
-    pub payload_examples: Vec<PayloadExampleModel>,
+    code: String,
+    name: String,
+    vars: Option<HashMap<String, String>>,
+    schema: Value,
+    enabled: bool,
+    payload_examples: Vec<PayloadExampleModel>,
+}
+
+impl CreateMessageTypeRequest {
+    pub fn code(&self) -> Result<Code, ApiError> {
+        Ok(Code::try_from(&self.code)?)
+    }
+
+    pub fn name(&self) -> Result<Name, ApiError> {
+        Ok(Name::try_from(&self.name)?)
+    }
+
+    pub fn vars(&self) -> Result<Option<Vars>, ApiError> {
+        Ok(self.vars.as_ref().map(Into::into))
+    }
+
+    pub fn enabled(&self) -> bool {
+        self.enabled
+    }
+
+    pub fn payload_examples(&self) -> Result<Vec<(Name, Payload)>, ApiError> {
+        PayloadExampleModel::from_model(&self.payload_examples)
+    }
+    pub fn schema(&self) -> Result<Schema, ApiError> {
+        Ok(Schema::try_from(&self.schema)?)
+    }
 }
 
 #[derive(Debug, Deserialize, Validate)]
 pub struct UpdateMessageTypeRequest {
-    pub name: String,
-    pub vars: Option<HashMap<String, String>>,
-    pub schema: Value,
-    pub enabled: bool,
-    pub payload_examples: Vec<PayloadExampleModel>,
+    name: String,
+    vars: Option<HashMap<String, String>>,
+    schema: Value,
+    enabled: bool,
+    payload_examples: Vec<PayloadExampleModel>,
+}
+
+impl UpdateMessageTypeRequest {
+    pub fn name(&self) -> Result<Name, ApiError> {
+        Ok(Name::try_from(&self.name)?)
+    }
+
+    pub fn vars(&self) -> Result<Option<Vars>, ApiError> {
+        Ok(self.vars.as_ref().map(Into::into))
+    }
+
+    pub fn enabled(&self) -> bool {
+        self.enabled
+    }
+
+    pub fn payload_examples(&self) -> Result<Vec<(Name, Payload)>, ApiError> {
+        PayloadExampleModel::from_model(&self.payload_examples)
+    }
+
+    pub fn schema(&self) -> Result<Schema, ApiError> {
+        Ok(Schema::try_from(&self.schema)?)
+    }
 }

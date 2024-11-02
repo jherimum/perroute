@@ -21,3 +21,4 @@ validator = { workspace = true, features = ["derive"] }
 actix-web-validator = { workspace = true }
 url = { workspace = true }
 bon = { workspace = true }
+strum = { workspace = true }

@@ -1,9 +1,10 @@
+use bon::Builder;
 use perroute_commons::types::{
     id::Id, name::Name, Configuration, DispatchType, ProviderId, Timestamp,
 };
 use sqlx::prelude::FromRow;
 
-#[derive(Debug, Clone, PartialEq, Eq, FromRow)]
+#[derive(Debug, Clone, PartialEq, Eq, FromRow, Builder)]
 pub struct Channel {
     pub id: Id,
     pub business_unit_id: Id,

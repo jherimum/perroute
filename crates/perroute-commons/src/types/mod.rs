@@ -2,6 +2,7 @@ pub mod actor;
 pub mod code;
 pub mod id;
 pub mod name;
+pub mod priority;
 pub mod schema;
 pub mod vars;
 
@@ -35,31 +36,33 @@ impl Deref for Timestamp {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ProviderId(String);
 
+impl ProviderId {
+    pub fn new(value: &String) -> Self {
+        Self(value.to_string())
+    }
+}
+
 impl Display for ProviderId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, strum::EnumString, strum::Display)]
 pub enum DispatchType {
     Email,
     Sms,
     Push,
 }
 
-impl Display for DispatchType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            DispatchType::Email => write!(f, "email"),
-            DispatchType::Sms => write!(f, "sms"),
-            DispatchType::Push => write!(f, "push"),
-        }
-    }
-}
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Configuration(HashMap<String, String>);
+
+impl Configuration {
+    pub fn new(value: &HashMap<String, String>) -> Self {
+        Self(value.clone())
+    }
+}
 
 impl Deref for Configuration {
     type Target = HashMap<String, String>;
@@ -68,9 +71,6 @@ impl Deref for Configuration {
         &self.0
     }
 }
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Priority(i64);
 
 #[derive(Debug, Clone, PartialEq, Eq, Type)]
 #[sqlx(transparent)]

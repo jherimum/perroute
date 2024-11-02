@@ -5,7 +5,8 @@ use crate::rest::{
     modules::business_unit::models::{
         BusinessUnitModel, BusinessUnitPath, CreateBusinessUnitRequest, UpdateBusinessUnitRequest,
     },
-    ResourceModelCollectionResult, ResourceModelResult, RestService, RestServiceResult,
+    service::RestService,
+    ResourceModelCollectionResult, ResourceModelResult, RestServiceResult,
 };
 use perroute_command_bus::{
     commands::business_unit::{
@@ -15,7 +16,7 @@ use perroute_command_bus::{
     },
     CommandBus, CommandBusError,
 };
-use perroute_commons::types::{actor::Actor, code::Code, name::Name};
+use perroute_commons::types::actor::Actor;
 use perroute_query_bus::{queries::business_unit::QueryBusinessUnitsHandler, QueryBus};
 use perroute_storage::{
     models::business_unit::BusinessUnit, repository::business_units::BusinessUnitQuery,
@@ -111,8 +112,8 @@ impl<CB: CommandBus, QB: QueryBus> BusinessUnitRestService for RestService<CB, Q
     ) -> ResourceModelResult<BusinessUnitModel> {
         let cmd = UpdateBusinessUnitCommand::builder()
             .id(id.id())
-            .name(Name::try_from(&payload.name)?)
-            .maybe_vars(payload.vars.as_ref().map(From::from))
+            .name(payload.name()?)
+            .maybe_vars(payload.vars()?)
             .build();
 
         let bu = self
@@ -131,9 +132,9 @@ impl<CB: CommandBus, QB: QueryBus> BusinessUnitRestService for RestService<CB, Q
         payload: &CreateBusinessUnitRequest,
     ) -> ResourceModelResult<BusinessUnitModel> {
         let cmd = CreateBusinessUnitCommand::builder()
-            .name(Name::try_from(&payload.name)?)
-            .code(Code::try_from(&payload.code)?)
-            .maybe_vars(payload.vars.as_ref().map(From::from))
+            .name(payload.name()?)
+            .code(payload.code()?)
+            .maybe_vars(payload.vars()?)
             .build();
 
         Ok(self
