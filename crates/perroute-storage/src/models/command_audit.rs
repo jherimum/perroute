@@ -3,10 +3,14 @@ use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::{
     commands::CommandType,
-    types::{actor::Actor, id::Id, Timestamp},
+    types::{
+        actor::{Actor, ActorType},
+        id::Id,
+        Timestamp,
+    },
 };
 use serde::Serialize;
-use sqlx::{prelude::FromRow, types::Json};
+use sqlx::prelude::FromRow;
 
 #[derive(Debug, Clone, PartialEq, Eq, FromRow, Getters, Setters)]
 #[setters(prefix = "set_")]
@@ -15,7 +19,8 @@ pub struct CommandAudit {
     id: Id,
     command_type: CommandType,
     command_data: serde_json::Value,
-    actor: Json<Actor>,
+    actor_type: ActorType,
+    actor_id: Option<Id>,
     created_at: Timestamp,
 }
 
@@ -29,7 +34,8 @@ pub fn command_audit_builder<D: Serialize>(
         id: Id::new(),
         command_type: command_type.clone(),
         command_data: serde_json::to_value(command_data).unwrap(),
-        actor: Json(actor.clone()),
+        actor_type: actor.actor_type(),
+        actor_id: actor.id().cloned(),
         created_at: Timestamp::now(),
     }
 }

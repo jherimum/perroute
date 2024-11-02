@@ -1,5 +1,4 @@
 CREATE TYPE message_status AS ENUM ('pending', 'dispatched', 'failed');
-CREATE TYPE actor_type AS ENUM ('system', 'user', 'service');
 
 create table business_units (
     id              varchar(21) primary key,
@@ -111,7 +110,8 @@ create table command_audit(
     id              varchar(21) primary key,
     command_type    varchar(100) not null,
     command_data    jsonb not null,
-    actor           json not null,
+    actor_type      varchar(100) not null,
+    actor_id        varchar(21)  null,
     created_at      timestamp not null
 );
 
