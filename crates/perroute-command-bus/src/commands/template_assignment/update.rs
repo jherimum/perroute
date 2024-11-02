@@ -1,5 +1,5 @@
 use crate::{
-    bus::{Command, CommandBusContext, CommandHandler},
+    bus::{Command, CommandBusContext, CommandHandler, CommandHandlerResult},
     CommandBusResult,
 };
 use bon::Builder;
@@ -27,12 +27,13 @@ pub struct UpdateTemplateAssignmentCommandHandler;
 impl CommandHandler for UpdateTemplateAssignmentCommandHandler {
     type Command = UpdateTemplateAssignmentCommand;
     type Output = TemplateAssignment;
+    type Event = ();
 
     async fn handle<R: TransactedRepository>(
         &self,
         cmd: &Self::Command,
         ctx: CommandBusContext<'_, R>,
-    ) -> CommandBusResult<Self::Output> {
+    ) -> CommandHandlerResult<Self::Output, Self::Event> {
         todo!()
     }
 }

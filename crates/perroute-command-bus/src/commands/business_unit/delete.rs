@@ -1,6 +1,5 @@
-use crate::{
-    bus::{Command, CommandBusContext, CommandHandler},
-    CommandBusResult,
+use crate::bus::{
+    Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult,
 };
 use bon::Builder;
 use perroute_commons::types::id::Id;
@@ -21,12 +20,16 @@ pub struct DeleteBusinessUnitCommandHandler;
 impl CommandHandler for DeleteBusinessUnitCommandHandler {
     type Command = DeleteBusinessUnitCommand;
     type Output = bool;
+    type Event = ();
 
     async fn handle<R: TransactedRepository>(
         &self,
         cmd: &Self::Command,
         ctx: CommandBusContext<'_, R>,
-    ) -> CommandBusResult<Self::Output> {
-        Ok(BusinessUnitRepository::delete_business_unit(ctx.repository(), &cmd.id).await?)
+    ) -> CommandHandlerResult<Self::Output, Self::Event> {
+        let deleted =
+            BusinessUnitRepository::delete_business_unit(ctx.repository(), &cmd.id).await?;
+
+        Ok(CommandHandlerOutput::new(deleted, None))
     }
 }

@@ -1,5 +1,5 @@
 use crate::{
-    bus::{Command, CommandBusContext, CommandHandler},
+    bus::{Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult},
     CommandBusResult,
 };
 use bon::Builder;
@@ -21,12 +21,13 @@ pub struct DeleteChannelCommandHandler;
 impl CommandHandler for DeleteChannelCommandHandler {
     type Command = DeleteChannelCommand;
     type Output = bool;
+    type Event = ();
 
     async fn handle<R: TransactedRepository>(
         &self,
         cmd: &Self::Command,
         ctx: CommandBusContext<'_, R>,
-    ) -> CommandBusResult<Self::Output> {
+    ) -> CommandHandlerResult<Self::Output, Self::Event> {
         todo!()
     }
 }

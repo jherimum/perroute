@@ -97,7 +97,7 @@ impl<CB: CommandBus, QB: QueryBus> BusinessUnitRestService for RestService<CB, Q
     async fn delete(&self, actor: &Actor, path: &BusinessUnitPath) -> RestServiceResult<bool> {
         Ok(self
             .command_bus()
-            .execute::<_, DeleteBusinessUnitCommandHandler, _>(
+            .execute::<_, DeleteBusinessUnitCommandHandler, _, _>(
                 actor,
                 &DeleteBusinessUnitCommand::builder().id(path.id()).build(),
             )
@@ -118,7 +118,7 @@ impl<CB: CommandBus, QB: QueryBus> BusinessUnitRestService for RestService<CB, Q
 
         let bu = self
             .command_bus()
-            .execute::<_, UpdateBusinessUnitCommandHandler, _>(actor, &cmd)
+            .execute::<_, UpdateBusinessUnitCommandHandler, _, _>(actor, &cmd)
             .await
             .map_err(CommandBusError::from)?;
 
@@ -139,7 +139,7 @@ impl<CB: CommandBus, QB: QueryBus> BusinessUnitRestService for RestService<CB, Q
 
         Ok(self
             .command_bus()
-            .execute::<_, CreateBusinessUnitCommandHandler, BusinessUnit>(actor, &cmd)
+            .execute::<_, CreateBusinessUnitCommandHandler, _, _>(actor, &cmd)
             .await
             .map(|bu| BusinessUnitModel::from(&bu))
             .map(ResourceModel::new)?)

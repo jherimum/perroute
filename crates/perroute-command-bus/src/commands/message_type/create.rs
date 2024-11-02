@@ -1,6 +1,5 @@
-use crate::{
-    bus::{Command, CommandBusContext, CommandHandler},
-    CommandBusResult,
+use crate::bus::{
+    Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult,
 };
 use bon::Builder;
 use perroute_commons::types::{
@@ -39,12 +38,13 @@ pub struct CreateMessageTypeCommandHandler;
 impl CommandHandler for CreateMessageTypeCommandHandler {
     type Command = CreateMessageTypeCommand;
     type Output = (MessageType, Vec<PayloadExample>);
+    type Event = ();
 
     async fn handle<R: TransactedRepository>(
         &self,
         cmd: &Self::Command,
         ctx: CommandBusContext<'_, R>,
-    ) -> CommandBusResult<Self::Output> {
+    ) -> CommandHandlerResult<Self::Output, Self::Event> {
         let exists = MessageTypeRepository::exists_message_type(
             ctx.repository(),
             &MessageTypeQuery::ByCode(cmd.code.clone()),
@@ -75,6 +75,6 @@ impl CommandHandler for CreateMessageTypeCommandHandler {
         let examples =
             PayloadExampleRepository::save_payload_examples(ctx.repository(), &examples).await?;
 
-        Ok((message_type, examples))
+        Ok(CommandHandlerOutput::new((message_type, examples), None))
     }
 }

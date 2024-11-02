@@ -1,6 +1,5 @@
-use crate::{
-    bus::{Command, CommandBusContext, CommandHandler},
-    CommandBusResult,
+use crate::bus::{
+    Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult,
 };
 use bon::Builder;
 use perroute_commons::types::id::Id;
@@ -21,12 +20,16 @@ pub struct DeleteMessageTypeCommandHandler;
 impl CommandHandler for DeleteMessageTypeCommandHandler {
     type Command = DeleteMessageTypeCommand;
     type Output = bool;
+    type Event = ();
 
     async fn handle<R: TransactedRepository>(
         &self,
         cmd: &Self::Command,
         ctx: CommandBusContext<'_, R>,
-    ) -> CommandBusResult<Self::Output> {
-        Ok(MessageTypeRepository::delete_message_type(ctx.repository(), &cmd.id).await?)
+    ) -> CommandHandlerResult<Self::Output, Self::Event> {
+        Ok(CommandHandlerOutput::new(
+            MessageTypeRepository::delete_message_type(ctx.repository(), &cmd.id).await?,
+            None,
+        ))
     }
 }

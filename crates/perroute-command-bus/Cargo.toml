@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 perroute-storage = { path = "../perroute-storage" }
 perroute-commons = { path = "../perroute-commons" }
+perroute-events = { path = "../perroute-events" }
 serde = { workspace = true }
 thiserror = { workspace = true }
 derive-getters = { workspace = true }

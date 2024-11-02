@@ -4,10 +4,13 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+perroute-commons = { path = "../perroute-commons" }
+perroute-events = { path = "../perroute-events" }
+
 uuid = { workspace = true, features = ["v7", "serde"] }
 chrono = { workspace = true, features = ["serde"] }
 serde_json = { workspace = true }
-perroute-commons = { path = "../perroute-commons" }
+
 sqlx = { workspace = true, features = ["postgres", "macros"] }
 tokio = { workspace = true }
 thiserror = { workspace = true }

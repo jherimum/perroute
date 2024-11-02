@@ -1,5 +1,5 @@
 use crate::{
-    bus::{Command, CommandBusContext, CommandHandler},
+    bus::{Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult},
     CommandBusError, CommandBusResult,
 };
 use bon::Builder;
@@ -29,13 +29,15 @@ pub struct UpdateBusinessUnitCommandHandler;
 impl CommandHandler for UpdateBusinessUnitCommandHandler {
     type Command = UpdateBusinessUnitCommand;
     type Output = BusinessUnit;
+    type Event = ();
 
     async fn handle<R: TransactedRepository>(
         &self,
         cmd: &Self::Command,
         ctx: CommandBusContext<'_, R>,
-    ) -> CommandBusResult<Self::Output> {
-        match BusinessUnitRepository::find_business_unit(ctx.repository(), &cmd.id).await? {
+    ) -> CommandHandlerResult<Self::Output, Self::Event> {
+        let bu = match BusinessUnitRepository::find_business_unit(ctx.repository(), &cmd.id).await?
+        {
             Some(bu) => {
                 let bu = BusinessUnitRepository::update_business_unit(
                     ctx.repository(),
@@ -47,6 +49,8 @@ impl CommandHandler for UpdateBusinessUnitCommandHandler {
             None => Err(CommandBusError::from(
                 UpdateBusinessUnitCommandError::NotFound,
             )),
-        }
+        }?;
+
+        Ok(CommandHandlerOutput::new(bu, None))
     }
 }

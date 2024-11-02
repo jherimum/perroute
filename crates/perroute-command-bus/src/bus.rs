@@ -25,14 +25,18 @@ use crate::{
     CommandBusError, CommandBusResult,
 };
 use perroute_commons::types::actor::Actor;
-use perroute_storage::repository::{Repository, TransactedRepository};
+use perroute_events::ApplicationEvent;
+use perroute_storage::{
+    models::event::Event,
+    repository::{events::EventRepository, Repository, TransactedRepository},
+};
 use std::{
     any::{Any, TypeId},
     collections::HashMap,
-    fmt::Debug,
     future::Future,
     sync::Arc,
 };
+use tap::TapFallible;
 
 pub fn create_command_bus<R: Repository + Clone>(repository: R) -> impl CommandBus + Clone {
     DefaultCommandBus::new(repository)
@@ -54,24 +58,43 @@ pub fn create_command_bus<R: Repository + Clone>(repository: R) -> impl CommandB
         .register(CreateMessageCommandHandler)
 }
 
+pub type CommandHandlerResult<O, E> = Result<CommandHandlerOutput<O, E>, CommandBusError>;
+
+pub struct CommandHandlerOutput<O, E> {
+    output: O,
+    event: Option<E>,
+}
+
+impl<O, E> CommandHandlerOutput<O, E> {
+    pub fn new(output: O, event: Option<E>) -> Self {
+        Self { output, event }
+    }
+}
+
 pub trait Command {}
 
 pub trait CommandBus {
-    fn execute<C, H, O>(&self, actor: &Actor, cmd: &C) -> impl Future<Output = CommandBusResult<O>>
+    fn execute<C, H, O, E>(
+        &self,
+        actor: &Actor,
+        cmd: &C,
+    ) -> impl Future<Output = CommandBusResult<O>>
     where
         C: Command + 'static,
-        H: CommandHandler<Command = C, Output = O> + 'static;
+        E: ApplicationEvent + 'static,
+        H: CommandHandler<Command = C, Output = O, Event = E> + 'static;
 }
 
 pub trait CommandHandler {
-    type Command: Command;
-    type Output: Debug;
+    type Command;
+    type Output;
+    type Event;
 
     fn handle<R: TransactedRepository>(
         &self,
         cmd: &Self::Command,
         ctx: CommandBusContext<R>,
-    ) -> impl Future<Output = CommandBusResult<Self::Output>>;
+    ) -> impl Future<Output = CommandBusResult<CommandHandlerOutput<Self::Output, Self::Event>>>;
 }
 
 #[derive(Clone)]
@@ -114,10 +137,11 @@ impl<R: Repository> DefaultCommandBus<R> {
 }
 
 impl<R: Repository> CommandBus for DefaultCommandBus<R> {
-    async fn execute<C, H, O>(&self, actor: &Actor, cmd: &C) -> CommandBusResult<O>
+    async fn execute<C, H, O, E>(&self, actor: &Actor, cmd: &C) -> CommandBusResult<O>
     where
         C: Command + 'static,
-        H: CommandHandler<Command = C, Output = O> + 'static,
+        E: ApplicationEvent + 'static,
+        H: CommandHandler<Command = C, Output = O, Event = E> + 'static,
     {
         let handler = self.get_handler::<C, H, O>()?;
         let tx = self.repository.begin().await?;
@@ -127,8 +151,13 @@ impl<R: Repository> CommandBus for DefaultCommandBus<R> {
         };
         match handler.handle(cmd, ctx).await {
             Ok(output) => {
+                if let Some(event) = output.event {
+                    EventRepository::save(&tx, Event::from(event))
+                        .await
+                        .tap_err(|e| log::error!("Failed to persist event: {}", e))?;
+                }
                 tx.commit().await?;
-                Ok(output)
+                Ok(output.output)
             }
             Err(e) => {
                 tx.rollback().await?;

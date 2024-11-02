@@ -1,6 +1,5 @@
-use crate::{
-    bus::{Command, CommandBusContext, CommandHandler},
-    CommandBusResult,
+use crate::bus::{
+    Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult,
 };
 use bon::Builder;
 use perroute_commons::types::{code::Code, id::Id, name::Name, vars::Vars, Timestamp};
@@ -32,14 +31,14 @@ pub struct CreateBusinessUnitCommandHandler;
 
 impl CommandHandler for CreateBusinessUnitCommandHandler {
     type Command = CreateBusinessUnitCommand;
-
+    type Event = ();
     type Output = BusinessUnit;
 
     async fn handle<R: TransactedRepository>(
         &self,
         cmd: &Self::Command,
         ctx: CommandBusContext<'_, R>,
-    ) -> CommandBusResult<Self::Output> {
+    ) -> CommandHandlerResult<Self::Output, Self::Event> {
         let exists = BusinessUnitRepository::exists_business_unit(
             ctx.repository(),
             &BusinessUnitQuery::ByCode(cmd.code.clone()),
@@ -60,10 +59,10 @@ impl CommandHandler for CreateBusinessUnitCommandHandler {
             .updated_at(Timestamp::now())
             .build();
 
-        Ok(
-            BusinessUnitRepository::save_business_unit(ctx.repository(), bu)
-                .await
-                .tap_err(|e| log::error!("Error saving business unit: {:?}", e))?,
-        )
+        let bu = BusinessUnitRepository::save_business_unit(ctx.repository(), bu)
+            .await
+            .tap_err(|e| log::error!("Error saving business unit: {:?}", e))?;
+
+        Ok(CommandHandlerOutput::new(bu, None))
     }
 }

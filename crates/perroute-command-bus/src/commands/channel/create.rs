@@ -1,5 +1,5 @@
 use crate::{
-    bus::{Command, CommandBusContext, CommandHandler},
+    bus::{Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult},
     CommandBusResult,
 };
 use bon::Builder;
@@ -38,12 +38,13 @@ pub struct CreateChannelCommandHandler;
 impl CommandHandler for CreateChannelCommandHandler {
     type Command = CreateChannelCommand;
     type Output = Channel;
+    type Event = ();
 
     async fn handle<R: TransactedRepository>(
         &self,
         cmd: &Self::Command,
         ctx: CommandBusContext<'_, R>,
-    ) -> CommandBusResult<Self::Output> {
+    ) -> CommandHandlerResult<Self::Output, Self::Event> {
         let exists_bu = BusinessUnitRepository::exists_business_unit(
             ctx.repository(),
             &BusinessUnitQuery::ById(cmd.business_unit_id.clone()),
@@ -66,6 +67,8 @@ impl CommandHandler for CreateChannelCommandHandler {
             .updated_at(Timestamp::now())
             .build();
 
-        Ok(ChannelRepository::save(ctx.repository(), channel).await?)
+        let channel = ChannelRepository::save(ctx.repository(), channel).await?;
+
+        Ok(CommandHandlerOutput::new(channel, None))
     }
 }
