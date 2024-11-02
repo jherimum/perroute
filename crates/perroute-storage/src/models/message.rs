@@ -1,6 +1,5 @@
-use perroute_commons::types::{
-    id::Id, DispatchType, MessageStatus, Payload, Recipient, Tags, Timestamp,
-};
+use perroute_commons::types::{id::Id, MessageStatus, Payload, Recipient, Tags, Timestamp};
+use perroute_connectors::types::dispatch_type::DispatchType;
 use sqlx::prelude::FromRow;
 
 #[derive(Debug, Clone, PartialEq, Eq, FromRow)]

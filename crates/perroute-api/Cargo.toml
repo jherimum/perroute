@@ -8,6 +8,7 @@ perroute-commons = { path = "../perroute-commons" }
 perroute-storage = { path = "../perroute-storage" }
 perroute-command-bus = { path = "../perroute-command-bus" }
 perroute-query-bus = { path = "../perroute-query-bus" }
+perroute-connectors = { path = "../perroute-connectors" }
 
 tokio = { workspace = true, features = ["full"] }
 actix-web = { workspace = true }

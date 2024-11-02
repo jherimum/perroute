@@ -5,8 +5,9 @@ use bon::Builder;
 use perroute_commons::{
     commands::CommandType,
     events::Event,
-    types::{id::Id, name::Name, Configuration, DispatchType, ProviderId, Timestamp},
+    types::{id::Id, name::Name, Configuration, ProviderId, Timestamp},
 };
+use perroute_connectors::types::dispatch_type::DispatchType;
 use perroute_storage::{
     models::channel::Channel,
     repository::{

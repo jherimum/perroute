@@ -1,4 +1,3 @@
-CREATE TYPE dispatch_type AS ENUM ('email', 'sms', 'push');
 CREATE TYPE message_status AS ENUM ('pending', 'dispatched', 'failed');
 CREATE TYPE actor_type AS ENUM ('system', 'user', 'service');
 
@@ -16,7 +15,7 @@ create table channels (
     id                  varchar(21) primary key,
     name                text not null,
     business_unit_id    varchar(21) not null,
-    dispatch_type       dispatch_type not null,
+    dispatch_type       varchar(50) not null,
     provider_id         varchar not null,
     configuration       jsonb not null,
     enabled             boolean not null,
@@ -72,7 +71,7 @@ create table template_assignments (
     start_at            timestamp not null,
     end_at              timestamp null,
     enabled             boolean not null,
-    dispatch_type       dispatch_type not null,    
+    dispatch_type       varchar(50) not null,    
     created_at          timestamp not null,
     updated_at          timestamp not null,
     constraint template_assignment_message_type_fk foreign key (message_type_id) references message_types(id),
@@ -86,7 +85,7 @@ create table messages(
     business_unit_id    varchar(21) not null,
     payload             jsonb not null,
     recipient           jsonb not null,
-    dispatch_type       dispatch_type not null,
+    dispatch_type       varchar(50) not null,
     status              message_status not null,
     tags                jsonb not null,
     scheduled_at        timestamp null,

@@ -2,8 +2,9 @@ use crate::bus::{Command, CommandBusContext, CommandHandler, CommandHandlerResul
 use bon::Builder;
 use perroute_commons::{
     commands::CommandType,
-    types::{id::Id, DispatchType, Payload, Recipient, Tags, Timestamp},
+    types::{id::Id, Payload, Recipient, Tags, Timestamp},
 };
+use perroute_connectors::types::dispatch_type::DispatchType;
 use perroute_storage::{models::message::Message, repository::TransactedRepository};
 
 #[derive(Debug, thiserror::Error)]

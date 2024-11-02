@@ -1,7 +1,8 @@
 use crate::rest::{error::ApiError, models::ResourceModel};
 use bon::Builder;
 use chrono::NaiveDateTime;
-use perroute_commons::types::{id::Id, name::Name, Configuration, DispatchType, ProviderId};
+use perroute_commons::types::{id::Id, name::Name, Configuration, ProviderId};
+use perroute_connectors::types::dispatch_type::DispatchType;
 use perroute_storage::models::channel::Channel;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, str::FromStr};

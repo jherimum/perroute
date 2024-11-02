@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 perroute-commons = { path = "../perroute-commons" }
+perroute-connectors = { path = "../perroute-connectors" }
 
 uuid = { workspace = true, features = ["v7", "serde"] }
 chrono = { workspace = true, features = ["serde"] }

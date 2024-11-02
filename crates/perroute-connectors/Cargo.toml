@@ -4,3 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+perroute-commons = { path = "../perroute-commons" }
+strum = { workspace = true }
+strum_macros = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+sqlx = { workspace = true }

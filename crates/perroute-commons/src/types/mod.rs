@@ -50,13 +50,6 @@ impl Display for ProviderId {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, strum::EnumString, strum::Display, Serialize)]
-pub enum DispatchType {
-    Email,
-    Sms,
-    Push,
-}
-
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(transparent)]
 pub struct Configuration(HashMap<String, String>);
