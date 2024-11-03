@@ -6,7 +6,7 @@ use crate::commands::{
     },
     channel::{create::CreateChannelCommandError, update::UpdateChannelCommandError},
     message_type::{create::CreateMessageTypeCommandError, update::UpdateMessageTypeCommandError},
-    route::create::CreateRouteCommandError,
+    route::{create::CreateRouteCommandError, update::UpdateRouteCommandError},
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -37,4 +37,7 @@ pub enum CommandBusError {
 
     #[error("Create route command error: {0}")]
     CreateRouteCommandError(#[from] CreateRouteCommandError),
+
+    #[error("Update route command error: {0}")]
+    UpdateRouteCommandError(#[from] UpdateRouteCommandError),
 }

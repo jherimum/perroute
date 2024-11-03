@@ -7,7 +7,7 @@ pub mod schema;
 pub mod vars;
 
 use chrono::{NaiveDateTime, Utc};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sqlx::prelude::Type;
 use std::{
@@ -50,7 +50,7 @@ impl Display for ProviderId {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct Configuration(HashMap<String, String>);
 

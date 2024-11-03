@@ -1,7 +1,12 @@
-use crate::bus::{Command, CommandBusContext, CommandHandler, CommandHandlerResult};
+use crate::bus::{
+    Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult,
+};
 use bon::Builder;
-use perroute_commons::{commands::CommandType, types::id::Id};
-use perroute_storage::repository::TransactedRepository;
+use perroute_commons::{commands::CommandType, events::Event, types::id::Id};
+use perroute_storage::repository::{
+    routes::{RouteQuery, RouteRepository},
+    TransactedRepository,
+};
 
 #[derive(Debug, thiserror::Error)]
 pub enum DeleteRouteCommandError {}
@@ -28,6 +33,11 @@ impl CommandHandler for DeleteRouteCommandHandler {
         cmd: &Self::Command,
         ctx: CommandBusContext<'_, R>,
     ) -> CommandHandlerResult<Self::Output> {
-        todo!()
+        let deleted =
+            RouteRepository::delete(ctx.repository(), &RouteQuery::ById(&cmd.id)).await? > 0;
+
+        CommandHandlerOutput::new(deleted)
+            .with_event(Event::RouteDeleted(cmd.id.clone()))
+            .ok()
     }
 }

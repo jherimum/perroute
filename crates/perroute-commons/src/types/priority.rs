@@ -1,6 +1,9 @@
 use std::ops::Deref;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+use sqlx::prelude::Type;
+
+#[derive(Debug, Clone, PartialEq, Eq, Type)]
+#[sqlx(transparent)]
 pub struct Priority(i64);
 
 impl Priority {
