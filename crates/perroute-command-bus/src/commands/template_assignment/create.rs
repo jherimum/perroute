@@ -13,6 +13,7 @@ pub enum CreateTemplateAssignmentCommandError {}
 
 #[derive(Debug, Clone, Builder)]
 pub struct CreateTemplateAssignmentCommand {
+    id: Id,
     pub business_unit_id: Id,
     pub message_type_id: Id,
     pub vars: Vars,

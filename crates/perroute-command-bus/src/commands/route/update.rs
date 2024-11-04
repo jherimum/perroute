@@ -14,6 +14,7 @@ use perroute_storage::{
         TransactedRepository,
     },
 };
+use serde::Serialize;
 
 #[derive(Debug, thiserror::Error)]
 pub enum UpdateRouteCommandError {
@@ -21,9 +22,10 @@ pub enum UpdateRouteCommandError {
     NotFound,
 }
 
-#[derive(Debug, Clone, Builder)]
+#[derive(Debug, Clone, Builder, Serialize)]
 pub struct UpdateRouteCommand {
     id: Id,
+    business_unit_id: Id,
     configuration: Configuration,
     priority: Priority,
     enabled: bool,

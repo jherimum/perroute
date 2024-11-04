@@ -25,6 +25,8 @@ pub enum CreateBusinessUnitCommandError {
 
 #[derive(Debug, Clone, Builder, Serialize)]
 pub struct CreateBusinessUnitCommand {
+    #[builder(default)]
+    id: Id,
     name: Name,
     code: Code,
     vars: Option<Vars>,
@@ -59,7 +61,7 @@ impl CommandHandler for CreateBusinessUnitCommandHandler {
         }
 
         let bu = BusinessUnit::builder()
-            .id(Id::default())
+            .id(cmd.id.clone())
             .code(cmd.code.clone())
             .name(cmd.name.clone())
             .maybe_vars(cmd.vars.clone())

@@ -26,6 +26,8 @@ pub enum CreateMessageTypeCommandError {
 
 #[derive(Debug, Clone, Builder, Serialize)]
 pub struct CreateMessageTypeCommand {
+    #[builder(default)]
+    id: Id,
     code: Code,
     name: Name,
     vars: Option<Vars>,
@@ -62,7 +64,7 @@ impl CommandHandler for CreateMessageTypeCommandHandler {
         }
 
         let message_type = MessageType::builder()
-            .id(Id::new())
+            .id(cmd.id.clone())
             .code(cmd.code.clone())
             .name(cmd.name.clone())
             .maybe_vars(cmd.vars.clone())

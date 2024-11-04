@@ -2,11 +2,16 @@ use super::models::{
     CreateRouteRequest, RouteCollectionPath, RouteModel, RoutePath, UpdateRouteRequest,
 };
 use crate::rest::{
-    models::{ResourceModel, ResourceModelCollection},
-    modules::ApiResult,
-    service::RestService,
+    modules::ApiResult, service::RestService, ResourceModelCollectionResult, ResourceModelResult,
 };
-use perroute_command_bus::CommandBus;
+use perroute_command_bus::{
+    commands::route::{
+        create::{CreateRouteCommand, CreateRouteCommandHandler},
+        delete::DeleteRouteCommand,
+        update::{UpdateRouteCommand, UpdateRouteCommandHandler},
+    },
+    CommandBus,
+};
 use perroute_commons::types::actor::Actor;
 use perroute_query_bus::QueryBus;
 use std::future::Future;
@@ -17,28 +22,28 @@ pub trait RouteRestService {
         actor: &Actor,
         path: &RouteCollectionPath,
         _req: &CreateRouteRequest,
-    ) -> impl Future<Output = ApiResult<ResourceModel<RouteModel>>>;
+    ) -> impl Future<Output = ResourceModelResult<RouteModel>>;
 
     fn update(
         &self,
         actor: &Actor,
         path: &RoutePath,
         _req: &UpdateRouteRequest,
-    ) -> impl Future<Output = ApiResult<ResourceModel<RouteModel>>>;
+    ) -> impl Future<Output = ResourceModelResult<RouteModel>>;
 
     fn get(
         &self,
         actor: &Actor,
         path: &RoutePath,
-    ) -> impl Future<Output = ApiResult<Option<ResourceModel<RouteModel>>>>;
+    ) -> impl Future<Output = Option<ResourceModelResult<RouteModel>>>;
 
     fn query(
         &self,
         actor: &Actor,
         path: &RoutePath,
-    ) -> impl Future<Output = ApiResult<ResourceModelCollection<RouteModel>>>;
+    ) -> impl Future<Output = ResourceModelCollectionResult<RouteModel>>;
 
-    fn delete(&self, actor: &Actor, path: &RoutePath) -> impl Future<Output = ApiResult<bool>>;
+    fn delete(&self, actor: &Actor, path: &RoutePath) -> impl Future<Output = ApiResult<()>>;
 }
 
 impl<CB: CommandBus, QB: QueryBus> RouteRestService for RestService<CB, QB> {
@@ -46,29 +51,58 @@ impl<CB: CommandBus, QB: QueryBus> RouteRestService for RestService<CB, QB> {
         &self,
         actor: &Actor,
         path: &RouteCollectionPath,
-        _req: &CreateRouteRequest,
-    ) -> ApiResult<ResourceModel<RouteModel>> {
-        todo!()
+        payload: &CreateRouteRequest,
+    ) -> ResourceModelResult<RouteModel> {
+        let cmd = CreateRouteCommand::builder()
+            .business_id(path.business_unit_id())
+            .channel_id(payload.channel_id())
+            .message_type_id(payload.message_type_id())
+            .configuration(payload.configuration())
+            .enabled(payload.enabled())
+            .priority(payload.priority())
+            .build();
+
+        let route = self
+            .command_bus()
+            .execute::<_, CreateRouteCommandHandler, _>(actor, &cmd)
+            .await?;
+
+        Ok(route.into())
     }
 
     async fn update(
         &self,
         actor: &Actor,
         path: &RoutePath,
-        _req: &UpdateRouteRequest,
-    ) -> ApiResult<ResourceModel<RouteModel>> {
-        todo!()
+        payload: &UpdateRouteRequest,
+    ) -> ResourceModelResult<RouteModel> {
+        let cmd = UpdateRouteCommand::builder()
+            .id(path.route_id())
+            .business_unit_id(path.business_unit_id())
+            .configuration(payload.configuration())
+            .enabled(payload.enabled())
+            .priority(payload.priority())
+            .build();
+        let route = self
+            .command_bus()
+            .execute::<_, UpdateRouteCommandHandler, _>(actor, &cmd)
+            .await?;
+
+        Ok(route.into())
     }
 
     async fn get(
         &self,
         actor: &Actor,
         path: &RoutePath,
-    ) -> ApiResult<Option<ResourceModel<RouteModel>>> {
+    ) -> Option<ResourceModelResult<RouteModel>> {
         todo!()
     }
 
-    async fn delete(&self, actor: &Actor, path: &RoutePath) -> ApiResult<bool> {
+    async fn delete(&self, actor: &Actor, path: &RoutePath) -> ApiResult<()> {
+        self.get(actor, path).await;
+        let cmd = DeleteRouteCommand::builder().id(path.route_id()).build();
+
         todo!()
     }
 
@@ -76,7 +110,7 @@ impl<CB: CommandBus, QB: QueryBus> RouteRestService for RestService<CB, QB> {
         &self,
         actor: &Actor,
         path: &RoutePath,
-    ) -> ApiResult<ResourceModelCollection<RouteModel>> {
+    ) -> ResourceModelCollectionResult<RouteModel> {
         todo!()
     }
 }

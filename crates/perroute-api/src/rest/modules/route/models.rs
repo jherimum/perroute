@@ -2,7 +2,7 @@ use bon::Builder;
 use chrono::NaiveDateTime;
 use perroute_commons::types::{id::Id, priority::Priority, Configuration};
 use perroute_storage::models::route::Route;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, ops::Deref};
 use validator::Validate;
 
@@ -94,6 +94,7 @@ impl UpdateRouteRequest {
     }
 }
 
+#[derive(Debug, Serialize)]
 pub struct RouteModel {
     id: String,
     channel_id: String,
@@ -105,8 +106,8 @@ pub struct RouteModel {
     updated_at: NaiveDateTime,
 }
 
-impl From<&Route> for RouteModel {
-    fn from(route: &Route) -> Self {
+impl From<Route> for RouteModel {
+    fn from(route: Route) -> Self {
         RouteModel {
             id: route.id().to_string(),
             channel_id: route.channel_id().to_string(),
@@ -120,8 +121,8 @@ impl From<&Route> for RouteModel {
     }
 }
 
-impl From<&Route> for ResourceModel<RouteModel> {
-    fn from(route: &Route) -> Self {
+impl From<Route> for ResourceModel<RouteModel> {
+    fn from(route: Route) -> Self {
         ResourceModel::new(RouteModel::from(route))
     }
 }

@@ -1,9 +1,11 @@
 use std::ops::Deref;
 
+use serde::Serialize;
 use sqlx::prelude::Type;
 
-#[derive(Debug, Clone, PartialEq, Eq, Type)]
+#[derive(Debug, Clone, PartialEq, Eq, Type, Serialize)]
 #[sqlx(transparent)]
+#[serde(transparent)]
 pub struct Priority(i64);
 
 impl Priority {

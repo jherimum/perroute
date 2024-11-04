@@ -26,6 +26,7 @@ pub enum CreateChannelCommandError {
 
 #[derive(Debug, Clone, Builder, Serialize)]
 pub struct CreateChannelCommand {
+    id: Id,
     business_unit_id: Id,
     name: Name,
     provider_id: ProviderId,
@@ -62,7 +63,7 @@ impl CommandHandler for CreateChannelCommandHandler {
         }
 
         let channel = Channel::builder()
-            .id(Id::new())
+            .id(cmd.id.clone())
             .business_unit_id(cmd.business_unit_id.clone())
             .name(cmd.name.clone())
             .provider_id(cmd.provider_id.clone())

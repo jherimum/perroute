@@ -12,6 +12,7 @@ pub enum CreateMessageCommandError {}
 
 #[derive(Debug, Clone, Builder)]
 pub struct CreateMessageCommand {
+    id: Id,
     pub message_type_id: Id,
     pub business_unit_id: Id,
     pub payload: Payload,

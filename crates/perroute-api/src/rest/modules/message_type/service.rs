@@ -1,5 +1,4 @@
 use crate::rest::{
-    models::ResourceModel,
     modules::message_type::models::{
         CreateMessageTypeRequest, MessageTypeModel, MessageTypePath, UpdateMessageTypeRequest,
     },
@@ -101,7 +100,7 @@ impl<CB: CommandBus, QB: QueryBus> MessageTypeRestService for RestService<CB, QB
             .execute::<_, UpdateMessageTypeCommandHandler, _>(actor, &cmd)
             .await?;
 
-        Ok(ResourceModel::new(MessageTypeModel::from(&mt)))
+        Ok(mt.into())
     }
 
     async fn create(
@@ -124,6 +123,6 @@ impl<CB: CommandBus, QB: QueryBus> MessageTypeRestService for RestService<CB, QB
             .execute::<_, CreateMessageTypeCommandHandler, _>(actor, &cmd)
             .await?;
 
-        Ok(ResourceModel::new(MessageTypeModel::from(&mt)))
+        Ok(mt.into())
     }
 }

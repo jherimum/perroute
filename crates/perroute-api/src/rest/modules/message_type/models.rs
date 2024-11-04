@@ -39,8 +39,8 @@ pub struct MessageTypeModel {
     pub updated_at: NaiveDateTime,
 }
 
-impl From<&(MessageType, Vec<PayloadExample>)> for MessageTypeModel {
-    fn from(value: &(MessageType, Vec<PayloadExample>)) -> Self {
+impl From<(MessageType, Vec<PayloadExample>)> for MessageTypeModel {
+    fn from(value: (MessageType, Vec<PayloadExample>)) -> Self {
         MessageTypeModel::builder()
             .id(value.0.id().to_string())
             .code(value.0.code().to_string())
@@ -55,8 +55,8 @@ impl From<&(MessageType, Vec<PayloadExample>)> for MessageTypeModel {
     }
 }
 
-impl From<&(MessageType, Vec<PayloadExample>)> for ResourceModel<MessageTypeModel> {
-    fn from(value: &(MessageType, Vec<PayloadExample>)) -> Self {
+impl From<(MessageType, Vec<PayloadExample>)> for ResourceModel<MessageTypeModel> {
+    fn from(value: (MessageType, Vec<PayloadExample>)) -> Self {
         ResourceModel::new(value.into())
     }
 }

@@ -30,6 +30,12 @@ pub trait BusinessUnitRestService {
         path: &BusinessUnitPath,
     ) -> impl Future<Output = ResourceModelResult<BusinessUnitModel>>;
 
+    fn try_get(
+        &self,
+        actor: &Actor,
+        path: &BusinessUnitPath,
+    ) -> impl Future<Output = Result<Option<ResourceModel<BusinessUnitModel>>, ApiError>>;
+
     fn query(
         &self,
         actor: &Actor,
@@ -73,9 +79,19 @@ impl<CB: CommandBus, QB: QueryBus> BusinessUnitRestService for RestService<CB, Q
         actor: &Actor,
         path: &BusinessUnitPath,
     ) -> ResourceModelResult<BusinessUnitModel> {
+        Ok(self
+            .try_get(actor, path)
+            .await?
+            .ok_or_else(|| ApiError::NotFound)?)
+    }
+
+    async fn try_get(
+        &self,
+        actor: &Actor,
+        path: &BusinessUnitPath,
+    ) -> Result<Option<ResourceModel<BusinessUnitModel>>, ApiError> {
         let query_result = query(self.query_bus(), &BusinessUnitQuery::ById(path.id())).await?;
-        let bu = query_result.first().ok_or_else(|| ApiError::NotFound)?;
-        Ok(ResourceModel::new(BusinessUnitModel::from(bu)))
+        Ok(query_result.first().map(|bu| bu.clone().into()))
     }
 
     async fn query(
@@ -87,7 +103,7 @@ impl<CB: CommandBus, QB: QueryBus> BusinessUnitRestService for RestService<CB, Q
 
         Ok(ResourceModelCollection {
             data: query_result
-                .iter()
+                .into_iter()
                 .map(BusinessUnitModel::from)
                 .map(ResourceModel::new)
                 .collect::<Vec<_>>(),
@@ -122,7 +138,7 @@ impl<CB: CommandBus, QB: QueryBus> BusinessUnitRestService for RestService<CB, Q
             .await
             .map_err(CommandBusError::from)?;
 
-        Ok(ResourceModel::new(BusinessUnitModel::from(&bu)))
+        Ok(bu.into())
     }
 
     async fn create(
@@ -141,7 +157,6 @@ impl<CB: CommandBus, QB: QueryBus> BusinessUnitRestService for RestService<CB, Q
             .command_bus()
             .execute::<_, CreateBusinessUnitCommandHandler, _>(actor, &cmd)
             .await
-            .map(|bu| BusinessUnitModel::from(&bu))
-            .map(ResourceModel::new)?)
+            .map(|bu| bu.into())?)
     }
 }

@@ -27,8 +27,8 @@ pub struct BusinessUnitModel {
     pub updated_at: NaiveDateTime,
 }
 
-impl From<&BusinessUnit> for BusinessUnitModel {
-    fn from(bu: &BusinessUnit) -> Self {
+impl From<BusinessUnit> for BusinessUnitModel {
+    fn from(bu: BusinessUnit) -> Self {
         BusinessUnitModel {
             id: bu.id().to_string(),
             code: bu.code().to_string(),
@@ -39,8 +39,8 @@ impl From<&BusinessUnit> for BusinessUnitModel {
     }
 }
 
-impl From<&BusinessUnit> for ResourceModel<BusinessUnitModel> {
-    fn from(value: &BusinessUnit) -> Self {
+impl From<BusinessUnit> for ResourceModel<BusinessUnitModel> {
+    fn from(value: BusinessUnit) -> Self {
         ResourceModel::new(value.into())
     }
 }
