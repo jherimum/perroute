@@ -47,3 +47,9 @@ impl From<&PayloadExample> for (String, Value) {
         (value.name().to_string(), value.payload().deref().clone())
     }
 }
+
+impl perroute_commons::types::entity::Entity for MessageType {
+    fn id(&self) -> &Id {
+        &self.id
+    }
+}

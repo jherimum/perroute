@@ -14,3 +14,9 @@ pub struct TemplateAssignment {
     pub created_at: Timestamp,
     pub updated_at: Timestamp,
 }
+
+impl perroute_commons::types::entity::Entity for TemplateAssignment {
+    fn id(&self) -> &Id {
+        &self.id
+    }
+}

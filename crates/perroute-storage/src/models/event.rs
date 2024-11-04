@@ -18,6 +18,12 @@ pub struct DbEvent {
     consumed_at: Option<Timestamp>,
 }
 
+impl perroute_commons::types::entity::Entity for DbEvent {
+    fn id(&self) -> &Id {
+        &self.id
+    }
+}
+
 impl From<&Event> for DbEvent {
     fn from(event: &Event) -> Self {
         Self {

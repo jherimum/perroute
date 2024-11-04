@@ -39,3 +39,9 @@ pub fn command_audit_builder<D: Serialize>(
         created_at: Timestamp::now(),
     }
 }
+
+impl perroute_commons::types::entity::Entity for CommandAudit {
+    fn id(&self) -> &Id {
+        &self.id
+    }
+}

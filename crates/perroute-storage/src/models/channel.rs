@@ -25,3 +25,9 @@ pub struct Channel {
     created_at: Timestamp,
     updated_at: Timestamp,
 }
+
+impl perroute_commons::types::entity::Entity for Channel {
+    fn id(&self) -> &Id {
+        &self.id
+    }
+}

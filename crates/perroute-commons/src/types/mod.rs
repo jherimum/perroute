@@ -1,5 +1,6 @@
 pub mod actor;
 pub mod code;
+pub mod entity;
 pub mod id;
 pub mod name;
 pub mod priority;

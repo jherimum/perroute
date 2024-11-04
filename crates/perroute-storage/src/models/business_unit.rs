@@ -1,7 +1,9 @@
 use bon::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
-use perroute_commons::types::{code::Code, id::Id, name::Name, vars::Vars, Timestamp};
+use perroute_commons::types::{
+    code::Code, entity::Entity, id::Id, name::Name, vars::Vars, Timestamp,
+};
 use sqlx::prelude::FromRow;
 
 #[derive(Debug, Clone, PartialEq, Eq, FromRow, Builder, Getters, Setters)]
@@ -19,4 +21,10 @@ pub struct BusinessUnit {
     #[setters(skip)]
     created_at: Timestamp,
     updated_at: Timestamp,
+}
+
+impl Entity for BusinessUnit {
+    fn id(&self) -> &Id {
+        &self.id
+    }
 }

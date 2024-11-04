@@ -17,3 +17,9 @@ pub struct Message {
     pub created_at: Timestamp,
     pub updated_at: Timestamp,
 }
+
+impl perroute_commons::types::entity::Entity for Message {
+    fn id(&self) -> &Id {
+        &self.id
+    }
+}
