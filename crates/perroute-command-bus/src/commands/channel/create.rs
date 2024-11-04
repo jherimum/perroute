@@ -26,6 +26,7 @@ pub enum CreateChannelCommandError {
 
 #[derive(Debug, Clone, Builder, Serialize)]
 pub struct CreateChannelCommand {
+    #[builder(default)]
     id: Id,
     business_unit_id: Id,
     name: Name,

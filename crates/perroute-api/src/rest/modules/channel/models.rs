@@ -1,4 +1,6 @@
-use crate::rest::{error::ApiError, models::ResourceModel};
+use crate::rest::{
+    error::ApiError, models::ResourceModel, modules::business_unit::models::BusinessUnitPath,
+};
 use bon::Builder;
 use chrono::NaiveDateTime;
 use perroute_commons::types::{id::Id, name::Name, Configuration, ProviderId};
@@ -25,7 +27,7 @@ impl ChannelPath {
 }
 
 impl ChannelPath {
-    pub fn parent(&self) -> ChannelCollectionPath {
+    pub fn channel_collection_path(&self) -> ChannelCollectionPath {
         ChannelCollectionPath {
             business_unit_id: self.business_unit_id.to_string(),
         }
@@ -40,6 +42,10 @@ pub struct ChannelCollectionPath {
 impl ChannelCollectionPath {
     pub fn business_unit_id(&self) -> Id {
         Id::from(&self.business_unit_id)
+    }
+
+    pub fn business_unit_path(&self) -> BusinessUnitPath {
+        BusinessUnitPath::new(&self.business_unit_id)
     }
 }
 
@@ -56,8 +62,8 @@ pub struct ChannelModel {
     updated_at: NaiveDateTime,
 }
 
-impl From<&Channel> for ChannelModel {
-    fn from(value: &Channel) -> Self {
+impl From<Channel> for ChannelModel {
+    fn from(value: Channel) -> Self {
         ChannelModel::builder()
             .id(value.id().to_string())
             .business_unit_id(value.business_unit_id().to_string())
@@ -72,8 +78,8 @@ impl From<&Channel> for ChannelModel {
     }
 }
 
-impl From<&Channel> for ResourceModel<ChannelModel> {
-    fn from(value: &Channel) -> Self {
+impl From<Channel> for ResourceModel<ChannelModel> {
+    fn from(value: Channel) -> Self {
         ResourceModel::new(value.into())
     }
 }

@@ -1,5 +1,6 @@
-use crate::bus::{
-    Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult,
+use crate::{
+    bus::{Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult},
+    CommandBusError,
 };
 use bon::{builder, Builder};
 use perroute_commons::{
@@ -10,6 +11,7 @@ use perroute_commons::{
 use perroute_storage::{
     models::route::Route,
     repository::{
+        business_units::{BusinessUnitQuery, BusinessUnitRepository},
         channels::{ChannelQuery, ChannelRepository},
         message_types::{MessageTypeQuery, MessageTypeRepository},
         routes::RouteRepository,
@@ -25,6 +27,9 @@ pub enum CreateRouteCommandError {
 
     #[error("channel type not found")]
     ChannelTypeNotFound,
+
+    #[error("business unit not found")]
+    BusinessUnitNotFound,
 }
 
 #[derive(Debug, Clone, Builder, Serialize)]
@@ -56,25 +61,7 @@ impl CommandHandler for CreateRouteCommandHandler {
         cmd: &Self::Command,
         ctx: CommandBusContext<'_, R>,
     ) -> CommandHandlerResult<Self::Output> {
-        let exists = MessageTypeRepository::exists_message_type(
-            ctx.repository(),
-            &MessageTypeQuery::ById(cmd.message_type_id.clone()),
-        )
-        .await?;
-
-        if !exists {
-            return Err(CreateRouteCommandError::MessageTypeNotFound.into());
-        }
-
-        let exists = ChannelRepository::exists_channel(
-            ctx.repository(),
-            &ChannelQuery::ById(cmd.channel_id.clone()),
-        )
-        .await?;
-
-        if !exists {
-            return Err(CreateRouteCommandError::MessageTypeNotFound.into());
-        }
+        validate(cmd, &ctx).await?;
 
         let route = Route::builder()
             .id(cmd.id.clone())
@@ -93,4 +80,43 @@ impl CommandHandler for CreateRouteCommandHandler {
             .with_event(Event::RouteCreated(route.id().clone()))
             .ok()
     }
+}
+
+async fn validate<R: TransactedRepository>(
+    cmd: &CreateRouteCommand,
+    ctx: &CommandBusContext<'_, R>,
+) -> Result<(), CommandBusError> {
+    let exists = BusinessUnitRepository::exists_business_unit(
+        ctx.repository(),
+        &BusinessUnitQuery::ById(cmd.business_id.clone()),
+    )
+    .await?;
+
+    if !exists {
+        return Err(CreateRouteCommandError::BusinessUnitNotFound.into());
+    }
+
+    let exists = MessageTypeRepository::exists_message_type(
+        ctx.repository(),
+        &MessageTypeQuery::ById(cmd.message_type_id.clone()),
+    )
+    .await?;
+
+    if !exists {
+        return Err(CreateRouteCommandError::MessageTypeNotFound.into());
+    }
+
+    let channel = ChannelRepository::find(
+        ctx.repository(),
+        &ChannelQuery::ById(cmd.channel_id.clone()),
+    )
+    .await?;
+
+    if let Some(channel) = channel {
+        if *channel.business_unit_id() == cmd.business_id {
+            return Ok(());
+        }
+    }
+
+    Err(CreateRouteCommandError::ChannelTypeNotFound.into())
 }

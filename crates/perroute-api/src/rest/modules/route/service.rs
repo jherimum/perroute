@@ -2,12 +2,14 @@ use super::models::{
     CreateRouteRequest, RouteCollectionPath, RouteModel, RoutePath, UpdateRouteRequest,
 };
 use crate::rest::{
-    modules::ApiResult, service::RestService, ResourceModelCollectionResult, ResourceModelResult,
+    error::ApiError, modules::business_unit::service::BusinessUnitRestService,
+    service::RestService, MaybeResourceModelResult, ResourceModelCollectionResult,
+    ResourceModelResult, RestServiceResult,
 };
 use perroute_command_bus::{
     commands::route::{
         create::{CreateRouteCommand, CreateRouteCommandHandler},
-        delete::DeleteRouteCommand,
+        delete::{DeleteRouteCommand, DeleteRouteCommandHandler},
         update::{UpdateRouteCommand, UpdateRouteCommandHandler},
     },
     CommandBus,
@@ -31,19 +33,29 @@ pub trait RouteRestService {
         _req: &UpdateRouteRequest,
     ) -> impl Future<Output = ResourceModelResult<RouteModel>>;
 
+    fn delete(
+        &self,
+        actor: &Actor,
+        path: &RoutePath,
+    ) -> impl Future<Output = RestServiceResult<()>>;
+
     fn get(
         &self,
         actor: &Actor,
         path: &RoutePath,
-    ) -> impl Future<Output = Option<ResourceModelResult<RouteModel>>>;
+    ) -> impl Future<Output = ResourceModelResult<RouteModel>>;
+
+    fn maybe_get(
+        &self,
+        actor: &Actor,
+        path: &RoutePath,
+    ) -> impl Future<Output = MaybeResourceModelResult<RouteModel>>;
 
     fn query(
         &self,
         actor: &Actor,
-        path: &RoutePath,
+        path: &RouteCollectionPath,
     ) -> impl Future<Output = ResourceModelCollectionResult<RouteModel>>;
-
-    fn delete(&self, actor: &Actor, path: &RoutePath) -> impl Future<Output = ApiResult<()>>;
 }
 
 impl<CB: CommandBus, QB: QueryBus> RouteRestService for RestService<CB, QB> {
@@ -53,6 +65,8 @@ impl<CB: CommandBus, QB: QueryBus> RouteRestService for RestService<CB, QB> {
         path: &RouteCollectionPath,
         payload: &CreateRouteRequest,
     ) -> ResourceModelResult<RouteModel> {
+        BusinessUnitRestService::get(self, actor, &path.business_unit_path()).await?;
+
         let cmd = CreateRouteCommand::builder()
             .business_id(path.business_unit_id())
             .channel_id(payload.channel_id())
@@ -76,9 +90,10 @@ impl<CB: CommandBus, QB: QueryBus> RouteRestService for RestService<CB, QB> {
         path: &RoutePath,
         payload: &UpdateRouteRequest,
     ) -> ResourceModelResult<RouteModel> {
+        RouteRestService::get(self, actor, path).await?;
+
         let cmd = UpdateRouteCommand::builder()
             .id(path.route_id())
-            .business_unit_id(path.business_unit_id())
             .configuration(payload.configuration())
             .enabled(payload.enabled())
             .priority(payload.priority())
@@ -91,26 +106,37 @@ impl<CB: CommandBus, QB: QueryBus> RouteRestService for RestService<CB, QB> {
         Ok(route.into())
     }
 
-    async fn get(
-        &self,
-        actor: &Actor,
-        path: &RoutePath,
-    ) -> Option<ResourceModelResult<RouteModel>> {
-        todo!()
-    }
+    async fn delete(&self, actor: &Actor, path: &RoutePath) -> RestServiceResult<()> {
+        RouteRestService::get(self, actor, path).await?;
+        let cmd = DeleteRouteCommand::builder()
+            .id(path.route_id().clone())
+            .build();
 
-    async fn delete(&self, actor: &Actor, path: &RoutePath) -> ApiResult<()> {
-        self.get(actor, path).await;
-        let cmd = DeleteRouteCommand::builder().id(path.route_id()).build();
+        self.command_bus()
+            .execute::<_, DeleteRouteCommandHandler, _>(actor, &cmd)
+            .await?;
 
-        todo!()
+        Ok(())
     }
 
     async fn query(
         &self,
         actor: &Actor,
-        path: &RoutePath,
+        path: &RouteCollectionPath,
     ) -> ResourceModelCollectionResult<RouteModel> {
+        BusinessUnitRestService::get(self, actor, &path.business_unit_path()).await?;
         todo!()
+    }
+
+    async fn maybe_get(
+        &self,
+        actor: &Actor,
+        path: &RoutePath,
+    ) -> MaybeResourceModelResult<RouteModel> {
+        todo!()
+    }
+
+    async fn get(&self, actor: &Actor, path: &RoutePath) -> ResourceModelResult<RouteModel> {
+        self.maybe_get(actor, path).await?.ok_or(ApiError::NotFound)
     }
 }

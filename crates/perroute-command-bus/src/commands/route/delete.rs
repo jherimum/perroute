@@ -7,11 +7,12 @@ use perroute_storage::repository::{
     routes::{RouteQuery, RouteRepository},
     TransactedRepository,
 };
+use serde::Serialize;
 
 #[derive(Debug, thiserror::Error)]
 pub enum DeleteRouteCommandError {}
 
-#[derive(Debug, Clone, Builder)]
+#[derive(Debug, Clone, Builder, Serialize)]
 pub struct DeleteRouteCommand {
     id: Id,
 }

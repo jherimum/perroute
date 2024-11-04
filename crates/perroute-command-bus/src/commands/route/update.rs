@@ -25,7 +25,6 @@ pub enum UpdateRouteCommandError {
 #[derive(Debug, Clone, Builder, Serialize)]
 pub struct UpdateRouteCommand {
     id: Id,
-    business_unit_id: Id,
     configuration: Configuration,
     priority: Priority,
     enabled: bool,

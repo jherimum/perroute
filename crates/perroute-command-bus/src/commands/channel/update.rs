@@ -15,6 +15,7 @@ use perroute_storage::{
         TransactedRepository,
     },
 };
+use serde::Serialize;
 
 #[derive(Debug, thiserror::Error)]
 pub enum UpdateChannelCommandError {
@@ -22,7 +23,7 @@ pub enum UpdateChannelCommandError {
     NotFound,
 }
 
-#[derive(Debug, Clone, Builder)]
+#[derive(Debug, Clone, Builder, Serialize)]
 pub struct UpdateChannelCommand {
     id: Id,
     name: Name,

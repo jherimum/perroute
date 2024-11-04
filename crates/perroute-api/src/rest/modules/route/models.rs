@@ -1,3 +1,4 @@
+use crate::rest::{models::ResourceModel, modules::business_unit::models::BusinessUnitPath};
 use bon::Builder;
 use chrono::NaiveDateTime;
 use perroute_commons::types::{id::Id, priority::Priority, Configuration};
@@ -6,10 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, ops::Deref};
 use validator::Validate;
 
-use crate::rest::models::ResourceModel;
-
 #[derive(Debug, Deserialize, Validate)]
-
 pub struct RoutePath {
     business_unit_id: String,
     route_id: String,
@@ -24,7 +22,7 @@ impl RoutePath {
         Id::from(&self.route_id)
     }
 
-    pub fn parent(&self) -> RouteCollectionPath {
+    pub fn business_unit_path(&self) -> RouteCollectionPath {
         RouteCollectionPath {
             business_unit_id: self.business_unit_id.to_string(),
         }
@@ -39,6 +37,10 @@ pub struct RouteCollectionPath {
 impl RouteCollectionPath {
     pub fn business_unit_id(&self) -> Id {
         Id::from(&self.business_unit_id)
+    }
+
+    pub fn business_unit_path(&self) -> BusinessUnitPath {
+        BusinessUnitPath::new(&self.business_unit_id)
     }
 }
 

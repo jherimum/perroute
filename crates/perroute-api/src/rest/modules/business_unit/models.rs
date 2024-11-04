@@ -10,6 +10,10 @@ use validator::Validate;
 pub struct BusinessUnitPath(String);
 
 impl BusinessUnitPath {
+    pub fn new(id: &str) -> Self {
+        BusinessUnitPath(id.to_string())
+    }
+
     pub fn id(&self) -> Id {
         Id::from(&self.0)
     }
