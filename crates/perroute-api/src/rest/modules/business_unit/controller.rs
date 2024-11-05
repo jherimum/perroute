@@ -64,17 +64,15 @@ impl<RS: BusinessUnitRestService> BusinessUnitController<RS> {
         service: Data<RS>,
         path: Path<BusinessUnitCollectionPath>,
     ) -> ApiResult<ResourceModelCollection<BusinessUnitModel>> {
-        service
-            .query(&Actor::System, &path)
-            .await
-            .map(ApiResponse::ok)
+        let bus = service.query(&Actor::System, &path).await?;
+        Ok(ApiResponse::ok(bus))
     }
 
     pub async fn delete(service: Data<RS>, path: Path<BusinessUnitPath>) -> ApiResult<()> {
         service
             .delete(&Actor::System, &path)
             .await
-            .map(|_| ApiResponse::ok_empty())
+            .map(|_| ApiResponse::no_content())
     }
 
     pub async fn update(
@@ -94,9 +92,6 @@ impl<RS: BusinessUnitRestService> BusinessUnitController<RS> {
         payload: Json<CreateBusinessUnitRequest>,
     ) -> ApiResult<ResourceModel<BusinessUnitModel>> {
         let bu = service.create(&Actor::System, &path, &payload).await?;
-        Ok(ApiResponse::created(
-            Url::parse("http://wine.com.br").unwrap(),
-            bu,
-        ))
+        Ok(ApiResponse::created(bu))
     }
 }

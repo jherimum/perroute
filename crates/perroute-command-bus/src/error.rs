@@ -2,7 +2,8 @@ use perroute_storage::repository;
 
 use crate::commands::{
     business_unit::{
-        create::CreateBusinessUnitCommandError, update::UpdateBusinessUnitCommandError,
+        create::CreateBusinessUnitCommandError, delete::DeleteBusinessUnitCommandError,
+        update::UpdateBusinessUnitCommandError,
     },
     channel::{create::CreateChannelCommandError, update::UpdateChannelCommandError},
     message_type::{create::CreateMessageTypeCommandError, update::UpdateMessageTypeCommandError},
@@ -22,6 +23,9 @@ pub enum CommandBusError {
 
     #[error("Update business unit command error: {0}")]
     UpdateBusinessUnitCommandError(#[from] UpdateBusinessUnitCommandError),
+
+    #[error("Delete business unit command error: {0}")]
+    DeleteBusinessUnitCommandError(#[from] DeleteBusinessUnitCommandError),
 
     #[error("Create message type command error: {0}")]
     CreateMessageTypeCommandError(#[from] CreateMessageTypeCommandError),

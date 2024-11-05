@@ -1,7 +1,7 @@
 use super::controller::{BusinessUnitCollectionPath, BusinessUnitPath};
 use crate::rest::{
     error::ApiError,
-    models::resource::{ResourceModel, ResourceModelCollection},
+    models::resource::ResourceModel,
     modules::business_unit::models::{
         BusinessUnitModel, CreateBusinessUnitRequest, UpdateBusinessUnitRequest,
     },
@@ -23,6 +23,7 @@ use perroute_storage::{
 };
 use std::future::Future;
 
+#[async_trait::async_trait]
 pub trait BusinessUnitRestService {
     fn get(
         &self,
@@ -46,7 +47,7 @@ pub trait BusinessUnitRestService {
         &self,
         actor: &Actor,
         path: &BusinessUnitPath,
-    ) -> impl Future<Output = RestServiceResult<bool>>;
+    ) -> impl Future<Output = RestServiceResult<()>>;
 
     fn update(
         &self,
@@ -61,16 +62,6 @@ pub trait BusinessUnitRestService {
         path: &BusinessUnitCollectionPath,
         payload: &CreateBusinessUnitRequest,
     ) -> impl Future<Output = ResourceModelResult<BusinessUnitModel>>;
-}
-
-async fn query<QB: QueryBus>(
-    query_bus: &QB,
-    query: &BusinessUnitQuery,
-) -> RestServiceResult<Vec<BusinessUnit>> {
-    query_bus
-        .execute::<_, QueryBusinessUnitsHandler, _>(&Actor::System, query)
-        .await
-        .map_err(|e| ApiError::InternalServerError(e.into()))
 }
 
 impl<CB: CommandBus, QB: QueryBus> BusinessUnitRestService for RestService<CB, QB> {
@@ -99,18 +90,11 @@ impl<CB: CommandBus, QB: QueryBus> BusinessUnitRestService for RestService<CB, Q
         actor: &Actor,
         path: &BusinessUnitCollectionPath,
     ) -> ResourceModelCollectionResult<BusinessUnitModel> {
-        let query_result = query(self.query_bus(), &BusinessUnitQuery::All).await?;
-
-        Ok(ResourceModelCollection::new(
-            query_result
-                .into_iter()
-                .map(BusinessUnitModel::from)
-                .map(ResourceModel::new)
-                .collect::<Vec<_>>(),
-        ))
+        let bus = query(self.query_bus(), &BusinessUnitQuery::All).await?;
+        Ok(bus.into())
     }
 
-    async fn delete(&self, actor: &Actor, path: &BusinessUnitPath) -> RestServiceResult<bool> {
+    async fn delete(&self, actor: &Actor, path: &BusinessUnitPath) -> RestServiceResult<()> {
         Ok(self
             .command_bus()
             .execute::<_, DeleteBusinessUnitCommandHandler, _>(
@@ -153,10 +137,21 @@ impl<CB: CommandBus, QB: QueryBus> BusinessUnitRestService for RestService<CB, Q
             .maybe_vars(payload.vars()?)
             .build();
 
-        Ok(self
+        let bu = self
             .command_bus()
             .execute::<_, CreateBusinessUnitCommandHandler, _>(actor, &cmd)
-            .await
-            .map(|bu| bu.into())?)
+            .await?;
+
+        Ok(bu.into())
     }
+}
+
+async fn query<QB: QueryBus>(
+    query_bus: &QB,
+    query: &BusinessUnitQuery,
+) -> RestServiceResult<Vec<BusinessUnit>> {
+    query_bus
+        .execute::<_, QueryBusinessUnitsHandler, _>(&Actor::System, query)
+        .await
+        .map_err(|e| ApiError::InternalServerError(e.into()))
 }

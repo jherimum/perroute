@@ -11,7 +11,6 @@ use crate::rest::{
 };
 use actix_web::web::{Data, Json, Path};
 use perroute_commons::types::actor::Actor;
-use url::Url;
 
 pub struct MessageTypeController<RS>(std::marker::PhantomData<RS>);
 
@@ -40,7 +39,7 @@ impl<RS: MessageTypeRestService> MessageTypeController<RS> {
         service
             .delete(&Actor::System, &path)
             .await
-            .map(|_| ApiResponse::ok_empty())
+            .map(|_| ApiResponse::no_content())
     }
 
     pub async fn update(
@@ -51,17 +50,15 @@ impl<RS: MessageTypeRestService> MessageTypeController<RS> {
         service
             .update(&Actor::System, &path, &payload)
             .await
-            .map(|_| ApiResponse::ok_empty())
+            .map(|mt| ApiResponse::ok(mt.into()))
     }
 
     pub async fn create(
         service: Data<RS>,
         path: Path<MessageTypeCollectionPath>,
         payload: Json<CreateMessageTypeRequest>,
-    ) -> ApiResult<()> {
-        service.create(&Actor::System, &path, &payload).await?;
-        Ok(ApiResponse::created_empty(
-            Url::parse("http://wine.com.br").unwrap(),
-        ))
+    ) -> ApiResult<ResourceModel<MessageTypeModel>> {
+        let mt = service.create(&Actor::System, &path, &payload).await?;
+        Ok(ApiResponse::created(mt.into()))
     }
 }

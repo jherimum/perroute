@@ -1,9 +1,19 @@
 use actix_web::HttpRequest;
-use std::fmt::{Debug, Display};
+use std::{
+    fmt::{Debug, Display},
+    rc::Rc,
+};
 use url::Url;
 
 pub trait ResourcePath: Debug {
     fn url(&self, req: &HttpRequest) -> Url;
+
+    fn into_rc(self) -> Rc<dyn ResourcePath>
+    where
+        Self: Sized + 'static,
+    {
+        Rc::new(self)
+    }
 }
 
 #[derive(Debug, Hash, Eq, PartialEq)]

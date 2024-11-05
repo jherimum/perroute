@@ -1,8 +1,8 @@
 use crate::rest::{
     error::ApiError,
     models::{
-        link::{Relation, ResourcePath},
-        resource::ResourceModel,
+        link::Relation,
+        resource::{ResourceModel, ResourceModelCollection},
     },
 };
 use chrono::NaiveDateTime;
@@ -46,6 +46,17 @@ impl From<BusinessUnit> for ResourceModel<BusinessUnitModel> {
                 Relation::Static("business_units"),
                 BusinessUnitCollectionPath,
             )
+    }
+}
+
+impl From<Vec<BusinessUnit>> for ResourceModelCollection<BusinessUnitModel> {
+    fn from(value: Vec<BusinessUnit>) -> Self {
+        let x = ResourceModelCollection::new(value.into_iter().map(Into::into).collect())
+            .with_link(Relation::Self_, BusinessUnitCollectionPath);
+
+        println!("{:?}", x);
+
+        x
     }
 }
 

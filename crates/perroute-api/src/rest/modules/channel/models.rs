@@ -41,6 +41,12 @@ pub struct ChannelCollectionPath {
 }
 
 impl ChannelCollectionPath {
+    pub fn new(business_unit_id: &str) -> Self {
+        ChannelCollectionPath {
+            business_unit_id: business_unit_id.to_string(),
+        }
+    }
+
     pub fn business_unit_id(&self) -> Id {
         Id::from(&self.business_unit_id)
     }
