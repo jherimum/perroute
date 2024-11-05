@@ -6,7 +6,7 @@ pub trait ResourcePath: Debug {
     fn url(&self, req: &HttpRequest) -> Url;
 }
 
-#[derive(Debug)]
+#[derive(Debug, Hash, Eq, PartialEq)]
 pub enum Relation {
     Self_,
     Static(&'static str),
@@ -19,10 +19,4 @@ impl Display for Relation {
             Relation::Static(s) => write!(f, "{}", s),
         }
     }
-}
-
-#[derive(Debug)]
-pub struct Link {
-    pub relation: Relation,
-    pub url: Box<dyn ResourcePath>,
 }

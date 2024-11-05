@@ -1,10 +1,18 @@
-use crate::rest::{error::ApiError, models::resource::ResourceModel};
+use crate::rest::{
+    error::ApiError,
+    models::{
+        link::{Relation, ResourcePath},
+        resource::ResourceModel,
+    },
+};
 use chrono::NaiveDateTime;
-use perroute_commons::types::{code::Code, id::Id, name::Name, vars::Vars};
+use perroute_commons::types::{code::Code, name::Name, vars::Vars};
 use perroute_storage::models::business_unit::BusinessUnit;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, fmt::Debug};
 use validator::Validate;
+
+use super::controller::{BusinessUnitCollectionPath, BusinessUnitPath};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct BusinessUnitModel {
@@ -29,7 +37,15 @@ impl From<BusinessUnit> for BusinessUnitModel {
 
 impl From<BusinessUnit> for ResourceModel<BusinessUnitModel> {
     fn from(value: BusinessUnit) -> Self {
-        ResourceModel::new(value.into())
+        ResourceModel::new(value.clone().into())
+            .with_link(
+                Relation::Self_,
+                BusinessUnitPath::new(value.id().to_string().as_str()),
+            )
+            .with_link(
+                Relation::Static("business_units"),
+                BusinessUnitCollectionPath,
+            )
     }
 }
 

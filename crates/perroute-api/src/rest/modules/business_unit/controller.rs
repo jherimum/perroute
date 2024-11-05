@@ -1,7 +1,7 @@
 use super::{
     models::{BusinessUnitModel, CreateBusinessUnitRequest, UpdateBusinessUnitRequest},
     service::BusinessUnitRestService,
-    BUSINESS_UNIT_COLLECTION_RESOURCE_NAME,
+    BUSINESS_UNIT_COLLECTION_RESOURCE_NAME, BUSINESS_UNIT_RESOURCE_NAME,
 };
 use crate::rest::{
     models::{
@@ -33,8 +33,7 @@ impl BusinessUnitPath {
 
 impl ResourcePath for BusinessUnitPath {
     fn url(&self, req: &actix_web::HttpRequest) -> Url {
-        req.url_for(BUSINESS_UNIT_COLLECTION_RESOURCE_NAME, &[&self.0])
-            .unwrap()
+        req.url_for(BUSINESS_UNIT_RESOURCE_NAME, [&self.0]).unwrap()
     }
 }
 
@@ -93,10 +92,11 @@ impl<RS: BusinessUnitRestService> BusinessUnitController<RS> {
         service: Data<RS>,
         path: Path<BusinessUnitCollectionPath>,
         payload: Json<CreateBusinessUnitRequest>,
-    ) -> ApiResult<()> {
-        service.create(&Actor::System, &path, &payload).await?;
-        Ok(ApiResponse::created_empty(
+    ) -> ApiResult<ResourceModel<BusinessUnitModel>> {
+        let bu = service.create(&Actor::System, &path, &payload).await?;
+        Ok(ApiResponse::created(
             Url::parse("http://wine.com.br").unwrap(),
+            bu,
         ))
     }
 }

@@ -20,7 +20,6 @@ pub fn scope<RS: BusinessUnitRestService + ChannelRestService + RouteRestService
         .service(
             web::resource("")
                 .name(BUSINESS_UNIT_COLLECTION_RESOURCE_NAME)
-                .name("bu_resources")
                 .route(web::get().to(BusinessUnitController::<RS>::query))
                 .route(web::post().to(BusinessUnitController::<RS>::create)),
         )
@@ -29,7 +28,6 @@ pub fn scope<RS: BusinessUnitRestService + ChannelRestService + RouteRestService
                 .service(
                     web::resource("")
                         .name(BUSINESS_UNIT_RESOURCE_NAME)
-                        .name("bu_resource")
                         .route(web::get().to(BusinessUnitController::<RS>::get))
                         .route(web::put().to(BusinessUnitController::<RS>::update))
                         .route(web::delete().to(BusinessUnitController::<RS>::delete)),

@@ -2,7 +2,7 @@ pub mod link;
 pub mod resource;
 
 use actix_web::{body::BoxBody, http::header::LOCATION, Responder};
-use serde::Serialize;
+use resource::ResourceBuilder;
 use url::Url;
 
 pub enum ApiResponse<D> {
@@ -11,7 +11,7 @@ pub enum ApiResponse<D> {
     NoContent,
 }
 
-impl<D: Serialize> ApiResponse<D> {
+impl<D> ApiResponse<D> {
     pub fn ok_empty() -> Self {
         Self::Ok(None)
     }
@@ -29,20 +29,20 @@ impl<D: Serialize> ApiResponse<D> {
     }
 }
 
-impl<D: Serialize> Responder for ApiResponse<D> {
+impl<D: ResourceBuilder> Responder for ApiResponse<D> {
     type Body = BoxBody;
 
-    fn respond_to(self, _req: &actix_web::HttpRequest) -> actix_web::HttpResponse {
+    fn respond_to(self, req: &actix_web::HttpRequest) -> actix_web::HttpResponse {
         match self {
             Self::Ok(d) => match d {
-                Some(data) => actix_web::HttpResponse::Ok().json(data),
+                Some(data) => actix_web::HttpResponse::Ok().json(data.build(req)),
                 None => actix_web::HttpResponse::Ok().finish(),
             },
             Self::Created(url, data) => {
                 let mut b = actix_web::HttpResponse::Created();
                 b.append_header((LOCATION, url.to_string()));
                 if let Some(data) = data {
-                    b.json(data)
+                    b.json(data.build(req))
                 } else {
                     b.finish()
                 }

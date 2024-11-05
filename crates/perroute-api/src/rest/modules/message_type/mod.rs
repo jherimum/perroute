@@ -11,16 +11,14 @@ pub fn scope<RS: MessageTypeRestService + 'static>() -> Scope {
         .service(
             web::resource("")
                 .name("message_types_resource")
-                .route(web::get().to(MessageTypeController::<RS>::query))
-                .route(web::post().to(MessageTypeController::<RS>::create)),
+                .route(web::get().to(MessageTypeController::<RS>::query)), //.route(web::post().to(MessageTypeController::<RS>::create)),
         )
         .service(
             web::scope("/{message_type_id}").service(
                 web::resource("")
                     .name("message_type_resource")
                     .route(web::get().to(MessageTypeController::<RS>::get))
-                    .route(web::put().to(MessageTypeController::<RS>::update))
-                    .route(web::delete().to(MessageTypeController::<RS>::delete)),
+                    .route(web::put().to(MessageTypeController::<RS>::update)), //.route(web::delete().to(MessageTypeController::<RS>::delete)),
             ),
         )
 }
