@@ -6,7 +6,7 @@ use super::{
     service::MessageTypeRestService,
 };
 use crate::rest::{
-    models::{ApiResponse, ResourceModel, ResourceModelCollection},
+    models::{resource::ResourceModel, resource::ResourceModelCollection, ApiResponse},
     modules::ApiResult,
 };
 use actix_web::web::{Data, Json, Path};

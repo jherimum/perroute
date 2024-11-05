@@ -1,5 +1,6 @@
 use crate::rest::{
-    error::ApiError, models::ResourceModel, modules::business_unit::models::BusinessUnitPath,
+    error::ApiError, models::resource::ResourceModel,
+    modules::business_unit::controller::BusinessUnitPath,
 };
 use bon::Builder;
 use chrono::NaiveDateTime;

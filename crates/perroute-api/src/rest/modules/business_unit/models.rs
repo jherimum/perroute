@@ -1,26 +1,10 @@
-use crate::rest::{error::ApiError, models::ResourceModel};
+use crate::rest::{error::ApiError, models::resource::ResourceModel};
 use chrono::NaiveDateTime;
 use perroute_commons::types::{code::Code, id::Id, name::Name, vars::Vars};
 use perroute_storage::models::business_unit::BusinessUnit;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, fmt::Debug};
 use validator::Validate;
-
-#[derive(Debug, Deserialize)]
-pub struct BusinessUnitPath(String);
-
-impl BusinessUnitPath {
-    pub fn new(id: &str) -> Self {
-        BusinessUnitPath(id.to_string())
-    }
-
-    pub fn id(&self) -> Id {
-        Id::from(&self.0)
-    }
-}
-
-#[derive(Debug, Deserialize)]
-pub struct BusinessUnitCollectionPath;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct BusinessUnitModel {

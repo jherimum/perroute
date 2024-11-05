@@ -1,9 +1,9 @@
-use super::models::BusinessUnitCollectionPath;
+use super::controller::{BusinessUnitCollectionPath, BusinessUnitPath};
 use crate::rest::{
     error::ApiError,
-    models::{ResourceModel, ResourceModelCollection},
+    models::resource::{ResourceModel, ResourceModelCollection},
     modules::business_unit::models::{
-        BusinessUnitModel, BusinessUnitPath, CreateBusinessUnitRequest, UpdateBusinessUnitRequest,
+        BusinessUnitModel, CreateBusinessUnitRequest, UpdateBusinessUnitRequest,
     },
     service::RestService,
     ResourceModelCollectionResult, ResourceModelResult, RestServiceResult,
@@ -101,13 +101,13 @@ impl<CB: CommandBus, QB: QueryBus> BusinessUnitRestService for RestService<CB, Q
     ) -> ResourceModelCollectionResult<BusinessUnitModel> {
         let query_result = query(self.query_bus(), &BusinessUnitQuery::All).await?;
 
-        Ok(ResourceModelCollection {
-            data: query_result
+        Ok(ResourceModelCollection::new(
+            query_result
                 .into_iter()
                 .map(BusinessUnitModel::from)
                 .map(ResourceModel::new)
                 .collect::<Vec<_>>(),
-        })
+        ))
     }
 
     async fn delete(&self, actor: &Actor, path: &BusinessUnitPath) -> RestServiceResult<bool> {

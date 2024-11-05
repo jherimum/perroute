@@ -1,3 +1,6 @@
+pub mod link;
+pub mod resource;
+
 use actix_web::{body::BoxBody, http::header::LOCATION, Responder};
 use serde::Serialize;
 use url::Url;
@@ -48,29 +51,4 @@ impl<D: Serialize> Responder for ApiResponse<D> {
             Self::NoContent => actix_web::HttpResponse::NoContent().finish(),
         }
     }
-}
-
-#[derive(Debug, Serialize)]
-pub struct ResourceModel<T> {
-    #[serde(flatten)]
-    data: T,
-}
-
-impl<T> ResourceModel<T> {
-    pub fn new(data: T) -> Self {
-        Self { data }
-    }
-}
-
-impl<T: Serialize> Responder for ResourceModel<T> {
-    type Body = BoxBody;
-
-    fn respond_to(self, _: &actix_web::HttpRequest) -> actix_web::HttpResponse<Self::Body> {
-        actix_web::HttpResponse::Ok().json(self.data)
-    }
-}
-
-#[derive(Debug, Serialize)]
-pub struct ResourceModelCollection<T> {
-    pub data: Vec<ResourceModel<T>>,
 }

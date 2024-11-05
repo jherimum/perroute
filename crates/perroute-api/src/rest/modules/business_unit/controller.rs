@@ -1,19 +1,52 @@
 use super::{
-    models::{
-        BusinessUnitCollectionPath, BusinessUnitModel, BusinessUnitPath, CreateBusinessUnitRequest,
-        UpdateBusinessUnitRequest,
-    },
+    models::{BusinessUnitModel, CreateBusinessUnitRequest, UpdateBusinessUnitRequest},
     service::BusinessUnitRestService,
+    BUSINESS_UNIT_COLLECTION_RESOURCE_NAME,
 };
 use crate::rest::{
-    models::{ApiResponse, ResourceModel, ResourceModelCollection},
+    models::{
+        link::ResourcePath,
+        resource::{ResourceModel, ResourceModelCollection},
+        ApiResponse,
+    },
     modules::ApiResult,
 };
 use actix_web::web::{Data, Path};
 use actix_web_validator::Json;
-use perroute_commons::types::actor::Actor;
+use perroute_commons::types::{actor::Actor, id::Id};
+use serde::Deserialize;
 use std::marker::PhantomData;
 use url::Url;
+
+#[derive(Debug, Deserialize)]
+pub struct BusinessUnitPath(String);
+
+impl BusinessUnitPath {
+    pub fn new(id: &str) -> Self {
+        BusinessUnitPath(id.to_string())
+    }
+
+    pub fn id(&self) -> Id {
+        Id::from(&self.0)
+    }
+}
+
+impl ResourcePath for BusinessUnitPath {
+    fn url(&self, req: &actix_web::HttpRequest) -> Url {
+        req.url_for(BUSINESS_UNIT_COLLECTION_RESOURCE_NAME, &[&self.0])
+            .unwrap()
+    }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct BusinessUnitCollectionPath;
+
+impl ResourcePath for BusinessUnitCollectionPath {
+    fn url(&self, req: &actix_web::HttpRequest) -> Url {
+        req.url_for_static(BUSINESS_UNIT_COLLECTION_RESOURCE_NAME)
+            .unwrap()
+    }
+}
 
 pub struct BusinessUnitController<RS>(PhantomData<RS>);
 

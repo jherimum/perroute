@@ -1,5 +1,5 @@
 use error::ApiError;
-use models::{ResourceModel, ResourceModelCollection};
+use models::resource::{ResourceModel, ResourceModelCollection};
 
 pub mod error;
 pub mod models;

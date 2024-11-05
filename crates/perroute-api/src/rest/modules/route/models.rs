@@ -1,4 +1,6 @@
-use crate::rest::{models::ResourceModel, modules::business_unit::models::BusinessUnitPath};
+use crate::rest::{
+    models::resource::ResourceModel, modules::business_unit::controller::BusinessUnitPath,
+};
 use bon::Builder;
 use chrono::NaiveDateTime;
 use perroute_commons::types::{id::Id, priority::Priority, Configuration};

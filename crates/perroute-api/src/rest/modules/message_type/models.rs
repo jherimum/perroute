@@ -1,4 +1,4 @@
-use crate::rest::{error::ApiError, models::ResourceModel};
+use crate::rest::{error::ApiError, models::resource::ResourceModel};
 use bon::Builder;
 use chrono::NaiveDateTime;
 use perroute_commons::types::{
