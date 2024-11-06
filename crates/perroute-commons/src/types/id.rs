@@ -13,6 +13,12 @@ impl Id {
     }
 }
 
+impl AsRef<String> for Id {
+    fn as_ref(&self) -> &String {
+        &self.0
+    }
+}
+
 impl Default for Id {
     fn default() -> Self {
         Self::new()

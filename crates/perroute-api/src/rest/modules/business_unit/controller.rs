@@ -5,42 +5,54 @@ use super::{
 };
 use crate::rest::{
     models::{
-        link::ResourcePath,
+        link::ToPath,
         resource::{ResourceModel, ResourceModelCollection},
         ApiResponse,
     },
     modules::ApiResult,
 };
-use actix_web::web::{Data, Path};
-use actix_web_validator::Json;
+use actix_web::web::Data;
+use actix_web_validator::{Json, Path};
 use perroute_commons::types::{actor::Actor, id::Id};
 use serde::Deserialize;
 use std::marker::PhantomData;
 use url::Url;
+use validator::Validate;
 
-#[derive(Debug, Deserialize)]
-pub struct BusinessUnitPath(String);
+#[derive(Debug, Deserialize, Clone, Validate, PartialEq, Eq)]
+pub struct BusinessUnitPath {
+    business_unit_id: String,
+}
 
 impl BusinessUnitPath {
     pub fn new(id: &str) -> Self {
-        BusinessUnitPath(id.to_string())
+        BusinessUnitPath {
+            business_unit_id: id.to_string(),
+        }
     }
 
     pub fn id(&self) -> Id {
-        Id::from(&self.0)
+        Id::from(&self.business_unit_id)
     }
 }
 
-impl ResourcePath for BusinessUnitPath {
+impl ToPath for BusinessUnitPath {
     fn url(&self, req: &actix_web::HttpRequest) -> Url {
-        req.url_for(BUSINESS_UNIT_RESOURCE_NAME, [&self.0]).unwrap()
+        req.url_for(BUSINESS_UNIT_RESOURCE_NAME, [&self.business_unit_id])
+            .unwrap()
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone, PartialEq, Eq)]
 pub struct BusinessUnitCollectionPath;
 
-impl ResourcePath for BusinessUnitCollectionPath {
+impl Validate for BusinessUnitCollectionPath {
+    fn validate(&self) -> Result<(), validator::ValidationErrors> {
+        Ok(())
+    }
+}
+
+impl ToPath for BusinessUnitCollectionPath {
     fn url(&self, req: &actix_web::HttpRequest) -> Url {
         req.url_for_static(BUSINESS_UNIT_COLLECTION_RESOURCE_NAME)
             .unwrap()

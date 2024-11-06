@@ -50,7 +50,7 @@ impl<RS: MessageTypeRestService> MessageTypeController<RS> {
         service
             .update(&Actor::System, &path, &payload)
             .await
-            .map(|mt| ApiResponse::ok(mt.into()))
+            .map(ApiResponse::ok)
     }
 
     pub async fn create(

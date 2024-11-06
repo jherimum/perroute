@@ -2,13 +2,12 @@ pub mod link;
 pub mod resource;
 
 use actix_web::{body::BoxBody, http::header::LOCATION, Responder};
-use link::ResourcePath;
+use link::{Relation, ResourcePath};
 use resource::ResourceBuilder;
-use std::rc::Rc;
 
 pub enum ApiResponse<D> {
     Ok(D),
-    Created(Rc<dyn ResourcePath>, Option<D>),
+    Created(ResourcePath, Option<D>),
     NoContent,
 }
 
@@ -17,12 +16,12 @@ impl<D: ResourceBuilder> ApiResponse<D> {
         Self::Ok(data)
     }
 
-    pub fn created_empty<P: ResourcePath + 'static>(path: P) -> Self {
-        Self::Created(Rc::new(path), None)
+    pub fn created_empty(path: ResourcePath) -> Self {
+        Self::Created(path, None)
     }
 
     pub fn created(data: D) -> Self {
-        let self_ = data.links().get(&link::Relation::Self_).unwrap();
+        let self_ = data.links().get(&Relation::Self_).unwrap();
         Self::Created(self_.clone(), Some(data))
     }
 

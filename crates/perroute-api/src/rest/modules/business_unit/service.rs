@@ -14,16 +14,17 @@ use perroute_command_bus::{
         delete::{DeleteBusinessUnitCommand, DeleteBusinessUnitCommandHandler},
         update::{UpdateBusinessUnitCommand, UpdateBusinessUnitCommandHandler},
     },
-    CommandBus, CommandBusError,
+    CommandBus,
 };
 use perroute_commons::types::actor::Actor;
-use perroute_query_bus::{queries::business_unit::QueryBusinessUnitsHandler, QueryBus};
+use perroute_query_bus::{
+    queries::business_unit::QueryBusinessUnitsHandler, QueryBus, QueryBusError,
+};
 use perroute_storage::{
     models::business_unit::BusinessUnit, repository::business_units::BusinessUnitQuery,
 };
 use std::future::Future;
 
-#[async_trait::async_trait]
 pub trait BusinessUnitRestService {
     fn get(
         &self,
@@ -119,8 +120,7 @@ impl<CB: CommandBus, QB: QueryBus> BusinessUnitRestService for RestService<CB, Q
         let bu = self
             .command_bus()
             .execute::<_, UpdateBusinessUnitCommandHandler, _>(actor, &cmd)
-            .await
-            .map_err(CommandBusError::from)?;
+            .await?;
 
         Ok(bu.into())
     }
@@ -149,9 +149,8 @@ impl<CB: CommandBus, QB: QueryBus> BusinessUnitRestService for RestService<CB, Q
 async fn query<QB: QueryBus>(
     query_bus: &QB,
     query: &BusinessUnitQuery,
-) -> RestServiceResult<Vec<BusinessUnit>> {
+) -> Result<Vec<BusinessUnit>, QueryBusError> {
     query_bus
         .execute::<_, QueryBusinessUnitsHandler, _>(&Actor::System, query)
         .await
-        .map_err(|e| ApiError::InternalServerError(e.into()))
 }

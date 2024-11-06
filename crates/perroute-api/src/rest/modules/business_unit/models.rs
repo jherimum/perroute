@@ -5,6 +5,7 @@ use crate::rest::{
         resource::{ResourceModel, ResourceModelCollection},
     },
 };
+use actix_web::dev::ResourcePath;
 use chrono::NaiveDateTime;
 use perroute_commons::types::{code::Code, name::Name, vars::Vars};
 use perroute_storage::models::business_unit::BusinessUnit;
@@ -14,7 +15,7 @@ use validator::Validate;
 
 use super::controller::{BusinessUnitCollectionPath, BusinessUnitPath};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Validate)]
 pub struct BusinessUnitModel {
     pub id: String,
     pub code: String,
@@ -40,23 +41,19 @@ impl From<BusinessUnit> for ResourceModel<BusinessUnitModel> {
         ResourceModel::new(value.clone().into())
             .with_link(
                 Relation::Self_,
-                BusinessUnitPath::new(value.id().to_string().as_str()),
+                BusinessUnitPath::new(value.id().as_ref()).into(),
             )
             .with_link(
                 Relation::Static("business_units"),
-                BusinessUnitCollectionPath,
+                BusinessUnitCollectionPath.into(),
             )
     }
 }
 
 impl From<Vec<BusinessUnit>> for ResourceModelCollection<BusinessUnitModel> {
     fn from(value: Vec<BusinessUnit>) -> Self {
-        let x = ResourceModelCollection::new(value.into_iter().map(Into::into).collect())
-            .with_link(Relation::Self_, BusinessUnitCollectionPath);
-
-        println!("{:?}", x);
-
-        x
+        ResourceModelCollection::new(value.into_iter().map(Into::into).collect())
+            .with_link(Relation::Self_, BusinessUnitCollectionPath.into())
     }
 }
 

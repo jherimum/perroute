@@ -1,22 +1,31 @@
-use actix_web::HttpRequest;
-use std::{
-    fmt::{Debug, Display},
-    rc::Rc,
+use crate::rest::modules::business_unit::controller::{
+    BusinessUnitCollectionPath, BusinessUnitPath,
 };
+use actix_web::HttpRequest;
+use derive_more::derive::From;
+use std::fmt::{Debug, Display};
 use url::Url;
 
-pub trait ResourcePath: Debug {
+pub trait ToPath {
     fn url(&self, req: &HttpRequest) -> Url;
+}
 
-    fn into_rc(self) -> Rc<dyn ResourcePath>
-    where
-        Self: Sized + 'static,
-    {
-        Rc::new(self)
+#[derive(Debug, Clone, PartialEq, Eq, From)]
+pub enum ResourcePath {
+    BusinessUnit(BusinessUnitPath),
+    BusinessUnits(BusinessUnitCollectionPath),
+}
+
+impl ResourcePath {
+    pub fn url(&self, req: &HttpRequest) -> Url {
+        match self {
+            ResourcePath::BusinessUnit(path) => path.url(req),
+            ResourcePath::BusinessUnits(path) => path.url(req),
+        }
     }
 }
 
-#[derive(Debug, Hash, Eq, PartialEq)]
+#[derive(Debug, Hash, Eq, PartialEq, Clone)]
 pub enum Relation {
     Self_,
     Static(&'static str),
