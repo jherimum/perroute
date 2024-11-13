@@ -1,10 +1,17 @@
 use super::{PgRepository, RepositoryResult};
 use crate::{execute, fetch_optional, models::route::Route};
-use perroute_commons::types::id::Id;
+use perroute_commons::types::{dispatch_type::DispatchType, id::Id};
 use std::future::Future;
 
 pub enum RouteQuery<'q> {
     ById(&'q Id),
+    ActiveByBusinessUnitAndDispatchType(&'q ActiveByBusinessUnitAndDispatchTypeQuery<'q>),
+}
+
+pub struct ActiveByBusinessUnitAndDispatchTypeQuery<'q> {
+    pub business_unit_id: &'q Id,
+    pub message_type_id: &'q Id,
+    pub dispatch_type: &'q DispatchType,
 }
 
 pub trait RouteRepository {
@@ -15,9 +22,15 @@ pub trait RouteRepository {
     fn update(&self, route: Route) -> impl Future<Output = RepositoryResult<Route>>;
 
     fn delete(&self, query: &RouteQuery<'_>) -> impl Future<Output = RepositoryResult<u64>>;
+
+    fn query(&self, query: &RouteQuery<'_>) -> impl Future<Output = RepositoryResult<Vec<Route>>>;
 }
 
 impl RouteRepository for PgRepository {
+    async fn query(&self, query: &RouteQuery<'_>) -> RepositoryResult<Vec<Route>> {
+        todo!()
+    }
+
     async fn save(&self, route: Route) -> RepositoryResult<Route> {
         todo!()
     }
@@ -32,6 +45,7 @@ impl RouteRepository for PgRepository {
                 let query = sqlx::query("DELETE FROM routes WHERE id = $1").bind(id);
                 Ok(execute!(&self.source, query)?.rows_affected())
             }
+            _ => todo!(),
         }
     }
 
@@ -41,6 +55,7 @@ impl RouteRepository for PgRepository {
                 let query = sqlx::query_as("SELECT * FROM routes WHERE id = $1").bind(id);
                 Ok(fetch_optional!(&self.source, query)?)
             }
+            _ => todo!(),
         }
     }
 }

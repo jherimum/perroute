@@ -5,7 +5,7 @@ use super::{
 };
 use crate::rest::{
     models::{
-        link::ToPath,
+        link::ResourcePath,
         resource::{ResourceModel, ResourceModelCollection},
         ApiResponse,
     },
@@ -36,7 +36,7 @@ impl BusinessUnitPath {
     }
 }
 
-impl ToPath for BusinessUnitPath {
+impl ResourcePath for BusinessUnitPath {
     fn url(&self, req: &actix_web::HttpRequest) -> Url {
         req.url_for(BUSINESS_UNIT_RESOURCE_NAME, [&self.business_unit_id])
             .unwrap()
@@ -52,7 +52,7 @@ impl Validate for BusinessUnitCollectionPath {
     }
 }
 
-impl ToPath for BusinessUnitCollectionPath {
+impl ResourcePath for BusinessUnitCollectionPath {
     fn url(&self, req: &actix_web::HttpRequest) -> Url {
         req.url_for_static(BUSINESS_UNIT_COLLECTION_RESOURCE_NAME)
             .unwrap()

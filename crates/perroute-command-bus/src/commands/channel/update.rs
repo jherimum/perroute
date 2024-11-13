@@ -48,14 +48,13 @@ impl CommandHandler for UpdateChannelCommandHandler {
         cmd: &Self::Command,
         ctx: CommandBusContext<'_, R>,
     ) -> CommandHandlerResult<Self::Output> {
-        let channel =
-            ChannelRepository::find(ctx.repository(), &ChannelQuery::ById(cmd.id.clone()))
-                .await?
-                .ok_or(CommandBusError::from(UpdateChannelCommandError::NotFound))?
-                .set_configuration(cmd.configuration.clone())
-                .set_enabled(cmd.enabled)
-                .set_name(cmd.name.clone())
-                .set_updated_at(Timestamp::now());
+        let channel = ChannelRepository::find(ctx.repository(), &ChannelQuery::ById(&cmd.id))
+            .await?
+            .ok_or(CommandBusError::from(UpdateChannelCommandError::NotFound))?
+            .set_configuration(cmd.configuration.clone())
+            .set_enabled(cmd.enabled)
+            .set_name(cmd.name.clone())
+            .set_updated_at(Timestamp::now());
 
         let channel = ChannelRepository::update(ctx.repository(), channel).await?;
 

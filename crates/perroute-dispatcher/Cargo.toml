@@ -1,0 +1,13 @@
+[package]
+name = "perroute-dispatcher"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+perroute-commons = { path = "../perroute-commons" }
+perroute-storage = { path = "../perroute-storage" }
+perroute-connectors = { path = "../perroute-connectors" }
+
+tokio = { workspace = true, features = ["full"] }
+log = { workspace = true }
+thiserror = { workspace = true }

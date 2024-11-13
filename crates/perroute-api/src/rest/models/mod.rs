@@ -2,12 +2,11 @@ pub mod link;
 pub mod resource;
 
 use actix_web::{body::BoxBody, http::header::LOCATION, Responder};
-use link::{Relation, ResourcePath};
 use resource::ResourceBuilder;
 
 pub enum ApiResponse<D> {
     Ok(D),
-    Created(ResourcePath, Option<D>),
+    Created(Option<D>),
     NoContent,
 }
 
@@ -16,13 +15,12 @@ impl<D: ResourceBuilder> ApiResponse<D> {
         Self::Ok(data)
     }
 
-    pub fn created_empty(path: ResourcePath) -> Self {
-        Self::Created(path, None)
+    pub fn created_empty() -> Self {
+        Self::Created(None)
     }
 
     pub fn created(data: D) -> Self {
-        let self_ = data.links().get(&Relation::Self_).unwrap();
-        Self::Created(self_.clone(), Some(data))
+        Self::Created(Some(data))
     }
 
     pub fn no_content() -> Self {
@@ -37,10 +35,14 @@ impl<D: ResourceBuilder> Responder for ApiResponse<D> {
         match self {
             Self::Ok(data) => actix_web::HttpResponse::Ok().json(data.build(req)),
 
-            Self::Created(url, data) => {
+            Self::Created(data) => {
                 let mut b = actix_web::HttpResponse::Created();
-                b.append_header((LOCATION, url.url(req).to_string()));
+
                 if let Some(data) = data {
+                    let self_ = data.links().get(&link::Relation::Self_);
+                    if let Some(rp) = self_ {
+                        b.append_header((LOCATION, rp.url(req).to_string()));
+                    }
                     b.json(data.build(req))
                 } else {
                     b.finish()

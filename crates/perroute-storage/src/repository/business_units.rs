@@ -12,6 +12,8 @@ pub enum BusinessUnitQuery {
 }
 
 pub trait BusinessUnitRepository {
+    fn get(&self, id: &Id) -> impl Future<Output = RepositoryResult<BusinessUnit>>;
+
     fn find_business_unit(
         &self,
         id: &Id,
@@ -41,6 +43,10 @@ pub trait BusinessUnitRepository {
 }
 
 impl BusinessUnitRepository for PgRepository {
+    async fn get(&self, id: &Id) -> RepositoryResult<BusinessUnit> {
+        todo!()
+    }
+
     async fn find_business_unit(&self, id: &Id) -> RepositoryResult<Option<BusinessUnit>> {
         Ok(fetch_optional!(
             &self.source,

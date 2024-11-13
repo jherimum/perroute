@@ -106,11 +106,8 @@ async fn validate<R: TransactedRepository>(
         return Err(CreateRouteCommandError::MessageTypeNotFound.into());
     }
 
-    let channel = ChannelRepository::find(
-        ctx.repository(),
-        &ChannelQuery::ById(cmd.channel_id.clone()),
-    )
-    .await?;
+    let channel =
+        ChannelRepository::find(ctx.repository(), &ChannelQuery::ById(&cmd.channel_id)).await?;
 
     if let Some(channel) = channel {
         if *channel.business_unit_id() == cmd.business_id {

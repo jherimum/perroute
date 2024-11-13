@@ -1,11 +1,12 @@
-use perroute_commons::types::id::Id;
+use perroute_commons::types::{dispatch_type::DispatchType, id::Id};
 
 use super::{PgRepository, RepositoryResult};
 use crate::models::channel::Channel;
 use std::future::Future;
 
-pub enum ChannelQuery {
-    ById(Id),
+pub enum ChannelQuery<'q> {
+    ById(&'q Id),
+    EnabledByBusinessUnitAndDispatchType(&'q Id, &'q DispatchType),
 }
 
 pub trait ChannelRepository {
@@ -13,15 +14,26 @@ pub trait ChannelRepository {
 
     fn update(&self, channel: Channel) -> impl Future<Output = RepositoryResult<Channel>>;
 
-    fn exists_channel(&self, query: &ChannelQuery) -> impl Future<Output = RepositoryResult<bool>>;
+    fn exists_channel(
+        &self,
+        query: &ChannelQuery<'_>,
+    ) -> impl Future<Output = RepositoryResult<bool>>;
 
-    fn delete(&self, query: &ChannelQuery) -> impl Future<Output = RepositoryResult<i32>>;
+    fn delete(&self, query: &ChannelQuery<'_>) -> impl Future<Output = RepositoryResult<i32>>;
 
-    fn find(&self, query: &ChannelQuery)
-        -> impl Future<Output = RepositoryResult<Option<Channel>>>;
+    fn find(
+        &self,
+        query: &ChannelQuery<'_>,
+    ) -> impl Future<Output = RepositoryResult<Option<Channel>>>;
+
+    fn query(&self, query: &ChannelQuery<'_>) -> RepositoryResult<Vec<Channel>>;
 }
 
 impl ChannelRepository for PgRepository {
+    fn query(&self, query: &ChannelQuery) -> RepositoryResult<Vec<Channel>> {
+        todo!()
+    }
+
     async fn save(&self, channel: Channel) -> RepositoryResult<Channel> {
         todo!()
     }
@@ -30,15 +42,15 @@ impl ChannelRepository for PgRepository {
         todo!()
     }
 
-    async fn exists_channel(&self, query: &ChannelQuery) -> RepositoryResult<bool> {
+    async fn exists_channel(&self, query: &ChannelQuery<'_>) -> RepositoryResult<bool> {
         todo!()
     }
 
-    async fn delete(&self, query: &ChannelQuery) -> RepositoryResult<i32> {
+    async fn delete(&self, query: &ChannelQuery<'_>) -> RepositoryResult<i32> {
         todo!()
     }
 
-    async fn find(&self, query: &ChannelQuery) -> RepositoryResult<Option<Channel>> {
+    async fn find(&self, query: &ChannelQuery<'_>) -> RepositoryResult<Option<Channel>> {
         todo!()
     }
 }

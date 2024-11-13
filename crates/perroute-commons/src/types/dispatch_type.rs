@@ -1,5 +1,6 @@
-use perroute_commons::impl_sqlx_type;
 use serde::Serialize;
+
+use crate::impl_sqlx_type;
 
 #[derive(Debug, Clone, PartialEq, Eq, strum::EnumString, strum::Display, Serialize)]
 pub enum DispatchType {

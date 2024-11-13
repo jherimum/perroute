@@ -1900,11 +1900,25 @@ dependencies = [
 name = "perroute-connectors"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "perroute-commons",
  "serde",
  "sqlx",
  "strum",
  "strum_macros",
+ "thiserror",
+]
+
+[[package]]
+name = "perroute-dispatcher"
+version = "0.1.0"
+dependencies = [
+ "log",
+ "perroute-commons",
+ "perroute-connectors",
+ "perroute-storage",
+ "thiserror",
+ "tokio",
 ]
 
 [[package]]

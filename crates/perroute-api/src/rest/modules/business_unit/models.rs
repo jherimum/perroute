@@ -5,7 +5,6 @@ use crate::rest::{
         resource::{ResourceModel, ResourceModelCollection},
     },
 };
-use actix_web::dev::ResourcePath;
 use chrono::NaiveDateTime;
 use perroute_commons::types::{code::Code, name::Name, vars::Vars};
 use perroute_storage::models::business_unit::BusinessUnit;
@@ -39,13 +38,10 @@ impl From<BusinessUnit> for BusinessUnitModel {
 impl From<BusinessUnit> for ResourceModel<BusinessUnitModel> {
     fn from(value: BusinessUnit) -> Self {
         ResourceModel::new(value.clone().into())
-            .with_link(
-                Relation::Self_,
-                BusinessUnitPath::new(value.id().as_ref()).into(),
-            )
+            .with_link(Relation::Self_, BusinessUnitPath::new(value.id().as_ref()))
             .with_link(
                 Relation::Static("business_units"),
-                BusinessUnitCollectionPath.into(),
+                BusinessUnitCollectionPath,
             )
     }
 }
@@ -53,7 +49,7 @@ impl From<BusinessUnit> for ResourceModel<BusinessUnitModel> {
 impl From<Vec<BusinessUnit>> for ResourceModelCollection<BusinessUnitModel> {
     fn from(value: Vec<BusinessUnit>) -> Self {
         ResourceModelCollection::new(value.into_iter().map(Into::into).collect())
-            .with_link(Relation::Self_, BusinessUnitCollectionPath.into())
+            .with_link(Relation::Self_, BusinessUnitCollectionPath)
     }
 }
 

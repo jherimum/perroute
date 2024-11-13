@@ -1,21 +1,24 @@
-use perroute_commons::types::{id::Id, MessageStatus, Payload, Recipient, Tags, Timestamp};
-use perroute_connectors::types::dispatch_type::DispatchType;
+use derive_getters::Getters;
+use perroute_commons::types::{
+    dispatch_type::DispatchType, id::Id, recipient::Recipient, MessageStatus, Payload, Tags,
+    Timestamp,
+};
 use sqlx::prelude::FromRow;
 
-#[derive(Debug, Clone, PartialEq, Eq, FromRow)]
+#[derive(Debug, Clone, PartialEq, Eq, FromRow, Getters)]
 pub struct Message {
-    pub id: Id,
-    pub message_type_id: Id,
-    pub business_unit_id: Id,
-    pub payload: Payload,
-    pub dispatch_type: DispatchType,
-    pub recipient: Recipient,
-    pub status: MessageStatus,
-    pub scheduled_at: Option<Timestamp>,
-    pub tags: Tags,
+    id: Id,
+    message_type_id: Id,
+    business_unit_id: Id,
+    payload: Payload,
+    dispatch_type: DispatchType,
+    recipient: Recipient,
+    status: MessageStatus,
+    scheduled_at: Option<Timestamp>,
+    tags: Tags,
 
-    pub created_at: Timestamp,
-    pub updated_at: Timestamp,
+    created_at: Timestamp,
+    updated_at: Timestamp,
 }
 
 impl perroute_commons::types::entity::Entity for Message {

@@ -1,10 +1,13 @@
 pub mod actor;
 pub mod code;
+pub mod dispatch_type;
 pub mod entity;
 pub mod id;
 pub mod name;
 pub mod priority;
+pub mod recipient;
 pub mod schema;
+pub mod template;
 pub mod vars;
 
 use chrono::{NaiveDateTime, Utc};
@@ -35,7 +38,7 @@ impl Deref for Timestamp {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Hash)]
 #[serde(transparent)]
 pub struct ProviderId(String);
 
@@ -58,6 +61,12 @@ pub struct Configuration(HashMap<String, String>);
 impl Configuration {
     pub fn new(value: &HashMap<String, String>) -> Self {
         Self(value.clone())
+    }
+
+    pub fn merge(&self, other: &Configuration) -> Configuration {
+        let mut merged = self.0.clone();
+        merged.extend(other.0.clone());
+        Configuration(merged)
     }
 }
 
@@ -88,11 +97,12 @@ impl Deref for Payload {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Recipient {}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum MessageStatus {}
+#[derive(Debug, Clone, PartialEq, Eq, strum::Display)]
+pub enum MessageStatus {
+    Received,
+    Failed,
+    Dispatched,
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Tags(HashSet<String>);

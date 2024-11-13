@@ -36,8 +36,7 @@ impl CommandHandler for DeleteChannelCommandHandler {
         ctx: CommandBusContext<'_, R>,
     ) -> CommandHandlerResult<Self::Output> {
         let result =
-            ChannelRepository::delete(ctx.repository(), &ChannelQuery::ById(cmd.id.clone()))
-                .await?;
+            ChannelRepository::delete(ctx.repository(), &ChannelQuery::ById(&cmd.id)).await?;
 
         CommandHandlerOutput::new(result > 0)
             .with_event(Event::ChannelDeleted(cmd.id.clone()))

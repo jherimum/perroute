@@ -54,7 +54,7 @@ impl Route {
         }
     }
 
-    pub fn configuration(&self) -> Configuration {
-        (*self.configuration).clone()
+    pub fn configuration(&self) -> &Configuration {
+        self.configuration.as_ref()
     }
 }

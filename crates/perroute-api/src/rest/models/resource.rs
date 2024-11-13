@@ -10,12 +10,15 @@ use url::Url;
 
 pub struct Link {
     relation: Relation,
-    path: ResourcePath,
+    path: Box<dyn ResourcePath>,
 }
 
 impl Link {
-    pub fn new(relation: Relation, path: ResourcePath) -> Self {
-        Self { relation, path }
+    pub fn new(relation: Relation, path: impl ResourcePath + 'static) -> Self {
+        Self {
+            relation,
+            path: Box::new(path),
+        }
     }
 }
 
@@ -27,7 +30,7 @@ impl Hash for Link {
 
 pub trait ResourceBuilder {
     fn build(self, req: &HttpRequest) -> impl Serialize;
-    fn links(&self) -> &HashMap<Relation, ResourcePath>;
+    fn links(&self) -> &HashMap<Relation, Box<dyn ResourcePath>>;
 }
 
 impl ResourceBuilder for () {
@@ -35,7 +38,7 @@ impl ResourceBuilder for () {
         serde_json::Value::Null
     }
 
-    fn links(&self) -> &HashMap<Relation, ResourcePath> {
+    fn links(&self) -> &HashMap<Relation, Box<dyn ResourcePath>> {
         unimplemented!()
     }
 }
@@ -52,7 +55,7 @@ impl<T: Serialize> ResourceBuilder for ResourceModel<T> {
         }
     }
 
-    fn links(&self) -> &HashMap<Relation, ResourcePath> {
+    fn links(&self) -> &HashMap<Relation, Box<dyn ResourcePath>> {
         &self.links
     }
 }
@@ -60,7 +63,7 @@ impl<T: Serialize> ResourceBuilder for ResourceModel<T> {
 #[derive(Debug)]
 pub struct ResourceModel<T> {
     data: T,
-    links: HashMap<Relation, ResourcePath>,
+    links: HashMap<Relation, Box<dyn ResourcePath>>,
 }
 
 impl<T> ResourceModel<T> {
@@ -71,12 +74,12 @@ impl<T> ResourceModel<T> {
         }
     }
 
-    pub fn with_link(mut self, relation: Relation, path: ResourcePath) -> Self {
-        self.links.insert(relation, path);
+    pub fn with_link(mut self, relation: Relation, path: impl ResourcePath + 'static) -> Self {
+        self.links.insert(relation, Box::new(path));
         self
     }
 
-    pub fn with_links(mut self, links: HashMap<Relation, ResourcePath>) -> Self {
+    pub fn with_links(mut self, links: HashMap<Relation, Box<dyn ResourcePath>>) -> Self {
         self.links.extend(links);
         self
     }
@@ -91,7 +94,7 @@ struct InternalResourceModel<T> {
 #[derive(Debug)]
 pub struct ResourceModelCollection<T> {
     data: Vec<ResourceModel<T>>,
-    links: HashMap<Relation, ResourcePath>,
+    links: HashMap<Relation, Box<dyn ResourcePath>>,
 }
 
 impl<T: Serialize + Debug> ResourceBuilder for ResourceModelCollection<T> {
@@ -106,7 +109,7 @@ impl<T: Serialize + Debug> ResourceBuilder for ResourceModelCollection<T> {
         }
     }
 
-    fn links(&self) -> &HashMap<Relation, ResourcePath> {
+    fn links(&self) -> &HashMap<Relation, Box<dyn ResourcePath>> {
         &self.links
     }
 }
@@ -119,12 +122,12 @@ impl<T> ResourceModelCollection<T> {
         }
     }
 
-    pub fn with_link(mut self, relation: Relation, path: ResourcePath) -> Self {
-        self.links.insert(relation, path);
+    pub fn with_link(mut self, relation: Relation, path: impl ResourcePath + 'static) -> Self {
+        self.links.insert(relation, Box::new(path));
         self
     }
 
-    pub fn with_links(mut self, links: HashMap<Relation, ResourcePath>) -> Self {
+    pub fn with_links(mut self, links: HashMap<Relation, Box<dyn ResourcePath>>) -> Self {
         self.links.extend(links);
         self
     }

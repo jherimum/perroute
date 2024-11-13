@@ -2,18 +2,22 @@ pub mod business_units;
 pub mod channels;
 pub mod command_audit;
 pub mod events;
+pub mod message;
 pub mod message_types;
 pub mod routes;
+pub mod template_assignment;
 
 use business_units::BusinessUnitRepository;
 use channels::ChannelRepository;
 use command_audit::CommandAuditRepository;
 use events::EventRepository;
+use message::MessageRepository;
 use message_types::{MessageTypeRepository, PayloadExampleRepository};
 use perroute_commons::configuration::settings::DatabaseSettings;
 use routes::RouteRepository;
 use sqlx::{PgPool, Postgres, Transaction};
 use std::{future::Future, sync::Arc};
+use template_assignment::TemplateAssignmentRepository;
 use tokio::sync::Mutex;
 
 use crate::database::build_pool;
@@ -43,6 +47,8 @@ pub trait Repository:
     + RouteRepository
     + EventRepository
     + CommandAuditRepository
+    + MessageRepository
+    + TemplateAssignmentRepository
 {
     fn begin(&self) -> impl Future<Output = RepositoryResult<impl TransactedRepository + Clone>>;
 }

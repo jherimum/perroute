@@ -4,6 +4,7 @@ pub mod channel;
 pub mod command_audit;
 pub mod event;
 pub mod message;
+pub mod message_dispatch;
 pub mod message_type;
 pub mod route;
 pub mod template_assignment;
