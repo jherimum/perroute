@@ -2,11 +2,11 @@ pub mod plugins;
 pub mod types;
 
 use perroute_commons::types::{
-    recipient::{self, EmailRecipient, PushRecipient, SmsRecipient},
+    recipient::{EmailRecipient, PushRecipient, SmsRecipient},
     template::{EmailTemplate, PushTemplate, SmsTemplate},
     Configuration, ProviderId,
 };
-use std::{collections::HashMap, future::Future, marker::PhantomData};
+use std::{collections::HashMap, future::Future};
 
 pub trait ProviderPluginRepository {
     fn get(&self, id: &ProviderId) -> Option<&dyn ProviderPlugin>;
@@ -24,94 +24,83 @@ impl ProviderPluginRepository for DefaultProviderPluginRepository {
 
 #[async_trait::async_trait]
 pub trait ProviderPlugin {
-    fn email_dispatcher(
+    async fn dispatch(
         &self,
-        _: Configuration,
-    ) -> Option<Box<dyn DispatcherTrait<EmailRecipient, EmailTemplate>>> {
-        None
-    }
+        configuration: Configuration,
+        request: DispatchRequest,
+    ) -> Result<DispatchResponse, DispatchError>;
+}
 
-    fn sms_dispatcher(
-        &self,
-        _: Configuration,
-    ) -> Option<Box<dyn DispatcherTrait<SmsRecipient, SmsTemplate>>> {
-        None
-    }
-
-    fn push_dispatcher(
-        &self,
-        _: Configuration,
-    ) -> Option<Box<dyn DispatcherTrait<PushRecipient, PushTemplate>>> {
-        None
-    }
+pub struct DefaulPlugin<O>
+where
+    O: Future<Output = Result<DispatchResponse, DispatchError>>,
+{
+    id: ProviderId,
+    sms: Option<Dispatcher<SmsRecipient, SmsTemplate, O>>,
+    email: Option<Dispatcher<EmailRecipient, EmailTemplate, O>>,
+    push: Option<Dispatcher<PushRecipient, PushTemplate, O>>,
 }
 
 #[async_trait::async_trait]
-pub trait DispatcherTrait<R, T> {
-    async fn dispatch(&self, request: Request<R, T>) -> Result<DispatchResponse, DispatchError>;
-}
-
-#[async_trait::async_trait]
-impl<R, T, F, O> DispatcherTrait<R, T> for Dispatcher<R, T, F, O>
+impl<O: Future<Output = Result<DispatchResponse, DispatchError>> + Send + Sync> ProviderPlugin
+    for DefaulPlugin<O>
 where
-    R: Sync + Send,
-    T: Sync + Send,
-    F: Fn(Configuration, R, T) -> O + Send + Sync,
-    O: Future<Output = Result<DispatchResponse, DispatchError>> + Send + Sync,
+    Self: Send + Sync,
 {
-    async fn dispatch(&self, request: Request<R, T>) -> Result<DispatchResponse, DispatchError> {
-        let f = &self.function;
-
-        f(
-            self.configuration.clone(),
-            request.recipient,
-            request.template,
-        )
-        .await
-    }
-}
-
-pub struct Dispatcher<R, T, F, O>
-where
-    F: Fn(Configuration, R, T) -> O,
-    O: Future<Output = Result<DispatchResponse, DispatchError>>,
-{
-    pub function: F,
-    configuration: Configuration,
-    recipient: PhantomData<R>,
-    template: PhantomData<T>,
-}
-
-impl<R, T, F, O> Dispatcher<R, T, F, O>
-where
-    F: Fn(Configuration, R, T) -> O,
-    O: Future<Output = Result<DispatchResponse, DispatchError>>,
-{
-    pub fn new(configuration: Configuration, function: F) -> Self {
-        Dispatcher {
-            function,
-            configuration,
-            recipient: PhantomData,
-            template: PhantomData,
+    async fn dispatch(
+        &self,
+        configuration: Configuration,
+        request: DispatchRequest,
+    ) -> Result<DispatchResponse, DispatchError> {
+        match request {
+            DispatchRequest::Email(request) => {
+                let x = self.email.as_ref().unwrap();
+                x.dispatch(configuration, request.recipient, request.template)
+                    .await
+            }
+            DispatchRequest::Sms(request) => {
+                let x = self.sms.as_ref().unwrap();
+                x.dispatch(configuration, request.recipient, request.template)
+                    .await
+            }
+            DispatchRequest::Push(request) => {
+                let x = self.push.as_ref().unwrap();
+                x.dispatch(configuration, request.recipient, request.template)
+                    .await
+            }
         }
     }
+}
+
+pub struct Dispatcher<R, T, O>
+where
+    O: Future<Output = Result<DispatchResponse, DispatchError>>,
+{
+    function: fn(Configuration, R, T) -> O,
+}
+
+impl<R, T, O> Dispatcher<R, T, O>
+where
+    O: Future<Output = Result<DispatchResponse, DispatchError>>,
+{
+    pub fn new(function: fn(Configuration, R, T) -> O) -> Self {
+        Dispatcher { function }
+    }
+
+    fn dispatch(&self, configuration: Configuration, recipient: R, template: T) -> O {
+        (self.function)(configuration, recipient, template)
+    }
+}
+
+pub enum DispatchRequest {
+    Sms(Request<SmsRecipient, SmsTemplate>),
+    Email(Request<EmailRecipient, EmailTemplate>),
+    Push(Request<PushRecipient, PushTemplate>),
 }
 
 pub struct Request<R, T> {
     recipient: R,
     template: T,
-}
-
-impl Request<EmailRecipient, EmailTemplate> {
-    pub fn email(
-        recipient: EmailRecipient,
-        template: EmailTemplate,
-    ) -> Request<EmailRecipient, EmailTemplate> {
-        Request {
-            recipient,
-            template,
-        }
-    }
 }
 
 pub struct DispatchResponse {}

@@ -5,7 +5,7 @@ use perroute_commons::{
         MessageStatus,
     },
 };
-use perroute_connectors::{DispatcherTrait, ProviderPluginRepository, Request};
+use perroute_connectors::{ProviderPluginRepository, Request};
 use perroute_storage::{
     models::{
         business_unit::BusinessUnit, channel::Channel, message::Message, route::Route,
@@ -136,15 +136,15 @@ impl<R: Repository, PR: ProviderPluginRepository, TR: TemplateRender> Dispatcher
             let r = EmailRecipient {};
             let t = EmailTemplate {};
 
-            let result = match message.dispatch_type() {
-                DispatchType::Email => {
-                    let request = Request::email(r, t);
-                    let dispatcher = plugin.email_dispatcher(configuration).unwrap();
-                    dispatcher.dispatch(request).await
-                }
-                DispatchType::Sms => todo!(),
-                DispatchType::Push => todo!(),
-            };
+            // let result = match message.dispatch_type() {
+            //     DispatchType::Email => {
+            //         let request = Request::email(r, t);
+            //         let dispatcher = plugin.email_dispatcher(configuration).unwrap();
+            //         dispatcher.dispatch(request).await
+            //     }
+            //     DispatchType::Sms => todo!(),
+            //     DispatchType::Push => todo!(),
+            // };
 
             // let req = build_request(&business_unit, &channel, &route, &template, &message);
             // let dispatch_result = plugin.dispatch(&req, &config).await;

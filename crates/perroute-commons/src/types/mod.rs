@@ -48,6 +48,12 @@ impl ProviderId {
     }
 }
 
+impl From<&str> for ProviderId {
+    fn from(value: &str) -> Self {
+        Self(value.to_string())
+    }
+}
+
 impl Display for ProviderId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0)
