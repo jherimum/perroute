@@ -11,3 +11,5 @@ perroute-connectors = { path = "../perroute-connectors" }
 tokio = { workspace = true, features = ["full"] }
 log = { workspace = true }
 thiserror = { workspace = true }
+tap = { workspace = true }
+futures = { workspace = true }

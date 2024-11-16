@@ -20,7 +20,7 @@ pub struct MessageType {
 
     name: Name,
 
-    vars: Option<Vars>,
+    vars: Vars,
 
     schema: Schema,
 

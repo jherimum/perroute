@@ -105,7 +105,8 @@ impl Deref for Payload {
 
 #[derive(Debug, Clone, PartialEq, Eq, strum::Display)]
 pub enum MessageStatus {
-    Received,
+    Pending,
+    Dispatching,
     Failed,
     Dispatched,
 }

@@ -28,7 +28,7 @@ pub enum UpdateMessageTypeCommandError {
 pub struct UpdateMessageTypeCommand {
     id: Id,
     name: Name,
-    vars: Option<Vars>,
+    vars: Vars,
     schema: Schema,
     enabled: bool,
     payload_examples: Vec<(Name, Payload)>,

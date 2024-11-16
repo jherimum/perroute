@@ -1,18 +1,22 @@
+use derive_getters::Getters;
 use perroute_commons::types::{id::Id, priority::Priority, vars::Vars, Timestamp};
 use sqlx::prelude::FromRow;
 
-#[derive(Debug, Clone, PartialEq, Eq, FromRow)]
+#[derive(Debug, Clone, PartialEq, Eq, FromRow, Getters)]
 pub struct TemplateAssignment {
-    pub id: Id,
-    pub business_unit_id: Id,
-    pub message_type_id: Id,
-    pub vars: Vars,
-    pub priority: Priority,
-    pub start_at: Timestamp,
-    pub end_at: Option<Timestamp>,
-    pub enabled: bool,
-    pub created_at: Timestamp,
-    pub updated_at: Timestamp,
+    id: Id,
+    business_unit_id: Id,
+    message_type_id: Id,
+    sms_template_id: Option<Id>,
+    email_template_id: Option<Id>,
+    push_template_id: Option<Id>,
+    vars: Vars,
+    priority: Priority,
+    start_at: Timestamp,
+    end_at: Option<Timestamp>,
+    enabled: bool,
+    created_at: Timestamp,
+    updated_at: Timestamp,
 }
 
 impl perroute_commons::types::entity::Entity for TemplateAssignment {

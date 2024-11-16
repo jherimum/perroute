@@ -16,7 +16,7 @@ pub struct BusinessUnit {
     code: Code,
     name: Name,
 
-    vars: Option<Vars>,
+    vars: Vars,
 
     #[setters(skip)]
     created_at: Timestamp,

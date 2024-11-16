@@ -24,7 +24,7 @@ pub enum UpdateBusinessUnitCommandError {
 pub struct UpdateBusinessUnitCommand {
     pub id: Id,
     pub name: Name,
-    pub vars: Option<Vars>,
+    pub vars: Vars,
 }
 
 impl Command for UpdateBusinessUnitCommand {

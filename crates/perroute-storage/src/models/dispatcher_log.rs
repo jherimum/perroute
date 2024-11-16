@@ -4,7 +4,7 @@ use perroute_commons::types::{id::Id, ProviderId, Timestamp};
 use sqlx::prelude::FromRow;
 
 #[derive(Debug, Clone, PartialEq, Eq, FromRow, Getters, Builder)]
-pub struct MessageDispatch {
+pub struct DispatcherLog {
     #[builder(default)]
     id: Id,
     message_id: Id,

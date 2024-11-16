@@ -2,11 +2,18 @@ pub mod plugins;
 pub mod types;
 
 use perroute_commons::types::{
-    recipient::{EmailRecipient, PushRecipient, SmsRecipient},
-    template::{EmailTemplate, PushTemplate, SmsTemplate},
+    id::Id,
+    recipient::{EmailRecipient, PushRecipient, Recipient, SmsRecipient},
+    template::{EmailTemplate, PushTemplate, SmsTemplate, Template},
     Configuration, ProviderId,
 };
-use std::{collections::HashMap, future::Future};
+use std::collections::HashMap;
+
+pub fn repository() -> impl ProviderPluginRepository {
+    DefaultProviderPluginRepository {
+        plugins: HashMap::new(),
+    }
+}
 
 pub trait ProviderPluginRepository {
     fn get(&self, id: &ProviderId) -> Option<&dyn ProviderPlugin>;
@@ -26,84 +33,87 @@ impl ProviderPluginRepository for DefaultProviderPluginRepository {
 pub trait ProviderPlugin {
     async fn dispatch(
         &self,
-        configuration: Configuration,
-        request: DispatchRequest,
-    ) -> Result<DispatchResponse, DispatchError>;
+        configuration: &Configuration,
+        request: &DispatchRequest,
+    ) -> Result<DispatchResponse, PluginDispatchError>;
 }
 
-pub struct DefaulPlugin<O>
-where
-    O: Future<Output = Result<DispatchResponse, DispatchError>>,
-{
-    id: ProviderId,
-    sms: Option<Dispatcher<SmsRecipient, SmsTemplate, O>>,
-    email: Option<Dispatcher<EmailRecipient, EmailTemplate, O>>,
-    push: Option<Dispatcher<PushRecipient, PushTemplate, O>>,
-}
-
-#[async_trait::async_trait]
-impl<O: Future<Output = Result<DispatchResponse, DispatchError>> + Send + Sync> ProviderPlugin
-    for DefaulPlugin<O>
-where
-    Self: Send + Sync,
-{
-    async fn dispatch(
-        &self,
-        configuration: Configuration,
-        request: DispatchRequest,
-    ) -> Result<DispatchResponse, DispatchError> {
-        match request {
-            DispatchRequest::Email(request) => {
-                let x = self.email.as_ref().unwrap();
-                x.dispatch(configuration, request.recipient, request.template)
-                    .await
-            }
-            DispatchRequest::Sms(request) => {
-                let x = self.sms.as_ref().unwrap();
-                x.dispatch(configuration, request.recipient, request.template)
-                    .await
-            }
-            DispatchRequest::Push(request) => {
-                let x = self.push.as_ref().unwrap();
-                x.dispatch(configuration, request.recipient, request.template)
-                    .await
-            }
-        }
-    }
-}
-
-pub struct Dispatcher<R, T, O>
-where
-    O: Future<Output = Result<DispatchResponse, DispatchError>>,
-{
-    function: fn(Configuration, R, T) -> O,
-}
-
-impl<R, T, O> Dispatcher<R, T, O>
-where
-    O: Future<Output = Result<DispatchResponse, DispatchError>>,
-{
-    pub fn new(function: fn(Configuration, R, T) -> O) -> Self {
-        Dispatcher { function }
-    }
-
-    fn dispatch(&self, configuration: Configuration, recipient: R, template: T) -> O {
-        (self.function)(configuration, recipient, template)
-    }
-}
-
+#[derive(Debug, derive_more::From)]
 pub enum DispatchRequest {
     Sms(Request<SmsRecipient, SmsTemplate>),
     Email(Request<EmailRecipient, EmailTemplate>),
     Push(Request<PushRecipient, PushTemplate>),
 }
 
+impl DispatchRequest {
+    pub fn id(&self) -> &Id {
+        match self {
+            DispatchRequest::Sms(request) => &request.id,
+            DispatchRequest::Email(request) => &request.id,
+            DispatchRequest::Push(request) => &request.id,
+        }
+    }
+}
+
+impl TryFrom<(&Id, Recipient, Template)> for DispatchRequest {
+    type Error = &'static str;
+
+    fn try_from(
+        (id, recipient, template): (&Id, Recipient, Template),
+    ) -> Result<Self, Self::Error> {
+        match (id, recipient, template) {
+            (id, Recipient::Sms(recipient), Template::Sms(template)) => {
+                Ok(DispatchRequest::Sms(Request::sms(id, recipient, template)))
+            }
+            (id, Recipient::Email(recipient), Template::Email(template)) => Ok(
+                DispatchRequest::Email(Request::email(id, recipient, template)),
+            ),
+            (id, Recipient::Push(recipient), Template::Push(template)) => Ok(
+                DispatchRequest::Push(Request::push(id, recipient, template)),
+            ),
+            _ => Err("Invalid recipient and template combination"),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct Request<R, T> {
+    id: Id,
     recipient: R,
     template: T,
+}
+
+impl Request<SmsRecipient, SmsTemplate> {
+    pub fn sms(id: &Id, recipient: SmsRecipient, template: SmsTemplate) -> Self {
+        Self {
+            id: id.clone(),
+            recipient,
+            template,
+        }
+    }
+}
+
+impl Request<EmailRecipient, EmailTemplate> {
+    pub fn email(id: &Id, recipient: EmailRecipient, template: EmailTemplate) -> Self {
+        Self {
+            id: id.clone(),
+            recipient,
+            template,
+        }
+    }
+}
+
+impl Request<PushRecipient, PushTemplate> {
+    pub fn push(id: &Id, recipient: PushRecipient, template: PushTemplate) -> Self {
+        Self {
+            id: id.clone(),
+            recipient,
+            template,
+        }
+    }
 }
 
 pub struct DispatchResponse {}
 
 #[derive(Debug, thiserror::Error)]
-pub enum DispatchError {}
+pub enum PluginDispatchError {}

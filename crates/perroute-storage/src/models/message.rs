@@ -1,23 +1,38 @@
 use derive_getters::Getters;
+use derive_setters::Setters;
 use perroute_commons::types::{
     dispatch_type::DispatchType, id::Id, recipient::Recipient, MessageStatus, Payload, Tags,
     Timestamp,
 };
 use sqlx::prelude::FromRow;
 
-#[derive(Debug, Clone, PartialEq, Eq, FromRow, Getters)]
+#[derive(Debug, Clone, PartialEq, Eq, FromRow, Getters, Setters)]
+#[setters(prefix = "set_")]
+#[setters(into)]
 pub struct Message {
+    #[setters(skip)]
     id: Id,
+    #[setters(skip)]
     message_type_id: Id,
+    #[setters(skip)]
     business_unit_id: Id,
+    #[setters(skip)]
     payload: Payload,
+    #[setters(skip)]
     dispatch_type: DispatchType,
+    #[setters(skip)]
     recipient: Recipient,
+
     status: MessageStatus,
+
     scheduled_at: Option<Timestamp>,
+
+    #[setters(skip)]
     tags: Tags,
 
+    #[setters(skip)]
     created_at: Timestamp,
+
     updated_at: Timestamp,
 }
 

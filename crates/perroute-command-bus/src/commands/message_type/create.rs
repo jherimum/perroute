@@ -30,7 +30,7 @@ pub struct CreateMessageTypeCommand {
     id: Id,
     code: Code,
     name: Name,
-    vars: Option<Vars>,
+    vars: Vars,
     schema: Schema,
     enabled: bool,
     payload_examples: Vec<(Name, Payload)>,
@@ -67,7 +67,7 @@ impl CommandHandler for CreateMessageTypeCommandHandler {
             .id(cmd.id.clone())
             .code(cmd.code.clone())
             .name(cmd.name.clone())
-            .maybe_vars(cmd.vars.clone())
+            .vars(cmd.vars.clone())
             .schema(cmd.schema.clone())
             .enabled(cmd.enabled)
             .created_at(Timestamp::now())

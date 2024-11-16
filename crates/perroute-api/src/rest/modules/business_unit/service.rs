@@ -114,7 +114,7 @@ impl<CB: CommandBus, QB: QueryBus> BusinessUnitRestService for RestService<CB, Q
         let cmd = UpdateBusinessUnitCommand::builder()
             .id(id.id())
             .name(payload.name()?)
-            .maybe_vars(payload.vars()?)
+            .vars(payload.vars())
             .build();
 
         let bu = self
@@ -134,7 +134,7 @@ impl<CB: CommandBus, QB: QueryBus> BusinessUnitRestService for RestService<CB, Q
         let cmd = CreateBusinessUnitCommand::builder()
             .name(payload.name()?)
             .code(payload.code()?)
-            .maybe_vars(payload.vars()?)
+            .vars(payload.vars())
             .build();
 
         let bu = self

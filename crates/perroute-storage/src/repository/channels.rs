@@ -7,6 +7,7 @@ use std::future::Future;
 pub enum ChannelQuery<'q> {
     ById(&'q Id),
     EnabledByBusinessUnitAndDispatchType(&'q Id, &'q DispatchType),
+    ActiveByIds(&'q [&'q Id]),
 }
 
 pub trait ChannelRepository {

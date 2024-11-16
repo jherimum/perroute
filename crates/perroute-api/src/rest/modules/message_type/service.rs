@@ -90,7 +90,7 @@ impl<CB: CommandBus, QB: QueryBus> MessageTypeRestService for RestService<CB, QB
             .id(path.id())
             .name(payload.name()?)
             .enabled(payload.enabled())
-            .maybe_vars(payload.vars()?)
+            .vars(payload.vars())
             .schema(payload.schema()?)
             .payload_examples(payload.payload_examples()?)
             .build();
@@ -113,7 +113,7 @@ impl<CB: CommandBus, QB: QueryBus> MessageTypeRestService for RestService<CB, QB
             .code(payload.code()?)
             .name(payload.name()?)
             .enabled(payload.enabled())
-            .maybe_vars(payload.vars()?)
+            .vars(payload.vars())
             .schema(payload.schema()?)
             .payload_examples(payload.payload_examples()?)
             .build();

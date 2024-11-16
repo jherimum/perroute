@@ -29,7 +29,7 @@ pub struct CreateBusinessUnitCommand {
     id: Id,
     name: Name,
     code: Code,
-    vars: Option<Vars>,
+    vars: Vars,
 }
 
 impl Command for CreateBusinessUnitCommand {
@@ -64,7 +64,7 @@ impl CommandHandler for CreateBusinessUnitCommandHandler {
             .id(cmd.id.clone())
             .code(cmd.code.clone())
             .name(cmd.name.clone())
-            .maybe_vars(cmd.vars.clone())
+            .vars(cmd.vars.clone())
             .created_at(Timestamp::now())
             .updated_at(Timestamp::now())
             .build();

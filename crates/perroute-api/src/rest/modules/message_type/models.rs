@@ -31,7 +31,7 @@ pub struct MessageTypeModel {
     pub id: String,
     pub code: String,
     pub name: String,
-    pub vars: Option<HashMap<String, String>>,
+    pub vars: HashMap<String, String>,
     pub schema: Value,
     pub enabled: bool,
     pub payload_examples: Vec<(String, Value)>,
@@ -45,7 +45,7 @@ impl From<(MessageType, Vec<PayloadExample>)> for MessageTypeModel {
             .id(value.0.id().to_string())
             .code(value.0.code().to_string())
             .name(value.0.name().to_string())
-            .maybe_vars(value.0.vars().as_ref().map(Into::into))
+            .vars(value.0.vars().into())
             .schema(value.0.schema().deref().clone())
             .enabled(*value.0.enabled())
             .created_at(**value.0.created_at())
@@ -92,7 +92,7 @@ impl TryInto<(Name, Payload)> for &PayloadExampleModel {
 pub struct CreateMessageTypeRequest {
     code: String,
     name: String,
-    vars: Option<HashMap<String, String>>,
+    vars: HashMap<String, String>,
     schema: Value,
     enabled: bool,
     payload_examples: Vec<PayloadExampleModel>,
@@ -107,8 +107,8 @@ impl CreateMessageTypeRequest {
         Ok(Name::try_from(&self.name)?)
     }
 
-    pub fn vars(&self) -> Result<Option<Vars>, ApiError> {
-        Ok(self.vars.as_ref().map(Into::into))
+    pub fn vars(&self) -> Vars {
+        Vars::from(&self.vars)
     }
 
     pub fn enabled(&self) -> bool {
@@ -126,7 +126,7 @@ impl CreateMessageTypeRequest {
 #[derive(Debug, Deserialize, Validate)]
 pub struct UpdateMessageTypeRequest {
     name: String,
-    vars: Option<HashMap<String, String>>,
+    vars: HashMap<String, String>,
     schema: Value,
     enabled: bool,
     payload_examples: Vec<PayloadExampleModel>,
@@ -137,8 +137,8 @@ impl UpdateMessageTypeRequest {
         Ok(Name::try_from(&self.name)?)
     }
 
-    pub fn vars(&self) -> Result<Option<Vars>, ApiError> {
-        Ok(self.vars.as_ref().map(Into::into))
+    pub fn vars(&self) -> Vars {
+        Vars::from(&self.vars)
     }
 
     pub fn enabled(&self) -> bool {

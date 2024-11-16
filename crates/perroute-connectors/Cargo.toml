@@ -11,3 +11,5 @@ serde = { workspace = true, features = ["derive"] }
 sqlx = { workspace = true }
 thiserror = { workspace = true }
 async-trait = { workspace = true }
+bon = { workspace = true }
+derive_more = { workspace = true }

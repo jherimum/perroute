@@ -57,7 +57,7 @@ impl From<Vec<BusinessUnit>> for ResourceModelCollection<BusinessUnitModel> {
 pub struct CreateBusinessUnitRequest {
     code: String,
     name: String,
-    vars: Option<HashMap<String, String>>,
+    vars: HashMap<String, String>,
 }
 
 impl CreateBusinessUnitRequest {
@@ -69,15 +69,15 @@ impl CreateBusinessUnitRequest {
         Ok(Name::try_from(&self.name)?)
     }
 
-    pub fn vars(&self) -> Result<Option<Vars>, ApiError> {
-        Ok(self.vars.as_ref().map(From::from))
+    pub fn vars(&self) -> Vars {
+        Vars::from(&self.vars)
     }
 }
 
 #[derive(Debug, Deserialize, Validate)]
 pub struct UpdateBusinessUnitRequest {
     name: String,
-    vars: Option<HashMap<String, String>>,
+    vars: HashMap<String, String>,
 }
 
 impl UpdateBusinessUnitRequest {
@@ -85,7 +85,7 @@ impl UpdateBusinessUnitRequest {
         Ok(Name::try_from(&self.name)?)
     }
 
-    pub fn vars(&self) -> Result<Option<Vars>, ApiError> {
-        Ok(self.vars.as_ref().map(From::from))
+    pub fn vars(&self) -> Vars {
+        Vars::from(&self.vars)
     }
 }

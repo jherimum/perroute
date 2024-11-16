@@ -1,10 +1,10 @@
 use super::dispatch_type::DispatchType;
 
-#[derive(Debug, Clone, PartialEq, Eq, strum::Display)]
+#[derive(Debug, Clone, PartialEq, Eq, strum::Display, derive_more::TryInto)]
 pub enum Recipient {
     Sms(SmsRecipient),
-    Push(EmailRecipient),
-    Email(PushRecipient),
+    Push(PushRecipient),
+    Email(EmailRecipient),
 }
 
 impl Recipient {
