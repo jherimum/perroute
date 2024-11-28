@@ -1,3 +1,5 @@
+use serde::{Deserialize, Serialize};
+
 use crate::{impl_sqlx_type, types::id::Id};
 
 #[derive(Debug, Clone, PartialEq, Eq, strum::EnumString, strum::Display)]
@@ -18,7 +20,7 @@ pub enum EventType {
 
 impl_sqlx_type!(EventType as String);
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub enum Event {
     BusinessUnitCreated(Id),
     BusinessUnitUpdated(Id),

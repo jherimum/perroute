@@ -1,28 +1,31 @@
 use perroute_connectors::{DispatchRequest, ProviderPlugin, ProviderPluginRepository};
-use perroute_storage::{
-    models::{channel::Channel, dispatcher_log::DispatcherLog, message::Message, route::Route},
-    repository::Repository,
-};
+use perroute_storage::models::{channel::Channel, dispatcher_log::DispatcherLog, route::Route};
 
-pub struct MessageDispatchers<R, PR> {
-    repository: R,
+#[derive(Debug, thiserror::Error)]
+pub enum MessageDispatcherError {}
+
+pub struct MessageDispatchers<PR> {
     plugin_repository: PR,
 }
 
-impl<R: Repository, PR: ProviderPluginRepository> MessageDispatchers<R, PR> {
-    pub fn new(repository: R, plugin_repository: PR) -> Self {
-        Self {
-            repository,
-            plugin_repository,
-        }
+impl<PR: ProviderPluginRepository> MessageDispatchers<PR> {
+    pub fn new(plugin_repository: PR) -> Self {
+        Self { plugin_repository }
     }
 
-    pub async fn stack(
+    pub async fn dispatch(
         &self,
-        message: &Message,
-    ) -> Result<Vec<MessageDispatcher<'_>>, perroute_storage::repository::Error> {
+        message: DispatchRequest,
+    ) -> Result<Vec<DispatcherLog>, MessageDispatcherError> {
         todo!()
     }
+
+    // pub async fn stack(
+    //     &self,
+    //     message: &Message,
+    // ) -> Result<Vec<MessageDispatcher<'_>>, perroute_storage::repository::Error> {
+    //     todo!()
+    // }
 }
 
 pub struct MessageDispatcher<'d> {

@@ -3,7 +3,7 @@ use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::{
     events::{Event, EventType},
-    types::{id::Id, Timestamp},
+    types::{entity::Entity, id::Id, Timestamp},
 };
 use sqlx::prelude::FromRow;
 
@@ -18,7 +18,7 @@ pub struct DbEvent {
     consumed_at: Option<Timestamp>,
 }
 
-impl perroute_commons::types::entity::Entity for DbEvent {
+impl Entity for DbEvent {
     fn id(&self) -> &Id {
         &self.id
     }

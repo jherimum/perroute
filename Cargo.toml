@@ -5,6 +5,7 @@ members = [
     "crates/perroute-command-bus",
     "crates/perroute-commons",
     "crates/perroute-connectors",
+    "crates/perroute-digester",
     "crates/perroute-dispatcher",
     "crates/perroute-events-pooling",
     "crates/perroute-query-bus",
@@ -21,6 +22,7 @@ tokio = { version = "1", features = ["full"] }
 actix-web = "4"
 actix-web-validator = "6"
 dotenvy = "0.15"
+env_logger = "0.11"
 tap = "1"
 strum = "0.26"
 strum_macros = "0.26"
@@ -37,3 +39,8 @@ log = "0.4"
 derive_more = "1"
 handlebars = "6"
 futures = "0.3"
+aws-config = "1"
+aws-sdk-sqs = "1"
+aws-sdk-s3 = "1"
+aws-sdk-sns = "1"
+config = "0.14"

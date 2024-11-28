@@ -1,17 +1,12 @@
 use crate::DispatcherError;
-use perroute_commons::{
-    template::{self, TemplateRender},
-    types::template::Template,
-};
+use perroute_commons::types::template::Template;
 use perroute_storage::{
-    models::{
-        business_unit::{self, BusinessUnit},
-        message::{self, Message},
-        message_type::MessageType,
-        template_assignment::TemplateAssignment,
-    },
+    models::{business_unit::BusinessUnit, message::Message, message_type::MessageType},
     repository::Repository,
 };
+
+#[derive(Debug, thiserror::Error)]
+pub enum TemplateError {}
 
 pub struct Templates<R, TR> {
     repository: R,
@@ -26,12 +21,7 @@ impl<R, TR> Templates<R, TR> {
         }
     }
 
-    pub async fn find_and_render(
-        &self,
-        message: &Message,
-        business_unit: &BusinessUnit,
-        message_type: MessageType,
-    ) -> Result<Template, DispatcherError> {
+    pub async fn find_and_render(&self, message: &Message) -> Result<Template, DispatcherError> {
         todo!()
     }
 }

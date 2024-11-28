@@ -14,7 +14,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let listener = TcpListener::bind("127.0.0.1:8080").unwrap();
 
-    let repository = create_repository(&settings.database).await?;
+    let repository = create_repository(&settings.database.unwrap()).await?;
     let command_bus = create_command_bus(repository.clone());
     let query_bus = create_query_bus(repository);
     let rest_service = RestService::new(command_bus, query_bus);

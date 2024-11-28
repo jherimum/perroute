@@ -106,9 +106,14 @@ impl Deref for Payload {
 #[derive(Debug, Clone, PartialEq, Eq, strum::Display)]
 pub enum MessageStatus {
     Pending,
-    Dispatching,
     Failed,
     Dispatched,
+}
+
+impl From<&MessageStatus> for MessageStatus {
+    fn from(value: &MessageStatus) -> Self {
+        value.clone()
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

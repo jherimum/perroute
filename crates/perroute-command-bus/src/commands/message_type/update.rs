@@ -51,7 +51,7 @@ impl CommandHandler for UpdateMessageTypeCommandHandler {
         cmd: &Self::Command,
         ctx: CommandBusContext<'_, R>,
     ) -> CommandHandlerResult<Self::Output> {
-        let message_type = MessageTypeRepository::find_message_type(ctx.repository(), &cmd.id)
+        let message_type = MessageTypeRepository::find_by_id(ctx.repository(), &cmd.id)
             .await?
             .ok_or(CommandBusError::from(
                 UpdateMessageTypeCommandError::NotFound,

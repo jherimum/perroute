@@ -1,6 +1,7 @@
 pub mod business_units;
 pub mod channels;
 pub mod command_audit;
+pub mod dispatcher_log;
 pub mod events;
 pub mod message;
 pub mod message_types;
@@ -10,6 +11,7 @@ pub mod template_assignment;
 use business_units::BusinessUnitRepository;
 use channels::ChannelRepository;
 use command_audit::CommandAuditRepository;
+use dispatcher_log::DispatcherLogRepository;
 use events::EventRepository;
 use message::MessageRepository;
 use message_types::{MessageTypeRepository, PayloadExampleRepository};
@@ -49,6 +51,7 @@ pub trait Repository:
     + CommandAuditRepository
     + MessageRepository
     + TemplateAssignmentRepository
+    + DispatcherLogRepository
 {
     fn begin(&self) -> impl Future<Output = RepositoryResult<impl TransactedRepository + Clone>>;
 }

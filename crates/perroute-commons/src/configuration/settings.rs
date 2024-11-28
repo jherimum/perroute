@@ -18,10 +18,25 @@ pub enum SettingsError {
 
 #[derive(Deserialize, Clone, Debug)]
 pub struct Settings {
-    pub server: ServerSettings,
-    pub database: DatabaseSettings,
-    pub rabbitmq: Option<RabbitMqSettings>,
-    pub template_storage: AwsS3TemplateStorageSettings,
+    pub server: Option<ServerSettings>,
+    pub database: Option<DatabaseSettings>,
+    pub template_storage: Option<AwsS3TemplateStorageSettings>,
+    pub aws: Option<AwsSettings>,
+    pub pooling: Option<EventPoolingSettings>,
+}
+
+#[derive(Deserialize, Clone, Debug)]
+pub struct EventPoolingSettings {
+    pub interval: u64,
+    pub max_events: u64,
+    pub topic_arn: String,
+}
+
+#[derive(Deserialize, Clone, Debug)]
+pub struct AwsSettings {
+    pub dispatch_queue_url: String,
+    pub digest_queue_url: String,
+    pub event_topic_arn: String,
 }
 
 #[derive(Deserialize, Clone, Debug)]
@@ -60,10 +75,6 @@ pub struct PollSettings {
     pub acquire_timeout: u64,
 }
 
-#[derive(Deserialize, Clone, Debug)]
-pub struct RabbitMqSettings {
-    pub uri: String,
-}
 fn config_dir() -> PathBuf {
     std::env::var(CONFIG_DIR_KEY).map_or_else(
         |_| {
@@ -82,16 +93,11 @@ impl Settings {
     pub fn load() -> Result<Self, SettingsError> {
         let env = Environment::which();
         log::info!("Starting to loading configuration from {} environment", env);
-        let config_dir = config_dir();
-        let environment_filename = format!("{}.yaml", env).to_lowercase();
         let settings = Config::builder()
-            .add_source(File::from(config_dir.join(BASE_CONFIG_FILENAME)))
-            .add_source(File::from(config_dir.join(environment_filename)))
             .add_source(
                 config::Environment::default()
-                    .prefix("APP")
-                    .prefix_separator("__")
-                    .separator("_"),
+                    .prefix("PERROUTE")
+                    .separator("__"),
             )
             .build()
             .tap_err(|e| log::error!("{:?}", e))?;

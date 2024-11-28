@@ -9,6 +9,12 @@ use perroute_commons::types::{
 };
 use std::collections::HashMap;
 
+#[derive(Debug, thiserror::Error)]
+pub enum ProviderPluginError {
+    #[error("Invalid data combination")]
+    InvalidRequest,
+}
+
 pub fn repository() -> impl ProviderPluginRepository {
     DefaultProviderPluginRepository {
         plugins: HashMap::new(),
@@ -53,25 +59,31 @@ impl DispatchRequest {
             DispatchRequest::Push(request) => &request.id,
         }
     }
-}
 
-impl TryFrom<(&Id, Recipient, Template)> for DispatchRequest {
-    type Error = &'static str;
-
-    fn try_from(
-        (id, recipient, template): (&Id, Recipient, Template),
-    ) -> Result<Self, Self::Error> {
+    pub fn create(
+        id: &Id,
+        recipient: &Recipient,
+        template: &Template,
+    ) -> Result<Self, ProviderPluginError> {
         match (id, recipient, template) {
-            (id, Recipient::Sms(recipient), Template::Sms(template)) => {
-                Ok(DispatchRequest::Sms(Request::sms(id, recipient, template)))
+            (id, Recipient::Sms(recipient), Template::Sms(template)) => Ok(DispatchRequest::Sms(
+                Request::sms(id.clone(), recipient.clone(), template.clone()),
+            )),
+            (id, Recipient::Email(recipient), Template::Email(template)) => {
+                Ok(DispatchRequest::Email(Request::email(
+                    id.clone(),
+                    recipient.clone(),
+                    template.clone(),
+                )))
             }
-            (id, Recipient::Email(recipient), Template::Email(template)) => Ok(
-                DispatchRequest::Email(Request::email(id, recipient, template)),
-            ),
-            (id, Recipient::Push(recipient), Template::Push(template)) => Ok(
-                DispatchRequest::Push(Request::push(id, recipient, template)),
-            ),
-            _ => Err("Invalid recipient and template combination"),
+            (id, Recipient::Push(recipient), Template::Push(template)) => {
+                Ok(DispatchRequest::Push(Request::push(
+                    id.clone(),
+                    recipient.clone(),
+                    template.clone(),
+                )))
+            }
+            _ => Err(ProviderPluginError::InvalidRequest),
         }
     }
 }
@@ -84,9 +96,9 @@ pub struct Request<R, T> {
 }
 
 impl Request<SmsRecipient, SmsTemplate> {
-    pub fn sms(id: &Id, recipient: SmsRecipient, template: SmsTemplate) -> Self {
+    pub fn sms(id: Id, recipient: SmsRecipient, template: SmsTemplate) -> Self {
         Self {
-            id: id.clone(),
+            id,
             recipient,
             template,
         }
@@ -94,9 +106,9 @@ impl Request<SmsRecipient, SmsTemplate> {
 }
 
 impl Request<EmailRecipient, EmailTemplate> {
-    pub fn email(id: &Id, recipient: EmailRecipient, template: EmailTemplate) -> Self {
+    pub fn email(id: Id, recipient: EmailRecipient, template: EmailTemplate) -> Self {
         Self {
-            id: id.clone(),
+            id,
             recipient,
             template,
         }
@@ -104,9 +116,9 @@ impl Request<EmailRecipient, EmailTemplate> {
 }
 
 impl Request<PushRecipient, PushTemplate> {
-    pub fn push(id: &Id, recipient: PushRecipient, template: PushTemplate) -> Self {
+    pub fn push(id: Id, recipient: PushRecipient, template: PushTemplate) -> Self {
         Self {
-            id: id.clone(),
+            id,
             recipient,
             template,
         }

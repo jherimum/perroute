@@ -9,7 +9,7 @@ use repository::RepositoryResult;
 
 pub async fn create_repository(
     settings: &DatabaseSettings,
-) -> RepositoryResult<impl Repository + Clone> {
+) -> RepositoryResult<impl Repository + Clone + Send + Sync + 'static> {
     PgRepository::from_settings(settings).await
 }
 

@@ -10,7 +10,10 @@ use perroute_commons::{
 };
 use perroute_storage::{
     models::business_unit::BusinessUnit,
-    repository::{business_units::BusinessUnitRepository, TransactedRepository},
+    repository::{
+        business_units::{BusinessUnitQuery, BusinessUnitRepository},
+        TransactedRepository,
+    },
 };
 use serde::Serialize;
 
@@ -44,7 +47,11 @@ impl CommandHandler for UpdateBusinessUnitCommandHandler {
         cmd: &Self::Command,
         ctx: CommandBusContext<'_, R>,
     ) -> CommandHandlerResult<Self::Output> {
-        let bu = match BusinessUnitRepository::find_business_unit(ctx.repository(), &cmd.id).await?
+        let bu = match BusinessUnitRepository::find_business_unit(
+            ctx.repository(),
+            &BusinessUnitQuery::ById(cmd.id.clone()),
+        )
+        .await?
         {
             Some(bu) => {
                 let bu = BusinessUnitRepository::update_business_unit(

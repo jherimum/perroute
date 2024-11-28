@@ -14,9 +14,11 @@ pub enum BusinessUnitQuery {
 pub trait BusinessUnitRepository {
     fn get(&self, id: &Id) -> impl Future<Output = RepositoryResult<BusinessUnit>>;
 
+    fn find_by_id(&self, id: &Id) -> impl Future<Output = RepositoryResult<Option<BusinessUnit>>>;
+
     fn find_business_unit(
         &self,
-        id: &Id,
+        id: &BusinessUnitQuery,
     ) -> impl Future<Output = RepositoryResult<Option<BusinessUnit>>>;
 
     fn delete_business_unit(&self, id: &Id) -> impl Future<Output = RepositoryResult<bool>>;
@@ -47,11 +49,19 @@ impl BusinessUnitRepository for PgRepository {
         todo!()
     }
 
-    async fn find_business_unit(&self, id: &Id) -> RepositoryResult<Option<BusinessUnit>> {
-        Ok(fetch_optional!(
-            &self.source,
-            query_as("select * from business_units where id = $1").bind(id)
-        )?)
+    async fn find_by_id(&self, id: &Id) -> RepositoryResult<Option<BusinessUnit>> {
+        todo!()
+    }
+
+    async fn find_business_unit(
+        &self,
+        id: &BusinessUnitQuery,
+    ) -> RepositoryResult<Option<BusinessUnit>> {
+        // Ok(fetch_optional!(
+        //     &self.source,
+        //     query_as("select * from business_units where id = $1").bind(id)
+        // )?)
+        todo!()
     }
 
     async fn update_business_unit(

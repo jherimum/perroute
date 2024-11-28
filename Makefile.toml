@@ -12,6 +12,14 @@ command = "cargo"
 args = ["watch", "-x", "clippy", "-x", "run | bunyan"]
 dependencies = ["db-reset"]
 
+[tasks.dev-events-pooling]
+install_crate = "cargo-watch"
+cwd = "./crates/perroute-events-pooling"
+command = "cargo"
+args = ["watch", "-x", "clippy", "-x", "run | bunyan"]
+dependencies = ["db-reset"]
+
+
 [tasks.db-reset]
 install_crate = "sqlx-cli"
 cwd = "./crates/perroute-storage"

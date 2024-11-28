@@ -24,4 +24,4 @@ sqlx = { workspace = true, features = [
 base58 = { workspace = true }
 secrecy = { workspace = true, features = ["serde"] }
 handlebars = { workspace = true }
-derive_more = { workspace = true }
+derive_more = { workspace = true, features = ["full"] }

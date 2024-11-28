@@ -3,13 +3,31 @@ use std::fmt::Display;
 use base58::ToBase58;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, sqlx::Type)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, sqlx::Type, Hash)]
 #[sqlx(transparent)]
 pub struct Id(String);
 
 impl Id {
     pub fn new() -> Self {
         Self(uuid::Uuid::now_v7().as_bytes().to_base58())
+    }
+}
+
+impl Into<String> for Id {
+    fn into(self) -> String {
+        self.0
+    }
+}
+
+impl Into<String> for &Id {
+    fn into(self) -> String {
+        self.0.to_string()
+    }
+}
+
+impl From<&Id> for Id {
+    fn from(id: &Id) -> Self {
+        id.clone()
     }
 }
 
