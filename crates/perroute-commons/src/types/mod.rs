@@ -30,6 +30,12 @@ impl Timestamp {
     }
 }
 
+impl Default for Timestamp {
+    fn default() -> Self {
+        Self::now()
+    }
+}
+
 impl Deref for Timestamp {
     type Target = NaiveDateTime;
 

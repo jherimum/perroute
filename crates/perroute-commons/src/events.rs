@@ -2,7 +2,7 @@ use crate::{
     impl_sqlx_type,
     types::{actor::Actor, id::Id, Timestamp},
 };
-use bon::Builder;
+use bon::{builder, Builder};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashSet, vec};
 
@@ -87,10 +87,11 @@ impl Event {
 
 #[derive(Debug, Clone, Builder, Serialize)]
 pub struct EventData<P: Serialize> {
+    #[builder(default)]
     pub id: Id,
     pub event_type: EventType,
     pub entity_id: Id,
     pub payload: P,
     pub created_at: Timestamp,
-    actor: Actor,
+    pub actor: Actor,
 }

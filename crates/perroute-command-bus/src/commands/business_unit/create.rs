@@ -4,15 +4,8 @@ use crate::bus::{
 use bon::Builder;
 use perroute_commons::{
     commands::CommandType,
-    events::Event,
-    types::{
-        actor::{self, Actor},
-        code::Code,
-        id::Id,
-        name::Name,
-        vars::Vars,
-        Timestamp,
-    },
+    events::{Event, EventData, EventType},
+    types::{actor::Actor, code::Code, id::Id, name::Name, vars::Vars, Timestamp},
 };
 use perroute_storage::{
     models::business_unit::BusinessUnit,
@@ -37,6 +30,8 @@ pub struct CreateBusinessUnitCommand {
     name: Name,
     code: Code,
     vars: Vars,
+    #[builder(default)]
+    created_at: Timestamp,
 }
 
 impl Command for CreateBusinessUnitCommand {
@@ -45,7 +40,15 @@ impl Command for CreateBusinessUnitCommand {
     }
 
     fn to_event(&self, actor: &Actor) -> Event {
-        todo!()
+        Event::BusinessUnitCreated(
+            EventData::builder()
+                .actor(actor.clone())
+                .created_at(self.created_at.clone())
+                .entity_id(self.id.clone())
+                .payload(())
+                .event_type(EventType::BusinessUnitCreated)
+                .build(),
+        )
     }
 }
 
