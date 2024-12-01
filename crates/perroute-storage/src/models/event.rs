@@ -2,18 +2,36 @@ use bon::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::{
-    events::{Event, EventType},
-    types::{entity::Entity, id::Id, Timestamp},
+    events::{Event, EventData, EventType},
+    types::{
+        actor::{Actor, ActorType},
+        entity::Entity,
+        id::Id,
+        Timestamp,
+    },
 };
-use sqlx::prelude::FromRow;
+use serde_json::Value;
+use sqlx::prelude::{FromRow, Type};
 
 #[derive(Debug, Clone, PartialEq, Eq, FromRow, Builder, Getters, Setters)]
 #[setters(prefix = "set_")]
 #[setters(into)]
 pub struct DbEvent {
+    #[setters(skip)]
     id: Id,
+    #[setters(skip)]
     event_type: EventType,
+    #[setters(skip)]
     entity_id: Id,
+    #[setters(skip)]
+    payload: DbEventPayload,
+
+    #[setters(skip)]
+    actor_type: ActorType,
+    #[setters(skip)]
+    actor_id: Option<Id>,
+
+    #[setters(skip)]
     created_at: Timestamp,
     consumed_at: Option<Timestamp>,
 }
@@ -24,45 +42,63 @@ impl Entity for DbEvent {
     }
 }
 
-impl From<&Event> for DbEvent {
-    fn from(event: &Event) -> Self {
-        Self {
-            id: Id::new(),
-            event_type: event.event_type(),
-            entity_id: event.entity_id().clone(),
-            created_at: Timestamp::now(),
-            consumed_at: None,
+impl DbEvent {
+    fn actor(&self) -> Actor {
+        match self.actor_type() {
+            ActorType::User => Actor::User(self.actor_id().as_ref().unwrap().clone()),
+            ActorType::System => Actor::System,
+            ActorType::Service => Actor::Service(self.actor_id().as_ref().unwrap().clone()),
         }
     }
 }
 
-impl From<&DbEvent> for Event {
-    fn from(db_event: &DbEvent) -> Self {
-        match db_event.event_type() {
+#[derive(Debug, Clone, PartialEq, Eq, Type)]
+#[sqlx(transparent)]
+pub struct DbEventPayload(Value);
+
+impl DbEventPayload {
+    pub fn deserialize<T: serde::de::DeserializeOwned>(&self) -> Result<T, serde_json::Error> {
+        serde_json::from_value(self.0.clone())
+    }
+}
+
+impl TryFrom<&Event> for DbEvent {
+    type Error = String;
+    fn try_from(value: &Event) -> Result<Self, Self::Error> {
+        todo!()
+    }
+}
+
+impl TryFrom<&DbEvent> for Event {
+    type Error = String;
+
+    fn try_from(value: &DbEvent) -> Result<Self, Self::Error> {
+        let builder = EventData::builder()
+            .actor(value.actor())
+            .created_at(value.created_at().clone())
+            .entity_id(value.entity_id().clone())
+            .event_type(value.event_type().clone())
+            .id(value.id().clone());
+
+        Ok(match value.event_type {
             EventType::BusinessUnitCreated => {
-                Event::BusinessUnitCreated(db_event.entity_id().clone())
-            }
-            EventType::BusinessUnitDeleted => {
-                Event::BusinessUnitDeleted(db_event.entity_id().clone())
+                Event::BusinessUnitCreated(builder.payload(()).build())
             }
             EventType::BusinessUnitUpdated => {
-                Event::BusinessUnitUpdated(db_event.entity_id().clone())
+                Event::BusinessUnitUpdated(builder.payload(()).build())
             }
-            EventType::ChannelCreated => Event::ChannelCreated(db_event.entity_id().clone()),
-            EventType::ChannelDeleted => Event::ChannelDeleted(db_event.entity_id().clone()),
-            EventType::ChannelUpdated => Event::ChannelUpdated(db_event.entity_id().clone()),
-            EventType::MessageTypeCreated => {
-                Event::MessageTypeCreated(db_event.entity_id().clone())
+            EventType::BusinessUnitDeleted => {
+                Event::BusinessUnitDeleted(builder.payload(()).build())
             }
-            EventType::MessageTypeUpdated => {
-                Event::MessageTypeUpdated(db_event.entity_id().clone())
-            }
-            EventType::MessageTypeDeleted => {
-                Event::MessageTypeDeleted(db_event.entity_id().clone())
-            }
-            EventType::RouteCreated => Event::RouteCreated(db_event.entity_id().clone()),
-            EventType::RouteDeleted => Event::RouteDeleted(db_event.entity_id().clone()),
-            EventType::RouteUpdated => Event::RouteUpdated(db_event.entity_id().clone()),
-        }
+            EventType::ChannelCreated => Event::ChannelCreated(builder.payload(()).build()),
+            EventType::ChannelUpdated => Event::ChannelUpdated(builder.payload(()).build()),
+            EventType::ChannelDeleted => Event::ChannelDeleted(builder.payload(()).build()),
+            EventType::MessageTypeCreated => Event::MessageTypeCreated(builder.payload(()).build()),
+            EventType::MessageTypeUpdated => Event::MessageTypeUpdated(builder.payload(()).build()),
+            EventType::MessageTypeDeleted => Event::MessageTypeDeleted(builder.payload(()).build()),
+            EventType::RouteCreated => Event::RouteCreated(builder.payload(()).build()),
+            EventType::RouteUpdated => Event::RouteUpdated(builder.payload(()).build()),
+            EventType::RouteDeleted => Event::RouteDeleted(builder.payload(()).build()),
+        })
     }
 }

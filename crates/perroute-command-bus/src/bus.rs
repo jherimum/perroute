@@ -24,8 +24,7 @@ use crate::{
     },
     CommandBusError, CommandBusResult,
 };
-use perroute_commons::events::Event;
-use perroute_commons::{commands::CommandType, types::actor::Actor};
+use perroute_commons::{commands::CommandType, events::Event, types::actor::Actor};
 use perroute_storage::{
     models::{command_audit::command_audit_builder, event::DbEvent},
     repository::{
@@ -67,23 +66,11 @@ pub type CommandHandlerResult<O> = Result<CommandHandlerOutput<O>, CommandBusErr
 #[derive(Debug)]
 pub struct CommandHandlerOutput<O> {
     output: O,
-    event: Option<Event>,
 }
 
 impl<O> CommandHandlerOutput<O> {
     pub fn new(output: O) -> Self {
-        Self {
-            output,
-            event: None,
-        }
-    }
-    pub fn with_event(mut self, event: Event) -> Self {
-        self.event = Some(event);
-        self
-    }
-
-    pub fn event(&self) -> Option<&Event> {
-        self.event.as_ref()
+        Self { output }
     }
 
     pub fn ok<E>(self) -> Result<Self, E> {
@@ -93,6 +80,8 @@ impl<O> CommandHandlerOutput<O> {
 
 pub trait Command {
     fn command_type(&self) -> CommandType;
+
+    fn to_event(&self, actor: &Actor) -> Event;
 }
 
 pub trait CommandBus {
@@ -175,11 +164,10 @@ impl<R: Repository> CommandBus for DefaultCommandBus<R> {
         };
         match handler.handle(cmd, ctx).await {
             Ok(output) => {
-                if let Some(event) = output.event() {
-                    EventRepository::save(&tx, DbEvent::from(event))
-                        .await
-                        .tap_err(|e| log::error!("Failed to persist event: {}", e))?;
-                }
+                EventRepository::save(&tx, DbEvent::try_from(&cmd.to_event(actor)).unwrap())
+                    .await
+                    .tap_err(|e| log::error!("Failed to persist event: {}", e))?;
+
                 tx.commit().await?;
 
                 Ok(output.output)

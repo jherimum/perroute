@@ -4,7 +4,6 @@ use crate::bus::{
 use bon::Builder;
 use perroute_commons::{
     commands::CommandType,
-    events::Event,
     types::{id::Id, priority::Priority, Configuration, Timestamp},
 };
 use perroute_storage::{
@@ -34,6 +33,13 @@ impl Command for UpdateRouteCommand {
     fn command_type(&self) -> CommandType {
         CommandType::UpdateRoute
     }
+
+    fn to_event(
+        &self,
+        actor: &perroute_commons::types::actor::Actor,
+    ) -> perroute_commons::events::Event {
+        todo!()
+    }
 }
 
 pub struct UpdateRouteCommandHandler;
@@ -57,8 +63,6 @@ impl CommandHandler for UpdateRouteCommandHandler {
 
         let route = RouteRepository::update(ctx.repository(), route).await?;
 
-        CommandHandlerOutput::new(route)
-            .with_event(Event::RouteUpdated(cmd.id.clone()))
-            .ok()
+        CommandHandlerOutput::new(route).ok()
     }
 }

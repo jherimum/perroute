@@ -5,7 +5,6 @@ use crate::{
 use bon::Builder;
 use perroute_commons::{
     commands::CommandType,
-    events::Event,
     types::{id::Id, name::Name, Configuration, Timestamp},
 };
 use perroute_storage::{
@@ -35,6 +34,13 @@ impl Command for UpdateChannelCommand {
     fn command_type(&self) -> CommandType {
         CommandType::UpdateChannel
     }
+
+    fn to_event(
+        &self,
+        actor: &perroute_commons::types::actor::Actor,
+    ) -> perroute_commons::events::Event {
+        todo!()
+    }
 }
 
 pub struct UpdateChannelCommandHandler;
@@ -58,8 +64,6 @@ impl CommandHandler for UpdateChannelCommandHandler {
 
         let channel = ChannelRepository::update(ctx.repository(), channel).await?;
 
-        CommandHandlerOutput::new(channel.clone())
-            .with_event(Event::ChannelUpdated(channel.id().clone()))
-            .ok()
+        CommandHandlerOutput::new(channel.clone()).ok()
     }
 }

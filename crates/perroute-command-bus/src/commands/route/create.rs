@@ -5,7 +5,6 @@ use crate::{
 use bon::{builder, Builder};
 use perroute_commons::{
     commands::CommandType,
-    events::Event,
     types::{id::Id, priority::Priority, Configuration, Timestamp},
 };
 use perroute_storage::{
@@ -48,6 +47,13 @@ impl Command for CreateRouteCommand {
     fn command_type(&self) -> CommandType {
         CommandType::CreateRoute
     }
+
+    fn to_event(
+        &self,
+        actor: &perroute_commons::types::actor::Actor,
+    ) -> perroute_commons::events::Event {
+        todo!()
+    }
 }
 
 pub struct CreateRouteCommandHandler;
@@ -76,9 +82,7 @@ impl CommandHandler for CreateRouteCommandHandler {
 
         let route = RouteRepository::save(ctx.repository(), route.clone()).await?;
 
-        CommandHandlerOutput::new(route.clone())
-            .with_event(Event::RouteCreated(route.id().clone()))
-            .ok()
+        CommandHandlerOutput::new(route.clone()).ok()
     }
 }
 

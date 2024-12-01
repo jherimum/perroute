@@ -24,6 +24,13 @@ impl Command for DeleteBusinessUnitCommand {
     fn command_type(&self) -> CommandType {
         CommandType::DeleteBusinessUnit
     }
+
+    fn to_event(
+        &self,
+        actor: &perroute_commons::types::actor::Actor,
+    ) -> perroute_commons::events::Event {
+        todo!()
+    }
 }
 
 pub struct DeleteBusinessUnitCommandHandler;
@@ -49,8 +56,6 @@ impl CommandHandler for DeleteBusinessUnitCommandHandler {
 
         BusinessUnitRepository::delete_business_unit(ctx.repository(), &cmd.id).await?;
 
-        CommandHandlerOutput::new(())
-            .with_event(Event::BusinessUnitDeleted(cmd.id.clone()))
-            .ok()
+        CommandHandlerOutput::new(()).ok()
     }
 }

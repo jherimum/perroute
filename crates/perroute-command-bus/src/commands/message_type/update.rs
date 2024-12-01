@@ -6,7 +6,6 @@ use crate::{
 use bon::Builder;
 use perroute_commons::{
     commands::CommandType,
-    events::Event,
     types::{id::Id, name::Name, schema::Schema, vars::Vars, Payload, Timestamp},
 };
 use perroute_storage::{
@@ -37,6 +36,13 @@ pub struct UpdateMessageTypeCommand {
 impl Command for UpdateMessageTypeCommand {
     fn command_type(&self) -> CommandType {
         CommandType::UpdateMessageType
+    }
+
+    fn to_event(
+        &self,
+        actor: &perroute_commons::types::actor::Actor,
+    ) -> perroute_commons::events::Event {
+        todo!()
     }
 }
 
@@ -74,8 +80,6 @@ impl CommandHandler for UpdateMessageTypeCommandHandler {
         let examples =
             PayloadExampleRepository::save_payload_examples(ctx.repository(), &examples).await?;
 
-        CommandHandlerOutput::new((message_type.clone(), examples))
-            .with_event(Event::MessageTypeUpdated(message_type.id().clone()))
-            .ok()
+        CommandHandlerOutput::new((message_type.clone(), examples)).ok()
     }
 }

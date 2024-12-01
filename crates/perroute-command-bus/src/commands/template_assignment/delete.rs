@@ -15,6 +15,13 @@ impl Command for DeleteTemplateAssignmentCommand {
     fn command_type(&self) -> CommandType {
         CommandType::DeleteTemplateAssignment
     }
+
+    fn to_event(
+        &self,
+        actor: &perroute_commons::types::actor::Actor,
+    ) -> perroute_commons::events::Event {
+        todo!()
+    }
 }
 
 pub struct DeleteTemplateAssignmentCommandHandler;

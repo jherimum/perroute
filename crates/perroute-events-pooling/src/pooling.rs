@@ -1,11 +1,10 @@
 use perroute_commons::{
-    events::EventType,
-    new_events::NewEvent,
+    events::{Event, EventType},
     types::{entity::Entity, Timestamp},
 };
 use perroute_storage::{
-    models::new_event::NewDbEvent,
-    repository::{new_events::NewEventRepository, Repository},
+    models::event::DbEvent,
+    repository::{events::EventRepository, Repository},
 };
 use std::time::Duration;
 use std::{collections::HashSet, error::Error};
@@ -37,21 +36,23 @@ impl<R: Repository + Send + Sync, P: Publisher + Send + Sync> Pooling<R, P> {
             publisheable_event_types,
         }
     }
-    async fn fetch_events(&self) -> Result<Vec<NewDbEvent>, perroute_storage::repository::Error> {
-        NewEventRepository::unconsumed(&self.repository, self.max_events as usize).await
+    async fn fetch_events(&self) -> Result<Vec<DbEvent>, perroute_storage::repository::Error> {
+        EventRepository::unconsumed(&self.repository, self.max_events as usize).await
     }
 
-    async fn set_consumed(&self, events: Vec<NewDbEvent>) -> Result<(), Box<dyn Error>> {
+    async fn set_consumed(&self, events: Vec<DbEvent>) -> Result<(), Box<dyn Error>> {
         if events.is_empty() {
             return Ok(());
         };
 
-        Ok(NewEventRepository::set_consumed(
-            &self.repository,
-            &Entity::ids(&events),
-            Timestamp::now(),
+        Ok(
+            EventRepository::set_consumed(
+                &self.repository,
+                &Entity::ids(&events),
+                Timestamp::now(),
+            )
+            .await?,
         )
-        .await?)
     }
 
     async fn inner_run(&self) -> Result<(), Box<dyn Error>> {
@@ -79,8 +80,8 @@ impl<R: Repository + Send + Sync, P: Publisher + Send + Sync> Pooling<R, P> {
         match events
             .iter()
             .filter(|e| self.publisheable_event_types.contains(e.event_type()))
-            .map(NewEvent::try_from)
-            .collect::<Result<Vec<NewEvent>, _>>()
+            .map(Event::try_from)
+            .collect::<Result<Vec<Event>, _>>()
         {
             Ok(publishable_events) if publishable_events.is_empty() => {
                 log::info!("There is no events to publish. Check which events are publishable on the configuration");

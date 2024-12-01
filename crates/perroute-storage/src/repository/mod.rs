@@ -5,7 +5,6 @@ pub mod dispatcher_log;
 pub mod events;
 pub mod message;
 pub mod message_types;
-pub mod new_events;
 pub mod routes;
 pub mod template_assignment;
 
@@ -16,7 +15,6 @@ use dispatcher_log::DispatcherLogRepository;
 use events::EventRepository;
 use message::MessageRepository;
 use message_types::{MessageTypeRepository, PayloadExampleRepository};
-use new_events::NewEventRepository;
 use perroute_commons::configuration::settings::DatabaseSettings;
 use routes::RouteRepository;
 use sqlx::{PgPool, Postgres, Transaction};
@@ -47,14 +45,12 @@ pub trait Repository:
     + MessageTypeRepository
     + PayloadExampleRepository
     + ChannelRepository
-    + EventRepository
     + RouteRepository
-    + EventRepository
     + CommandAuditRepository
     + MessageRepository
     + TemplateAssignmentRepository
     + DispatcherLogRepository
-    + NewEventRepository
+    + EventRepository
 {
     fn begin(&self) -> impl Future<Output = RepositoryResult<impl TransactedRepository + Clone>>;
 }

@@ -2,7 +2,6 @@ use crate::bus::{
     Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult,
 };
 use bon::Builder;
-use perroute_commons::events::Event;
 use perroute_commons::{commands::CommandType, types::id::Id};
 use perroute_storage::repository::{
     channels::{ChannelQuery, ChannelRepository},
@@ -22,6 +21,13 @@ impl Command for DeleteChannelCommand {
     fn command_type(&self) -> CommandType {
         CommandType::DeleteChannel
     }
+
+    fn to_event(
+        &self,
+        actor: &perroute_commons::types::actor::Actor,
+    ) -> perroute_commons::events::Event {
+        todo!()
+    }
 }
 
 pub struct DeleteChannelCommandHandler;
@@ -38,8 +44,6 @@ impl CommandHandler for DeleteChannelCommandHandler {
         let result =
             ChannelRepository::delete(ctx.repository(), &ChannelQuery::ById(&cmd.id)).await?;
 
-        CommandHandlerOutput::new(result > 0)
-            .with_event(Event::ChannelDeleted(cmd.id.clone()))
-            .ok()
+        CommandHandlerOutput::new(result > 0).ok()
     }
 }

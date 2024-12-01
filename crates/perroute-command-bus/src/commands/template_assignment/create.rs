@@ -27,6 +27,13 @@ impl Command for CreateTemplateAssignmentCommand {
     fn command_type(&self) -> CommandType {
         CommandType::CreateTemplateAssignment
     }
+
+    fn to_event(
+        &self,
+        actor: &perroute_commons::types::actor::Actor,
+    ) -> perroute_commons::events::Event {
+        todo!()
+    }
 }
 
 pub struct CreateTemplateAssignmentCommandHandler;

@@ -2,11 +2,11 @@ use crate::publisher::{Publisher, PublisherResult};
 use aws_sdk_sns::{
     config::http::HttpResponse,
     error::{BuildError, SdkError},
-    operation::publish_batch::PublishBatchError,
+    operation::publish_batch::{PublishBatchError, PublishBatchOutput},
     types::{BatchResultErrorEntry, PublishBatchRequestEntry},
 };
-use perroute_commons::{events::Event, new_events::NewEvent};
-use perroute_storage::models::event::DbEvent;
+use perroute_commons::events::Event;
+use tap::TapFallible;
 
 #[derive(Debug, thiserror::Error)]
 pub enum SnsPublisherError {
@@ -35,50 +35,55 @@ impl SnsPublisher {
 }
 
 impl Publisher for SnsPublisher {
-    async fn publish(&self, events: &[NewEvent]) -> PublisherResult {
-        let entries = events
-            .iter()
-            .filter_map(|event| match to_entry(event) {
-                Ok(entry) => Some(entry),
-                Err(error) => {
-                    log::error!("Failed to build entry: {}", error);
-                    None
-                }
-            })
-            .collect::<Vec<_>>();
+    async fn publish(&self, events: &[Event]) -> PublisherResult {
+        let entries = match events.iter().map(to_entry).collect::<Result<Vec<_>, _>>() {
+            Ok(entries) if entries.is_empty() => {
+                log::info!("No events to publish");
+                return Ok(());
+            }
+            Ok(entries) => entries,
+            Err(e) => {
+                log::error!("Failed to build entries: {}", e);
+                return Err(e.into());
+            }
+        };
 
-        if entries.is_empty() {
-            return Ok(());
-        }
-
-        let sqs_output = self
-            .sns_client
+        self.sns_client
             .publish_batch()
             .topic_arn(&self.topic_arn)
             .set_publish_batch_request_entries(Some(entries))
             .send()
             .await
-            .map_err(SnsPublisherError::from)?;
-
-        if let Some(failed) = sqs_output.failed {
-            for error in failed {
+            .tap_err(|e| {
                 log::error!(
-                    "Failed to publish event {}. Error: {}",
-                    error.id(),
-                    SqsBatchError::from(&error)
-                );
-            }
-        }
-
-        Ok(())
+                    "Failed to publish events to topic: {} : {e}",
+                    self.topic_arn
+                )
+            })
+            .tap_ok(log_publish_result)
+            .map_err(SnsPublisherError::from)
+            .map(|_| Ok(()))?
     }
 }
 
-fn to_entry(db_event: &NewEvent) -> Result<PublishBatchRequestEntry, SnsPublisherError> {
+fn log_publish_result(out: &PublishBatchOutput) {
+    out.failed().iter().for_each(|entry| {
+        log::warn!(
+            "Failed to publish event: {}. Error: {:?}",
+            entry.id(),
+            SqsBatchError::from(entry)
+        );
+    });
+    out.successful().iter().for_each(|entry| {
+        log::info!("Published event: {:?}", entry.id());
+    });
+}
+
+fn to_entry(db_event: &Event) -> Result<PublishBatchRequestEntry, SnsPublisherError> {
     Ok(PublishBatchRequestEntry::builder()
         .id(db_event.id())
         .message_group_id(db_event.entity_id())
-        .message_deduplication_id(db_event.entity_id())
+        .message_deduplication_id(db_event.id())
         .message(serde_json::to_string(&db_event)?)
         .build()?)
 }

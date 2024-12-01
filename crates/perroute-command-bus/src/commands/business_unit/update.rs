@@ -3,7 +3,6 @@ use crate::{
     CommandBusError,
 };
 use bon::Builder;
-use perroute_commons::events::Event;
 use perroute_commons::{
     commands::CommandType,
     types::{id::Id, name::Name, vars::Vars},
@@ -33,6 +32,13 @@ pub struct UpdateBusinessUnitCommand {
 impl Command for UpdateBusinessUnitCommand {
     fn command_type(&self) -> CommandType {
         CommandType::UpdateBusinessUnit
+    }
+
+    fn to_event(
+        &self,
+        actor: &perroute_commons::types::actor::Actor,
+    ) -> perroute_commons::events::Event {
+        todo!()
     }
 }
 
@@ -66,8 +72,6 @@ impl CommandHandler for UpdateBusinessUnitCommandHandler {
             )),
         }?;
 
-        CommandHandlerOutput::new(bu.clone())
-            .with_event(Event::BusinessUnitUpdated(bu.id().clone()))
-            .ok()
+        CommandHandlerOutput::new(bu.clone()).ok()
     }
 }

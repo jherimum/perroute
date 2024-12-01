@@ -25,6 +25,13 @@ impl Command for CreateMessageCommand {
     fn command_type(&self) -> CommandType {
         CommandType::CreateMessage
     }
+
+    fn to_event(
+        &self,
+        actor: &perroute_commons::types::actor::Actor,
+    ) -> perroute_commons::events::Event {
+        todo!()
+    }
 }
 
 pub struct CreateMessageCommandHandler;

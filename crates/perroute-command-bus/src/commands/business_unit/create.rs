@@ -5,7 +5,14 @@ use bon::Builder;
 use perroute_commons::{
     commands::CommandType,
     events::Event,
-    types::{code::Code, id::Id, name::Name, vars::Vars, Timestamp},
+    types::{
+        actor::{self, Actor},
+        code::Code,
+        id::Id,
+        name::Name,
+        vars::Vars,
+        Timestamp,
+    },
 };
 use perroute_storage::{
     models::business_unit::BusinessUnit,
@@ -35,6 +42,10 @@ pub struct CreateBusinessUnitCommand {
 impl Command for CreateBusinessUnitCommand {
     fn command_type(&self) -> CommandType {
         CommandType::CreateBusinessUnit
+    }
+
+    fn to_event(&self, actor: &Actor) -> Event {
+        todo!()
     }
 }
 
@@ -73,8 +84,6 @@ impl CommandHandler for CreateBusinessUnitCommandHandler {
             .await
             .tap_err(|e| log::error!("Error saving business unit: {:?}", e))?;
 
-        CommandHandlerOutput::new(bu.clone())
-            .with_event(Event::BusinessUnitCreated(bu.id().clone()))
-            .ok()
+        CommandHandlerOutput::new(bu.clone()).ok()
     }
 }

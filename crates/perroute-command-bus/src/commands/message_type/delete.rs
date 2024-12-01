@@ -2,7 +2,7 @@ use crate::bus::{
     Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult,
 };
 use bon::Builder;
-use perroute_commons::{commands::CommandType, events::Event, types::id::Id};
+use perroute_commons::{commands::CommandType, types::id::Id};
 use perroute_storage::repository::{message_types::MessageTypeRepository, TransactedRepository};
 use serde::Serialize;
 
@@ -17,6 +17,13 @@ pub struct DeleteMessageTypeCommand {
 impl Command for DeleteMessageTypeCommand {
     fn command_type(&self) -> CommandType {
         CommandType::DeleteMessageType
+    }
+
+    fn to_event(
+        &self,
+        actor: &perroute_commons::types::actor::Actor,
+    ) -> perroute_commons::events::Event {
+        todo!()
     }
 }
 
@@ -33,8 +40,6 @@ impl CommandHandler for DeleteMessageTypeCommandHandler {
     ) -> CommandHandlerResult<Self::Output> {
         let deleted = MessageTypeRepository::delete_message_type(ctx.repository(), &cmd.id).await?;
 
-        CommandHandlerOutput::new(deleted)
-            .with_event(Event::MessageTypeDeleted(cmd.id.clone()))
-            .ok()
+        CommandHandlerOutput::new(deleted).ok()
     }
 }
