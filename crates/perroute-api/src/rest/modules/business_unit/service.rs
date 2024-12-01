@@ -71,10 +71,9 @@ impl<CB: CommandBus, QB: QueryBus> BusinessUnitRestService for RestService<CB, Q
         actor: &Actor,
         path: &BusinessUnitPath,
     ) -> ResourceModelResult<BusinessUnitModel> {
-        Ok(self
-            .try_get(actor, path)
+        self.try_get(actor, path)
             .await?
-            .ok_or_else(|| ApiError::NotFound)?)
+            .ok_or_else(|| ApiError::NotFound)
     }
 
     async fn try_get(

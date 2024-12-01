@@ -1,14 +1,8 @@
 use crate::configuration::env::Environment;
-use ::config::{Config, ConfigError, File};
+use ::config::{Config, ConfigError};
 use secrecy::SecretString;
 use serde::Deserialize;
-use std::path::PathBuf;
 use tap::{Tap, TapFallible};
-
-const CONFIG_DIR_KEY: &str = "CONFIG_DIR";
-const CARGO_MANIFEST_DIR_KEY: &str = "CARGO_MANIFEST_DIR";
-const DEFAULT_CONFIG_FOLDER: &str = "configuration";
-const BASE_CONFIG_FILENAME: &str = "base.yaml";
 
 #[derive(Debug, thiserror::Error)]
 pub enum SettingsError {
@@ -30,6 +24,7 @@ pub struct EventPoolingSettings {
     pub interval: u64,
     pub max_events: u64,
     pub topic_arn: String,
+    pub publisheable_events: String,
 }
 
 #[derive(Deserialize, Clone, Debug)]
@@ -75,20 +70,6 @@ pub struct PollSettings {
     pub acquire_timeout: u64,
 }
 
-fn config_dir() -> PathBuf {
-    std::env::var(CONFIG_DIR_KEY).map_or_else(
-        |_| {
-            std::env::var(CARGO_MANIFEST_DIR_KEY)
-                .map_or_else(
-                    |_| std::env::current_dir().unwrap(),
-                    std::path::PathBuf::from,
-                )
-                .join(DEFAULT_CONFIG_FOLDER)
-        },
-        std::path::PathBuf::from,
-    )
-}
-
 impl Settings {
     pub fn load() -> Result<Self, SettingsError> {
         let env = Environment::which();
@@ -97,7 +78,8 @@ impl Settings {
             .add_source(
                 config::Environment::default()
                     .prefix("PERROUTE")
-                    .separator("__"),
+                    .separator("__")
+                    .list_separator(","),
             )
             .build()
             .tap_err(|e| log::error!("{:?}", e))?;

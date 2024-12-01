@@ -6,6 +6,7 @@ pub mod dispatcher_log;
 pub mod event;
 pub mod message;
 pub mod message_type;
+pub mod new_event;
 pub mod route;
 pub mod template_assignment;
 pub mod user;

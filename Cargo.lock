@@ -2591,6 +2591,7 @@ name = "perroute-commons"
 version = "0.1.0"
 dependencies = [
  "base58",
+ "bon",
  "chrono",
  "config",
  "derive_more 1.0.0",

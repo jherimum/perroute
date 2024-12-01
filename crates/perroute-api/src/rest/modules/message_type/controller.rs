@@ -59,6 +59,6 @@ impl<RS: MessageTypeRestService> MessageTypeController<RS> {
         payload: Json<CreateMessageTypeRequest>,
     ) -> ApiResult<ResourceModel<MessageTypeModel>> {
         let mt = service.create(&Actor::System, &path, &payload).await?;
-        Ok(ApiResponse::created(mt.into()))
+        Ok(ApiResponse::created(mt))
     }
 }

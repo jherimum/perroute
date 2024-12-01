@@ -1,8 +1,10 @@
-use serde::{Deserialize, Serialize};
-
 use crate::{impl_sqlx_type, types::id::Id};
+use serde::{Deserialize, Serialize};
+use std::{collections::HashSet, vec};
 
-#[derive(Debug, Clone, PartialEq, Eq, strum::EnumString, strum::Display)]
+#[derive(
+    Debug, Clone, PartialEq, Eq, strum::EnumString, strum::Display, Deserialize, Serialize, Hash,
+)]
 pub enum EventType {
     BusinessUnitCreated,
     BusinessUnitUpdated,
@@ -16,6 +18,13 @@ pub enum EventType {
     RouteCreated,
     RouteUpdated,
     RouteDeleted,
+}
+
+impl EventType {
+    //TODO: Implement a better error handling
+    pub fn parse(str: &str) -> Result<HashSet<Self>, Box<dyn std::error::Error>> {
+        Ok(HashSet::from_iter(vec![EventType::BusinessUnitCreated]))
+    }
 }
 
 impl_sqlx_type!(EventType as String);

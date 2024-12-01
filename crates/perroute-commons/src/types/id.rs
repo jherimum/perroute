@@ -13,15 +13,15 @@ impl Id {
     }
 }
 
-impl Into<String> for Id {
-    fn into(self) -> String {
-        self.0
+impl From<Id> for String {
+    fn from(id: Id) -> Self {
+        id.0
     }
 }
 
-impl Into<String> for &Id {
-    fn into(self) -> String {
-        self.0.to_string()
+impl From<&Id> for String {
+    fn from(id: &Id) -> Self {
+        id.0.clone()
     }
 }
 

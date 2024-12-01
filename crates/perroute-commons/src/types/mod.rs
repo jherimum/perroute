@@ -20,7 +20,7 @@ use std::{
     ops::Deref,
 };
 
-#[derive(Debug, Clone, PartialEq, Eq, Type)]
+#[derive(Debug, Clone, PartialEq, Eq, Type, Serialize)]
 #[sqlx(transparent)]
 pub struct Timestamp(NaiveDateTime);
 

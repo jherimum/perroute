@@ -1,5 +1,5 @@
 use crate::sns::SnsPublisherError;
-use perroute_storage::models::event::DbEvent;
+use perroute_commons::new_events::NewEvent;
 use std::future::Future;
 
 pub type PublisherResult = Result<(), PublisherError>;
@@ -11,5 +11,5 @@ pub enum PublisherError {
 }
 
 pub trait Publisher {
-    fn publish<'e>(&self, events: &'e Vec<DbEvent>) -> impl Future<Output = PublisherResult>;
+    fn publish(&self, events: &[NewEvent]) -> impl Future<Output = PublisherResult>;
 }

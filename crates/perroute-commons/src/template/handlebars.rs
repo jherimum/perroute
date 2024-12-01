@@ -6,7 +6,7 @@ pub struct HandlebarsTemplateRender<'reg> {
     handlebars: Handlebars<'reg>,
 }
 
-impl<'reg> TemplateRender for HandlebarsTemplateRender<'reg> {
+impl TemplateRender for HandlebarsTemplateRender<'_> {
     fn render(
         &self,
         template: &str,

@@ -23,7 +23,7 @@ impl PayloadExamplesInput<'_> {
     }
 }
 
-impl<'a> From<PayloadExamplesInput<'a>> for Vec<PayloadExample> {
+impl From<PayloadExamplesInput<'_>> for Vec<PayloadExample> {
     fn from(value: PayloadExamplesInput) -> Self {
         value
             .examples

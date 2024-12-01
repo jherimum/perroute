@@ -5,7 +5,7 @@ use aws_sdk_sns::{
     operation::publish_batch::PublishBatchError,
     types::{BatchResultErrorEntry, PublishBatchRequestEntry},
 };
-use perroute_commons::events::Event;
+use perroute_commons::{events::Event, new_events::NewEvent};
 use perroute_storage::models::event::DbEvent;
 
 #[derive(Debug, thiserror::Error)]
@@ -35,7 +35,7 @@ impl SnsPublisher {
 }
 
 impl Publisher for SnsPublisher {
-    async fn publish<'e>(&self, events: &'e Vec<DbEvent>) -> PublisherResult {
+    async fn publish(&self, events: &[NewEvent]) -> PublisherResult {
         let entries = events
             .iter()
             .filter_map(|event| match to_entry(event) {
@@ -74,12 +74,12 @@ impl Publisher for SnsPublisher {
     }
 }
 
-fn to_entry(db_event: &DbEvent) -> Result<PublishBatchRequestEntry, SnsPublisherError> {
+fn to_entry(db_event: &NewEvent) -> Result<PublishBatchRequestEntry, SnsPublisherError> {
     Ok(PublishBatchRequestEntry::builder()
         .id(db_event.id())
         .message_group_id(db_event.entity_id())
         .message_deduplication_id(db_event.entity_id())
-        .message(serde_json::to_string(&Event::from(db_event))?)
+        .message(serde_json::to_string(&db_event)?)
         .build()?)
 }
 

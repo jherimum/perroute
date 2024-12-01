@@ -1,4 +1,4 @@
-use perroute_commons::configuration::settings::Settings;
+use perroute_commons::{configuration::settings::Settings, events::EventType};
 use perroute_events_pooling::{pooling::Pooling, sns::SnsPublisher};
 use perroute_storage::create_repository;
 use std::error::Error;
@@ -10,7 +10,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     env_logger::init();
 
     log::info!("Starting events pooling service");
-    let settings = Settings::load().tap_err(|e| log::error!("Failed to load settings: {}", e))?;
+    let settings = Settings::load().tap_err(|e| log::error!("Failed to load settings: {e}"))?;
     let event_pooling_settings = settings
         .pooling
         .ok_or("Event pooling settings are missing")?;
@@ -19,7 +19,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let sns_client = aws_sdk_sns::Client::new(&sdk_config);
     let repository = create_repository(&settings.database.unwrap())
         .await
-        .tap_err(|e| log::error!("Failed to create repository: {}", e))?;
+        .tap_err(|e| log::error!("Failed to create repository: {e}"))?;
 
     let publisher = SnsPublisher::new(sns_client, event_pooling_settings.topic_arn);
 
@@ -28,9 +28,13 @@ async fn main() -> Result<(), Box<dyn Error>> {
         publisher,
         event_pooling_settings.interval,
         event_pooling_settings.max_events,
+        EventType::parse(&event_pooling_settings.publisheable_events)
+            .tap_err(|e| log::error!("Failed to parse publishable events: {e}"))?,
     );
 
-    tokio::spawn(async move { pooling.run().await }).await?;
+    tokio::spawn(async move { pooling.run().await })
+        .await
+        .tap_err(|e| log::error!("Failed to join task: {e}"))?;
 
     Ok(())
 }

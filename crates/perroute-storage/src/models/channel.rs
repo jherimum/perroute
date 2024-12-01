@@ -9,7 +9,6 @@ use sqlx::prelude::FromRow;
 #[derive(Debug, Clone, PartialEq, Eq, FromRow, Builder, Getters, Setters)]
 #[setters(prefix = "set_")]
 #[setters(into)]
-
 pub struct Channel {
     #[setters(skip)]
     id: Id,

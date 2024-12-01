@@ -162,7 +162,7 @@ impl<R: Repository> CommandBus for DefaultCommandBus<R> {
         let tx = self.repository.begin().await?;
 
         let command_audit = command_audit_builder()
-            .actor(&actor)
+            .actor(actor)
             .command_data(cmd)
             .command_type(&cmd.command_type())
             .call();

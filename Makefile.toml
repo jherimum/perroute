@@ -16,7 +16,7 @@ dependencies = ["db-reset"]
 install_crate = "cargo-watch"
 cwd = "./crates/perroute-events-pooling"
 command = "cargo"
-args = ["watch", "-x", "clippy", "-x", "run | bunyan"]
+args = ["watch", "-x", "run | bunyan"]
 dependencies = ["db-reset"]
 
 

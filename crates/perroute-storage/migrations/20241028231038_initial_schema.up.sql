@@ -120,6 +120,9 @@ create table event_messages(
     id              varchar(21) primary key,
     event_type      varchar(100) not null,
     entity_id       varchar(21) not null,
+    payload         jsonb not null,
+    actor_type      varchar(100) not null,
+    actor_id        varchar(21)  null,
     created_at      timestamp not null,    
     consumed_at     timestamp null
 );
