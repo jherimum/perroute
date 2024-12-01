@@ -11,7 +11,7 @@ use tap::TapFallible;
 #[derive(Debug, thiserror::Error)]
 pub enum SnsPublisherError {
     #[error("Failed to publish events: {0:?}")]
-    PublishError(#[from] SdkError<PublishBatchError, HttpResponse>),
+    SdkError(#[from] SdkError<PublishBatchError, HttpResponse>),
 
     #[error("Failed to build entry: {0}")]
     PublishBatchRequestEntryBuilderError(#[from] BuildError),

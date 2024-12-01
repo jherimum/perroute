@@ -5,6 +5,7 @@ use crate::{
 use bon::Builder;
 use perroute_commons::{
     commands::CommandType,
+    events::Event,
     types::{id::Id, name::Name, vars::Vars},
 };
 use perroute_storage::{
@@ -34,10 +35,7 @@ impl Command for UpdateBusinessUnitCommand {
         CommandType::UpdateBusinessUnit
     }
 
-    fn to_event(
-        &self,
-        actor: &perroute_commons::types::actor::Actor,
-    ) -> perroute_commons::events::Event {
+    fn to_event<R: TransactedRepository>(&self, ctx: &CommandBusContext<'_, R>) -> Event {
         todo!()
     }
 }
@@ -51,7 +49,7 @@ impl CommandHandler for UpdateBusinessUnitCommandHandler {
     async fn handle<R: TransactedRepository>(
         &self,
         cmd: &Self::Command,
-        ctx: CommandBusContext<'_, R>,
+        ctx: &CommandBusContext<'_, R>,
     ) -> CommandHandlerResult<Self::Output> {
         let bu = match BusinessUnitRepository::find_business_unit(
             ctx.repository(),
@@ -62,7 +60,9 @@ impl CommandHandler for UpdateBusinessUnitCommandHandler {
             Some(bu) => {
                 let bu = BusinessUnitRepository::update_business_unit(
                     ctx.repository(),
-                    bu.set_name(cmd.name.clone()).set_vars(cmd.vars.clone()),
+                    bu.set_name(cmd.name.clone())
+                        .set_vars(cmd.vars.clone())
+                        .set_updated_at(ctx.created_at().clone()),
                 )
                 .await?;
                 Ok(bu)

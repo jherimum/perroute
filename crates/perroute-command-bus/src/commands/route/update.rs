@@ -4,7 +4,7 @@ use crate::bus::{
 use bon::Builder;
 use perroute_commons::{
     commands::CommandType,
-    types::{id::Id, priority::Priority, Configuration, Timestamp},
+    types::{id::Id, priority::Priority, Configuration},
 };
 use perroute_storage::{
     models::route::Route,
@@ -34,9 +34,9 @@ impl Command for UpdateRouteCommand {
         CommandType::UpdateRoute
     }
 
-    fn to_event(
+    fn to_event<R: TransactedRepository>(
         &self,
-        actor: &perroute_commons::types::actor::Actor,
+        ctx: &CommandBusContext<'_, R>,
     ) -> perroute_commons::events::Event {
         todo!()
     }
@@ -51,7 +51,7 @@ impl CommandHandler for UpdateRouteCommandHandler {
     async fn handle<R: TransactedRepository>(
         &self,
         cmd: &Self::Command,
-        ctx: CommandBusContext<'_, R>,
+        ctx: &CommandBusContext<'_, R>,
     ) -> CommandHandlerResult<Self::Output> {
         let route = RouteRepository::get(ctx.repository(), &RouteQuery::ById(&cmd.id))
             .await?
@@ -59,7 +59,7 @@ impl CommandHandler for UpdateRouteCommandHandler {
             .set_configuration(cmd.configuration.clone())
             .set_enabled(cmd.enabled)
             .set_priority(cmd.priority.clone())
-            .set_updated_at(Timestamp::now());
+            .set_updated_at(ctx.created_at().clone());
 
         let route = RouteRepository::update(ctx.repository(), route).await?;
 

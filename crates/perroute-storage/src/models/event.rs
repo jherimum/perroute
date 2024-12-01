@@ -1,4 +1,4 @@
-use bon::Builder;
+use bon::{builder, Builder};
 use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::{
@@ -33,7 +33,26 @@ pub struct DbEvent {
 
     #[setters(skip)]
     created_at: Timestamp,
+
+    #[builder(skip)]
     consumed_at: Option<Timestamp>,
+}
+
+impl TryFrom<Event> for DbEvent {
+    type Error = String;
+
+    fn try_from(value: Event) -> Result<Self, Self::Error> {
+        let actor = value.actor();
+        Ok(DbEvent::builder()
+            .maybe_actor_id(actor.id().cloned())
+            .actor_type(actor.actor_type())
+            .entity_id(value.entity_id().clone())
+            .id(value.id().clone())
+            .created_at(value.created_at().clone())
+            .payload(DbEventPayload::serialize(value.payload()).unwrap())
+            .event_type(value.event_type().clone())
+            .build())
+    }
 }
 
 impl Entity for DbEvent {
@@ -60,12 +79,9 @@ impl DbEventPayload {
     pub fn deserialize<T: serde::de::DeserializeOwned>(&self) -> Result<T, serde_json::Error> {
         serde_json::from_value(self.0.clone())
     }
-}
 
-impl TryFrom<&Event> for DbEvent {
-    type Error = String;
-    fn try_from(value: &Event) -> Result<Self, Self::Error> {
-        todo!()
+    pub fn serialize(value: &impl serde::Serialize) -> Result<Self, serde_json::Error> {
+        Ok(Self(serde_json::to_value(value)?))
     }
 }
 

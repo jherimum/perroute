@@ -4,7 +4,7 @@ use crate::bus::{
 use bon::Builder;
 use perroute_commons::{
     commands::CommandType,
-    types::{code::Code, id::Id, name::Name, schema::Schema, vars::Vars, Payload, Timestamp},
+    types::{code::Code, id::Id, name::Name, schema::Schema, vars::Vars, Payload},
 };
 use perroute_storage::{
     models::message_type::{MessageType, PayloadExample},
@@ -39,9 +39,10 @@ impl Command for CreateMessageTypeCommand {
     fn command_type(&self) -> CommandType {
         CommandType::CreateMessageType
     }
-    fn to_event(
+
+    fn to_event<R: TransactedRepository>(
         &self,
-        actor: &perroute_commons::types::actor::Actor,
+        ctx: &CommandBusContext<'_, R>,
     ) -> perroute_commons::events::Event {
         todo!()
     }
@@ -56,7 +57,7 @@ impl CommandHandler for CreateMessageTypeCommandHandler {
     async fn handle<R: TransactedRepository>(
         &self,
         cmd: &Self::Command,
-        ctx: CommandBusContext<'_, R>,
+        ctx: &CommandBusContext<'_, R>,
     ) -> CommandHandlerResult<Self::Output> {
         let exists = MessageTypeRepository::exists_message_type(
             ctx.repository(),
@@ -75,8 +76,8 @@ impl CommandHandler for CreateMessageTypeCommandHandler {
             .vars(cmd.vars.clone())
             .schema(cmd.schema.clone())
             .enabled(cmd.enabled)
-            .created_at(Timestamp::now())
-            .updated_at(Timestamp::now())
+            .created_at(ctx.created_at().clone())
+            .updated_at(ctx.created_at().clone())
             .build();
 
         let message_type =

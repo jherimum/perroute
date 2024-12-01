@@ -5,7 +5,7 @@ use crate::{
 use bon::Builder;
 use perroute_commons::{
     commands::CommandType,
-    types::{id::Id, name::Name, Configuration, Timestamp},
+    types::{id::Id, name::Name, Configuration},
 };
 use perroute_storage::{
     models::channel::Channel,
@@ -35,9 +35,9 @@ impl Command for UpdateChannelCommand {
         CommandType::UpdateChannel
     }
 
-    fn to_event(
+    fn to_event<R: TransactedRepository>(
         &self,
-        actor: &perroute_commons::types::actor::Actor,
+        ctx: &CommandBusContext<'_, R>,
     ) -> perroute_commons::events::Event {
         todo!()
     }
@@ -52,7 +52,7 @@ impl CommandHandler for UpdateChannelCommandHandler {
     async fn handle<R: TransactedRepository>(
         &self,
         cmd: &Self::Command,
-        ctx: CommandBusContext<'_, R>,
+        ctx: &CommandBusContext<'_, R>,
     ) -> CommandHandlerResult<Self::Output> {
         let channel = ChannelRepository::find(ctx.repository(), &ChannelQuery::ById(&cmd.id))
             .await?
@@ -60,7 +60,7 @@ impl CommandHandler for UpdateChannelCommandHandler {
             .set_configuration(cmd.configuration.clone())
             .set_enabled(cmd.enabled)
             .set_name(cmd.name.clone())
-            .set_updated_at(Timestamp::now());
+            .set_updated_at(ctx.created_at().clone());
 
         let channel = ChannelRepository::update(ctx.repository(), channel).await?;
 

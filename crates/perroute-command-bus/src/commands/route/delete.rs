@@ -22,9 +22,9 @@ impl Command for DeleteRouteCommand {
         CommandType::DeleteRoute
     }
 
-    fn to_event(
+    fn to_event<R: TransactedRepository>(
         &self,
-        actor: &perroute_commons::types::actor::Actor,
+        ctx: &CommandBusContext<'_, R>,
     ) -> perroute_commons::events::Event {
         todo!()
     }
@@ -39,7 +39,7 @@ impl CommandHandler for DeleteRouteCommandHandler {
     async fn handle<R: TransactedRepository>(
         &self,
         cmd: &Self::Command,
-        ctx: CommandBusContext<'_, R>,
+        ctx: &CommandBusContext<'_, R>,
     ) -> CommandHandlerResult<Self::Output> {
         let deleted =
             RouteRepository::delete(ctx.repository(), &RouteQuery::ById(&cmd.id)).await? > 0;

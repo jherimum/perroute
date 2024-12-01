@@ -16,9 +16,9 @@ impl Command for DeleteTemplateAssignmentCommand {
         CommandType::DeleteTemplateAssignment
     }
 
-    fn to_event(
+    fn to_event<R: TransactedRepository>(
         &self,
-        actor: &perroute_commons::types::actor::Actor,
+        ctx: &CommandBusContext<'_, R>,
     ) -> perroute_commons::events::Event {
         todo!()
     }
@@ -33,7 +33,7 @@ impl CommandHandler for DeleteTemplateAssignmentCommandHandler {
     async fn handle<R: TransactedRepository>(
         &self,
         cmd: &Self::Command,
-        ctx: CommandBusContext<'_, R>,
+        ctx: &CommandBusContext<'_, R>,
     ) -> CommandHandlerResult<Self::Output> {
         todo!()
     }

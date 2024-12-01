@@ -5,7 +5,7 @@ use crate::{
 use bon::{builder, Builder};
 use perroute_commons::{
     commands::CommandType,
-    types::{id::Id, priority::Priority, Configuration, Timestamp},
+    types::{id::Id, priority::Priority, Configuration},
 };
 use perroute_storage::{
     models::route::Route,
@@ -48,9 +48,9 @@ impl Command for CreateRouteCommand {
         CommandType::CreateRoute
     }
 
-    fn to_event(
+    fn to_event<R: TransactedRepository>(
         &self,
-        actor: &perroute_commons::types::actor::Actor,
+        ctx: &CommandBusContext<'_, R>,
     ) -> perroute_commons::events::Event {
         todo!()
     }
@@ -65,7 +65,7 @@ impl CommandHandler for CreateRouteCommandHandler {
     async fn handle<R: TransactedRepository>(
         &self,
         cmd: &Self::Command,
-        ctx: CommandBusContext<'_, R>,
+        ctx: &CommandBusContext<'_, R>,
     ) -> CommandHandlerResult<Self::Output> {
         validate(cmd, &ctx).await?;
 
@@ -76,8 +76,8 @@ impl CommandHandler for CreateRouteCommandHandler {
             .configuration(cmd.configuration.clone())
             .priority(cmd.priority.clone())
             .enabled(cmd.enabled)
-            .created_at(Timestamp::now())
-            .updated_at(Timestamp::now())
+            .created_at(ctx.created_at().clone())
+            .updated_at(ctx.created_at().clone())
             .build();
 
         let route = RouteRepository::save(ctx.repository(), route.clone()).await?;

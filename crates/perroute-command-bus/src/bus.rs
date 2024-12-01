@@ -24,7 +24,11 @@ use crate::{
     },
     CommandBusError, CommandBusResult,
 };
-use perroute_commons::{commands::CommandType, events::Event, types::actor::Actor};
+use perroute_commons::{
+    commands::CommandType,
+    events::Event,
+    types::{actor::Actor, Timestamp},
+};
 use perroute_storage::{
     models::{command_audit::command_audit_builder, event::DbEvent},
     repository::{
@@ -36,6 +40,7 @@ use serde::Serialize;
 use std::{
     any::{Any, TypeId},
     collections::HashMap,
+    f64::consts::E,
     future::Future,
     sync::Arc,
 };
@@ -81,7 +86,7 @@ impl<O> CommandHandlerOutput<O> {
 pub trait Command {
     fn command_type(&self) -> CommandType;
 
-    fn to_event(&self, actor: &Actor) -> Event;
+    fn to_event<R: TransactedRepository>(&self, ctx: &CommandBusContext<'_, R>) -> Event;
 }
 
 pub trait CommandBus {
@@ -98,7 +103,7 @@ pub trait CommandHandler {
     fn handle<R: TransactedRepository>(
         &self,
         cmd: &Self::Command,
-        ctx: CommandBusContext<R>,
+        ctx: &CommandBusContext<R>,
     ) -> impl Future<Output = CommandHandlerResult<Self::Output>>;
 }
 
@@ -161,10 +166,11 @@ impl<R: Repository> CommandBus for DefaultCommandBus<R> {
         let ctx = CommandBusContext {
             repository: tx.clone(),
             actor,
+            created_at: Timestamp::now(),
         };
-        match handler.handle(cmd, ctx).await {
+        match handler.handle(cmd, &ctx).await {
             Ok(output) => {
-                EventRepository::save(&tx, DbEvent::try_from(&cmd.to_event(actor)).unwrap())
+                EventRepository::save(&tx, DbEvent::try_from(cmd.to_event(&ctx)).unwrap())
                     .await
                     .tap_err(|e| log::error!("Failed to persist event: {}", e))?;
 
@@ -183,6 +189,7 @@ impl<R: Repository> CommandBus for DefaultCommandBus<R> {
 pub struct CommandBusContext<'a, R: TransactedRepository> {
     repository: R,
     actor: &'a Actor,
+    created_at: Timestamp,
 }
 
 impl<'a, R: TransactedRepository> CommandBusContext<'a, R> {
@@ -192,5 +199,9 @@ impl<'a, R: TransactedRepository> CommandBusContext<'a, R> {
 
     pub fn actor(&self) -> &'a Actor {
         self.actor
+    }
+
+    pub fn created_at(&self) -> &Timestamp {
+        &self.created_at
     }
 }

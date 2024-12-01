@@ -5,7 +5,7 @@ use bon::Builder;
 use perroute_commons::{
     commands::CommandType,
     events::{Event, EventData, EventType},
-    types::{actor::Actor, code::Code, id::Id, name::Name, vars::Vars, Timestamp},
+    types::{code::Code, id::Id, name::Name, vars::Vars},
 };
 use perroute_storage::{
     models::business_unit::BusinessUnit,
@@ -30,8 +30,6 @@ pub struct CreateBusinessUnitCommand {
     name: Name,
     code: Code,
     vars: Vars,
-    #[builder(default)]
-    created_at: Timestamp,
 }
 
 impl Command for CreateBusinessUnitCommand {
@@ -39,11 +37,11 @@ impl Command for CreateBusinessUnitCommand {
         CommandType::CreateBusinessUnit
     }
 
-    fn to_event(&self, actor: &Actor) -> Event {
+    fn to_event<R: TransactedRepository>(&self, ctx: &CommandBusContext<'_, R>) -> Event {
         Event::BusinessUnitCreated(
             EventData::builder()
-                .actor(actor.clone())
-                .created_at(self.created_at.clone())
+                .actor(ctx.actor().clone())
+                .created_at(ctx.created_at().clone())
                 .entity_id(self.id.clone())
                 .payload(())
                 .event_type(EventType::BusinessUnitCreated)
@@ -61,7 +59,7 @@ impl CommandHandler for CreateBusinessUnitCommandHandler {
     async fn handle<R: TransactedRepository>(
         &self,
         cmd: &Self::Command,
-        ctx: CommandBusContext<'_, R>,
+        ctx: &CommandBusContext<'_, R>,
     ) -> CommandHandlerResult<Self::Output> {
         let exists = BusinessUnitRepository::exists_business_unit(
             ctx.repository(),
@@ -79,8 +77,8 @@ impl CommandHandler for CreateBusinessUnitCommandHandler {
             .code(cmd.code.clone())
             .name(cmd.name.clone())
             .vars(cmd.vars.clone())
-            .created_at(Timestamp::now())
-            .updated_at(Timestamp::now())
+            .created_at(ctx.created_at().clone())
+            .updated_at(ctx.created_at().clone())
             .build();
 
         let bu = BusinessUnitRepository::save_business_unit(ctx.repository(), bu)

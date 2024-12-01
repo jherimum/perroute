@@ -25,10 +25,7 @@ impl Command for DeleteBusinessUnitCommand {
         CommandType::DeleteBusinessUnit
     }
 
-    fn to_event(
-        &self,
-        actor: &perroute_commons::types::actor::Actor,
-    ) -> perroute_commons::events::Event {
+    fn to_event<R: TransactedRepository>(&self, ctx: &CommandBusContext<'_, R>) -> Event {
         todo!()
     }
 }
@@ -42,7 +39,7 @@ impl CommandHandler for DeleteBusinessUnitCommandHandler {
     async fn handle<R: TransactedRepository>(
         &self,
         cmd: &Self::Command,
-        ctx: CommandBusContext<'_, R>,
+        ctx: &CommandBusContext<'_, R>,
     ) -> CommandHandlerResult<Self::Output> {
         let exists = BusinessUnitRepository::exists_business_unit(
             ctx.repository(),

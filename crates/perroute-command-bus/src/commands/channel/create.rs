@@ -4,9 +4,8 @@ use crate::bus::{
 use bon::Builder;
 use perroute_commons::{
     commands::CommandType,
-    types::{
-        dispatch_type::DispatchType, id::Id, name::Name, Configuration, ProviderId, Timestamp,
-    },
+    events::Event,
+    types::{dispatch_type::DispatchType, id::Id, name::Name, Configuration, ProviderId},
 };
 use perroute_storage::{
     models::channel::Channel,
@@ -41,10 +40,7 @@ impl Command for CreateChannelCommand {
         CommandType::CreateChannel
     }
 
-    fn to_event(
-        &self,
-        actor: &perroute_commons::types::actor::Actor,
-    ) -> perroute_commons::events::Event {
+    fn to_event<R: TransactedRepository>(&self, ctx: &CommandBusContext<'_, R>) -> Event {
         todo!()
     }
 }
@@ -58,7 +54,7 @@ impl CommandHandler for CreateChannelCommandHandler {
     async fn handle<R: TransactedRepository>(
         &self,
         cmd: &Self::Command,
-        ctx: CommandBusContext<'_, R>,
+        ctx: &CommandBusContext<'_, R>,
     ) -> CommandHandlerResult<Self::Output> {
         let exists_bu = BusinessUnitRepository::exists_business_unit(
             ctx.repository(),
@@ -78,8 +74,8 @@ impl CommandHandler for CreateChannelCommandHandler {
             .dispatch_type(cmd.dispatch_type.clone())
             .configuration(cmd.configuration.clone())
             .enabled(cmd.enabled)
-            .created_at(Timestamp::now())
-            .updated_at(Timestamp::now())
+            .created_at(ctx.created_at().clone())
+            .updated_at(ctx.created_at().clone())
             .build();
 
         let channel = ChannelRepository::save(ctx.repository(), channel).await?;
