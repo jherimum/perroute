@@ -1,13 +1,10 @@
 use crate::{
-    bus::{Command, CommandBusContext, CommandHandler, CommandHandlerResult, CommandWrapper},
-    commands::message_type::PayloadExamplesInput,
+    bus::{CommandBusContext, CommandHandler, CommandHandlerResult},
+    commands::{message_type::PayloadExamplesInput, Command},
     CommandBusError,
 };
 use bon::Builder;
-use perroute_commons::{
-    commands::CommandType,
-    types::{id::Id, name::Name, schema::Schema, vars::Vars, Payload},
-};
+use perroute_commons::types::{id::Id, name::Name, schema::Schema, vars::Vars, Payload};
 use perroute_storage::{
     models::message_type::{MessageType, PayloadExample},
     repository::{
@@ -34,19 +31,12 @@ pub struct UpdateMessageTypeCommand {
 }
 
 impl Command for UpdateMessageTypeCommand {
-    type Output = (MessageType, Vec<PayloadExample>);
-
-    fn command_type(&self) -> CommandType {
-        CommandType::UpdateMessageType
+    fn event_type(&self) -> perroute_commons::events::EventType {
+        perroute_commons::events::EventType::MessageTypeUpdated
     }
 
-    fn to_event(
-        &self,
-        created_at: &perroute_commons::types::Timestamp,
-        actor: &perroute_commons::types::actor::Actor,
-        output: &Self::Output,
-    ) -> perroute_commons::events::Event {
-        todo!()
+    fn entity_id(&self) -> &Id {
+        &self.id
     }
 }
 
@@ -58,7 +48,7 @@ impl CommandHandler for UpdateMessageTypeCommandHandler {
 
     async fn handle<R: TransactedRepository>(
         &self,
-        cmd: CommandWrapper<'_, Self::Command>,
+        cmd: &crate::commands::CommandWrapper<'_, Self::Command>,
         ctx: &CommandBusContext<'_, R>,
     ) -> CommandHandlerResult<Self::Output> {
         let message_type = MessageTypeRepository::find_by_id(ctx.repository(), &cmd.inner().id)

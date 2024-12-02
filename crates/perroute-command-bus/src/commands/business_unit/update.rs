@@ -1,12 +1,10 @@
 use crate::{
-    bus::{Command, CommandBusContext, CommandHandler, CommandHandlerResult, CommandWrapper},
+    bus::{CommandBusContext, CommandHandler, CommandHandlerResult},
+    commands::Command,
     CommandBusError,
 };
 use bon::Builder;
-use perroute_commons::{
-    commands::CommandType,
-    types::{id::Id, name::Name, vars::Vars},
-};
+use perroute_commons::types::{id::Id, name::Name, vars::Vars};
 use perroute_storage::{
     models::business_unit::BusinessUnit,
     repository::{
@@ -30,19 +28,12 @@ pub struct UpdateBusinessUnitCommand {
 }
 
 impl Command for UpdateBusinessUnitCommand {
-    type Output = BusinessUnit;
-
-    fn command_type(&self) -> CommandType {
-        CommandType::UpdateBusinessUnit
+    fn event_type(&self) -> perroute_commons::events::EventType {
+        perroute_commons::events::EventType::BusinessUnitUpdated
     }
 
-    fn to_event(
-        &self,
-        created_at: &perroute_commons::types::Timestamp,
-        actor: &perroute_commons::types::actor::Actor,
-        output: &Self::Output,
-    ) -> perroute_commons::events::Event {
-        todo!()
+    fn entity_id(&self) -> &Id {
+        &self.id
     }
 }
 
@@ -54,7 +45,7 @@ impl CommandHandler for UpdateBusinessUnitCommandHandler {
 
     async fn handle<R: TransactedRepository>(
         &self,
-        cmd: CommandWrapper<'_, Self::Command>,
+        cmd: &crate::commands::CommandWrapper<'_, Self::Command>,
         ctx: &CommandBusContext<'_, R>,
     ) -> CommandHandlerResult<Self::Output> {
         let bu = match BusinessUnitRepository::find_business_unit(

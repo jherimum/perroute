@@ -1,12 +1,10 @@
 use crate::{
-    bus::{Command, CommandBusContext, CommandHandler, CommandHandlerResult, CommandWrapper},
+    bus::{CommandBusContext, CommandHandler, CommandHandlerResult},
+    commands::Command,
     CommandBusError,
 };
 use bon::Builder;
-use perroute_commons::{
-    commands::CommandType,
-    types::{id::Id, name::Name, Configuration},
-};
+use perroute_commons::types::{id::Id, name::Name, Configuration};
 use perroute_storage::{
     models::channel::Channel,
     repository::{
@@ -31,19 +29,12 @@ pub struct UpdateChannelCommand {
 }
 
 impl Command for UpdateChannelCommand {
-    type Output = Channel;
-
-    fn command_type(&self) -> CommandType {
-        CommandType::UpdateChannel
+    fn event_type(&self) -> perroute_commons::events::EventType {
+        perroute_commons::events::EventType::ChannelUpdated
     }
 
-    fn to_event(
-        &self,
-        created_at: &perroute_commons::types::Timestamp,
-        actor: &perroute_commons::types::actor::Actor,
-        output: &Self::Output,
-    ) -> perroute_commons::events::Event {
-        todo!()
+    fn entity_id(&self) -> &Id {
+        &self.id
     }
 }
 
@@ -55,7 +46,7 @@ impl CommandHandler for UpdateChannelCommandHandler {
 
     async fn handle<R: TransactedRepository>(
         &self,
-        cmd: CommandWrapper<'_, Self::Command>,
+        cmd: &crate::commands::CommandWrapper<'_, Self::Command>,
         ctx: &CommandBusContext<'_, R>,
     ) -> CommandHandlerResult<Self::Output> {
         let channel =

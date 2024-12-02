@@ -1,11 +1,10 @@
-use crate::bus::{
-    Command, CommandBusContext, CommandHandler, CommandHandlerResult, CommandWrapper,
+use crate::{
+    bus::{CommandBusContext, CommandHandler, CommandHandlerResult},
+    commands::Command,
 };
 use bon::Builder;
-use perroute_commons::{
-    commands::CommandType,
-    events::Event,
-    types::{dispatch_type::DispatchType, id::Id, name::Name, Configuration, ProviderId},
+use perroute_commons::types::{
+    dispatch_type::DispatchType, id::Id, name::Name, Configuration, ProviderId,
 };
 use perroute_storage::{
     models::channel::Channel,
@@ -36,19 +35,12 @@ pub struct CreateChannelCommand {
 }
 
 impl Command for CreateChannelCommand {
-    type Output = Channel;
-
-    fn command_type(&self) -> CommandType {
-        CommandType::CreateChannel
+    fn event_type(&self) -> perroute_commons::events::EventType {
+        perroute_commons::events::EventType::ChannelCreated
     }
 
-    fn to_event(
-        &self,
-        created_at: &perroute_commons::types::Timestamp,
-        actor: &perroute_commons::types::actor::Actor,
-        output: &Self::Output,
-    ) -> perroute_commons::events::Event {
-        todo!()
+    fn entity_id(&self) -> &Id {
+        &self.id
     }
 }
 
@@ -60,7 +52,7 @@ impl CommandHandler for CreateChannelCommandHandler {
 
     async fn handle<R: TransactedRepository>(
         &self,
-        cmd: CommandWrapper<'_, Self::Command>,
+        cmd: &crate::commands::CommandWrapper<'_, Self::Command>,
         ctx: &CommandBusContext<'_, R>,
     ) -> CommandHandlerResult<Self::Output> {
         let exists_bu = BusinessUnitRepository::exists_business_unit(

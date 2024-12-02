@@ -1,12 +1,9 @@
-use crate::bus::{
-    Command, CommandBusContext, CommandHandler, CommandHandlerResult, CommandWrapper,
+use crate::{
+    bus::{CommandBusContext, CommandHandler, CommandHandlerResult},
+    commands::Command,
 };
-use bon::Builder;
-use perroute_commons::{
-    commands::CommandType,
-    events::{Event, EventData, EventType},
-    types::{code::Code, id::Id, name::Name, vars::Vars},
-};
+use bon::{builder, Builder};
+use perroute_commons::types::{code::Code, id::Id, name::Name, vars::Vars};
 use perroute_storage::{
     models::business_unit::BusinessUnit,
     repository::{
@@ -25,34 +22,20 @@ pub enum CreateBusinessUnitCommandError {
 
 #[derive(Debug, Clone, Builder, Serialize)]
 pub struct CreateBusinessUnitCommand {
+    #[builder(default)]
+    business_unit_id: Id,
     name: Name,
     code: Code,
     vars: Vars,
 }
 
 impl Command for CreateBusinessUnitCommand {
-    type Output = BusinessUnit;
-
-    fn command_type(&self) -> CommandType {
-        CommandType::CreateBusinessUnit
+    fn entity_id(&self) -> &Id {
+        &self.business_unit_id
     }
 
-    fn to_event(
-        &self,
-        created_at: &perroute_commons::types::Timestamp,
-        actor: &perroute_commons::types::actor::Actor,
-        output: &Self::Output,
-    ) -> Event {
-        Event::BusinessUnitCreated(
-            EventData::builder()
-                .id(Id::new())
-                .entity_id(output.id().clone())
-                .event_type(EventType::BusinessUnitCreated)
-                .actor(actor.clone())
-                .payload(serde_json::to_value(self).unwrap())
-                .created_at(created_at.clone())
-                .build(),
-        )
+    fn event_type(&self) -> perroute_commons::events::EventType {
+        perroute_commons::events::EventType::BusinessUnitCreated
     }
 }
 
@@ -64,7 +47,7 @@ impl CommandHandler for CreateBusinessUnitCommandHandler {
 
     async fn handle<R: TransactedRepository>(
         &self,
-        cmd: CommandWrapper<'_, Self::Command>,
+        cmd: &crate::commands::CommandWrapper<'_, Self::Command>,
         ctx: &CommandBusContext<'_, R>,
     ) -> CommandHandlerResult<Self::Output> {
         let exists = BusinessUnitRepository::exists_business_unit(

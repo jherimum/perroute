@@ -1,12 +1,10 @@
 use crate::{
-    bus::{Command, CommandBusContext, CommandHandler, CommandHandlerResult, CommandWrapper},
+    bus::{CommandBusContext, CommandHandler, CommandHandlerResult},
+    commands::Command,
     CommandBusError,
 };
 use bon::{builder, Builder};
-use perroute_commons::{
-    commands::CommandType,
-    types::{id::Id, priority::Priority, Configuration},
-};
+use perroute_commons::types::{id::Id, priority::Priority, Configuration};
 use perroute_storage::{
     models::route::Route,
     repository::{
@@ -44,19 +42,12 @@ pub struct CreateRouteCommand {
 }
 
 impl Command for CreateRouteCommand {
-    type Output = Route;
-
-    fn command_type(&self) -> CommandType {
-        CommandType::CreateRoute
+    fn event_type(&self) -> perroute_commons::events::EventType {
+        perroute_commons::events::EventType::RouteCreated
     }
 
-    fn to_event(
-        &self,
-        created_at: &perroute_commons::types::Timestamp,
-        actor: &perroute_commons::types::actor::Actor,
-        output: &Self::Output,
-    ) -> perroute_commons::events::Event {
-        todo!()
+    fn entity_id(&self) -> &Id {
+        &self.id
     }
 }
 
@@ -68,7 +59,7 @@ impl CommandHandler for CreateRouteCommandHandler {
 
     async fn handle<R: TransactedRepository>(
         &self,
-        cmd: CommandWrapper<'_, Self::Command>,
+        cmd: &crate::commands::CommandWrapper<'_, Self::Command>,
         ctx: &CommandBusContext<'_, R>,
     ) -> CommandHandlerResult<Self::Output> {
         validate(cmd.inner(), ctx).await?;

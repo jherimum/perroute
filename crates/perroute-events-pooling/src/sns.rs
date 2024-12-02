@@ -79,18 +79,18 @@ fn log_publish_result(out: &PublishBatchOutput) {
     });
 }
 
-fn to_entry(db_event: &Event) -> Result<PublishBatchRequestEntry, SnsPublisherError> {
-    let event_data: &EventData = db_event.as_ref();
+fn to_entry(event: &Event) -> Result<PublishBatchRequestEntry, SnsPublisherError> {
+    let event_data: &EventData = event.as_ref();
     Ok(PublishBatchRequestEntry::builder()
         .id(event_data.id())
         .message_group_id(event_data.entity_id())
         .message_deduplication_id(event_data.id())
-        .message(serde_json::to_string(&db_event)?)
+        .message(serde_json::to_string(&event)?)
         .message_attributes(
             "event_type",
             MessageAttributeValue::builder()
                 .data_type("String")
-                .string_value(event_data.event_type().to_string())
+                .string_value(event.event_type().to_string())
                 .build()
                 .unwrap(),
         )

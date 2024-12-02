@@ -2738,6 +2738,8 @@ dependencies = [
  "perroute-storage",
  "serde",
  "serde_json",
+ "strum",
+ "strum_macros",
  "tap",
  "thiserror 2.0.3",
 ]

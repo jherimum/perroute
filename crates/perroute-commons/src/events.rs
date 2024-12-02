@@ -15,15 +15,20 @@ pub enum EventType {
     BusinessUnitCreated,
     BusinessUnitUpdated,
     BusinessUnitDeleted,
+
     ChannelCreated,
     ChannelUpdated,
     ChannelDeleted,
+
     MessageTypeCreated,
     MessageTypeUpdated,
     MessageTypeDeleted,
+
     RouteCreated,
     RouteUpdated,
     RouteDeleted,
+
+    MessageCreated,
 }
 
 impl From<&Self> for EventType {
@@ -56,6 +61,27 @@ pub enum Event {
     RouteCreated(EventData),
     RouteUpdated(EventData),
     RouteDeleted(EventData),
+    MessageCreated(EventData),
+}
+
+impl Event {
+    pub fn event_type(&self) -> EventType {
+        match self {
+            Event::BusinessUnitCreated(_) => EventType::BusinessUnitCreated,
+            Event::BusinessUnitUpdated(_) => EventType::BusinessUnitUpdated,
+            Event::BusinessUnitDeleted(_) => EventType::BusinessUnitDeleted,
+            Event::ChannelCreated(_) => EventType::ChannelCreated,
+            Event::ChannelUpdated(_) => EventType::ChannelUpdated,
+            Event::ChannelDeleted(_) => EventType::ChannelDeleted,
+            Event::MessageTypeCreated(_) => EventType::MessageTypeCreated,
+            Event::MessageTypeUpdated(_) => EventType::MessageTypeUpdated,
+            Event::MessageTypeDeleted(_) => EventType::MessageTypeDeleted,
+            Event::RouteCreated(_) => EventType::RouteCreated,
+            Event::RouteUpdated(_) => EventType::RouteUpdated,
+            Event::RouteDeleted(_) => EventType::RouteDeleted,
+            Event::MessageCreated(_) => EventType::MessageCreated,
+        }
+    }
 }
 
 impl AsRef<EventData> for Event {
@@ -73,6 +99,7 @@ impl AsRef<EventData> for Event {
             Event::RouteCreated(event) => event,
             Event::RouteUpdated(event) => event,
             Event::RouteDeleted(event) => event,
+            Event::MessageCreated(event) => event,
         }
     }
 }
@@ -80,7 +107,6 @@ impl AsRef<EventData> for Event {
 #[derive(Debug, Clone, Builder, Serialize, Getters)]
 pub struct EventData {
     pub id: Id,
-    pub event_type: EventType,
     pub entity_id: Id,
     pub payload: Value,
     pub created_at: Timestamp,

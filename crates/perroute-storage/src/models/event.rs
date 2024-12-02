@@ -51,7 +51,7 @@ impl TryFrom<Event> for DbEvent {
             .id(event_data.id())
             .created_at(event_data.created_at())
             .payload(event_data.payload().clone())
-            .event_type(event_data.event_type())
+            .event_type(value.event_type())
             .build())
     }
 }
@@ -112,7 +112,6 @@ impl TryFrom<&DbEvent> for Event {
             .actor(value.actor())
             .created_at(value.created_at().clone())
             .entity_id(value.entity_id().clone())
-            .event_type(value.event_type().clone())
             .payload(value.payload().clone())
             .id(value.id().clone())
             .build();
@@ -130,6 +129,7 @@ impl TryFrom<&DbEvent> for Event {
             EventType::RouteCreated => Event::RouteCreated(data),
             EventType::RouteUpdated => Event::RouteUpdated(data),
             EventType::RouteDeleted => Event::RouteDeleted(data),
+            EventType::MessageCreated => Event::MessageCreated(data),
         })
     }
 }

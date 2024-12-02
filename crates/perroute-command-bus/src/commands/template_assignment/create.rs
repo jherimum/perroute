@@ -1,11 +1,9 @@
-use crate::bus::{
-    Command, CommandBusContext, CommandHandler, CommandHandlerResult, CommandWrapper,
+use crate::{
+    bus::{CommandBusContext, CommandHandler, CommandHandlerResult},
+    commands::Command,
 };
 use bon::Builder;
-use perroute_commons::{
-    commands::CommandType,
-    types::{id::Id, priority::Priority, vars::Vars, Timestamp},
-};
+use perroute_commons::types::{id::Id, priority::Priority, vars::Vars, Timestamp};
 use perroute_storage::{
     models::template_assignment::TemplateAssignment, repository::TransactedRepository,
 };
@@ -26,18 +24,12 @@ pub struct CreateTemplateAssignmentCommand {
 }
 
 impl Command for CreateTemplateAssignmentCommand {
-    type Output = TemplateAssignment;
-    fn command_type(&self) -> CommandType {
-        CommandType::CreateTemplateAssignment
+    fn event_type(&self) -> perroute_commons::events::EventType {
+        todo!()
     }
 
-    fn to_event(
-        &self,
-        created_at: &perroute_commons::types::Timestamp,
-        actor: &perroute_commons::types::actor::Actor,
-        output: &Self::Output,
-    ) -> perroute_commons::events::Event {
-        todo!()
+    fn entity_id(&self) -> &Id {
+        &self.id
     }
 }
 
@@ -49,7 +41,7 @@ impl CommandHandler for CreateTemplateAssignmentCommandHandler {
 
     async fn handle<R: TransactedRepository>(
         &self,
-        cmd: CommandWrapper<'_, Self::Command>,
+        cmd: &crate::commands::CommandWrapper<'_, Self::Command>,
         ctx: &CommandBusContext<'_, R>,
     ) -> CommandHandlerResult<Self::Output> {
         todo!()

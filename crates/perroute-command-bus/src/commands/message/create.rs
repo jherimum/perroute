@@ -1,10 +1,10 @@
-use crate::bus::{
-    Command, CommandBusContext, CommandHandler, CommandHandlerResult, CommandWrapper,
+use crate::{
+    bus::{CommandBusContext, CommandHandler, CommandHandlerResult},
+    commands::Command,
 };
 use bon::Builder;
-use perroute_commons::{
-    commands::CommandType,
-    types::{dispatch_type::DispatchType, id::Id, recipient::Recipient, Payload, Tags, Timestamp},
+use perroute_commons::types::{
+    dispatch_type::DispatchType, id::Id, recipient::Recipient, Payload, Tags, Timestamp,
 };
 use perroute_storage::{models::message::Message, repository::TransactedRepository};
 
@@ -13,7 +13,7 @@ pub enum CreateMessageCommandError {}
 
 #[derive(Debug, Clone, Builder)]
 pub struct CreateMessageCommand {
-    id: Id,
+    pub id: Id,
     pub message_type_id: Id,
     pub business_unit_id: Id,
     pub payload: Payload,
@@ -24,19 +24,12 @@ pub struct CreateMessageCommand {
 }
 
 impl Command for CreateMessageCommand {
-    type Output = Message;
-
-    fn command_type(&self) -> CommandType {
-        CommandType::CreateMessage
+    fn event_type(&self) -> perroute_commons::events::EventType {
+        perroute_commons::events::EventType::MessageCreated
     }
 
-    fn to_event(
-        &self,
-        created_at: &perroute_commons::types::Timestamp,
-        actor: &perroute_commons::types::actor::Actor,
-        output: &Self::Output,
-    ) -> perroute_commons::events::Event {
-        todo!()
+    fn entity_id(&self) -> &Id {
+        &self.id
     }
 }
 
@@ -48,7 +41,7 @@ impl CommandHandler for CreateMessageCommandHandler {
 
     async fn handle<R: TransactedRepository>(
         &self,
-        cmd: CommandWrapper<'_, Self::Command>,
+        cmd: &crate::commands::CommandWrapper<'_, Self::Command>,
         ctx: &CommandBusContext<'_, R>,
     ) -> CommandHandlerResult<Self::Output> {
         todo!()
