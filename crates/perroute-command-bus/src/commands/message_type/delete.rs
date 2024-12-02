@@ -1,5 +1,5 @@
 use crate::bus::{
-    Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult,
+    Command, CommandBusContext, CommandHandler, CommandHandlerResult, CommandWrapper,
 };
 use bon::Builder;
 use perroute_commons::{commands::CommandType, types::id::Id};
@@ -15,13 +15,16 @@ pub struct DeleteMessageTypeCommand {
 }
 
 impl Command for DeleteMessageTypeCommand {
+    type Output = ();
+
     fn command_type(&self) -> CommandType {
         CommandType::DeleteMessageType
     }
-
-    fn to_event<R: TransactedRepository>(
+    fn to_event(
         &self,
-        ctx: &CommandBusContext<'_, R>,
+        created_at: &perroute_commons::types::Timestamp,
+        actor: &perroute_commons::types::actor::Actor,
+        output: &Self::Output,
     ) -> perroute_commons::events::Event {
         todo!()
     }
@@ -31,15 +34,16 @@ pub struct DeleteMessageTypeCommandHandler;
 
 impl CommandHandler for DeleteMessageTypeCommandHandler {
     type Command = DeleteMessageTypeCommand;
-    type Output = bool;
+    type Output = ();
 
     async fn handle<R: TransactedRepository>(
         &self,
-        cmd: &Self::Command,
+        cmd: CommandWrapper<'_, Self::Command>,
         ctx: &CommandBusContext<'_, R>,
     ) -> CommandHandlerResult<Self::Output> {
-        let deleted = MessageTypeRepository::delete_message_type(ctx.repository(), &cmd.id).await?;
+        let deleted =
+            MessageTypeRepository::delete_message_type(ctx.repository(), &cmd.inner().id).await?;
 
-        CommandHandlerOutput::new(deleted).ok()
+        Ok(())
     }
 }

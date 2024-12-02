@@ -36,7 +36,7 @@ pub trait MessageTypeRestService {
         &self,
         actor: &Actor,
         path: &MessageTypePath,
-    ) -> impl Future<Output = RestServiceResult<bool>>;
+    ) -> impl Future<Output = RestServiceResult<()>>;
 
     fn update(
         &self,
@@ -70,7 +70,7 @@ impl<CB: CommandBus, QB: QueryBus> MessageTypeRestService for RestService<CB, QB
         todo!()
     }
 
-    async fn delete(&self, actor: &Actor, path: &MessageTypePath) -> RestServiceResult<bool> {
+    async fn delete(&self, actor: &Actor, path: &MessageTypePath) -> RestServiceResult<()> {
         Ok(self
             .command_bus()
             .execute::<_, DeleteMessageTypeCommandHandler, _>(

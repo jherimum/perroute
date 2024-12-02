@@ -3,9 +3,9 @@ use aws_sdk_sns::{
     config::http::HttpResponse,
     error::{BuildError, SdkError},
     operation::publish_batch::{PublishBatchError, PublishBatchOutput},
-    types::{BatchResultErrorEntry, PublishBatchRequestEntry},
+    types::{BatchResultErrorEntry, MessageAttributeValue, PublishBatchRequestEntry},
 };
-use perroute_commons::events::Event;
+use perroute_commons::events::{Event, EventData};
 use tap::TapFallible;
 
 #[derive(Debug, thiserror::Error)]
@@ -80,11 +80,20 @@ fn log_publish_result(out: &PublishBatchOutput) {
 }
 
 fn to_entry(db_event: &Event) -> Result<PublishBatchRequestEntry, SnsPublisherError> {
+    let event_data: &EventData = db_event.as_ref();
     Ok(PublishBatchRequestEntry::builder()
-        .id(db_event.id())
-        .message_group_id(db_event.entity_id())
-        .message_deduplication_id(db_event.id())
+        .id(event_data.id())
+        .message_group_id(event_data.entity_id())
+        .message_deduplication_id(event_data.id())
         .message(serde_json::to_string(&db_event)?)
+        .message_attributes(
+            "event_type",
+            MessageAttributeValue::builder()
+                .data_type("String")
+                .string_value(event_data.event_type().to_string())
+                .build()
+                .unwrap(),
+        )
         .build()?)
 }
 

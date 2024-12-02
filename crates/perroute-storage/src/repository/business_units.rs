@@ -1,5 +1,5 @@
 use super::{PgRepository, RepositoryResult};
-use crate::{execute, fetch_all, fetch_one, fetch_optional, models::business_unit::BusinessUnit};
+use crate::{execute, fetch_all, fetch_one, models::business_unit::BusinessUnit};
 use perroute_commons::types::{code::Code, id::Id};
 use sqlx::{postgres::PgQueryResult, query, query_as};
 use std::future::Future;

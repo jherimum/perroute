@@ -30,6 +30,12 @@ impl Timestamp {
     }
 }
 
+impl Into<Timestamp> for &Timestamp {
+    fn into(self) -> Timestamp {
+        self.clone()
+    }
+}
+
 impl Default for Timestamp {
     fn default() -> Self {
         Self::now()

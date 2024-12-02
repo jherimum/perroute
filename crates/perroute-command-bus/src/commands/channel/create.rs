@@ -1,5 +1,5 @@
 use crate::bus::{
-    Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult,
+    Command, CommandBusContext, CommandHandler, CommandHandlerResult, CommandWrapper,
 };
 use bon::Builder;
 use perroute_commons::{
@@ -36,11 +36,18 @@ pub struct CreateChannelCommand {
 }
 
 impl Command for CreateChannelCommand {
+    type Output = Channel;
+
     fn command_type(&self) -> CommandType {
         CommandType::CreateChannel
     }
 
-    fn to_event<R: TransactedRepository>(&self, ctx: &CommandBusContext<'_, R>) -> Event {
+    fn to_event(
+        &self,
+        created_at: &perroute_commons::types::Timestamp,
+        actor: &perroute_commons::types::actor::Actor,
+        output: &Self::Output,
+    ) -> perroute_commons::events::Event {
         todo!()
     }
 }
@@ -53,12 +60,12 @@ impl CommandHandler for CreateChannelCommandHandler {
 
     async fn handle<R: TransactedRepository>(
         &self,
-        cmd: &Self::Command,
+        cmd: CommandWrapper<'_, Self::Command>,
         ctx: &CommandBusContext<'_, R>,
     ) -> CommandHandlerResult<Self::Output> {
         let exists_bu = BusinessUnitRepository::exists_business_unit(
             ctx.repository(),
-            &BusinessUnitQuery::ById(cmd.business_unit_id.clone()),
+            &BusinessUnitQuery::ById(cmd.inner().business_unit_id.clone()),
         )
         .await?;
 
@@ -67,19 +74,19 @@ impl CommandHandler for CreateChannelCommandHandler {
         }
 
         let channel = Channel::builder()
-            .id(cmd.id.clone())
-            .business_unit_id(cmd.business_unit_id.clone())
-            .name(cmd.name.clone())
-            .provider_id(cmd.provider_id.clone())
-            .dispatch_type(cmd.dispatch_type.clone())
-            .configuration(cmd.configuration.clone())
-            .enabled(cmd.enabled)
-            .created_at(ctx.created_at().clone())
-            .updated_at(ctx.created_at().clone())
+            .id(cmd.inner().id.clone())
+            .business_unit_id(cmd.inner().business_unit_id.clone())
+            .name(cmd.inner().name.clone())
+            .provider_id(cmd.inner().provider_id.clone())
+            .dispatch_type(cmd.inner().dispatch_type.clone())
+            .configuration(cmd.inner().configuration.clone())
+            .enabled(cmd.inner().enabled)
+            .created_at(cmd.created_at().clone())
+            .updated_at(cmd.created_at().clone())
             .build();
 
         let channel = ChannelRepository::save(ctx.repository(), channel).await?;
 
-        CommandHandlerOutput::new(channel.clone()).ok()
+        Ok(channel)
     }
 }

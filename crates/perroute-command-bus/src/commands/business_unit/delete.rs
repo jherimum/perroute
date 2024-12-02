@@ -1,5 +1,5 @@
 use crate::bus::{
-    Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult,
+    Command, CommandBusContext, CommandHandler, CommandHandlerResult, CommandWrapper,
 };
 use bon::Builder;
 use perroute_commons::{commands::CommandType, events::Event, types::id::Id};
@@ -21,11 +21,18 @@ pub struct DeleteBusinessUnitCommand {
 }
 
 impl Command for DeleteBusinessUnitCommand {
+    type Output = ();
+
     fn command_type(&self) -> CommandType {
         CommandType::DeleteBusinessUnit
     }
 
-    fn to_event<R: TransactedRepository>(&self, ctx: &CommandBusContext<'_, R>) -> Event {
+    fn to_event(
+        &self,
+        created_at: &perroute_commons::types::Timestamp,
+        actor: &perroute_commons::types::actor::Actor,
+        output: &Self::Output,
+    ) -> perroute_commons::events::Event {
         todo!()
     }
 }
@@ -38,12 +45,12 @@ impl CommandHandler for DeleteBusinessUnitCommandHandler {
 
     async fn handle<R: TransactedRepository>(
         &self,
-        cmd: &Self::Command,
+        cmd: CommandWrapper<'_, Self::Command>,
         ctx: &CommandBusContext<'_, R>,
     ) -> CommandHandlerResult<Self::Output> {
         let exists = BusinessUnitRepository::exists_business_unit(
             ctx.repository(),
-            &BusinessUnitQuery::ById(cmd.id.clone()),
+            &BusinessUnitQuery::ById(cmd.inner().id.clone()),
         )
         .await?;
 
@@ -51,8 +58,8 @@ impl CommandHandler for DeleteBusinessUnitCommandHandler {
             return Err(DeleteBusinessUnitCommandError::BusinessUnitNotFound.into());
         }
 
-        BusinessUnitRepository::delete_business_unit(ctx.repository(), &cmd.id).await?;
+        BusinessUnitRepository::delete_business_unit(ctx.repository(), &cmd.inner().id).await?;
 
-        CommandHandlerOutput::new(()).ok()
+        Ok(())
     }
 }

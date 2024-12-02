@@ -1,5 +1,5 @@
 use crate::{
-    bus::{Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult},
+    bus::{Command, CommandBusContext, CommandHandler, CommandHandlerResult, CommandWrapper},
     CommandBusError,
 };
 use bon::Builder;
@@ -31,13 +31,17 @@ pub struct UpdateChannelCommand {
 }
 
 impl Command for UpdateChannelCommand {
+    type Output = Channel;
+
     fn command_type(&self) -> CommandType {
         CommandType::UpdateChannel
     }
 
-    fn to_event<R: TransactedRepository>(
+    fn to_event(
         &self,
-        ctx: &CommandBusContext<'_, R>,
+        created_at: &perroute_commons::types::Timestamp,
+        actor: &perroute_commons::types::actor::Actor,
+        output: &Self::Output,
     ) -> perroute_commons::events::Event {
         todo!()
     }
@@ -51,19 +55,20 @@ impl CommandHandler for UpdateChannelCommandHandler {
 
     async fn handle<R: TransactedRepository>(
         &self,
-        cmd: &Self::Command,
+        cmd: CommandWrapper<'_, Self::Command>,
         ctx: &CommandBusContext<'_, R>,
     ) -> CommandHandlerResult<Self::Output> {
-        let channel = ChannelRepository::find(ctx.repository(), &ChannelQuery::ById(&cmd.id))
-            .await?
-            .ok_or(CommandBusError::from(UpdateChannelCommandError::NotFound))?
-            .set_configuration(cmd.configuration.clone())
-            .set_enabled(cmd.enabled)
-            .set_name(cmd.name.clone())
-            .set_updated_at(ctx.created_at().clone());
+        let channel =
+            ChannelRepository::find(ctx.repository(), &ChannelQuery::ById(&cmd.inner().id))
+                .await?
+                .ok_or(CommandBusError::from(UpdateChannelCommandError::NotFound))?
+                .set_configuration(cmd.inner().configuration.clone())
+                .set_enabled(cmd.inner().enabled)
+                .set_name(cmd.inner().name.clone())
+                .set_updated_at(cmd.created_at().clone());
 
         let channel = ChannelRepository::update(ctx.repository(), channel).await?;
 
-        CommandHandlerOutput::new(channel.clone()).ok()
+        Ok(channel)
     }
 }

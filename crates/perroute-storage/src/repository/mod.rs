@@ -1,6 +1,5 @@
 pub mod business_units;
 pub mod channels;
-pub mod command_audit;
 pub mod dispatcher_log;
 pub mod events;
 pub mod message;
@@ -10,7 +9,6 @@ pub mod template_assignment;
 
 use business_units::BusinessUnitRepository;
 use channels::ChannelRepository;
-use command_audit::CommandAuditRepository;
 use dispatcher_log::DispatcherLogRepository;
 use events::EventRepository;
 use message::MessageRepository;
@@ -46,7 +44,6 @@ pub trait Repository:
     + PayloadExampleRepository
     + ChannelRepository
     + RouteRepository
-    + CommandAuditRepository
     + MessageRepository
     + TemplateAssignmentRepository
     + DispatcherLogRepository
@@ -55,60 +52,10 @@ pub trait Repository:
     fn begin(&self) -> impl Future<Output = RepositoryResult<impl TransactedRepository + Clone>>;
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Source {
     Pool(PgPool),
     Tx(Arc<Mutex<Transaction<'static, Postgres>>>),
-}
-
-impl Source {
-    async fn begin(&self) -> RepositoryResult<Self> {
-        match &self {
-            Source::Pool(pool) => {
-                let tx = pool.begin().await?;
-                Ok(Source::Tx(Arc::new(Mutex::new(tx))))
-            }
-            _ => Err(Error::InvalidRepositoryState(
-                "A transaction is already in progress",
-            )),
-        }
-    }
-
-    async fn commit(self) -> RepositoryResult<()> {
-        match self {
-            Source::Tx(tx) => match Arc::try_unwrap(tx) {
-                Ok(tx) => {
-                    let tx = tx.into_inner();
-                    tx.commit().await?;
-                    Ok(())
-                }
-                Err(_) => Err(Error::InvalidRepositoryState(
-                    "Unexpected error when unwrapping transaction",
-                )),
-            },
-            _ => Err(Error::InvalidRepositoryState(
-                "There is no transaction to commit",
-            )),
-        }
-    }
-
-    async fn rollback(self) -> RepositoryResult<()> {
-        match self {
-            Source::Tx(tx) => match Arc::try_unwrap(tx) {
-                Ok(tx) => {
-                    let tx = tx.into_inner();
-                    tx.rollback().await?;
-                    Ok(())
-                }
-                Err(_) => Err(Error::InvalidRepositoryState(
-                    "Unexpected error when unwrapping transaction",
-                )),
-            },
-            _ => Err(Error::InvalidRepositoryState(
-                "There is no transaction to commit",
-            )),
-        }
-    }
 }
 
 #[derive(Clone)]
@@ -131,17 +78,40 @@ impl PgRepository {
 
 impl TransactedRepository for PgRepository {
     async fn rollback(self) -> RepositoryResult<()> {
-        self.source.rollback().await
+        match self.source {
+            Source::Tx(tx) => {
+                let tx = Arc::try_unwrap(tx).unwrap().into_inner();
+                tx.rollback().await?;
+                Ok(())
+            }
+            _ => Err(Error::InvalidRepositoryState("Invalid repository state").into()),
+        }
     }
 
     async fn commit(self) -> RepositoryResult<()> {
-        self.source.commit().await
+        match self.source {
+            Source::Tx(tx) => {
+                let tx = Arc::try_unwrap(tx).unwrap().into_inner();
+                tx.commit().await?;
+                Ok(())
+            }
+            _ => Err(Error::InvalidRepositoryState("Invalid repository state").into()),
+        }
     }
 }
 
 impl Repository for PgRepository {
     async fn begin(&self) -> RepositoryResult<impl TransactedRepository + Clone> {
-        let source = self.source.begin().await?;
-        Ok(PgRepository { source })
+        match &self.source {
+            Source::Pool(p) => {
+                let tx = p.begin().await?;
+                Ok(PgRepository {
+                    source: Source::Tx(Arc::new(Mutex::new(tx))),
+                })
+            }
+            Source::Tx(_) => Err(Error::InvalidRepositoryState(
+                "A transaction is already in progress",
+            )),
+        }
     }
 }

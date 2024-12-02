@@ -1,5 +1,5 @@
 use crate::{
-    bus::{Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult},
+    bus::{Command, CommandBusContext, CommandHandler, CommandHandlerResult, CommandWrapper},
     commands::message_type::PayloadExamplesInput,
     CommandBusError,
 };
@@ -34,13 +34,17 @@ pub struct UpdateMessageTypeCommand {
 }
 
 impl Command for UpdateMessageTypeCommand {
+    type Output = (MessageType, Vec<PayloadExample>);
+
     fn command_type(&self) -> CommandType {
         CommandType::UpdateMessageType
     }
 
-    fn to_event<R: TransactedRepository>(
+    fn to_event(
         &self,
-        ctx: &CommandBusContext<'_, R>,
+        created_at: &perroute_commons::types::Timestamp,
+        actor: &perroute_commons::types::actor::Actor,
+        output: &Self::Output,
     ) -> perroute_commons::events::Event {
         todo!()
     }
@@ -54,19 +58,19 @@ impl CommandHandler for UpdateMessageTypeCommandHandler {
 
     async fn handle<R: TransactedRepository>(
         &self,
-        cmd: &Self::Command,
+        cmd: CommandWrapper<'_, Self::Command>,
         ctx: &CommandBusContext<'_, R>,
     ) -> CommandHandlerResult<Self::Output> {
-        let message_type = MessageTypeRepository::find_by_id(ctx.repository(), &cmd.id)
+        let message_type = MessageTypeRepository::find_by_id(ctx.repository(), &cmd.inner().id)
             .await?
             .ok_or(CommandBusError::from(
                 UpdateMessageTypeCommandError::NotFound,
             ))?
-            .set_enabled(cmd.enabled)
-            .set_name(cmd.name.clone())
-            .set_schema(cmd.schema.clone())
-            .set_updated_at(ctx.created_at().clone())
-            .set_vars(cmd.vars.clone());
+            .set_enabled(cmd.inner().enabled)
+            .set_name(cmd.inner().name.clone())
+            .set_schema(cmd.inner().schema.clone())
+            .set_updated_at(cmd.created_at().clone())
+            .set_vars(cmd.inner().vars.clone());
 
         let message_type =
             MessageTypeRepository::update_message_type(ctx.repository(), message_type).await?;
@@ -75,11 +79,11 @@ impl CommandHandler for UpdateMessageTypeCommandHandler {
             .await?;
 
         let examples: Vec<PayloadExample> =
-            PayloadExamplesInput::new(message_type.id(), &cmd.payload_examples).into();
+            PayloadExamplesInput::new(message_type.id(), &cmd.inner().payload_examples).into();
 
         let examples =
             PayloadExampleRepository::save_payload_examples(ctx.repository(), &examples).await?;
 
-        CommandHandlerOutput::new((message_type.clone(), examples)).ok()
+        Ok((message_type.clone(), examples))
     }
 }

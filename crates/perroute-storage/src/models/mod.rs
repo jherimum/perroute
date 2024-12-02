@@ -1,7 +1,6 @@
 pub mod application;
 pub mod business_unit;
 pub mod channel;
-pub mod command_audit;
 pub mod dispatcher_log;
 pub mod event;
 pub mod message;

@@ -1,5 +1,5 @@
 use crate::bus::{
-    Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult,
+    Command, CommandBusContext, CommandHandler, CommandHandlerResult, CommandWrapper,
 };
 use bon::Builder;
 use perroute_commons::{
@@ -36,13 +36,17 @@ pub struct CreateMessageTypeCommand {
 }
 
 impl Command for CreateMessageTypeCommand {
+    type Output = (MessageType, Vec<PayloadExample>);
+
     fn command_type(&self) -> CommandType {
         CommandType::CreateMessageType
     }
 
-    fn to_event<R: TransactedRepository>(
+    fn to_event(
         &self,
-        ctx: &CommandBusContext<'_, R>,
+        created_at: &perroute_commons::types::Timestamp,
+        actor: &perroute_commons::types::actor::Actor,
+        output: &Self::Output,
     ) -> perroute_commons::events::Event {
         todo!()
     }
@@ -56,12 +60,12 @@ impl CommandHandler for CreateMessageTypeCommandHandler {
 
     async fn handle<R: TransactedRepository>(
         &self,
-        cmd: &Self::Command,
+        cmd: CommandWrapper<'_, Self::Command>,
         ctx: &CommandBusContext<'_, R>,
     ) -> CommandHandlerResult<Self::Output> {
         let exists = MessageTypeRepository::exists_message_type(
             ctx.repository(),
-            &MessageTypeQuery::ByCode(cmd.code.clone()),
+            &MessageTypeQuery::ByCode(cmd.inner().code.clone()),
         )
         .await?;
 
@@ -70,25 +74,25 @@ impl CommandHandler for CreateMessageTypeCommandHandler {
         }
 
         let message_type = MessageType::builder()
-            .id(cmd.id.clone())
-            .code(cmd.code.clone())
-            .name(cmd.name.clone())
-            .vars(cmd.vars.clone())
-            .schema(cmd.schema.clone())
-            .enabled(cmd.enabled)
-            .created_at(ctx.created_at().clone())
-            .updated_at(ctx.created_at().clone())
+            .id(cmd.inner().id.clone())
+            .code(cmd.inner().code.clone())
+            .name(cmd.inner().name.clone())
+            .vars(cmd.inner().vars.clone())
+            .schema(cmd.inner().schema.clone())
+            .enabled(cmd.inner().enabled)
+            .created_at(cmd.created_at().clone())
+            .updated_at(cmd.created_at().clone())
             .build();
 
         let message_type =
             MessageTypeRepository::save_message_type(ctx.repository(), message_type).await?;
 
         let examples: Vec<PayloadExample> =
-            PayloadExamplesInput::new(message_type.id(), &cmd.payload_examples).into();
+            PayloadExamplesInput::new(message_type.id(), &cmd.inner().payload_examples).into();
 
         let examples =
             PayloadExampleRepository::save_payload_examples(ctx.repository(), &examples).await?;
 
-        CommandHandlerOutput::new((message_type.clone(), examples)).ok()
+        Ok((message_type, examples))
     }
 }

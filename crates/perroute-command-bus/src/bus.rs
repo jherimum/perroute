@@ -30,17 +30,13 @@ use perroute_commons::{
     types::{actor::Actor, Timestamp},
 };
 use perroute_storage::{
-    models::{command_audit::command_audit_builder, event::DbEvent},
-    repository::{
-        command_audit::CommandAuditRepository, events::EventRepository, Repository,
-        TransactedRepository,
-    },
+    models::event::DbEvent,
+    repository::{events::EventRepository, Repository, TransactedRepository},
 };
 use serde::Serialize;
 use std::{
     any::{Any, TypeId},
     collections::HashMap,
-    f64::consts::E,
     future::Future,
     sync::Arc,
 };
@@ -66,44 +62,50 @@ pub fn create_command_bus<R: Repository + Clone>(repository: R) -> impl CommandB
         .register(CreateMessageCommandHandler)
 }
 
-pub type CommandHandlerResult<O> = Result<CommandHandlerOutput<O>, CommandBusError>;
+pub type CommandHandlerResult<O> = Result<O, CommandBusError>;
 
-#[derive(Debug)]
-pub struct CommandHandlerOutput<O> {
-    output: O,
+pub struct CommandWrapper<'c, C: Command> {
+    command: &'c C,
+    created_at: &'c Timestamp,
+    actor: &'c Actor,
 }
 
-impl<O> CommandHandlerOutput<O> {
-    pub fn new(output: O) -> Self {
-        Self { output }
+impl<C: Command> CommandWrapper<'_, C> {
+    pub fn inner(&self) -> &C {
+        self.command
     }
 
-    pub fn ok<E>(self) -> Result<Self, E> {
-        Ok(self)
+    pub fn created_at(&self) -> &Timestamp {
+        &self.created_at
+    }
+
+    pub fn actor(&self) -> &Actor {
+        &self.actor
     }
 }
 
 pub trait Command {
-    fn command_type(&self) -> CommandType;
+    type Output;
 
-    fn to_event<R: TransactedRepository>(&self, ctx: &CommandBusContext<'_, R>) -> Event;
+    fn command_type(&self) -> CommandType;
+    fn to_event(&self, created_at: &Timestamp, actor: &Actor, output: &Self::Output) -> Event;
 }
 
 pub trait CommandBus {
     fn execute<C, H, O>(&self, actor: &Actor, cmd: &C) -> impl Future<Output = CommandBusResult<O>>
     where
-        C: Command + 'static + Serialize,
+        C: Command<Output = O> + 'static + Serialize,
         H: CommandHandler<Command = C, Output = O> + 'static;
 }
 
 pub trait CommandHandler {
-    type Command;
+    type Command: Command;
     type Output;
 
     fn handle<R: TransactedRepository>(
         &self,
-        cmd: &Self::Command,
-        ctx: &CommandBusContext<R>,
+        cmd: CommandWrapper<Self::Command>,
+        ctx: &CommandBusContext<'_, R>,
     ) -> impl Future<Output = CommandHandlerResult<Self::Output>>;
 }
 
@@ -147,36 +149,39 @@ impl<R: Repository> DefaultCommandBus<R> {
 }
 
 impl<R: Repository> CommandBus for DefaultCommandBus<R> {
-    async fn execute<C, H, O>(&self, actor: &Actor, cmd: &C) -> CommandBusResult<O>
+    async fn execute<C, H, O>(&self, actor: &Actor, command: &C) -> CommandBusResult<O>
     where
-        C: Command + 'static + Serialize,
-        H: CommandHandler<Command = C, Output = O> + 'static,
+        C: Command<Output = O> + 'static + Serialize,
+        H: CommandHandler<Command = C, Output = C::Output> + 'static,
     {
         let handler = self.get_handler::<C, H, O>()?;
         let tx = self.repository.begin().await?;
-
-        let command_audit = command_audit_builder()
-            .actor(actor)
-            .command_data(cmd)
-            .command_type(&cmd.command_type())
-            .call();
-
-        CommandAuditRepository::save(&tx, command_audit).await?;
-
-        let ctx = CommandBusContext {
-            repository: tx.clone(),
-            actor,
-            created_at: Timestamp::now(),
-        };
-        match handler.handle(cmd, &ctx).await {
+        let ctx = CommandBusContext { repository: &tx };
+        let created_at = &Timestamp::now();
+        match handler
+            .handle(
+                CommandWrapper {
+                    command,
+                    created_at,
+                    actor,
+                },
+                &ctx,
+            )
+            .await
+        {
             Ok(output) => {
-                EventRepository::save(&tx, DbEvent::try_from(cmd.to_event(&ctx)).unwrap())
+                EventRepository::save(
+                    &tx,
+                    DbEvent::try_from(command.to_event(&created_at, &actor, &output)).unwrap(),
+                )
+                .await
+                .tap_err(|e| log::error!("Failed to persist event: {}", e))?;
+
+                tx.commit()
                     .await
-                    .tap_err(|e| log::error!("Failed to persist event: {}", e))?;
+                    .tap_err(|e| log::error!("Failed to commit transaction: {e}"))?;
 
-                tx.commit().await?;
-
-                Ok(output.output)
+                Ok(output)
             }
             Err(e) => {
                 tx.rollback().await?;
@@ -186,22 +191,12 @@ impl<R: Repository> CommandBus for DefaultCommandBus<R> {
     }
 }
 
-pub struct CommandBusContext<'a, R: TransactedRepository> {
-    repository: R,
-    actor: &'a Actor,
-    created_at: Timestamp,
+pub struct CommandBusContext<'r, R: TransactedRepository> {
+    repository: &'r R,
 }
 
-impl<'a, R: TransactedRepository> CommandBusContext<'a, R> {
+impl<'r, R: TransactedRepository> CommandBusContext<'_, R> {
     pub fn repository(&self) -> &R {
         &self.repository
-    }
-
-    pub fn actor(&self) -> &'a Actor {
-        self.actor
-    }
-
-    pub fn created_at(&self) -> &Timestamp {
-        &self.created_at
     }
 }

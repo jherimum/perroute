@@ -1,5 +1,5 @@
 use crate::bus::{
-    Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult,
+    Command, CommandBusContext, CommandHandler, CommandHandlerResult, CommandWrapper,
 };
 use bon::Builder;
 use perroute_commons::{
@@ -30,13 +30,17 @@ pub struct UpdateRouteCommand {
 }
 
 impl Command for UpdateRouteCommand {
+    type Output = Route;
+
     fn command_type(&self) -> CommandType {
         CommandType::UpdateRoute
     }
 
-    fn to_event<R: TransactedRepository>(
+    fn to_event(
         &self,
-        ctx: &CommandBusContext<'_, R>,
+        created_at: &perroute_commons::types::Timestamp,
+        actor: &perroute_commons::types::actor::Actor,
+        output: &Self::Output,
     ) -> perroute_commons::events::Event {
         todo!()
     }
@@ -50,19 +54,19 @@ impl CommandHandler for UpdateRouteCommandHandler {
 
     async fn handle<R: TransactedRepository>(
         &self,
-        cmd: &Self::Command,
+        cmd: CommandWrapper<'_, Self::Command>,
         ctx: &CommandBusContext<'_, R>,
     ) -> CommandHandlerResult<Self::Output> {
-        let route = RouteRepository::get(ctx.repository(), &RouteQuery::ById(&cmd.id))
+        let route = RouteRepository::get(ctx.repository(), &RouteQuery::ById(&cmd.inner().id))
             .await?
             .ok_or(UpdateRouteCommandError::NotFound)?
-            .set_configuration(cmd.configuration.clone())
-            .set_enabled(cmd.enabled)
-            .set_priority(cmd.priority.clone())
-            .set_updated_at(ctx.created_at().clone());
+            .set_configuration(cmd.inner().configuration.clone())
+            .set_enabled(cmd.inner().enabled)
+            .set_priority(cmd.inner().priority.clone())
+            .set_updated_at(cmd.created_at().clone());
 
         let route = RouteRepository::update(ctx.repository(), route).await?;
 
-        CommandHandlerOutput::new(route).ok()
+        Ok(route)
     }
 }

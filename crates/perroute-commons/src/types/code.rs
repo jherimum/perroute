@@ -1,9 +1,9 @@
 use std::fmt::Display;
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use sqlx::prelude::Type;
 
-#[derive(Debug, Clone, PartialEq, Eq, Type, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Type, Serialize, Deserialize)]
 #[sqlx(transparent)]
 #[serde(transparent)]
 pub struct Code(String);

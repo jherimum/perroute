@@ -1,5 +1,5 @@
 use crate::{
-    bus::{Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult},
+    bus::{Command, CommandBusContext, CommandHandler, CommandHandlerResult, CommandWrapper},
     CommandBusError,
 };
 use bon::{builder, Builder};
@@ -44,13 +44,17 @@ pub struct CreateRouteCommand {
 }
 
 impl Command for CreateRouteCommand {
+    type Output = Route;
+
     fn command_type(&self) -> CommandType {
         CommandType::CreateRoute
     }
 
-    fn to_event<R: TransactedRepository>(
+    fn to_event(
         &self,
-        ctx: &CommandBusContext<'_, R>,
+        created_at: &perroute_commons::types::Timestamp,
+        actor: &perroute_commons::types::actor::Actor,
+        output: &Self::Output,
     ) -> perroute_commons::events::Event {
         todo!()
     }
@@ -64,25 +68,25 @@ impl CommandHandler for CreateRouteCommandHandler {
 
     async fn handle<R: TransactedRepository>(
         &self,
-        cmd: &Self::Command,
+        cmd: CommandWrapper<'_, Self::Command>,
         ctx: &CommandBusContext<'_, R>,
     ) -> CommandHandlerResult<Self::Output> {
-        validate(cmd, &ctx).await?;
+        validate(cmd.inner(), ctx).await?;
 
         let route = Route::builder()
-            .id(cmd.id.clone())
-            .channel_id(cmd.channel_id.clone())
-            .message_type_id(cmd.message_type_id.clone())
-            .configuration(cmd.configuration.clone())
-            .priority(cmd.priority.clone())
-            .enabled(cmd.enabled)
-            .created_at(ctx.created_at().clone())
-            .updated_at(ctx.created_at().clone())
+            .id(cmd.inner().id.clone())
+            .channel_id(cmd.inner().channel_id.clone())
+            .message_type_id(cmd.inner().message_type_id.clone())
+            .configuration(cmd.inner().configuration.clone())
+            .priority(cmd.inner().priority.clone())
+            .enabled(cmd.inner().enabled)
+            .created_at(cmd.created_at().clone())
+            .updated_at(cmd.created_at().clone())
             .build();
 
         let route = RouteRepository::save(ctx.repository(), route.clone()).await?;
 
-        CommandHandlerOutput::new(route.clone()).ok()
+        Ok(route.clone())
     }
 }
 

@@ -20,3 +20,4 @@ secrecy = { workspace = true }
 derive-getters = { workspace = true }
 derive_setters = { workspace = true }
 bon = { workspace = true }
+futures = { workspace = true }

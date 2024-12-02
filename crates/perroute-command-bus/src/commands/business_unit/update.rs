@@ -1,11 +1,10 @@
 use crate::{
-    bus::{Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult},
+    bus::{Command, CommandBusContext, CommandHandler, CommandHandlerResult, CommandWrapper},
     CommandBusError,
 };
 use bon::Builder;
 use perroute_commons::{
     commands::CommandType,
-    events::Event,
     types::{id::Id, name::Name, vars::Vars},
 };
 use perroute_storage::{
@@ -31,11 +30,18 @@ pub struct UpdateBusinessUnitCommand {
 }
 
 impl Command for UpdateBusinessUnitCommand {
+    type Output = BusinessUnit;
+
     fn command_type(&self) -> CommandType {
         CommandType::UpdateBusinessUnit
     }
 
-    fn to_event<R: TransactedRepository>(&self, ctx: &CommandBusContext<'_, R>) -> Event {
+    fn to_event(
+        &self,
+        created_at: &perroute_commons::types::Timestamp,
+        actor: &perroute_commons::types::actor::Actor,
+        output: &Self::Output,
+    ) -> perroute_commons::events::Event {
         todo!()
     }
 }
@@ -48,21 +54,21 @@ impl CommandHandler for UpdateBusinessUnitCommandHandler {
 
     async fn handle<R: TransactedRepository>(
         &self,
-        cmd: &Self::Command,
+        cmd: CommandWrapper<'_, Self::Command>,
         ctx: &CommandBusContext<'_, R>,
     ) -> CommandHandlerResult<Self::Output> {
         let bu = match BusinessUnitRepository::find_business_unit(
             ctx.repository(),
-            &BusinessUnitQuery::ById(cmd.id.clone()),
+            &BusinessUnitQuery::ById(cmd.inner().id.clone()),
         )
         .await?
         {
             Some(bu) => {
                 let bu = BusinessUnitRepository::update_business_unit(
                     ctx.repository(),
-                    bu.set_name(cmd.name.clone())
-                        .set_vars(cmd.vars.clone())
-                        .set_updated_at(ctx.created_at().clone()),
+                    bu.set_name(cmd.inner().name.clone())
+                        .set_vars(cmd.inner().vars.clone())
+                        .set_updated_at(cmd.created_at().clone()),
                 )
                 .await?;
                 Ok(bu)
@@ -72,6 +78,6 @@ impl CommandHandler for UpdateBusinessUnitCommandHandler {
             )),
         }?;
 
-        CommandHandlerOutput::new(bu.clone()).ok()
+        Ok(bu)
     }
 }

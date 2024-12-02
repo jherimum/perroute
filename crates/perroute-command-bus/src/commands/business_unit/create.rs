@@ -1,5 +1,5 @@
 use crate::bus::{
-    Command, CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult,
+    Command, CommandBusContext, CommandHandler, CommandHandlerResult, CommandWrapper,
 };
 use bon::Builder;
 use perroute_commons::{
@@ -25,26 +25,32 @@ pub enum CreateBusinessUnitCommandError {
 
 #[derive(Debug, Clone, Builder, Serialize)]
 pub struct CreateBusinessUnitCommand {
-    #[builder(default)]
-    id: Id,
     name: Name,
     code: Code,
     vars: Vars,
 }
 
 impl Command for CreateBusinessUnitCommand {
+    type Output = BusinessUnit;
+
     fn command_type(&self) -> CommandType {
         CommandType::CreateBusinessUnit
     }
 
-    fn to_event<R: TransactedRepository>(&self, ctx: &CommandBusContext<'_, R>) -> Event {
+    fn to_event(
+        &self,
+        created_at: &perroute_commons::types::Timestamp,
+        actor: &perroute_commons::types::actor::Actor,
+        output: &Self::Output,
+    ) -> Event {
         Event::BusinessUnitCreated(
             EventData::builder()
-                .actor(ctx.actor().clone())
-                .created_at(ctx.created_at().clone())
-                .entity_id(self.id.clone())
-                .payload(())
+                .id(Id::new())
+                .entity_id(output.id().clone())
                 .event_type(EventType::BusinessUnitCreated)
+                .actor(actor.clone())
+                .payload(serde_json::to_value(self).unwrap())
+                .created_at(created_at.clone())
                 .build(),
         )
     }
@@ -58,33 +64,36 @@ impl CommandHandler for CreateBusinessUnitCommandHandler {
 
     async fn handle<R: TransactedRepository>(
         &self,
-        cmd: &Self::Command,
+        cmd: CommandWrapper<'_, Self::Command>,
         ctx: &CommandBusContext<'_, R>,
     ) -> CommandHandlerResult<Self::Output> {
         let exists = BusinessUnitRepository::exists_business_unit(
             ctx.repository(),
-            &BusinessUnitQuery::ByCode(cmd.code.clone()),
+            &BusinessUnitQuery::ByCode(cmd.inner().code.clone()),
         )
         .await
         .tap_err(|e| log::error!("Error checking if business unit exists: {:?}", e))?;
 
         if exists {
-            return Err(CreateBusinessUnitCommandError::CodeAlreadyExists(cmd.code.clone()).into());
+            return Err(CreateBusinessUnitCommandError::CodeAlreadyExists(
+                cmd.inner().code.clone(),
+            )
+            .into());
         }
 
         let bu = BusinessUnit::builder()
-            .id(cmd.id.clone())
-            .code(cmd.code.clone())
-            .name(cmd.name.clone())
-            .vars(cmd.vars.clone())
-            .created_at(ctx.created_at().clone())
-            .updated_at(ctx.created_at().clone())
+            .id(Id::new())
+            .code(cmd.inner().code.clone())
+            .name(cmd.inner().name.clone())
+            .vars(cmd.inner().vars.clone())
+            .created_at(cmd.created_at().clone())
+            .updated_at(cmd.created_at().clone())
             .build();
 
         let bu = BusinessUnitRepository::save_business_unit(ctx.repository(), bu)
             .await
             .tap_err(|e| log::error!("Error saving business unit: {:?}", e))?;
 
-        CommandHandlerOutput::new(bu.clone()).ok()
+        Ok(bu)
     }
 }
