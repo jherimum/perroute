@@ -1,8 +1,8 @@
 use crate::{
     bus::{CommandBusContext, CommandHandler, CommandHandlerResult},
     commands::Command,
+    impl_command,
 };
-use bon::Builder;
 use perroute_commons::{
     events::ChannelUpdatedEvent,
     types::{dispatch_type::DispatchType, id::Id, name::Name, Configuration, ProviderId},
@@ -15,7 +15,6 @@ use perroute_storage::{
         TransactedRepository,
     },
 };
-use serde::Serialize;
 
 #[derive(Debug, thiserror::Error)]
 pub enum CreateChannelCommandError {
@@ -23,27 +22,16 @@ pub enum CreateChannelCommandError {
     BusinessUnitNotFound,
 }
 
-#[derive(Debug, Clone, Builder, Serialize)]
-pub struct CreateChannelCommand {
-    #[builder(default)]
-    id: Id,
+impl_command!(CreateChannelCommand, {
+    channel_id: Id,
     business_unit_id: Id,
     name: Name,
     provider_id: ProviderId,
     dispatch_type: DispatchType,
     configuration: Configuration,
     enabled: bool,
-}
 
-impl Command for CreateChannelCommand {
-    fn event_type(&self) -> perroute_commons::events::EventType {
-        perroute_commons::events::EventType::ChannelCreated
-    }
-
-    fn entity_id(&self) -> &Id {
-        &self.id
-    }
-}
+});
 
 pub struct CreateChannelCommandHandler;
 
@@ -68,7 +56,7 @@ impl CommandHandler for CreateChannelCommandHandler {
         }
 
         let channel = Channel::builder()
-            .id(cmd.inner().id.clone())
+            .id(cmd.inner().channel_id.clone())
             .business_unit_id(cmd.inner().business_unit_id.clone())
             .name(cmd.inner().name.clone())
             .provider_id(cmd.inner().provider_id.clone())

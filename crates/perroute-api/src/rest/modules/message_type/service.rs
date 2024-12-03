@@ -13,7 +13,7 @@ use perroute_command_bus::{
     },
     CommandBus,
 };
-use perroute_commons::types::actor::Actor;
+use perroute_commons::types::{actor::Actor, id::Id};
 use perroute_query_bus::QueryBus;
 use std::future::Future;
 
@@ -75,7 +75,9 @@ impl<CB: CommandBus, QB: QueryBus> MessageTypeRestService for RestService<CB, QB
             .command_bus()
             .execute::<_, DeleteMessageTypeCommandHandler, _>(
                 actor,
-                &DeleteMessageTypeCommand::builder().id(path.id()).build(),
+                &DeleteMessageTypeCommand::builder()
+                    .message_type_id(path.id())
+                    .build(),
             )
             .await?)
     }
@@ -87,7 +89,7 @@ impl<CB: CommandBus, QB: QueryBus> MessageTypeRestService for RestService<CB, QB
         payload: &UpdateMessageTypeRequest,
     ) -> ResourceModelResult<MessageTypeModel> {
         let cmd = UpdateMessageTypeCommand::builder()
-            .id(path.id())
+            .message_type_id(path.id())
             .name(payload.name()?)
             .enabled(payload.enabled())
             .vars(payload.vars())
@@ -110,6 +112,7 @@ impl<CB: CommandBus, QB: QueryBus> MessageTypeRestService for RestService<CB, QB
         payload: &CreateMessageTypeRequest,
     ) -> ResourceModelResult<MessageTypeModel> {
         let cmd = CreateMessageTypeCommand::builder()
+            .message_type_id(Id::new())
             .code(payload.code()?)
             .name(payload.name()?)
             .enabled(payload.enabled())

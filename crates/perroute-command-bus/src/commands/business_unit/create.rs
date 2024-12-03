@@ -1,6 +1,7 @@
 use crate::{
     bus::{CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult},
     commands::Command,
+    impl_command,
 };
 use bon::{builder, Builder};
 use perroute_commons::{
@@ -14,7 +15,6 @@ use perroute_storage::{
         TransactedRepository,
     },
 };
-use serde::Serialize;
 use tap::TapFallible;
 
 #[derive(Debug, thiserror::Error)]
@@ -23,24 +23,12 @@ pub enum CreateBusinessUnitCommandError {
     CodeAlreadyExists(Code),
 }
 
-#[derive(Debug, Clone, Builder, Serialize)]
-pub struct CreateBusinessUnitCommand {
-    #[builder(default)]
+impl_command!(CreateBusinessUnitCommand, {
     business_unit_id: Id,
     name: Name,
     code: Code,
     vars: Vars,
-}
-
-impl Command for CreateBusinessUnitCommand {
-    fn entity_id(&self) -> &Id {
-        &self.business_unit_id
-    }
-
-    fn event_type(&self) -> perroute_commons::events::EventType {
-        perroute_commons::events::EventType::BusinessUnitCreated
-    }
-}
+});
 
 pub struct CreateBusinessUnitCommandHandler;
 

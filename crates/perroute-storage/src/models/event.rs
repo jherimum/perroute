@@ -2,7 +2,7 @@ use bon::{builder, Builder};
 use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::{
-    events::{Event, EventData, EventType},
+    events::{ApplicationEventData, Event, EventType},
     types::{
         actor::{Actor, ActorType},
         entity::Entity,
@@ -13,6 +13,7 @@ use perroute_commons::{
 use serde::{de::DeserializeOwned, Serialize};
 use serde_json::Value;
 use sqlx::prelude::FromRow;
+use tap::TapFallible;
 
 #[derive(Debug, Clone, PartialEq, Eq, FromRow, Builder, Getters, Setters)]
 #[setters(prefix = "set_")]
@@ -56,79 +57,116 @@ impl DbEvent {
     }
 }
 
-impl<D: DeserializeOwned> From<&DbEvent> for EventData<D> {
-    fn from(value: &DbEvent) -> Self {
-        EventData::builder()
+impl<D: DeserializeOwned> TryFrom<&DbEvent> for ApplicationEventData<D> {
+    type Error = serde_json::Error;
+
+    fn try_from(value: &DbEvent) -> Result<Self, Self::Error> {
+        Ok(ApplicationEventData::builder()
             .id(value.id().clone())
             .entity_id(value.entity_id().clone())
             .event_type(value.event_type().clone())
             .created_at(value.created_at().clone())
             .actor(value.actor())
-            .payload(serde_json::from_value(value.payload().clone()).unwrap())
-            .build()
+            .payload(
+                serde_json::from_value(value.payload().clone())
+                    .tap_err(|e| log::error!("Failed to deserialize event payload: {e}"))?,
+            )
+            .build())
     }
 }
 
 impl TryFrom<&DbEvent> for Event {
-    type Error = String;
+    type Error = serde_json::Error;
 
     fn try_from(value: &DbEvent) -> Result<Self, Self::Error> {
         Ok(match value.event_type() {
-            EventType::BusinessUnitCreated => Event::BusinessUnitCreated(value.into()),
-            EventType::BusinessUnitUpdated => Event::BusinessUnitUpdated(value.into()),
-            EventType::BusinessUnitDeleted => Event::BusinessUnitCreated(value.into()),
-            EventType::ChannelCreated => Event::ChannelCreated(value.into()),
-            EventType::ChannelUpdated => Event::ChannelUpdated(value.into()),
-            EventType::ChannelDeleted => Event::ChannelDeleted(value.into()),
-            EventType::MessageTypeCreated => Event::MessageTypeCreated(value.into()),
-            EventType::MessageTypeUpdated => Event::MessageTypeUpdated(value.into()),
-            EventType::MessageTypeDeleted => Event::MessageTypeDeleted(value.into()),
-            EventType::RouteCreated => Event::RouteCreated(value.into()),
-            EventType::RouteUpdated => Event::RouteUpdated(value.into()),
-            EventType::RouteDeleted => Event::RouteDeleted(value.into()),
-            EventType::MessageCreated => Event::MessageCreated(value.into()),
-            EventType::TemplateAssignmentCreated => Event::TemplateAssignmentCreated(value.into()),
-            EventType::TemplateAssignmentUpdated => Event::TemplateAssignmentUpdated(value.into()),
-            EventType::TemplateAssignmentDeleted => Event::TemplateAssignmentDeleted(value.into()),
+            EventType::BusinessUnitCreated => {
+                Event::BusinessUnitCreated(ApplicationEventData::try_from(value)?)
+            }
+            EventType::BusinessUnitUpdated => {
+                Event::BusinessUnitUpdated(ApplicationEventData::try_from(value)?)
+            }
+            EventType::BusinessUnitDeleted => {
+                Event::BusinessUnitCreated(ApplicationEventData::try_from(value)?)
+            }
+            EventType::ChannelCreated => {
+                Event::ChannelCreated(ApplicationEventData::try_from(value)?)
+            }
+            EventType::ChannelUpdated => {
+                Event::ChannelUpdated(ApplicationEventData::try_from(value)?)
+            }
+            EventType::ChannelDeleted => {
+                Event::ChannelDeleted(ApplicationEventData::try_from(value)?)
+            }
+            EventType::MessageTypeCreated => {
+                Event::MessageTypeCreated(ApplicationEventData::try_from(value)?)
+            }
+            EventType::MessageTypeUpdated => {
+                Event::MessageTypeUpdated(ApplicationEventData::try_from(value)?)
+            }
+            EventType::MessageTypeDeleted => {
+                Event::MessageTypeDeleted(ApplicationEventData::try_from(value)?)
+            }
+            EventType::RouteCreated => Event::RouteCreated(ApplicationEventData::try_from(value)?),
+            EventType::RouteUpdated => Event::RouteUpdated(ApplicationEventData::try_from(value)?),
+            EventType::RouteDeleted => Event::RouteDeleted(ApplicationEventData::try_from(value)?),
+            EventType::MessageCreated => {
+                Event::MessageCreated(ApplicationEventData::try_from(value)?)
+            }
+            EventType::TemplateAssignmentCreated => {
+                Event::TemplateAssignmentCreated(ApplicationEventData::try_from(value)?)
+            }
+            EventType::TemplateAssignmentUpdated => {
+                Event::TemplateAssignmentUpdated(ApplicationEventData::try_from(value)?)
+            }
+            EventType::TemplateAssignmentDeleted => {
+                Event::TemplateAssignmentDeleted(ApplicationEventData::try_from(value)?)
+            }
         })
     }
 }
 
 impl TryFrom<Event> for DbEvent {
-    type Error = String;
+    type Error = serde_json::Error;
 
     fn try_from(value: Event) -> Result<Self, Self::Error> {
-        Ok(match value {
-            Event::BusinessUnitCreated(d) => DbEvent::from(&d),
-            Event::BusinessUnitUpdated(d) => DbEvent::from(&d),
-            Event::BusinessUnitDeleted(d) => DbEvent::from(&d),
-            Event::ChannelCreated(d) => DbEvent::from(&d),
-            Event::ChannelUpdated(d) => DbEvent::from(&d),
-            Event::ChannelDeleted(d) => DbEvent::from(&d),
-            Event::MessageTypeCreated(d) => DbEvent::from(&d),
-            Event::MessageTypeUpdated(d) => DbEvent::from(&d),
-            Event::MessageTypeDeleted(d) => DbEvent::from(&d),
-            Event::RouteCreated(d) => DbEvent::from(&d),
-            Event::RouteUpdated(d) => DbEvent::from(&d),
-            Event::RouteDeleted(d) => DbEvent::from(&d),
-            Event::MessageCreated(d) => DbEvent::from(&d),
-            Event::TemplateAssignmentCreated(d) => DbEvent::from(&d),
-            Event::TemplateAssignmentUpdated(d) => DbEvent::from(&d),
-            Event::TemplateAssignmentDeleted(d) => DbEvent::from(&d),
-        })
+        match value {
+            Event::BusinessUnitCreated(d) => DbEvent::try_from(&d),
+            Event::BusinessUnitUpdated(d) => DbEvent::try_from(&d),
+            Event::BusinessUnitDeleted(d) => DbEvent::try_from(&d),
+            Event::ChannelCreated(d) => DbEvent::try_from(&d),
+            Event::ChannelUpdated(d) => DbEvent::try_from(&d),
+            Event::ChannelDeleted(d) => DbEvent::try_from(&d),
+            Event::MessageTypeCreated(d) => DbEvent::try_from(&d),
+            Event::MessageTypeUpdated(d) => DbEvent::try_from(&d),
+            Event::MessageTypeDeleted(d) => DbEvent::try_from(&d),
+            Event::RouteCreated(d) => DbEvent::try_from(&d),
+            Event::RouteUpdated(d) => DbEvent::try_from(&d),
+            Event::RouteDeleted(d) => DbEvent::try_from(&d),
+            Event::MessageCreated(d) => DbEvent::try_from(&d),
+            Event::TemplateAssignmentCreated(d) => DbEvent::try_from(&d),
+            Event::TemplateAssignmentUpdated(d) => DbEvent::try_from(&d),
+            Event::TemplateAssignmentDeleted(d) => DbEvent::try_from(&d),
+        }
+        .tap_err(|e| log::error!("Failed to convert event to DbEvent: {e}"))
     }
 }
 
-impl<D: Serialize> From<&EventData<D>> for DbEvent {
-    fn from(value: &EventData<D>) -> Self {
-        DbEvent::builder()
+impl<D: Serialize> TryFrom<&ApplicationEventData<D>> for DbEvent {
+    type Error = serde_json::Error;
+
+    fn try_from(value: &ApplicationEventData<D>) -> Result<Self, Self::Error> {
+        Ok(DbEvent::builder()
             .id(value.id().clone())
             .event_type(value.event_type().clone())
             .entity_id(value.entity_id().clone())
-            .payload(serde_json::to_value(value.payload()).unwrap())
+            .payload(
+                serde_json::to_value(value.payload())
+                    .tap_err(|e| log::error!("Failed to serialize event payload: {e}"))?,
+            )
             .created_at(value.created_at().clone())
             .maybe_actor_id(value.actor().id())
             .actor_type(value.actor().actor_type().clone())
-            .build()
+            .build())
     }
 }

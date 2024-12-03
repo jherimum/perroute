@@ -1,9 +1,8 @@
 use crate::{
     bus::{CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult},
     commands::Command,
-    CommandBusError,
+    impl_command, CommandBusError,
 };
-use bon::Builder;
 use perroute_commons::{
     events::BusinessUnitUpdatedEvent,
     types::{id::Id, name::Name, vars::Vars},
@@ -15,7 +14,6 @@ use perroute_storage::{
         TransactedRepository,
     },
 };
-use serde::Serialize;
 
 #[derive(Debug, thiserror::Error)]
 pub enum UpdateBusinessUnitCommandError {
@@ -23,22 +21,11 @@ pub enum UpdateBusinessUnitCommandError {
     NotFound,
 }
 
-#[derive(Debug, Clone, Builder, Serialize)]
-pub struct UpdateBusinessUnitCommand {
-    pub id: Id,
-    pub name: Name,
-    pub vars: Vars,
-}
-
-impl Command for UpdateBusinessUnitCommand {
-    fn event_type(&self) -> perroute_commons::events::EventType {
-        perroute_commons::events::EventType::BusinessUnitUpdated
-    }
-
-    fn entity_id(&self) -> &Id {
-        &self.id
-    }
-}
+impl_command!(UpdateBusinessUnitCommand, {
+    business_unit_id: Id,
+    name: Name,
+    vars: Vars,
+});
 
 pub struct UpdateBusinessUnitCommandHandler;
 
@@ -54,7 +41,7 @@ impl CommandHandler for UpdateBusinessUnitCommandHandler {
     ) -> CommandHandlerResult<Self::Output, Self::ApplicationEvent> {
         let bu = match BusinessUnitRepository::find_business_unit(
             ctx.repository(),
-            &BusinessUnitQuery::ById(cmd.inner().id.clone()),
+            &BusinessUnitQuery::ById(cmd.inner().business_unit_id.clone()),
         )
         .await?
         {
@@ -76,7 +63,7 @@ impl CommandHandler for UpdateBusinessUnitCommandHandler {
         Ok(CommandHandlerOutput::new(
             bu,
             BusinessUnitUpdatedEvent::builder()
-                .id(cmd.command.id.clone())
+                .business_unit_id(cmd.command.business_unit_id.clone())
                 .name(cmd.command.name.clone())
                 .vars(cmd.command.vars.clone())
                 .build(),

@@ -14,7 +14,7 @@ use perroute_command_bus::{
     },
     CommandBus,
 };
-use perroute_commons::types::actor::Actor;
+use perroute_commons::types::{actor::Actor, id::Id};
 use perroute_query_bus::QueryBus;
 use std::future::Future;
 
@@ -68,6 +68,7 @@ impl<CB: CommandBus, QB: QueryBus> ChannelRestService for RestService<CB, QB> {
         BusinessUnitRestService::get(self, actor, &path.business_unit_path()).await?;
 
         let cmd = CreateChannelCommand::builder()
+            .channel_id(Id::new())
             .configuration(payload.configuration())
             .enabled(payload.enabled())
             .name(payload.name()?)
@@ -93,7 +94,7 @@ impl<CB: CommandBus, QB: QueryBus> ChannelRestService for RestService<CB, QB> {
         ChannelRestService::get(self, actor, path).await?;
 
         let cmd = UpdateChannelCommand::builder()
-            .id(path.channel_id())
+            .channel_id(path.channel_id())
             .configuration(payload.configuration())
             .enabled(payload.enabled())
             .name(payload.name()?)
@@ -110,7 +111,7 @@ impl<CB: CommandBus, QB: QueryBus> ChannelRestService for RestService<CB, QB> {
     async fn delete(&self, actor: &Actor, path: &ChannelPath) -> RestServiceResult<()> {
         ChannelRestService::get(self, actor, path).await?;
         let cmd = DeleteChannelCommand::builder()
-            .id(path.channel_id().clone())
+            .channel_id(path.channel_id().clone())
             .build();
 
         self.command_bus()

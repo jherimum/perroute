@@ -1,8 +1,8 @@
 use crate::{
     bus::{CommandBusContext, CommandHandler, CommandHandlerResult},
     commands::Command,
+    impl_command,
 };
-use bon::Builder;
 use perroute_commons::{
     events::MessageTypeCreatedEvent,
     types::{code::Code, id::Id, name::Name, schema::Schema, vars::Vars, Payload},
@@ -14,7 +14,6 @@ use perroute_storage::{
         TransactedRepository,
     },
 };
-use serde::Serialize;
 
 use super::PayloadExamplesInput;
 
@@ -24,27 +23,15 @@ pub enum CreateMessageTypeCommandError {
     AlreadyExists,
 }
 
-#[derive(Debug, Clone, Builder, Serialize)]
-pub struct CreateMessageTypeCommand {
-    #[builder(default)]
-    id: Id,
+impl_command!(CreateMessageTypeCommand, {
+    message_type_id: Id,
     code: Code,
     name: Name,
     vars: Vars,
     schema: Schema,
     enabled: bool,
     payload_examples: Vec<(Name, Payload)>,
-}
-
-impl Command for CreateMessageTypeCommand {
-    fn event_type(&self) -> perroute_commons::events::EventType {
-        perroute_commons::events::EventType::MessageTypeCreated
-    }
-
-    fn entity_id(&self) -> &Id {
-        &self.id
-    }
-}
+});
 
 pub struct CreateMessageTypeCommandHandler;
 
@@ -69,7 +56,7 @@ impl CommandHandler for CreateMessageTypeCommandHandler {
         }
 
         let message_type = MessageType::builder()
-            .id(cmd.inner().id.clone())
+            .id(cmd.inner().message_type_id.clone())
             .code(cmd.inner().code.clone())
             .name(cmd.inner().name.clone())
             .vars(cmd.inner().vars.clone())

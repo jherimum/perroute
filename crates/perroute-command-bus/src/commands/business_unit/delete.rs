@@ -1,12 +1,10 @@
 use crate::{
     bus::{CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult},
     commands::Command,
+    impl_command,
 };
 use bon::Builder;
-use perroute_commons::{
-    events::{BusinessUnitDeletedEvent, Event, EventData, EventType},
-    types::id::Id,
-};
+use perroute_commons::{events::BusinessUnitDeletedEvent, types::id::Id};
 use perroute_storage::repository::{
     business_units::{BusinessUnitQuery, BusinessUnitRepository},
     TransactedRepository,
@@ -19,20 +17,9 @@ pub enum DeleteBusinessUnitCommandError {
     BusinessUnitNotFound,
 }
 
-#[derive(Debug, Clone, Builder, Serialize)]
-pub struct DeleteBusinessUnitCommand {
-    pub id: Id,
-}
-
-impl Command for DeleteBusinessUnitCommand {
-    fn event_type(&self) -> perroute_commons::events::EventType {
-        perroute_commons::events::EventType::BusinessUnitDeleted
-    }
-
-    fn entity_id(&self) -> &Id {
-        &self.id
-    }
-}
+impl_command!(DeleteBusinessUnitCommand, {
+    business_unit_id: Id
+});
 
 pub struct DeleteBusinessUnitCommandHandler;
 
@@ -48,7 +35,7 @@ impl CommandHandler for DeleteBusinessUnitCommandHandler {
     ) -> CommandHandlerResult<Self::Output, Self::ApplicationEvent> {
         let exists = BusinessUnitRepository::exists_business_unit(
             ctx.repository(),
-            &BusinessUnitQuery::ById(cmd.inner().id.clone()),
+            &BusinessUnitQuery::ById(cmd.inner().business_unit_id.clone()),
         )
         .await?;
 
@@ -56,12 +43,16 @@ impl CommandHandler for DeleteBusinessUnitCommandHandler {
             return Err(DeleteBusinessUnitCommandError::BusinessUnitNotFound.into());
         }
 
-        BusinessUnitRepository::delete_business_unit(ctx.repository(), &cmd.inner().id).await?;
+        BusinessUnitRepository::delete_business_unit(
+            ctx.repository(),
+            &cmd.inner().business_unit_id,
+        )
+        .await?;
 
         Ok(CommandHandlerOutput::new(
             (),
             BusinessUnitDeletedEvent::builder()
-                .id(cmd.inner().id.clone())
+                .business_unit_id(cmd.inner().business_unit_id.clone())
                 .build(),
         ))
     }

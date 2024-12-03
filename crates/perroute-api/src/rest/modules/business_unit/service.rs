@@ -16,7 +16,7 @@ use perroute_command_bus::{
     },
     CommandBus,
 };
-use perroute_commons::types::actor::Actor;
+use perroute_commons::types::{actor::Actor, id::Id};
 use perroute_query_bus::{
     queries::business_unit::QueryBusinessUnitsHandler, QueryBus, QueryBusError,
 };
@@ -99,7 +99,9 @@ impl<CB: CommandBus, QB: QueryBus> BusinessUnitRestService for RestService<CB, Q
             .command_bus()
             .execute::<_, DeleteBusinessUnitCommandHandler, _>(
                 actor,
-                &DeleteBusinessUnitCommand::builder().id(path.id()).build(),
+                &DeleteBusinessUnitCommand::builder()
+                    .business_unit_id(path.id())
+                    .build(),
             )
             .await?)
     }
@@ -111,7 +113,7 @@ impl<CB: CommandBus, QB: QueryBus> BusinessUnitRestService for RestService<CB, Q
         payload: &UpdateBusinessUnitRequest,
     ) -> ResourceModelResult<BusinessUnitModel> {
         let cmd = UpdateBusinessUnitCommand::builder()
-            .id(id.id())
+            .business_unit_id(id.id())
             .name(payload.name()?)
             .vars(payload.vars())
             .build();
@@ -131,6 +133,7 @@ impl<CB: CommandBus, QB: QueryBus> BusinessUnitRestService for RestService<CB, Q
         payload: &CreateBusinessUnitRequest,
     ) -> ResourceModelResult<BusinessUnitModel> {
         let cmd = CreateBusinessUnitCommand::builder()
+            .business_unit_id(Id::new())
             .name(payload.name()?)
             .code(payload.code()?)
             .vars(payload.vars())

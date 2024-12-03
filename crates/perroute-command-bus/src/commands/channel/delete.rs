@@ -1,32 +1,20 @@
 use crate::{
     bus::{CommandBusContext, CommandHandler, CommandHandlerResult},
     commands::Command,
+    impl_command,
 };
-use bon::Builder;
 use perroute_commons::{events::ChannelDeletedEvent, types::id::Id};
 use perroute_storage::repository::{
     channels::{ChannelQuery, ChannelRepository},
     TransactedRepository,
 };
-use serde::Serialize;
 
 #[derive(Debug, thiserror::Error)]
 pub enum DeleteChannelCommandError {}
 
-#[derive(Debug, Clone, Builder, Serialize)]
-pub struct DeleteChannelCommand {
-    id: Id,
-}
-
-impl Command for DeleteChannelCommand {
-    fn event_type(&self) -> perroute_commons::events::EventType {
-        perroute_commons::events::EventType::ChannelDeleted
-    }
-
-    fn entity_id(&self) -> &Id {
-        &self.id
-    }
-}
+impl_command!(DeleteChannelCommand, {
+    channel_id: Id
+});
 
 pub struct DeleteChannelCommandHandler;
 
@@ -40,9 +28,11 @@ impl CommandHandler for DeleteChannelCommandHandler {
         cmd: &crate::commands::CommandWrapper<'_, Self::Command>,
         ctx: &CommandBusContext<'_, R>,
     ) -> CommandHandlerResult<Self::Output, Self::ApplicationEvent> {
-        let result =
-            ChannelRepository::delete(ctx.repository(), &ChannelQuery::ById(&cmd.inner().id))
-                .await?;
+        let result = ChannelRepository::delete(
+            ctx.repository(),
+            &ChannelQuery::ById(&cmd.inner().channel_id),
+        )
+        .await?;
 
         //Ok(())
 

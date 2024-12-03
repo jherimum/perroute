@@ -1,6 +1,7 @@
 use crate::{
     bus::{CommandBusContext, CommandHandler, CommandHandlerResult},
     commands::Command,
+    impl_command,
 };
 use bon::Builder;
 use perroute_commons::{
@@ -14,27 +15,16 @@ use perroute_storage::{
 #[derive(Debug, thiserror::Error)]
 pub enum CreateTemplateAssignmentCommandError {}
 
-#[derive(Debug, Clone, Builder)]
-pub struct CreateTemplateAssignmentCommand {
-    id: Id,
-    pub business_unit_id: Id,
-    pub message_type_id: Id,
-    pub vars: Vars,
-    pub priority: Priority,
-    pub start_at: Timestamp,
-    pub end_at: Option<Timestamp>,
-    pub enabled: bool,
-}
-
-impl Command for CreateTemplateAssignmentCommand {
-    fn event_type(&self) -> perroute_commons::events::EventType {
-        todo!()
-    }
-
-    fn entity_id(&self) -> &Id {
-        &self.id
-    }
-}
+impl_command!(CreateTemplateAssignmentCommand,{
+    template_assignment_id: Id,
+    business_unit_id: Id,
+     message_type_id: Id,
+     vars: Vars,
+     priority: Priority,
+     start_at: Timestamp,
+     end_at: Option<Timestamp>,
+     enabled: bool,
+});
 
 pub struct CreateTemplateAssignmentCommandHandler;
 

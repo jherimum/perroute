@@ -21,3 +21,5 @@ derive-getters = { workspace = true }
 derive_setters = { workspace = true }
 bon = { workspace = true }
 futures = { workspace = true }
+tap = { workspace = true }
+log = { workspace = true }

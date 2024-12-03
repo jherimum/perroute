@@ -1,7 +1,7 @@
 use crate::{
     bus::{CommandBusContext, CommandHandler, CommandHandlerResult},
     commands::Command,
-    CommandBusError,
+    impl_command, CommandBusError,
 };
 use bon::{builder, Builder};
 use perroute_commons::{
@@ -32,27 +32,15 @@ pub enum CreateRouteCommandError {
     BusinessUnitNotFound,
 }
 
-#[derive(Debug, Clone, Builder, Serialize)]
-pub struct CreateRouteCommand {
-    #[builder(default)]
-    id: Id,
+impl_command!(CreateRouteCommand, {
+    route_id: Id,
     business_id: Id,
     channel_id: Id,
     message_type_id: Id,
     configuration: Configuration,
     priority: Priority,
     enabled: bool,
-}
-
-impl Command for CreateRouteCommand {
-    fn event_type(&self) -> perroute_commons::events::EventType {
-        perroute_commons::events::EventType::RouteCreated
-    }
-
-    fn entity_id(&self) -> &Id {
-        &self.id
-    }
-}
+});
 
 pub struct CreateRouteCommandHandler;
 
@@ -69,7 +57,7 @@ impl CommandHandler for CreateRouteCommandHandler {
         validate(cmd.inner(), ctx).await?;
 
         let route = Route::builder()
-            .id(cmd.inner().id.clone())
+            .id(cmd.inner().route_id.clone())
             .channel_id(cmd.inner().channel_id.clone())
             .message_type_id(cmd.inner().message_type_id.clone())
             .configuration(cmd.inner().configuration.clone())

@@ -50,7 +50,7 @@ impl Deref for Timestamp {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Hash, Deserialize)]
 #[serde(transparent)]
 pub struct ProviderId(String);
 

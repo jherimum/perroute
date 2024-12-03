@@ -1,8 +1,8 @@
 use crate::{
     bus::{CommandBusContext, CommandHandler, CommandHandlerResult},
     commands::Command,
+    impl_command,
 };
-use bon::Builder;
 use perroute_commons::{
     events::MessageCreatedEvent,
     types::{dispatch_type::DispatchType, id::Id, recipient::Recipient, Payload, Tags, Timestamp},
@@ -12,27 +12,16 @@ use perroute_storage::{models::message::Message, repository::TransactedRepositor
 #[derive(Debug, thiserror::Error)]
 pub enum CreateMessageCommandError {}
 
-#[derive(Debug, Clone, Builder)]
-pub struct CreateMessageCommand {
-    pub id: Id,
-    pub message_type_id: Id,
-    pub business_unit_id: Id,
-    pub payload: Payload,
-    pub dispatch_type: DispatchType,
-    pub recipient: Recipient,
-    pub scheduled_at: Option<Timestamp>,
-    pub tags: Tags,
-}
-
-impl Command for CreateMessageCommand {
-    fn event_type(&self) -> perroute_commons::events::EventType {
-        perroute_commons::events::EventType::MessageCreated
-    }
-
-    fn entity_id(&self) -> &Id {
-        &self.id
-    }
-}
+impl_command!(CreateMessageCommand, {
+     message_id: Id,
+     message_type_id: Id,
+     business_unit_id: Id,
+     payload: Payload,
+     dispatch_type: DispatchType,
+     recipient: Recipient,
+     scheduled_at: Option<Timestamp>,
+     tags: Tags,
+});
 
 pub struct CreateMessageCommandHandler;
 

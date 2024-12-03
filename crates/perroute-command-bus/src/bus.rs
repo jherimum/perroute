@@ -36,7 +36,7 @@ pub type CommandHandlerResult<O, E> = Result<CommandHandlerOutput<O, E>, Command
 pub trait CommandBus {
     fn execute<C, H, O>(&self, actor: &Actor, cmd: &C) -> impl Future<Output = CommandBusResult<O>>
     where
-        C: Command + 'static + Serialize,
+        C: Command + 'static,
         H: CommandHandler<Command = C, Output = O> + 'static;
 }
 
@@ -94,21 +94,28 @@ impl<R: Repository> DefaultCommandBus<R> {
 impl<R: Repository> CommandBus for DefaultCommandBus<R> {
     async fn execute<C, H, O>(&self, actor: &Actor, command: &C) -> CommandBusResult<O>
     where
-        C: Command + 'static + Serialize,
+        C: Command + 'static,
         H: CommandHandler<Command = C, Output = O> + 'static,
     {
-        let handler = self.get_handler::<C, H, O>()?;
-        let tx = self.repository.begin().await?;
+        let handler = self
+            .get_handler::<C, H, O>()
+            .tap_err(|e| log::error!("Failed to get command handler: {e}"))?;
+        let tx = self
+            .repository
+            .begin()
+            .await
+            .tap_err(|e| log::error!("Failed to begin transaction: {e}"))?;
+
         let ctx = CommandBusContext { repository: &tx };
         let created_at = &Timestamp::now();
-
         let command_wrapper = CommandWrapper::new(command, created_at, actor);
 
         match handler.handle(&command_wrapper, &ctx).await {
             Ok(output) => {
                 EventRepository::save(
                     &tx,
-                    DbEvent::try_from(output.event.to_event(actor, created_at)).unwrap(),
+                    DbEvent::try_from(output.event.to_event(actor, created_at))
+                        .tap_err(|e| log::error!("Failed to convert event to DbEvent: {e}"))?,
                 )
                 .await
                 .tap_err(|e| log::error!("Failed to persist event: {}", e))?;
@@ -120,7 +127,9 @@ impl<R: Repository> CommandBus for DefaultCommandBus<R> {
                 Ok(output.output)
             }
             Err(e) => {
-                tx.rollback().await?;
+                tx.rollback()
+                    .await
+                    .tap_err(|e| log::error!("Failed to rollback transaction: {e}"))?;
                 Err(e)
             }
         }

@@ -44,4 +44,7 @@ pub enum CommandBusError {
 
     #[error("Update route command error: {0}")]
     UpdateRouteCommandError(#[from] UpdateRouteCommandError),
+
+    #[error("{0}")]
+    GeneralError(#[from] serde_json::Error),
 }

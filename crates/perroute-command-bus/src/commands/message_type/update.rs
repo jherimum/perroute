@@ -1,9 +1,8 @@
 use crate::{
     bus::{CommandBusContext, CommandHandler, CommandHandlerResult},
     commands::{message_type::PayloadExamplesInput, Command},
-    CommandBusError,
+    impl_command, CommandBusError,
 };
-use bon::Builder;
 use perroute_commons::{
     events::MessageTypeUpdatedEvent,
     types::{id::Id, name::Name, schema::Schema, vars::Vars, Payload},
@@ -15,7 +14,6 @@ use perroute_storage::{
         TransactedRepository,
     },
 };
-use serde::Serialize;
 
 #[derive(Debug, thiserror::Error)]
 pub enum UpdateMessageTypeCommandError {
@@ -23,25 +21,14 @@ pub enum UpdateMessageTypeCommandError {
     NotFound,
 }
 
-#[derive(Debug, Clone, Builder, Serialize)]
-pub struct UpdateMessageTypeCommand {
-    id: Id,
+impl_command!(UpdateMessageTypeCommand, {
+    message_type_id: Id,
     name: Name,
     vars: Vars,
     schema: Schema,
     enabled: bool,
     payload_examples: Vec<(Name, Payload)>,
-}
-
-impl Command for UpdateMessageTypeCommand {
-    fn event_type(&self) -> perroute_commons::events::EventType {
-        perroute_commons::events::EventType::MessageTypeUpdated
-    }
-
-    fn entity_id(&self) -> &Id {
-        &self.id
-    }
-}
+});
 
 pub struct UpdateMessageTypeCommandHandler;
 
@@ -55,16 +42,17 @@ impl CommandHandler for UpdateMessageTypeCommandHandler {
         cmd: &crate::commands::CommandWrapper<'_, Self::Command>,
         ctx: &CommandBusContext<'_, R>,
     ) -> CommandHandlerResult<Self::Output, Self::ApplicationEvent> {
-        let message_type = MessageTypeRepository::find_by_id(ctx.repository(), &cmd.inner().id)
-            .await?
-            .ok_or(CommandBusError::from(
-                UpdateMessageTypeCommandError::NotFound,
-            ))?
-            .set_enabled(cmd.inner().enabled)
-            .set_name(cmd.inner().name.clone())
-            .set_schema(cmd.inner().schema.clone())
-            .set_updated_at(cmd.created_at().clone())
-            .set_vars(cmd.inner().vars.clone());
+        let message_type =
+            MessageTypeRepository::find_by_id(ctx.repository(), &cmd.inner().message_type_id)
+                .await?
+                .ok_or(CommandBusError::from(
+                    UpdateMessageTypeCommandError::NotFound,
+                ))?
+                .set_enabled(cmd.inner().enabled)
+                .set_name(cmd.inner().name.clone())
+                .set_schema(cmd.inner().schema.clone())
+                .set_updated_at(cmd.created_at().clone())
+                .set_vars(cmd.inner().vars.clone());
 
         let message_type =
             MessageTypeRepository::update_message_type(ctx.repository(), message_type).await?;

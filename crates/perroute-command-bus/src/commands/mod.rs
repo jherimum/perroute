@@ -49,7 +49,4 @@ impl<C: Command> CommandWrapper<'_, C> {
     }
 }
 
-pub trait Command {
-    fn entity_id(&self) -> &Id;
-    fn event_type(&self) -> EventType;
-}
+pub trait Command {}

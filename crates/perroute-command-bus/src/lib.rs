@@ -2,6 +2,20 @@ mod bus;
 pub mod commands;
 mod error;
 
+#[macro_export]
+macro_rules! impl_command {
+    ($name:ident, { $( $field_name:ident : $field_type:ty ),* $(,)? }) => {
+
+            #[derive(Debug, Clone, bon::Builder)]
+            pub struct $name {
+                $( pub $field_name: $field_type ),*
+            }
+
+            impl Command for $name {}
+
+    };
+}
+
 pub use bus::CommandBus;
 use bus::DefaultCommandBus;
 use commands::{

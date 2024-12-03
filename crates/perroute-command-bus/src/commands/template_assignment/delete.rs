@@ -1,30 +1,17 @@
 use crate::{
     bus::{CommandBusContext, CommandHandler, CommandHandlerResult},
     commands::Command,
+    impl_command,
 };
-use bon::Builder;
 use perroute_commons::{events::TemplateAssignmentDeletedEvent, types::id::Id};
-use perroute_storage::{
-    models::template_assignment::TemplateAssignment, repository::TransactedRepository,
-};
+use perroute_storage::repository::TransactedRepository;
 
 #[derive(Debug, thiserror::Error)]
 pub enum DeleteTemplateAssignmentCommandError {}
 
-#[derive(Debug, Clone, Builder)]
-pub struct DeleteTemplateAssignmentCommand {
-    id: Id,
-}
-
-impl Command for DeleteTemplateAssignmentCommand {
-    fn event_type(&self) -> perroute_commons::events::EventType {
-        todo!()
-    }
-
-    fn entity_id(&self) -> &Id {
-        &self.id
-    }
-}
+impl_command!(DeleteTemplateAssignmentCommand, {
+    template_assignment_id: Id,
+});
 
 pub struct DeleteTemplateAssignmentCommandHandler;
 

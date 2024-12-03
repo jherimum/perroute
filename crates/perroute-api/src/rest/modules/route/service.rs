@@ -14,7 +14,7 @@ use perroute_command_bus::{
     },
     CommandBus,
 };
-use perroute_commons::types::actor::Actor;
+use perroute_commons::types::{actor::Actor, id::Id};
 use perroute_query_bus::QueryBus;
 use std::future::Future;
 
@@ -68,6 +68,7 @@ impl<CB: CommandBus, QB: QueryBus> RouteRestService for RestService<CB, QB> {
         BusinessUnitRestService::get(self, actor, &path.business_unit_path()).await?;
 
         let cmd = CreateRouteCommand::builder()
+            .route_id(Id::new())
             .business_id(path.business_unit_id())
             .channel_id(payload.channel_id())
             .message_type_id(payload.message_type_id())
@@ -93,7 +94,7 @@ impl<CB: CommandBus, QB: QueryBus> RouteRestService for RestService<CB, QB> {
         RouteRestService::get(self, actor, path).await?;
 
         let cmd = UpdateRouteCommand::builder()
-            .id(path.route_id())
+            .route_id(path.route_id())
             .configuration(payload.configuration())
             .enabled(payload.enabled())
             .priority(payload.priority())
@@ -109,7 +110,7 @@ impl<CB: CommandBus, QB: QueryBus> RouteRestService for RestService<CB, QB> {
     async fn delete(&self, actor: &Actor, path: &RoutePath) -> RestServiceResult<()> {
         RouteRestService::get(self, actor, path).await?;
         let cmd = DeleteRouteCommand::builder()
-            .id(path.route_id().clone())
+            .route_id(path.route_id().clone())
             .build();
 
         self.command_bus()

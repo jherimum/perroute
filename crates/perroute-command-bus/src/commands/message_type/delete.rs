@@ -1,32 +1,17 @@
 use crate::{
     bus::{CommandBusContext, CommandHandler, CommandHandlerResult},
     commands::Command,
+    impl_command,
 };
-use bon::Builder;
 use perroute_commons::{events::MessageTypeDeletedEvent, types::id::Id};
-use perroute_storage::{
-    models::message_type::MessageType,
-    repository::{message_types::MessageTypeRepository, TransactedRepository},
-};
-use serde::Serialize;
+use perroute_storage::repository::{message_types::MessageTypeRepository, TransactedRepository};
 
 #[derive(Debug, thiserror::Error)]
 pub enum DeleteMessageTypeCommandError {}
 
-#[derive(Debug, Clone, Builder, Serialize)]
-pub struct DeleteMessageTypeCommand {
-    id: Id,
-}
-
-impl Command for DeleteMessageTypeCommand {
-    fn event_type(&self) -> perroute_commons::events::EventType {
-        perroute_commons::events::EventType::MessageTypeDeleted
-    }
-
-    fn entity_id(&self) -> &Id {
-        todo!()
-    }
-}
+impl_command!(DeleteMessageTypeCommand, {
+    message_type_id: Id,
+});
 
 pub struct DeleteMessageTypeCommandHandler;
 
@@ -40,8 +25,11 @@ impl CommandHandler for DeleteMessageTypeCommandHandler {
         cmd: &crate::commands::CommandWrapper<'_, Self::Command>,
         ctx: &CommandBusContext<'_, R>,
     ) -> CommandHandlerResult<Self::Output, Self::ApplicationEvent> {
-        let deleted =
-            MessageTypeRepository::delete_message_type(ctx.repository(), &cmd.inner().id).await?;
+        let deleted = MessageTypeRepository::delete_message_type(
+            ctx.repository(),
+            &cmd.inner().message_type_id,
+        )
+        .await?;
 
         //Ok(())/
         todo!()

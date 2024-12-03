@@ -5,7 +5,7 @@ use aws_sdk_sns::{
     operation::publish_batch::{PublishBatchError, PublishBatchOutput},
     types::{BatchResultErrorEntry, MessageAttributeValue, PublishBatchRequestEntry},
 };
-use perroute_commons::events::{Event, EventData};
+use perroute_commons::events::{Event, ApplicationEventData};
 use serde::Serialize;
 use tap::TapFallible;
 
@@ -102,7 +102,7 @@ fn to_entry(event: &Event) -> Result<PublishBatchRequestEntry, SnsPublisherError
 }
 
 fn to_entry_e<P: Serialize>(
-    event_data: &EventData<P>,
+    event_data: &ApplicationEventData<P>,
 ) -> Result<PublishBatchRequestEntry, SnsPublisherError> {
     Ok(PublishBatchRequestEntry::builder()
         .id(event_data.id())

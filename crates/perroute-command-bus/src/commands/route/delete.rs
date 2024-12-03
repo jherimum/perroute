@@ -1,32 +1,20 @@
 use crate::{
     bus::{CommandBusContext, CommandHandler, CommandHandlerResult},
     commands::Command,
+    impl_command,
 };
-use bon::Builder;
 use perroute_commons::{events::RouteDeletedEvent, types::id::Id};
 use perroute_storage::repository::{
     routes::{RouteQuery, RouteRepository},
     TransactedRepository,
 };
-use serde::Serialize;
 
 #[derive(Debug, thiserror::Error)]
 pub enum DeleteRouteCommandError {}
 
-#[derive(Debug, Clone, Builder, Serialize)]
-pub struct DeleteRouteCommand {
-    id: Id,
-}
-
-impl Command for DeleteRouteCommand {
-    fn event_type(&self) -> perroute_commons::events::EventType {
-        perroute_commons::events::EventType::RouteDeleted
-    }
-
-    fn entity_id(&self) -> &Id {
-        &self.id
-    }
-}
+impl_command!(DeleteRouteCommand, {
+    route_id: Id,
+});
 
 pub struct DeleteRouteCommandHandler;
 
@@ -40,9 +28,10 @@ impl CommandHandler for DeleteRouteCommandHandler {
         cmd: &crate::commands::CommandWrapper<'_, Self::Command>,
         ctx: &CommandBusContext<'_, R>,
     ) -> CommandHandlerResult<Self::Output, Self::ApplicationEvent> {
-        let deleted = RouteRepository::delete(ctx.repository(), &RouteQuery::ById(&cmd.inner().id))
-            .await?
-            > 0;
+        let deleted =
+            RouteRepository::delete(ctx.repository(), &RouteQuery::ById(&cmd.inner().route_id))
+                .await?
+                > 0;
 
         //Ok(())
         todo!()
