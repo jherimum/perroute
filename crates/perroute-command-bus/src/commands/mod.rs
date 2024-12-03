@@ -1,6 +1,6 @@
 use perroute_commons::{
-    events::{Event, EventType},
-    types::{actor::Actor, id::Id, Timestamp},
+    events::Event,
+    types::{actor::Actor, Timestamp},
 };
 use serde::Serialize;
 

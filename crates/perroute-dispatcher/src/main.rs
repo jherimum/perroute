@@ -1,8 +1,6 @@
-use aws_config::Region;
-use aws_sdk_sqs::config::Credentials;
 use perroute_commons::configuration::settings::Settings;
 
-use std::{borrow::Cow, error::Error};
+use std::error::Error;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {

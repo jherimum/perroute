@@ -3,7 +3,6 @@ use crate::{
     commands::Command,
     impl_command, CommandBusError,
 };
-use bon::{builder, Builder};
 use perroute_commons::{
     events::RouteCreatedEvent,
     types::{id::Id, priority::Priority, Configuration},
@@ -18,7 +17,6 @@ use perroute_storage::{
         TransactedRepository,
     },
 };
-use serde::Serialize;
 
 #[derive(Debug, thiserror::Error)]
 pub enum CreateRouteCommandError {

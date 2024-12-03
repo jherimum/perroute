@@ -3,7 +3,6 @@ use crate::{
     commands::Command,
     impl_command,
 };
-use bon::Builder;
 use perroute_commons::{
     events::RouteUpdatedEvent,
     types::{id::Id, priority::Priority, Configuration},
@@ -15,7 +14,6 @@ use perroute_storage::{
         TransactedRepository,
     },
 };
-use serde::Serialize;
 
 #[derive(Debug, thiserror::Error)]
 pub enum UpdateRouteCommandError {

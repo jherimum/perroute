@@ -3,7 +3,6 @@ use crate::{
     commands::Command,
     impl_command,
 };
-use bon::{builder, Builder};
 use perroute_commons::{
     events::BusinessUnitCreatedEvent,
     types::{code::Code, id::Id, name::Name, vars::Vars},

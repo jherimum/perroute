@@ -10,7 +10,6 @@ use perroute_storage::{
     models::event::DbEvent,
     repository::{events::EventRepository, Repository, TransactedRepository},
 };
-use serde::Serialize;
 use std::{
     any::{Any, TypeId},
     collections::HashMap,

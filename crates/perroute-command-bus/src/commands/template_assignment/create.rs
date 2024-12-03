@@ -3,7 +3,6 @@ use crate::{
     commands::Command,
     impl_command,
 };
-use bon::Builder;
 use perroute_commons::{
     events::TemplateAssignmentCreatedEvent,
     types::{id::Id, priority::Priority, vars::Vars, Timestamp},

@@ -1,8 +1,4 @@
-use aws_sdk_s3::types::RecordsEvent;
-use aws_sdk_sqs::{
-    types::{DeleteMessageBatchRequestEntry, Message},
-    Client,
-};
+use aws_sdk_sqs::types::{DeleteMessageBatchRequestEntry, Message};
 use futures::stream::FuturesUnordered;
 use std::time::Duration;
 

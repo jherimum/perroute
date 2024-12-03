@@ -3,13 +3,11 @@ use crate::{
     commands::Command,
     impl_command,
 };
-use bon::Builder;
 use perroute_commons::{events::BusinessUnitDeletedEvent, types::id::Id};
 use perroute_storage::repository::{
     business_units::{BusinessUnitQuery, BusinessUnitRepository},
     TransactedRepository,
 };
-use serde::Serialize;
 
 #[derive(Debug, thiserror::Error)]
 pub enum DeleteBusinessUnitCommandError {
