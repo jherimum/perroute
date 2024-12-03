@@ -89,11 +89,7 @@ impl<R: Repository> CommandBus for DefaultCommandBus<R> {
         let ctx = CommandBusContext { repository: &tx };
         let created_at = &Timestamp::now();
 
-        let command_wrapper = CommandWrapper {
-            command,
-            created_at,
-            actor,
-        };
+        let command_wrapper = CommandWrapper::new(command, created_at, actor);
 
         match handler.handle(&command_wrapper, &ctx).await {
             Ok(output) => {

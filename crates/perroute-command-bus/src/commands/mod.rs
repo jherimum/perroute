@@ -12,9 +12,19 @@ pub mod route;
 pub mod template_assignment;
 
 pub struct CommandWrapper<'c, C> {
-    pub command: &'c C,
-    pub created_at: &'c Timestamp,
-    pub actor: &'c Actor,
+    command: &'c C,
+    created_at: &'c Timestamp,
+    actor: &'c Actor,
+}
+
+impl<'c, C: Command> CommandWrapper<'c, C> {
+    pub fn new(command: &'c C, created_at: &'c Timestamp, actor: &'c Actor) -> Self {
+        Self {
+            command,
+            created_at,
+            actor,
+        }
+    }
 }
 
 impl<'c, C: Command + Serialize> TryFrom<&CommandWrapper<'c, C>> for Event {
@@ -44,12 +54,6 @@ impl<'c, C: Command + Serialize> TryFrom<&CommandWrapper<'c, C>> for Event {
             EventType::RouteUpdated => Event::RouteUpdated(event_data),
             EventType::MessageCreated => Event::MessageCreated(event_data),
         })
-    }
-}
-
-impl<C> AsRef<C> for CommandWrapper<'_, C> {
-    fn as_ref(&self) -> &C {
-        self.command
     }
 }
 
