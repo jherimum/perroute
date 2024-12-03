@@ -20,7 +20,7 @@ use std::{
     ops::Deref,
 };
 
-#[derive(Debug, Clone, PartialEq, Eq, Type, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Type, Serialize, Deserialize)]
 #[sqlx(transparent)]
 pub struct Timestamp(NaiveDateTime);
 
@@ -30,9 +30,9 @@ impl Timestamp {
     }
 }
 
-impl Into<Timestamp> for &Timestamp {
-    fn into(self) -> Timestamp {
-        self.clone()
+impl From<&Timestamp> for Timestamp {
+    fn from(value: &Timestamp) -> Timestamp {
+        value.clone()
     }
 }
 

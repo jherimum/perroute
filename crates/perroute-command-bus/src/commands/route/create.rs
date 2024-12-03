@@ -4,7 +4,10 @@ use crate::{
     CommandBusError,
 };
 use bon::{builder, Builder};
-use perroute_commons::types::{id::Id, priority::Priority, Configuration};
+use perroute_commons::{
+    events::RouteCreatedEvent,
+    types::{id::Id, priority::Priority, Configuration},
+};
 use perroute_storage::{
     models::route::Route,
     repository::{
@@ -56,12 +59,13 @@ pub struct CreateRouteCommandHandler;
 impl CommandHandler for CreateRouteCommandHandler {
     type Command = CreateRouteCommand;
     type Output = Route;
+    type ApplicationEvent = RouteCreatedEvent;
 
     async fn handle<R: TransactedRepository>(
         &self,
         cmd: &crate::commands::CommandWrapper<'_, Self::Command>,
         ctx: &CommandBusContext<'_, R>,
-    ) -> CommandHandlerResult<Self::Output> {
+    ) -> CommandHandlerResult<Self::Output, Self::ApplicationEvent> {
         validate(cmd.inner(), ctx).await?;
 
         let route = Route::builder()
@@ -77,7 +81,8 @@ impl CommandHandler for CreateRouteCommandHandler {
 
         let route = RouteRepository::save(ctx.repository(), route.clone()).await?;
 
-        Ok(route.clone())
+        //Ok(route.clone())
+        todo!()
     }
 }
 

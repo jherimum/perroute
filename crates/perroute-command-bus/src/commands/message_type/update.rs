@@ -4,7 +4,10 @@ use crate::{
     CommandBusError,
 };
 use bon::Builder;
-use perroute_commons::types::{id::Id, name::Name, schema::Schema, vars::Vars, Payload};
+use perroute_commons::{
+    events::MessageTypeUpdatedEvent,
+    types::{id::Id, name::Name, schema::Schema, vars::Vars, Payload},
+};
 use perroute_storage::{
     models::message_type::{MessageType, PayloadExample},
     repository::{
@@ -45,12 +48,13 @@ pub struct UpdateMessageTypeCommandHandler;
 impl CommandHandler for UpdateMessageTypeCommandHandler {
     type Command = UpdateMessageTypeCommand;
     type Output = (MessageType, Vec<PayloadExample>);
+    type ApplicationEvent = MessageTypeUpdatedEvent;
 
     async fn handle<R: TransactedRepository>(
         &self,
         cmd: &crate::commands::CommandWrapper<'_, Self::Command>,
         ctx: &CommandBusContext<'_, R>,
-    ) -> CommandHandlerResult<Self::Output> {
+    ) -> CommandHandlerResult<Self::Output, Self::ApplicationEvent> {
         let message_type = MessageTypeRepository::find_by_id(ctx.repository(), &cmd.inner().id)
             .await?
             .ok_or(CommandBusError::from(
@@ -74,6 +78,7 @@ impl CommandHandler for UpdateMessageTypeCommandHandler {
         let examples =
             PayloadExampleRepository::save_payload_examples(ctx.repository(), &examples).await?;
 
-        Ok((message_type.clone(), examples))
+        //Ok((message_type.clone(), examples))
+        todo!()
     }
 }

@@ -3,8 +3,9 @@ use crate::{
     commands::Command,
 };
 use bon::Builder;
-use perroute_commons::types::{
-    dispatch_type::DispatchType, id::Id, recipient::Recipient, Payload, Tags, Timestamp,
+use perroute_commons::{
+    events::MessageCreatedEvent,
+    types::{dispatch_type::DispatchType, id::Id, recipient::Recipient, Payload, Tags, Timestamp},
 };
 use perroute_storage::{models::message::Message, repository::TransactedRepository};
 
@@ -38,12 +39,13 @@ pub struct CreateMessageCommandHandler;
 impl CommandHandler for CreateMessageCommandHandler {
     type Command = CreateMessageCommand;
     type Output = Message;
+    type ApplicationEvent = MessageCreatedEvent;
 
     async fn handle<R: TransactedRepository>(
         &self,
         cmd: &crate::commands::CommandWrapper<'_, Self::Command>,
         ctx: &CommandBusContext<'_, R>,
-    ) -> CommandHandlerResult<Self::Output> {
+    ) -> CommandHandlerResult<Self::Output, Self::ApplicationEvent> {
         todo!()
     }
 }

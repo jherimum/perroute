@@ -1,9 +1,12 @@
 use crate::{
-    bus::{CommandBusContext, CommandHandler, CommandHandlerResult},
+    bus::{CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult},
     commands::Command,
 };
 use bon::Builder;
-use perroute_commons::types::id::Id;
+use perroute_commons::{
+    events::{BusinessUnitDeletedEvent, Event, EventData, EventType},
+    types::id::Id,
+};
 use perroute_storage::repository::{
     business_units::{BusinessUnitQuery, BusinessUnitRepository},
     TransactedRepository,
@@ -36,12 +39,13 @@ pub struct DeleteBusinessUnitCommandHandler;
 impl CommandHandler for DeleteBusinessUnitCommandHandler {
     type Command = DeleteBusinessUnitCommand;
     type Output = ();
+    type ApplicationEvent = BusinessUnitDeletedEvent;
 
     async fn handle<R: TransactedRepository>(
         &self,
         cmd: &crate::commands::CommandWrapper<'_, Self::Command>,
         ctx: &CommandBusContext<'_, R>,
-    ) -> CommandHandlerResult<Self::Output> {
+    ) -> CommandHandlerResult<Self::Output, Self::ApplicationEvent> {
         let exists = BusinessUnitRepository::exists_business_unit(
             ctx.repository(),
             &BusinessUnitQuery::ById(cmd.inner().id.clone()),
@@ -54,6 +58,11 @@ impl CommandHandler for DeleteBusinessUnitCommandHandler {
 
         BusinessUnitRepository::delete_business_unit(ctx.repository(), &cmd.inner().id).await?;
 
-        Ok(())
+        Ok(CommandHandlerOutput::new(
+            (),
+            BusinessUnitDeletedEvent::builder()
+                .id(cmd.inner().id.clone())
+                .build(),
+        ))
     }
 }

@@ -3,7 +3,10 @@ use crate::{
     commands::Command,
 };
 use bon::Builder;
-use perroute_commons::types::{id::Id, priority::Priority, vars::Vars, Timestamp};
+use perroute_commons::{
+    events::TemplateAssignmentCreatedEvent,
+    types::{id::Id, priority::Priority, vars::Vars, Timestamp},
+};
 use perroute_storage::{
     models::template_assignment::TemplateAssignment, repository::TransactedRepository,
 };
@@ -38,12 +41,13 @@ pub struct CreateTemplateAssignmentCommandHandler;
 impl CommandHandler for CreateTemplateAssignmentCommandHandler {
     type Command = CreateTemplateAssignmentCommand;
     type Output = TemplateAssignment;
+    type ApplicationEvent = TemplateAssignmentCreatedEvent;
 
     async fn handle<R: TransactedRepository>(
         &self,
         cmd: &crate::commands::CommandWrapper<'_, Self::Command>,
         ctx: &CommandBusContext<'_, R>,
-    ) -> CommandHandlerResult<Self::Output> {
+    ) -> CommandHandlerResult<Self::Output, Self::ApplicationEvent> {
         todo!()
     }
 }

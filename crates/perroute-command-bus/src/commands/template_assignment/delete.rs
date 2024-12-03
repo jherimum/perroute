@@ -3,8 +3,10 @@ use crate::{
     commands::Command,
 };
 use bon::Builder;
-use perroute_commons::types::id::Id;
-use perroute_storage::repository::TransactedRepository;
+use perroute_commons::{events::TemplateAssignmentDeletedEvent, types::id::Id};
+use perroute_storage::{
+    models::template_assignment::TemplateAssignment, repository::TransactedRepository,
+};
 
 #[derive(Debug, thiserror::Error)]
 pub enum DeleteTemplateAssignmentCommandError {}
@@ -29,12 +31,13 @@ pub struct DeleteTemplateAssignmentCommandHandler;
 impl CommandHandler for DeleteTemplateAssignmentCommandHandler {
     type Command = DeleteTemplateAssignmentCommand;
     type Output = bool;
+    type ApplicationEvent = TemplateAssignmentDeletedEvent;
 
     async fn handle<R: TransactedRepository>(
         &self,
         cmd: &crate::commands::CommandWrapper<'_, Self::Command>,
         ctx: &CommandBusContext<'_, R>,
-    ) -> CommandHandlerResult<Self::Output> {
+    ) -> CommandHandlerResult<Self::Output, Self::ApplicationEvent> {
         todo!()
     }
 }

@@ -3,7 +3,7 @@ use crate::{
     commands::Command,
 };
 use bon::Builder;
-use perroute_commons::types::id::Id;
+use perroute_commons::{events::ChannelDeletedEvent, types::id::Id};
 use perroute_storage::repository::{
     channels::{ChannelQuery, ChannelRepository},
     TransactedRepository,
@@ -33,16 +33,19 @@ pub struct DeleteChannelCommandHandler;
 impl CommandHandler for DeleteChannelCommandHandler {
     type Command = DeleteChannelCommand;
     type Output = ();
+    type ApplicationEvent = ChannelDeletedEvent;
 
     async fn handle<R: TransactedRepository>(
         &self,
         cmd: &crate::commands::CommandWrapper<'_, Self::Command>,
         ctx: &CommandBusContext<'_, R>,
-    ) -> CommandHandlerResult<Self::Output> {
+    ) -> CommandHandlerResult<Self::Output, Self::ApplicationEvent> {
         let result =
             ChannelRepository::delete(ctx.repository(), &ChannelQuery::ById(&cmd.inner().id))
                 .await?;
 
-        Ok(())
+        //Ok(())
+
+        todo!()
     }
 }

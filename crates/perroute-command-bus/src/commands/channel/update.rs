@@ -4,7 +4,10 @@ use crate::{
     CommandBusError,
 };
 use bon::Builder;
-use perroute_commons::types::{id::Id, name::Name, Configuration};
+use perroute_commons::{
+    events::ChannelUpdatedEvent,
+    types::{id::Id, name::Name, Configuration},
+};
 use perroute_storage::{
     models::channel::Channel,
     repository::{
@@ -43,12 +46,13 @@ pub struct UpdateChannelCommandHandler;
 impl CommandHandler for UpdateChannelCommandHandler {
     type Command = UpdateChannelCommand;
     type Output = Channel;
+    type ApplicationEvent = ChannelUpdatedEvent;
 
     async fn handle<R: TransactedRepository>(
         &self,
         cmd: &crate::commands::CommandWrapper<'_, Self::Command>,
         ctx: &CommandBusContext<'_, R>,
-    ) -> CommandHandlerResult<Self::Output> {
+    ) -> CommandHandlerResult<Self::Output, Self::ApplicationEvent> {
         let channel =
             ChannelRepository::find(ctx.repository(), &ChannelQuery::ById(&cmd.inner().id))
                 .await?
@@ -60,6 +64,7 @@ impl CommandHandler for UpdateChannelCommandHandler {
 
         let channel = ChannelRepository::update(ctx.repository(), channel).await?;
 
-        Ok(channel)
+        //Ok(channel)
+        todo!()
     }
 }

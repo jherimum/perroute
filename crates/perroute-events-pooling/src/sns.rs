@@ -6,6 +6,7 @@ use aws_sdk_sns::{
     types::{BatchResultErrorEntry, MessageAttributeValue, PublishBatchRequestEntry},
 };
 use perroute_commons::events::{Event, EventData};
+use serde::Serialize;
 use tap::TapFallible;
 
 #[derive(Debug, thiserror::Error)]
@@ -80,17 +81,39 @@ fn log_publish_result(out: &PublishBatchOutput) {
 }
 
 fn to_entry(event: &Event) -> Result<PublishBatchRequestEntry, SnsPublisherError> {
-    let event_data: &EventData = event.as_ref();
+    match event {
+        Event::BusinessUnitCreated(event_data) => to_entry_e(event_data),
+        Event::BusinessUnitUpdated(event_data) => to_entry_e(event_data),
+        Event::BusinessUnitDeleted(event_data) => to_entry_e(event_data),
+        Event::ChannelCreated(event_data) => to_entry_e(event_data),
+        Event::ChannelUpdated(event_data) => to_entry_e(event_data),
+        Event::ChannelDeleted(event_data) => to_entry_e(event_data),
+        Event::MessageTypeCreated(event_data) => to_entry_e(event_data),
+        Event::MessageTypeUpdated(event_data) => to_entry_e(event_data),
+        Event::MessageTypeDeleted(event_data) => to_entry_e(event_data),
+        Event::RouteCreated(event_data) => to_entry_e(event_data),
+        Event::RouteUpdated(event_data) => to_entry_e(event_data),
+        Event::RouteDeleted(event_data) => to_entry_e(event_data),
+        Event::MessageCreated(event_data) => to_entry_e(event_data),
+        Event::TemplateAssignmentCreated(event_data) => to_entry_e(event_data),
+        Event::TemplateAssignmentUpdated(event_data) => to_entry_e(event_data),
+        Event::TemplateAssignmentDeleted(event_data) => to_entry_e(event_data),
+    }
+}
+
+fn to_entry_e<P: Serialize>(
+    event_data: &EventData<P>,
+) -> Result<PublishBatchRequestEntry, SnsPublisherError> {
     Ok(PublishBatchRequestEntry::builder()
         .id(event_data.id())
         .message_group_id(event_data.entity_id())
         .message_deduplication_id(event_data.id())
-        .message(serde_json::to_string(&event)?)
+        .message(serde_json::to_string(event_data)?)
         .message_attributes(
             "event_type",
             MessageAttributeValue::builder()
                 .data_type("String")
-                .string_value(event.event_type().to_string())
+                .string_value(event_data.event_type().to_string())
                 .build()
                 .unwrap(),
         )

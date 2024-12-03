@@ -3,7 +3,7 @@ use crate::{
     CommandBusError, CommandBusResult,
 };
 use perroute_commons::{
-    events::Event,
+    events::ApplicationEvent,
     types::{actor::Actor, Timestamp},
 };
 use perroute_storage::{
@@ -19,7 +19,19 @@ use std::{
 };
 use tap::TapFallible;
 
-pub type CommandHandlerResult<O> = Result<O, CommandBusError>;
+#[derive(Debug)]
+pub struct CommandHandlerOutput<O, E> {
+    pub output: O,
+    pub event: E,
+}
+
+impl<O, E: ApplicationEvent> CommandHandlerOutput<O, E> {
+    pub fn new(output: O, event: E) -> Self {
+        Self { output, event }
+    }
+}
+
+pub type CommandHandlerResult<O, E> = Result<CommandHandlerOutput<O, E>, CommandBusError>;
 
 pub trait CommandBus {
     fn execute<C, H, O>(&self, actor: &Actor, cmd: &C) -> impl Future<Output = CommandBusResult<O>>
@@ -31,12 +43,13 @@ pub trait CommandBus {
 pub trait CommandHandler {
     type Command: Command;
     type Output;
+    type ApplicationEvent: ApplicationEvent;
 
     fn handle<R: TransactedRepository>(
         &self,
         cmd: &CommandWrapper<Self::Command>,
         ctx: &CommandBusContext<'_, R>,
-    ) -> impl Future<Output = CommandHandlerResult<Self::Output>>;
+    ) -> impl Future<Output = CommandHandlerResult<Self::Output, Self::ApplicationEvent>>;
 }
 
 #[derive(Clone)]
@@ -95,7 +108,7 @@ impl<R: Repository> CommandBus for DefaultCommandBus<R> {
             Ok(output) => {
                 EventRepository::save(
                     &tx,
-                    DbEvent::try_from(Event::try_from(&command_wrapper).unwrap()).unwrap(),
+                    DbEvent::try_from(output.event.to_event(actor, created_at)).unwrap(),
                 )
                 .await
                 .tap_err(|e| log::error!("Failed to persist event: {}", e))?;
@@ -104,7 +117,7 @@ impl<R: Repository> CommandBus for DefaultCommandBus<R> {
                     .await
                     .tap_err(|e| log::error!("Failed to commit transaction: {e}"))?;
 
-                Ok(output)
+                Ok(output.output)
             }
             Err(e) => {
                 tx.rollback().await?;
@@ -118,8 +131,8 @@ pub struct CommandBusContext<'r, R> {
     repository: &'r R,
 }
 
-impl<'r, R: Repository> CommandBusContext<'_, R> {
+impl<R: Repository> CommandBusContext<'_, R> {
     pub fn repository(&self) -> &R {
-        &self.repository
+        self.repository
     }
 }

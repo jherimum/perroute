@@ -1,10 +1,13 @@
 use crate::{
-    bus::{CommandBusContext, CommandHandler, CommandHandlerResult},
+    bus::{CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult},
     commands::Command,
     CommandBusError,
 };
 use bon::Builder;
-use perroute_commons::types::{id::Id, name::Name, vars::Vars};
+use perroute_commons::{
+    events::BusinessUnitUpdatedEvent,
+    types::{id::Id, name::Name, vars::Vars},
+};
 use perroute_storage::{
     models::business_unit::BusinessUnit,
     repository::{
@@ -42,12 +45,13 @@ pub struct UpdateBusinessUnitCommandHandler;
 impl CommandHandler for UpdateBusinessUnitCommandHandler {
     type Command = UpdateBusinessUnitCommand;
     type Output = BusinessUnit;
+    type ApplicationEvent = BusinessUnitUpdatedEvent;
 
     async fn handle<R: TransactedRepository>(
         &self,
         cmd: &crate::commands::CommandWrapper<'_, Self::Command>,
         ctx: &CommandBusContext<'_, R>,
-    ) -> CommandHandlerResult<Self::Output> {
+    ) -> CommandHandlerResult<Self::Output, Self::ApplicationEvent> {
         let bu = match BusinessUnitRepository::find_business_unit(
             ctx.repository(),
             &BusinessUnitQuery::ById(cmd.inner().id.clone()),
@@ -69,6 +73,13 @@ impl CommandHandler for UpdateBusinessUnitCommandHandler {
             )),
         }?;
 
-        Ok(bu)
+        Ok(CommandHandlerOutput::new(
+            bu,
+            BusinessUnitUpdatedEvent::builder()
+                .id(cmd.command.id.clone())
+                .name(cmd.command.name.clone())
+                .vars(cmd.command.vars.clone())
+                .build(),
+        ))
     }
 }

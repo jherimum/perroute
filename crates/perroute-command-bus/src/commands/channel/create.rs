@@ -3,8 +3,9 @@ use crate::{
     commands::Command,
 };
 use bon::Builder;
-use perroute_commons::types::{
-    dispatch_type::DispatchType, id::Id, name::Name, Configuration, ProviderId,
+use perroute_commons::{
+    events::ChannelUpdatedEvent,
+    types::{dispatch_type::DispatchType, id::Id, name::Name, Configuration, ProviderId},
 };
 use perroute_storage::{
     models::channel::Channel,
@@ -49,12 +50,13 @@ pub struct CreateChannelCommandHandler;
 impl CommandHandler for CreateChannelCommandHandler {
     type Command = CreateChannelCommand;
     type Output = Channel;
+    type ApplicationEvent = ChannelUpdatedEvent;
 
     async fn handle<R: TransactedRepository>(
         &self,
         cmd: &crate::commands::CommandWrapper<'_, Self::Command>,
         ctx: &CommandBusContext<'_, R>,
-    ) -> CommandHandlerResult<Self::Output> {
+    ) -> CommandHandlerResult<Self::Output, Self::ApplicationEvent> {
         let exists_bu = BusinessUnitRepository::exists_business_unit(
             ctx.repository(),
             &BusinessUnitQuery::ById(cmd.inner().business_unit_id.clone()),
@@ -79,6 +81,7 @@ impl CommandHandler for CreateChannelCommandHandler {
 
         let channel = ChannelRepository::save(ctx.repository(), channel).await?;
 
-        Ok(channel)
+        //Ok(channel)
+        todo!()
     }
 }

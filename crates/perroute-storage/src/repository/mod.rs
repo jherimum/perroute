@@ -84,7 +84,7 @@ impl TransactedRepository for PgRepository {
                 tx.rollback().await?;
                 Ok(())
             }
-            _ => Err(Error::InvalidRepositoryState("Invalid repository state").into()),
+            _ => Err(Error::InvalidRepositoryState("Invalid repository state")),
         }
     }
 
@@ -95,7 +95,7 @@ impl TransactedRepository for PgRepository {
                 tx.commit().await?;
                 Ok(())
             }
-            _ => Err(Error::InvalidRepositoryState("Invalid repository state").into()),
+            _ => Err(Error::InvalidRepositoryState("Invalid repository state")),
         }
     }
 }

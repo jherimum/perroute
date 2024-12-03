@@ -3,7 +3,10 @@ use crate::{
     commands::Command,
 };
 use bon::Builder;
-use perroute_commons::types::{id::Id, priority::Priority, Configuration};
+use perroute_commons::{
+    events::RouteUpdatedEvent,
+    types::{id::Id, priority::Priority, Configuration},
+};
 use perroute_storage::{
     models::route::Route,
     repository::{
@@ -42,12 +45,13 @@ pub struct UpdateRouteCommandHandler;
 impl CommandHandler for UpdateRouteCommandHandler {
     type Command = UpdateRouteCommand;
     type Output = Route;
+    type ApplicationEvent = RouteUpdatedEvent;
 
     async fn handle<R: TransactedRepository>(
         &self,
         cmd: &crate::commands::CommandWrapper<'_, Self::Command>,
         ctx: &CommandBusContext<'_, R>,
-    ) -> CommandHandlerResult<Self::Output> {
+    ) -> CommandHandlerResult<Self::Output, Self::ApplicationEvent> {
         let route = RouteRepository::get(ctx.repository(), &RouteQuery::ById(&cmd.inner().id))
             .await?
             .ok_or(UpdateRouteCommandError::NotFound)?
@@ -58,6 +62,7 @@ impl CommandHandler for UpdateRouteCommandHandler {
 
         let route = RouteRepository::update(ctx.repository(), route).await?;
 
-        Ok(route)
+        //Ok(route)
+        todo!()
     }
 }
