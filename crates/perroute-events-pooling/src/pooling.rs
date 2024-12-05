@@ -47,87 +47,77 @@ impl<R: Repository + Send + Sync, P: Publisher + Send + Sync> Pooling<R, P> {
             publisheable_event_types,
         }
     }
-    async fn fetch_events(&self) -> Result<Vec<DbEvent>, PoolingError> {
+    async fn fetch_events(&self) -> Result<Vec<Event>, PoolingError> {
         Ok(
             EventRepository::unconsumed(&self.repository, self.max_events as usize)
                 .await
                 .tap_err(|e| {
                     log::error!("Failed to retrieve uncosumed messages from database: {e}")
-                })?,
+                })?
+                .into_iter()
+                .map(|e| Event::try_from(&e))
+                .collect::<Result<Vec<_>, _>>()?,
         )
     }
 
-    async fn set_consumed(&self, events: Vec<DbEvent>) -> Result<(), PoolingError> {
-        if events.is_empty() {
-            return Ok(());
-        };
+    // async fn set_consumed(&self, events: Vec<DbEvent>) -> Result<(), PoolingError> {
+    //     if events.is_empty() {
+    //         return Ok(());
+    //     };
 
-        Ok(
-            EventRepository::set_consumed(
-                &self.repository,
-                &Entity::ids(&events),
-                Timestamp::now(),
-            )
-            .await
-            .tap_err(|e| log::error!("Failed to set messages as consumed: {e}"))?,
-        )
+    //     Ok(
+    //         EventRepository::set_consumed(
+    //             &self.repository,
+    //             &Entity::ids(&events),
+    //             Timestamp::now(),
+    //         )
+    //         .await
+    //         .tap_err(|e| log::error!("Failed to set messages as consumed: {e}"))?,
+    //     )
+    // }
+
+    async fn set_consumed1(
+        &self,
+        published: &Vec<Event>,
+        skipped: &Vec<Event>,
+    ) -> Result<(), PoolingError> {
+        match (published, skipped) {
+            (published, skipped) if published.is_empty() && skipped.is_empty() => Ok(()),
+            (published, skipped) => {
+                let tx = self.repository.begin().await?;
+
+                if !published.is_empty() {
+                    EventRepository::set_consumed(&tx, events, skipped, timestamp)
+                }
+
+                if !skipped.is_empty() {
+                    EventRepository::set_consumed(&tx, events, skipped, timestamp)
+                }
+
+                self.set_consumed(events).await
+            }
+        }
     }
 
     async fn inner_run(&self) -> Result<(), PoolingError> {
         log::info!("Starting to pooling events");
 
-        let events = match self.fetch_events().await {
-            Ok(events) if events.is_empty() => {
-                log::info!("There are no events to be pooled");
-                return Ok(());
-            }
-            Ok(events) => {
-                log::info!("{} events were pooled from database", events.len());
-                if log::log_enabled!(log::Level::Debug) {
-                    log::debug!("Pooled events: {events:?}");
-                }
-                events
-            }
-            Err(e) => {
-                log::error!("Error while pooling events from database: {e}");
-                return Err(e.into());
-            }
-        };
+        let (to_publish, ignored): (Vec<_>, Vec<_>) = self
+            .fetch_events()
+            .await?
+            .into_iter()
+            .partition(|e| self.publisheable_event_types.contains(e.event_type()));
 
-        log::info!("Starting to publish events...");
-        match events
-            .iter()
-            .filter(|e| self.publisheable_event_types.contains(e.event_type()))
-            .map(Event::try_from)
-            .collect::<Result<Vec<Event>, _>>()
-        {
-            Ok(publishable_events) if publishable_events.is_empty() => {
-                log::info!("There is no events to publish. Check which events are publishable on the configuration");
-            }
-            Ok(publishable_events) => {
-                log::info!(
-                    "There are {} events to be published",
-                    publishable_events.len()
-                );
+        let output = self.publisher.publish(to_publish).await?;
+        let published = output.success().to_owned();
+        let not_published = output
+            .failed()
+            .into_iter()
+            .map(|e| e.0.to_owned())
+            .chain(ignored)
+            .collect::<Vec<_>>();
 
-                if log::log_enabled!(log::Level::Debug) {
-                    log::debug!("Events to be published: {publishable_events:?}");
-                }
-
-                self.publisher
-                    .publish(publishable_events)
-                    .await
-                    .tap_err(|e| log::error!("Failed to publish events: {e}"))?;
-            }
-            Err(e) => {
-                log::error!("Error while converting events to publishable events: {e}");
-                return Err(e.into());
-            }
-        }
-
-        self.set_consumed(events)
-            .await
-            .tap_err(|e| log::error!("Failed to set events consumed: {e}"))?;
+        self.set_consumed1(&published, &not_published).await?;
 
         Ok(())
     }

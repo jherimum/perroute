@@ -5,7 +5,12 @@ use sqlx::{query, query_as};
 
 #[async_trait::async_trait]
 pub trait EventRepository {
-    async fn set_consumed(&self, events: &[Id], timestamp: Timestamp) -> RepositoryResult<()>;
+    async fn set_consumed(
+        &self,
+        events: &[Id],
+        skipped: bool,
+        timestamp: Timestamp,
+    ) -> RepositoryResult<()>;
 
     async fn unconsumed(&self, size: usize) -> RepositoryResult<Vec<DbEvent>>;
 
@@ -30,7 +35,12 @@ impl EventRepository for PgRepository {
         Ok(fetch_one!(&self.source, query)?)
     }
 
-    async fn set_consumed(&self, events: &[Id], timestamp: Timestamp) -> RepositoryResult<()> {
+    async fn set_consumed(
+        &self,
+        events: &[Id],
+        skipped: bool,
+        timestamp: Timestamp,
+    ) -> RepositoryResult<()> {
         let query = query("UPDATE event_messages SET consumed_at = $1 WHERE id = ANY($2)")
             .bind(timestamp)
             .bind(events);

@@ -21,6 +21,14 @@ pub struct PublisherOutput {
 }
 
 impl PublisherOutput {
+    pub fn success(&self) -> &Vec<Event> {
+        &self.success
+    }
+
+    pub fn failed(&self) -> &Vec<(Event, PublisherError)> {
+        &self.failed
+    }
+
     pub fn new() -> Self {
         Default::default()
     }

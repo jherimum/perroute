@@ -68,6 +68,10 @@ pub enum Event {
 }
 
 impl Event {
+    pub fn to_ids(events: &'e Vec<Self>) -> &'e Vec<Id> {
+        events.iter().map(|event| event.id()).collect()
+    }
+
     pub fn id(&self) -> &Id {
         match self {
             Event::BusinessUnitCreated(data) => data.id(),
@@ -86,6 +90,27 @@ impl Event {
             Event::TemplateAssignmentCreated(data) => data.id(),
             Event::TemplateAssignmentUpdated(data) => data.id(),
             Event::TemplateAssignmentDeleted(data) => data.id(),
+        }
+    }
+
+    pub fn event_type(&self) -> &EventType {
+        match self {
+            Event::BusinessUnitCreated(data) => data.event_type(),
+            Event::BusinessUnitUpdated(data) => data.event_type(),
+            Event::BusinessUnitDeleted(data) => data.event_type(),
+            Event::ChannelCreated(data) => data.event_type(),
+            Event::ChannelUpdated(data) => data.event_type(),
+            Event::ChannelDeleted(data) => data.event_type(),
+            Event::MessageTypeCreated(data) => data.event_type(),
+            Event::MessageTypeUpdated(data) => data.event_type(),
+            Event::MessageTypeDeleted(data) => data.event_type(),
+            Event::RouteCreated(data) => data.event_type(),
+            Event::RouteUpdated(data) => data.event_type(),
+            Event::RouteDeleted(data) => data.event_type(),
+            Event::MessageCreated(data) => data.event_type(),
+            Event::TemplateAssignmentCreated(data) => data.event_type(),
+            Event::TemplateAssignmentUpdated(data) => data.event_type(),
+            Event::TemplateAssignmentDeleted(data) => data.event_type(),
         }
     }
 }
