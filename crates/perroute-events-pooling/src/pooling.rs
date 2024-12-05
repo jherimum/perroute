@@ -115,7 +115,7 @@ impl<R: Repository + Send + Sync, P: Publisher + Send + Sync> Pooling<R, P> {
                 }
 
                 self.publisher
-                    .publish(&publishable_events)
+                    .publish(publishable_events)
                     .await
                     .tap_err(|e| log::error!("Failed to publish events: {e}"))?;
             }
