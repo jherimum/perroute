@@ -1,3 +1,4 @@
+use crate::publisher::Publisher;
 use perroute_commons::{
     events::{Event, EventType},
     types::{entity::Entity, Timestamp},
@@ -9,8 +10,6 @@ use perroute_storage::{
 use std::time::Duration;
 use std::{collections::HashSet, error::Error};
 use tap::TapFallible;
-
-use crate::publisher::Publisher;
 
 pub struct Pooling<R, P> {
     repository: R,
@@ -97,7 +96,7 @@ impl<R: Repository + Send + Sync, P: Publisher + Send + Sync> Pooling<R, P> {
                 }
 
                 self.publisher
-                    .publish(&publishable_events)
+                    .publish_with_output(&publishable_events)
                     .await
                     .tap_err(|e| log::error!("Failed to publish events: {e}"))?;
             }

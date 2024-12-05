@@ -1,13 +1,15 @@
-use crate::publisher::{Publisher, PublisherResult};
+use crate::publisher::{Publisher, PublisherOutput, PublisherResult};
 use aws_sdk_sns::{
     config::http::HttpResponse,
     error::{BuildError, SdkError},
     operation::publish_batch::{PublishBatchError, PublishBatchOutput},
     types::{BatchResultErrorEntry, MessageAttributeValue, PublishBatchRequestEntry},
 };
-use perroute_commons::events::{Event, ApplicationEventData};
+use perroute_commons::{
+    events::{ApplicationEventData, Event},
+    types::id::Id,
+};
 use serde::Serialize;
-use tap::TapFallible;
 
 #[derive(Debug, thiserror::Error)]
 pub enum SnsPublisherError {
@@ -19,6 +21,12 @@ pub enum SnsPublisherError {
 
     #[error("Failed to serialize event: {0}")]
     SerializationError(#[from] serde_json::Error),
+
+    #[error("Failed to publish batch: {0}")]
+    PublishBatchError(#[from] PublishBatchError),
+
+    #[error("Failed to build batch entries: {0}")]
+    EntryBatchError(#[from] SqsBatchError),
 }
 
 pub struct SnsPublisher {
@@ -33,51 +41,30 @@ impl SnsPublisher {
             topic_arn,
         }
     }
-}
 
-impl Publisher for SnsPublisher {
-    async fn publish(&self, events: &[Event]) -> PublisherResult {
-        let entries = match events.iter().map(to_entry).collect::<Result<Vec<_>, _>>() {
-            Ok(entries) if entries.is_empty() => {
-                log::info!("No events to publish");
-                return Ok(());
-            }
-            Ok(entries) => entries,
-            Err(e) => {
-                log::error!("Failed to build entries: {}", e);
-                return Err(e.into());
-            }
-        };
+    async fn puplish_to_sns(
+        &self,
+        events: &BatchEvents<'_>,
+    ) -> Result<PublishBatchOutput, SnsPublisherError> {
+        let entries = BatchEntries::try_from(events).unwrap();
 
-        self.sns_client
+        Ok(self
+            .sns_client
             .publish_batch()
             .topic_arn(&self.topic_arn)
-            .set_publish_batch_request_entries(Some(entries))
+            .set_publish_batch_request_entries(Some(entries.entries))
             .send()
             .await
-            .tap_err(|e| {
-                log::error!(
-                    "Failed to publish events to topic: {} : {e}",
-                    self.topic_arn
-                )
-            })
-            .tap_ok(log_publish_result)
-            .map_err(SnsPublisherError::from)
-            .map(|_| Ok(()))?
+            .map_err(SnsPublisherError::from)?)
     }
 }
 
-fn log_publish_result(out: &PublishBatchOutput) {
-    out.failed().iter().for_each(|entry| {
-        log::warn!(
-            "Failed to publish event: {}. Error: {:?}",
-            entry.id(),
-            SqsBatchError::from(entry)
-        );
-    });
-    out.successful().iter().for_each(|entry| {
-        log::info!("Published event: {:?}", entry.id());
-    });
+impl Publisher for SnsPublisher {
+    async fn publish_with_output<'e>(&self, events: &'e Vec<Event>) -> PublisherResult<'e> {
+        let events = BatchEvents::new(events);
+        let output = self.puplish_to_sns(&events).await?;
+        Ok(events.to_output(output))
+    }
 }
 
 fn to_entry(event: &Event) -> Result<PublishBatchRequestEntry, SnsPublisherError> {
@@ -136,4 +123,59 @@ impl From<&BatchResultErrorEntry> for SqsBatchError {
             sender_fault: error.sender_fault(),
         }
     }
+}
+
+struct BatchEvents<'e> {
+    events: &'e Vec<Event>,
+}
+
+impl<'e> BatchEvents<'e> {
+    fn new(events: &'e Vec<Event>) -> Self {
+        Self { events }
+    }
+
+    fn find_event(&self, id: &str) -> Option<&'e Event> {
+        self.events.iter().find(|e| *e.id() == Id::from(id))
+    }
+
+    fn to_output(&self, output: PublishBatchOutput) -> PublisherOutput<'e> {
+        let mut publisher_output = PublisherOutput::new();
+
+        for success in output.successful() {
+            if let Some(success_id) = success.id() {
+                if let Some(e) = self.find_event(success_id) {
+                    publisher_output.push_success(e);
+                }
+            }
+        }
+
+        for failed in output.failed() {
+            if let Some(event) = self.find_event(failed.id()) {
+                publisher_output.push_failed(
+                    event,
+                    SnsPublisherError::from(SqsBatchError::from(failed)).into(),
+                );
+            }
+        }
+
+        publisher_output
+    }
+}
+
+impl<'e> TryFrom<&BatchEvents<'e>> for BatchEntries {
+    type Error = SnsPublisherError;
+
+    fn try_from(value: &BatchEvents) -> Result<Self, Self::Error> {
+        let entries = value
+            .events
+            .iter()
+            .map(to_entry)
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(Self { entries })
+    }
+}
+
+pub struct BatchEntries {
+    entries: Vec<PublishBatchRequestEntry>,
 }

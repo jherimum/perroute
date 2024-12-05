@@ -54,3 +54,9 @@ impl From<&String> for Id {
         Self(s.to_string())
     }
 }
+
+impl From<&str> for Id {
+    fn from(s: &str) -> Self {
+        Self(s.to_string())
+    }
+}

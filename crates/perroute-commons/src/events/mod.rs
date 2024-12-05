@@ -67,6 +67,29 @@ pub enum Event {
     TemplateAssignmentDeleted(ApplicationEventData<TemplateAssignmentDeletedEvent>),
 }
 
+impl Event {
+    pub fn id(&self) -> &Id {
+        match self {
+            Event::BusinessUnitCreated(data) => data.id(),
+            Event::BusinessUnitUpdated(data) => data.id(),
+            Event::BusinessUnitDeleted(data) => data.id(),
+            Event::ChannelCreated(data) => data.id(),
+            Event::ChannelUpdated(data) => data.id(),
+            Event::ChannelDeleted(data) => data.id(),
+            Event::MessageTypeCreated(data) => data.id(),
+            Event::MessageTypeUpdated(data) => data.id(),
+            Event::MessageTypeDeleted(data) => data.id(),
+            Event::RouteCreated(data) => data.id(),
+            Event::RouteUpdated(data) => data.id(),
+            Event::RouteDeleted(data) => data.id(),
+            Event::MessageCreated(data) => data.id(),
+            Event::TemplateAssignmentCreated(data) => data.id(),
+            Event::TemplateAssignmentUpdated(data) => data.id(),
+            Event::TemplateAssignmentDeleted(data) => data.id(),
+        }
+    }
+}
+
 pub trait ApplicationEvent {
     fn to_event(self, actor: &Actor, created_at: &Timestamp) -> Event;
 }
