@@ -42,17 +42,17 @@ impl SnsPublisher {
         }
     }
 
-    async fn puplish_to_sns(
+    async fn publish_to_sns(
         &self,
         events: &BatchEvents<'_>,
     ) -> Result<PublishBatchOutput, SnsPublisherError> {
-        let entries = BatchEntries::try_from(events).unwrap();
+        let entries: Vec<_> = TryFrom::try_from(events)?;
 
         Ok(self
             .sns_client
             .publish_batch()
             .topic_arn(&self.topic_arn)
-            .set_publish_batch_request_entries(Some(entries.entries))
+            .set_publish_batch_request_entries(Some(entries))
             .send()
             .await
             .map_err(SnsPublisherError::from)?)
@@ -60,9 +60,9 @@ impl SnsPublisher {
 }
 
 impl Publisher for SnsPublisher {
-    async fn publish_with_output<'e>(&self, events: &'e Vec<Event>) -> PublisherResult<'e> {
+    async fn publish<'e>(&self, events: &'e Vec<Event>) -> PublisherResult<'e> {
         let events = BatchEvents::new(events);
-        let output = self.puplish_to_sns(&events).await?;
+        let output = self.publish_to_sns(&events).await?;
         Ok(events.to_output(output))
     }
 }
@@ -162,7 +162,7 @@ impl<'e> BatchEvents<'e> {
     }
 }
 
-impl<'e> TryFrom<&BatchEvents<'e>> for BatchEntries {
+impl<'e> TryFrom<&BatchEvents<'e>> for Vec<PublishBatchRequestEntry> {
     type Error = SnsPublisherError;
 
     fn try_from(value: &BatchEvents) -> Result<Self, Self::Error> {
@@ -172,10 +172,6 @@ impl<'e> TryFrom<&BatchEvents<'e>> for BatchEntries {
             .map(to_entry)
             .collect::<Result<Vec<_>, _>>()?;
 
-        Ok(Self { entries })
+        Ok(entries)
     }
-}
-
-pub struct BatchEntries {
-    entries: Vec<PublishBatchRequestEntry>,
 }

@@ -1,4 +1,4 @@
-use crate::publisher::Publisher;
+use crate::publisher::{Publisher, PublisherError};
 use perroute_commons::{
     events::{Event, EventType},
     types::{entity::Entity, Timestamp},
@@ -7,9 +7,21 @@ use perroute_storage::{
     models::event::DbEvent,
     repository::{events::EventRepository, Repository},
 };
+use std::collections::HashSet;
 use std::time::Duration;
-use std::{collections::HashSet, error::Error};
 use tap::TapFallible;
+
+#[derive(Debug, thiserror::Error)]
+pub enum PoolingError {
+    #[error("{0}")]
+    RepositoryError(#[from] perroute_storage::repository::Error),
+
+    #[error("{0}")]
+    SerializationError(#[from] serde_json::Error),
+
+    #[error("{0}")]
+    PublisherError(#[from] PublisherError),
+}
 
 pub struct Pooling<R, P> {
     repository: R,
@@ -35,11 +47,17 @@ impl<R: Repository + Send + Sync, P: Publisher + Send + Sync> Pooling<R, P> {
             publisheable_event_types,
         }
     }
-    async fn fetch_events(&self) -> Result<Vec<DbEvent>, perroute_storage::repository::Error> {
-        EventRepository::unconsumed(&self.repository, self.max_events as usize).await
+    async fn fetch_events(&self) -> Result<Vec<DbEvent>, PoolingError> {
+        Ok(
+            EventRepository::unconsumed(&self.repository, self.max_events as usize)
+                .await
+                .tap_err(|e| {
+                    log::error!("Failed to retrieve uncosumed messages from database: {e}")
+                })?,
+        )
     }
 
-    async fn set_consumed(&self, events: Vec<DbEvent>) -> Result<(), Box<dyn Error>> {
+    async fn set_consumed(&self, events: Vec<DbEvent>) -> Result<(), PoolingError> {
         if events.is_empty() {
             return Ok(());
         };
@@ -50,11 +68,12 @@ impl<R: Repository + Send + Sync, P: Publisher + Send + Sync> Pooling<R, P> {
                 &Entity::ids(&events),
                 Timestamp::now(),
             )
-            .await?,
+            .await
+            .tap_err(|e| log::error!("Failed to set messages as consumed: {e}"))?,
         )
     }
 
-    async fn inner_run(&self) -> Result<(), Box<dyn Error>> {
+    async fn inner_run(&self) -> Result<(), PoolingError> {
         log::info!("Starting to pooling events");
 
         let events = match self.fetch_events().await {
@@ -70,7 +89,7 @@ impl<R: Repository + Send + Sync, P: Publisher + Send + Sync> Pooling<R, P> {
                 events
             }
             Err(e) => {
-                log::error!("Error while pooled events from database: {e}");
+                log::error!("Error while pooling events from database: {e}");
                 return Err(e.into());
             }
         };
@@ -96,7 +115,7 @@ impl<R: Repository + Send + Sync, P: Publisher + Send + Sync> Pooling<R, P> {
                 }
 
                 self.publisher
-                    .publish_with_output(&publishable_events)
+                    .publish(&publishable_events)
                     .await
                     .tap_err(|e| log::error!("Failed to publish events: {e}"))?;
             }
