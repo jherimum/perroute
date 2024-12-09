@@ -1,15 +1,15 @@
 use crate::{
     event, impl_sqlx_type,
     types::{
-        actor::Actor, code::Code, dispatch_type::DispatchType, id::Id, name::Name, vars::Vars,
-        Configuration, ProviderId, Timestamp,
+        actor::Actor, code::Code, dispatch_type::DispatchType, entity::Entity, id::Id, name::Name,
+        vars::Vars, Configuration, ProviderId, Timestamp,
     },
 };
 use bon::Builder;
 use derive_getters::Getters;
 use serde::{Deserialize, Serialize};
-use std::{collections::HashSet, vec};
-use strum::EnumString;
+use std::{collections::HashSet, str::FromStr};
+use strum::{EnumString, ParseError};
 
 impl_sqlx_type!(EventType as String);
 
@@ -40,9 +40,12 @@ impl From<&Self> for EventType {
 }
 
 impl EventType {
-    //TODO: Implement a better error handling
-    pub fn parse(str: &str) -> Result<HashSet<Self>, Box<dyn std::error::Error>> {
-        Ok(HashSet::from_iter(vec![EventType::BusinessUnitCreated]))
+    pub fn parse(str: &str) -> Result<HashSet<Self>, ParseError> {
+        str.split(",")
+            .into_iter()
+            .filter(|e| !e.is_empty())
+            .map(EventType::from_str)
+            .collect::<Result<HashSet<_>, _>>()
     }
 }
 
@@ -67,11 +70,13 @@ pub enum Event {
     TemplateAssignmentDeleted(ApplicationEventData<TemplateAssignmentDeletedEvent>),
 }
 
-impl Event {
-    pub fn to_ids(events: &'e Vec<Self>) -> &'e Vec<Id> {
-        events.iter().map(|event| event.id()).collect()
+impl Entity for Event {
+    fn id(&self) -> &Id {
+        self.id()
     }
+}
 
+impl Event {
     pub fn id(&self) -> &Id {
         match self {
             Event::BusinessUnitCreated(data) => data.id(),
@@ -111,6 +116,69 @@ impl Event {
             Event::TemplateAssignmentCreated(data) => data.event_type(),
             Event::TemplateAssignmentUpdated(data) => data.event_type(),
             Event::TemplateAssignmentDeleted(data) => data.event_type(),
+        }
+    }
+
+    pub fn actor(&self) -> &Actor {
+        match self {
+            Event::BusinessUnitCreated(data) => data.actor(),
+            Event::BusinessUnitUpdated(data) => data.actor(),
+            Event::BusinessUnitDeleted(data) => data.actor(),
+            Event::ChannelCreated(data) => data.actor(),
+            Event::ChannelUpdated(data) => data.actor(),
+            Event::ChannelDeleted(data) => data.actor(),
+            Event::MessageTypeCreated(data) => data.actor(),
+            Event::MessageTypeUpdated(data) => data.actor(),
+            Event::MessageTypeDeleted(data) => data.actor(),
+            Event::RouteCreated(data) => data.actor(),
+            Event::RouteUpdated(data) => data.actor(),
+            Event::RouteDeleted(data) => data.actor(),
+            Event::MessageCreated(data) => data.actor(),
+            Event::TemplateAssignmentCreated(data) => data.actor(),
+            Event::TemplateAssignmentUpdated(data) => data.actor(),
+            Event::TemplateAssignmentDeleted(data) => data.actor(),
+        }
+    }
+
+    pub fn entity_id(&self) -> &Id {
+        match self {
+            Event::BusinessUnitCreated(data) => data.entity_id(),
+            Event::BusinessUnitUpdated(data) => data.entity_id(),
+            Event::BusinessUnitDeleted(data) => data.entity_id(),
+            Event::ChannelCreated(data) => data.entity_id(),
+            Event::ChannelUpdated(data) => data.entity_id(),
+            Event::ChannelDeleted(data) => data.entity_id(),
+            Event::MessageTypeCreated(data) => data.entity_id(),
+            Event::MessageTypeUpdated(data) => data.entity_id(),
+            Event::MessageTypeDeleted(data) => data.entity_id(),
+            Event::RouteCreated(data) => data.entity_id(),
+            Event::RouteUpdated(data) => data.entity_id(),
+            Event::RouteDeleted(data) => data.entity_id(),
+            Event::MessageCreated(data) => data.entity_id(),
+            Event::TemplateAssignmentCreated(data) => data.entity_id(),
+            Event::TemplateAssignmentUpdated(data) => data.entity_id(),
+            Event::TemplateAssignmentDeleted(data) => data.entity_id(),
+        }
+    }
+
+    pub fn created_at(&self) -> &Timestamp {
+        match self {
+            Event::BusinessUnitCreated(data) => data.created_at(),
+            Event::BusinessUnitUpdated(data) => data.created_at(),
+            Event::BusinessUnitDeleted(data) => data.created_at(),
+            Event::ChannelCreated(data) => data.created_at(),
+            Event::ChannelUpdated(data) => data.created_at(),
+            Event::ChannelDeleted(data) => data.created_at(),
+            Event::MessageTypeCreated(data) => data.created_at(),
+            Event::MessageTypeUpdated(data) => data.created_at(),
+            Event::MessageTypeDeleted(data) => data.created_at(),
+            Event::RouteCreated(data) => data.created_at(),
+            Event::RouteUpdated(data) => data.created_at(),
+            Event::RouteDeleted(data) => data.created_at(),
+            Event::MessageCreated(data) => data.created_at(),
+            Event::TemplateAssignmentCreated(data) => data.created_at(),
+            Event::TemplateAssignmentUpdated(data) => data.created_at(),
+            Event::TemplateAssignmentDeleted(data) => data.created_at(),
         }
     }
 }

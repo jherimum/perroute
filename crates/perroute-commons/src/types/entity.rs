@@ -7,10 +7,10 @@ pub trait Entity {
         self.id() == other.id()
     }
 
-    fn ids(entities: &[Self]) -> Vec<Id>
+    fn ids(entities: &[Self]) -> Vec<&Id>
     where
         Self: Sized,
     {
-        entities.iter().map(|e| e.id().clone()).collect()
+        entities.iter().map(|e| e.id()).collect::<Vec<_>>()
     }
 }

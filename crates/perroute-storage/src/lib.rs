@@ -4,12 +4,9 @@ pub mod repository;
 
 use perroute_commons::configuration::settings::DatabaseSettings;
 use repository::PgRepository;
-use repository::Repository;
 use repository::RepositoryResult;
 
-pub async fn create_repository(
-    settings: &DatabaseSettings,
-) -> RepositoryResult<impl Repository + Clone + Send + Sync + 'static> {
+pub async fn create_repository(settings: &DatabaseSettings) -> RepositoryResult<PgRepository> {
     PgRepository::from_settings(settings).await
 }
 

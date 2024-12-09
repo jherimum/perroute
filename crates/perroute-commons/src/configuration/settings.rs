@@ -24,7 +24,7 @@ pub struct EventPoolingSettings {
     pub interval: u64,
     pub max_events: u64,
     pub topic_arn: String,
-    pub publisheable_events: String,
+    pub publishable_events: Option<String>,
 }
 
 #[derive(Deserialize, Clone, Debug)]

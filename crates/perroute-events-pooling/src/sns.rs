@@ -61,15 +61,17 @@ impl SnsPublisher {
 
 impl Publisher for SnsPublisher {
     async fn publish(&self, events: Vec<Event>) -> PublisherResult {
-        Ok({
-            let events = BatchEvents::new(events);
-            let output = self
-                .publish_to_sns(&events)
-                .await
-                .tap_err(|e| log::error!("Failed to publish events: {e}"))?;
+        if events.is_empty() {
+            return Ok(PublisherOutput::new());
+        }
 
-            events.to_output(output)
-        })
+        let events = BatchEvents::new(events);
+        let output = self
+            .publish_to_sns(&events)
+            .await
+            .tap_err(|e| log::error!("Failed to publish events: {e}"))?;
+
+        Ok(events.to_output(output))
     }
 }
 

@@ -49,7 +49,9 @@ pub trait Repository:
     + DispatcherLogRepository
     + EventRepository
 {
-    fn begin(&self) -> impl Future<Output = RepositoryResult<impl TransactedRepository + Clone>>;
+    type TR: TransactedRepository + Send + Sync;
+
+    fn begin(&self) -> impl Future<Output = RepositoryResult<Self::TR>>;
 }
 
 #[derive(Clone, Debug)]
@@ -101,7 +103,9 @@ impl TransactedRepository for PgRepository {
 }
 
 impl Repository for PgRepository {
-    async fn begin(&self) -> RepositoryResult<impl TransactedRepository + Clone> {
+    type TR = PgRepository;
+
+    async fn begin(&self) -> RepositoryResult<PgRepository> {
         match &self.source {
             Source::Pool(p) => {
                 let tx = p.begin().await?;

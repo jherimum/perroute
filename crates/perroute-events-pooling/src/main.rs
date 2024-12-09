@@ -9,7 +9,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     dotenvy::dotenv().ok();
     env_logger::init();
 
-    log::info!("Starting events pooling service");
+    log::info!("Starting events pooling service...");
     let settings = Settings::load().tap_err(|e| log::error!("Failed to load settings: {e}"))?;
     let event_pooling_settings = settings
         .pooling
@@ -28,8 +28,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
         publisher,
         event_pooling_settings.interval,
         event_pooling_settings.max_events,
-        EventType::parse(&event_pooling_settings.publisheable_events)
-            .tap_err(|e| log::error!("Failed to parse publishable events: {e}"))?,
+        EventType::parse(
+            &event_pooling_settings
+                .publishable_events
+                .unwrap_or("".to_string()),
+        )
+        .tap_err(|e| log::error!("Failed to parse publishable events: {e}"))?,
     );
 
     tokio::spawn(async move { pooling.run().await })

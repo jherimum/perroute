@@ -114,5 +114,6 @@ create table event_messages(
     actor_type      varchar(100) not null,
     actor_id        varchar(21)  null,
     created_at      timestamp not null,    
-    consumed_at     timestamp null
+    consumed_at     timestamp null,
+    skipped         boolean null
 );

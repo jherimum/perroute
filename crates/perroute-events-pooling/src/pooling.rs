@@ -5,7 +5,7 @@ use perroute_commons::{
 };
 use perroute_storage::{
     models::event::DbEvent,
-    repository::{events::EventRepository, Repository},
+    repository::{events::EventRepository, Repository, TransactedRepository},
 };
 use std::collections::HashSet;
 use std::time::Duration;
@@ -28,7 +28,7 @@ pub struct Pooling<R, P> {
     publisher: P,
     interval: Duration,
     max_events: u64,
-    publisheable_event_types: HashSet<EventType>,
+    publishable_event_types: HashSet<EventType>,
 }
 
 impl<R: Repository + Send + Sync, P: Publisher + Send + Sync> Pooling<R, P> {
@@ -37,46 +37,18 @@ impl<R: Repository + Send + Sync, P: Publisher + Send + Sync> Pooling<R, P> {
         publisher: P,
         interval: u64,
         max_events: u64,
-        publisheable_event_types: HashSet<EventType>,
+        publishable_event_types: HashSet<EventType>,
     ) -> Self {
         Self {
             repository,
             publisher,
             interval: Duration::from_secs(interval),
             max_events,
-            publisheable_event_types,
+            publishable_event_types,
         }
     }
-    async fn fetch_events(&self) -> Result<Vec<Event>, PoolingError> {
-        Ok(
-            EventRepository::unconsumed(&self.repository, self.max_events as usize)
-                .await
-                .tap_err(|e| {
-                    log::error!("Failed to retrieve uncosumed messages from database: {e}")
-                })?
-                .into_iter()
-                .map(|e| Event::try_from(&e))
-                .collect::<Result<Vec<_>, _>>()?,
-        )
-    }
 
-    // async fn set_consumed(&self, events: Vec<DbEvent>) -> Result<(), PoolingError> {
-    //     if events.is_empty() {
-    //         return Ok(());
-    //     };
-
-    //     Ok(
-    //         EventRepository::set_consumed(
-    //             &self.repository,
-    //             &Entity::ids(&events),
-    //             Timestamp::now(),
-    //         )
-    //         .await
-    //         .tap_err(|e| log::error!("Failed to set messages as consumed: {e}"))?,
-    //     )
-    // }
-
-    async fn set_consumed1(
+    async fn set_consumed(
         &self,
         published: &Vec<Event>,
         skipped: &Vec<Event>,
@@ -85,39 +57,88 @@ impl<R: Repository + Send + Sync, P: Publisher + Send + Sync> Pooling<R, P> {
             (published, skipped) if published.is_empty() && skipped.is_empty() => Ok(()),
             (published, skipped) => {
                 let tx = self.repository.begin().await?;
-
+                let consumed_at = Timestamp::now();
                 if !published.is_empty() {
-                    EventRepository::set_consumed(&tx, events, skipped, timestamp)
+                    if let Err(e) = EventRepository::set_consumed(
+                        &tx,
+                        Entity::ids(&published),
+                        false,
+                        &consumed_at,
+                    )
+                    .await
+                    {
+                        tx.rollback().await?;
+                        return Err(e.into());
+                    }
                 }
 
                 if !skipped.is_empty() {
-                    EventRepository::set_consumed(&tx, events, skipped, timestamp)
+                    if let Err(e) = EventRepository::set_consumed(
+                        &tx,
+                        Entity::ids(&skipped),
+                        true,
+                        &consumed_at,
+                    )
+                    .await
+                    {
+                        tx.rollback().await?;
+                        return Err(e.into());
+                    }
                 }
 
-                self.set_consumed(events).await
+                tx.commit().await?;
+
+                Ok(())
             }
         }
     }
 
+    async fn fetch_events(&self) -> Result<Vec<DbEvent>, perroute_storage::repository::Error> {
+        EventRepository::unconsumed(&self.repository, self.max_events as usize)
+            .await
+            .tap_err(|e| log::error!("Failed to retrieve uncosumed messages from database: {e}"))
+    }
+
     async fn inner_run(&self) -> Result<(), PoolingError> {
-        log::info!("Starting to pooling events");
+        log::info!("Starting to pooling events from database");
 
-        let (to_publish, ignored): (Vec<_>, Vec<_>) = self
+        let (to_publish, ignored) = self
             .fetch_events()
-            .await?
+            .await
+            .tap_ok(|events| log::info!("{} events were pooled form database", events.len()))
+            .tap_ok(|events| {
+                if log::log_enabled!(log::Level::Debug) {
+                    log::debug!("Events pooled from database: {:#?}", Entity::ids(events));
+                }
+            })
+            .tap_err(|e| log::error!("Failed to fetch events from database: {e}"))?
             .into_iter()
-            .partition(|e| self.publisheable_event_types.contains(e.event_type()));
+            .map(|db_event| {
+                Event::try_from(&db_event).tap_err(|error| {
+                    log::error!("Failed to convert dbevent {db_event:?} to event: {error}")
+                })
+            })
+            .collect::<Result<Vec<_>, _>>()?
+            .into_iter()
+            .partition(|e| self.publishable_event_types.contains(&e.event_type()));
 
-        let output = self.publisher.publish(to_publish).await?;
-        let published = output.success().to_owned();
-        let not_published = output
+        let output = self
+            .publisher
+            .publish(to_publish)
+            .await
+            .tap_err(|e| log::error!("Failed to publish events: {e}"))?;
+
+        let published = output.success();
+        let skipped = output
             .failed()
             .into_iter()
             .map(|e| e.0.to_owned())
             .chain(ignored)
             .collect::<Vec<_>>();
 
-        self.set_consumed1(&published, &not_published).await?;
+        self.set_consumed(&published, &skipped)
+            .await
+            .tap_err(|e| log::error!("Failed to mark events as consumed: {e}"))?;
 
         Ok(())
     }

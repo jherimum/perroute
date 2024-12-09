@@ -1,6 +1,5 @@
 use bon::{builder, Builder};
 use derive_getters::Getters;
-use derive_setters::Setters;
 use perroute_commons::{
     events::{ApplicationEventData, Event, EventType},
     types::{
@@ -15,30 +14,28 @@ use serde_json::Value;
 use sqlx::prelude::FromRow;
 use tap::TapFallible;
 
-#[derive(Debug, Clone, PartialEq, Eq, FromRow, Builder, Getters, Setters)]
-#[setters(prefix = "set_")]
-#[setters(into)]
+#[derive(Debug, Clone, PartialEq, Eq, FromRow, Builder, Getters)]
 #[builder(on(Id, into), on(Timestamp, into), on(EventType, into))]
 pub struct DbEvent {
-    #[setters(skip)]
     id: Id,
-    #[setters(skip)]
+
     event_type: EventType,
-    #[setters(skip)]
+
     entity_id: Id,
-    #[setters(skip)]
+
     payload: Value,
 
-    #[setters(skip)]
     actor_type: ActorType,
-    #[setters(skip)]
+
     actor_id: Option<Id>,
 
-    #[setters(skip)]
     created_at: Timestamp,
 
     #[builder(skip)]
     consumed_at: Option<Timestamp>,
+
+    #[builder(skip)]
+    skipped: Option<bool>,
 }
 
 impl Entity for DbEvent {
