@@ -46,15 +46,20 @@ impl SnsPublisher {
         }
     }
 
-    async fn publish_to_sns(
+    async fn publish_to_sns<'e>(
         &self,
-        events: &BatchEvents,
+        events: &HashMap<Id, &'e Event>,
     ) -> Result<PublishBatchOutput, SnsPublisherError> {
+        let entries = events
+            .values()
+            .map(to_entry)
+            .collect::<SnsPublisherResult<Vec<PublishBatchRequestEntry>>>()?;
+
         Ok(self
             .sns_client
             .publish_batch()
             .topic_arn(&self.topic_arn)
-            .set_publish_batch_request_entries(Some(TryInto::try_into(events)?))
+            .set_publish_batch_request_entries(Some(entries))
             .send()
             .await
             .tap_err(|e| log::error!("Failed to publish events: {e}"))?)
@@ -62,18 +67,39 @@ impl SnsPublisher {
 }
 
 impl Publisher for SnsPublisher {
-    async fn publish(&self, events: Vec<Event>) -> PublisherResult {
+    async fn publish<'e>(&self, events: Vec<&'e Event>) -> PublisherResult<'e> {
+        let mut publisher_output = PublisherOutput::new();
+
         if events.is_empty() {
-            return Ok(PublisherOutput::new());
+            return Ok(publisher_output);
         }
 
-        let events = BatchEvents::new(events);
+        let events: HashMap<Id, &'e Event> =
+            events.into_iter().map(|e| (e.id().to_owned(), e)).collect();
+
         let output = self
             .publish_to_sns(&events)
             .await
             .tap_err(|e| log::error!("Failed to publish events: {e}"))?;
 
-        Ok(events.output(output))
+        for success in output.successful() {
+            if let Some(success_id) = success.id() {
+                if let Some(e) = events.get(&Id::from(success_id)) {
+                    publisher_output.push_success(e);
+                }
+            }
+        }
+
+        for failed in output.failed() {
+            if let Some(event) = events.get(&Id::from(failed.id())) {
+                publisher_output.push_failed(
+                    event,
+                    SnsPublisherError::from(SqsBatchError::from(failed)).into(),
+                );
+            }
+        }
+
+        Ok(publisher_output)
     }
 }
 
@@ -95,60 +121,7 @@ impl From<&BatchResultErrorEntry> for SqsBatchError {
     }
 }
 
-struct BatchEvents {
-    events: HashMap<Id, Event>,
-}
-
-impl BatchEvents {
-    fn new(events: Vec<Event>) -> Self {
-        Self {
-            events: events.into_iter().map(|e| (e.id().to_owned(), e)).collect(),
-        }
-    }
-
-    fn find_event(&mut self, id: &str) -> Option<Event> {
-        self.events.remove(&Id::from(id))
-    }
-
-    fn output(mut self, output: PublishBatchOutput) -> PublisherOutput {
-        let mut publisher_output = PublisherOutput::new();
-
-        for success in output.successful() {
-            if let Some(success_id) = success.id() {
-                if let Some(e) = self.find_event(success_id) {
-                    publisher_output.push_success(e);
-                }
-            }
-        }
-
-        for failed in output.failed() {
-            if let Some(event) = self.find_event(failed.id()) {
-                publisher_output.push_failed(
-                    event,
-                    SnsPublisherError::from(SqsBatchError::from(failed)).into(),
-                );
-            }
-        }
-
-        publisher_output
-    }
-}
-
-impl TryFrom<&BatchEvents> for Vec<PublishBatchRequestEntry> {
-    type Error = SnsPublisherError;
-
-    fn try_from(value: &BatchEvents) -> Result<Self, Self::Error> {
-        let entries = value
-            .events
-            .values()
-            .map(to_entry)
-            .collect::<Result<Vec<_>, _>>()?;
-
-        Ok(entries)
-    }
-}
-
-fn to_entry(event: &Event) -> SnsPublisherResult<PublishBatchRequestEntry> {
+fn to_entry(event: &&Event) -> SnsPublisherResult<PublishBatchRequestEntry> {
     match event {
         Event::BusinessUnitCreated(event_data) => from_event_data(event_data),
         Event::BusinessUnitUpdated(event_data) => from_event_data(event_data),

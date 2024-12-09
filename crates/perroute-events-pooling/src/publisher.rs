@@ -2,7 +2,7 @@ use crate::sns::SnsPublisherError;
 use perroute_commons::events::Event;
 use std::future::Future;
 
-pub type PublisherResult = Result<PublisherOutput, PublisherError>;
+pub type PublisherResult<'e> = Result<PublisherOutput<'e>, PublisherError>;
 
 #[derive(Debug, thiserror::Error)]
 pub enum PublisherError {
@@ -11,21 +11,21 @@ pub enum PublisherError {
 }
 
 pub trait Publisher {
-    fn publish(&self, events: Vec<Event>) -> impl Future<Output = PublisherResult>;
+    fn publish<'e>(&self, events: Vec<&'e Event>) -> impl Future<Output = PublisherResult<'e>>;
 }
 
 #[derive(Debug, Default)]
-pub struct PublisherOutput {
-    success: Vec<Event>,
-    failed: Vec<(Event, PublisherError)>,
+pub struct PublisherOutput<'e> {
+    success: Vec<&'e Event>,
+    failed: Vec<(&'e Event, PublisherError)>,
 }
 
-impl PublisherOutput {
-    pub fn success(&self) -> &Vec<Event> {
+impl<'e> PublisherOutput<'e> {
+    pub fn success(&self) -> &Vec<&'e Event> {
         &self.success
     }
 
-    pub fn failed(&self) -> &Vec<(Event, PublisherError)> {
+    pub fn failed(&self) -> &Vec<(&'e Event, PublisherError)> {
         &self.failed
     }
 
@@ -33,11 +33,11 @@ impl PublisherOutput {
         Default::default()
     }
 
-    pub fn push_success(&mut self, event: Event) {
+    pub fn push_success(&mut self, event: &'e Event) {
         self.success.push(event);
     }
 
-    pub fn push_failed(&mut self, event: Event, error: PublisherError) {
+    pub fn push_failed(&mut self, event: &'e Event, error: PublisherError) {
         self.failed.push((event, error));
     }
 }

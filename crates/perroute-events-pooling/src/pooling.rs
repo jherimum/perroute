@@ -1,7 +1,7 @@
 use crate::publisher::{Publisher, PublisherError};
 use perroute_commons::{
     events::{Event, EventType},
-    types::{entity::Entity, Timestamp},
+    types::{entity::Entity, id::Id, Timestamp},
 };
 use perroute_storage::{
     models::event::DbEvent,
@@ -48,11 +48,7 @@ impl<R: Repository + Send + Sync, P: Publisher + Send + Sync> Pooling<R, P> {
         }
     }
 
-    async fn set_consumed(
-        &self,
-        published: &Vec<Event>,
-        skipped: &Vec<Event>,
-    ) -> Result<(), PoolingError> {
+    async fn set_consumed(&self, published: Vec<Id>, skipped: Vec<Id>) -> Result<(), PoolingError> {
         match (published, skipped) {
             (published, skipped) if published.is_empty() && skipped.is_empty() => Ok(()),
             (published, skipped) => {
@@ -60,13 +56,8 @@ impl<R: Repository + Send + Sync, P: Publisher + Send + Sync> Pooling<R, P> {
 
                 let consumed_at = Timestamp::now();
                 if !published.is_empty() {
-                    if let Err(e) = EventRepository::set_consumed(
-                        &tx,
-                        Entity::ids(published),
-                        false,
-                        &consumed_at,
-                    )
-                    .await
+                    if let Err(e) =
+                        EventRepository::set_consumed(&tx, published, false, &consumed_at).await
                     {
                         tx.rollback()
                             .await
@@ -77,8 +68,7 @@ impl<R: Repository + Send + Sync, P: Publisher + Send + Sync> Pooling<R, P> {
 
                 if !skipped.is_empty() {
                     if let Err(e) =
-                        EventRepository::set_consumed(&tx, Entity::ids(skipped), true, &consumed_at)
-                            .await
+                        EventRepository::set_consumed(&tx, skipped, true, &consumed_at).await
                     {
                         tx.rollback()
                             .await
@@ -105,7 +95,7 @@ impl<R: Repository + Send + Sync, P: Publisher + Send + Sync> Pooling<R, P> {
     async fn inner_run(&self) -> Result<(), PoolingError> {
         log::info!("Starting to pooling events from database");
 
-        let (to_publish, ignored) = self
+        let (to_publish, ignored): (Vec<_>, Vec<_>) = self
             .fetch_events()
             .await
             .tap_ok(|events| log::info!("{} events were pooled form database", events.len()))
@@ -127,7 +117,7 @@ impl<R: Repository + Send + Sync, P: Publisher + Send + Sync> Pooling<R, P> {
 
         let output = self
             .publisher
-            .publish(to_publish)
+            .publish(to_publish.iter().collect())
             .await
             .tap_err(|e| log::error!("Failed to publish events: {e}"))?;
 
@@ -139,9 +129,12 @@ impl<R: Repository + Send + Sync, P: Publisher + Send + Sync> Pooling<R, P> {
             .chain(ignored)
             .collect::<Vec<_>>();
 
-        self.set_consumed(published, &skipped)
-            .await
-            .tap_err(|e| log::error!("Failed to mark events as consumed: {e}"))?;
+        self.set_consumed(
+            published.into_iter().map(|e| e.id().to_owned()).collect(),
+            skipped.into_iter().map(|e| e.id().to_owned()).collect(),
+        )
+        .await
+        .tap_err(|e| log::error!("Failed to mark events as consumed: {e}"))?;
 
         Ok(())
     }

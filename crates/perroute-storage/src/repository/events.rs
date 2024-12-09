@@ -8,7 +8,7 @@ use sqlx::{query, query_as};
 pub trait EventRepository {
     fn set_consumed(
         &self,
-        events: Vec<&Id>,
+        events: Vec<Id>,
         skipped: bool,
         timestamp: &Timestamp,
     ) -> impl Future<Output = RepositoryResult<()>>;
@@ -37,7 +37,7 @@ impl EventRepository for PgRepository {
 
     async fn set_consumed(
         &self,
-        events: Vec<&Id>,
+        events: Vec<Id>,
         skipped: bool,
         timestamp: &Timestamp,
     ) -> RepositoryResult<()> {
