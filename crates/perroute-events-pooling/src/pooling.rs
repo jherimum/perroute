@@ -57,36 +57,39 @@ impl<R: Repository + Send + Sync, P: Publisher + Send + Sync> Pooling<R, P> {
             (published, skipped) if published.is_empty() && skipped.is_empty() => Ok(()),
             (published, skipped) => {
                 let tx = self.repository.begin().await?;
+
                 let consumed_at = Timestamp::now();
                 if !published.is_empty() {
                     if let Err(e) = EventRepository::set_consumed(
                         &tx,
-                        Entity::ids(&published),
+                        Entity::ids(published),
                         false,
                         &consumed_at,
                     )
                     .await
                     {
-                        tx.rollback().await?;
+                        tx.rollback()
+                            .await
+                            .tap_err(|e| log::error!("Failed to rollback transaction:{e}"))?;
                         return Err(e.into());
                     }
                 }
 
                 if !skipped.is_empty() {
-                    if let Err(e) = EventRepository::set_consumed(
-                        &tx,
-                        Entity::ids(&skipped),
-                        true,
-                        &consumed_at,
-                    )
-                    .await
+                    if let Err(e) =
+                        EventRepository::set_consumed(&tx, Entity::ids(skipped), true, &consumed_at)
+                            .await
                     {
-                        tx.rollback().await?;
+                        tx.rollback()
+                            .await
+                            .tap_err(|e| log::error!("Failed to rollback transaction:{e}"))?;
                         return Err(e.into());
                     }
                 }
 
-                tx.commit().await?;
+                tx.commit()
+                    .await
+                    .tap_err(|e| log::error!("Failet co commit transaction: {e}"))?;
 
                 Ok(())
             }
@@ -120,7 +123,7 @@ impl<R: Repository + Send + Sync, P: Publisher + Send + Sync> Pooling<R, P> {
             })
             .collect::<Result<Vec<_>, _>>()?
             .into_iter()
-            .partition(|e| self.publishable_event_types.contains(&e.event_type()));
+            .partition(|e| self.publishable_event_types.contains(e.event_type()));
 
         let output = self
             .publisher
@@ -131,12 +134,12 @@ impl<R: Repository + Send + Sync, P: Publisher + Send + Sync> Pooling<R, P> {
         let published = output.success();
         let skipped = output
             .failed()
-            .into_iter()
+            .iter()
             .map(|e| e.0.to_owned())
             .chain(ignored)
             .collect::<Vec<_>>();
 
-        self.set_consumed(&published, &skipped)
+        self.set_consumed(published, &skipped)
             .await
             .tap_err(|e| log::error!("Failed to mark events as consumed: {e}"))?;
 

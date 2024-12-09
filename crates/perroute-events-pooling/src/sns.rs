@@ -13,6 +13,8 @@ use serde::Serialize;
 use std::collections::HashMap;
 use tap::TapFallible;
 
+type SnsPublisherResult<O> = Result<O, SnsPublisherError>;
+
 #[derive(Debug, thiserror::Error)]
 pub enum SnsPublisherError {
     #[error("Failed to publish events: {0:?}")]
@@ -71,7 +73,7 @@ impl Publisher for SnsPublisher {
             .await
             .tap_err(|e| log::error!("Failed to publish events: {e}"))?;
 
-        Ok(events.to_output(output))
+        Ok(events.output(output))
     }
 }
 
@@ -108,7 +110,7 @@ impl BatchEvents {
         self.events.remove(&Id::from(id))
     }
 
-    fn to_output(mut self, output: PublishBatchOutput) -> PublisherOutput {
+    fn output(mut self, output: PublishBatchOutput) -> PublisherOutput {
         let mut publisher_output = PublisherOutput::new();
 
         for success in output.successful() {
@@ -146,7 +148,7 @@ impl TryFrom<&BatchEvents> for Vec<PublishBatchRequestEntry> {
     }
 }
 
-fn to_entry(event: &Event) -> Result<PublishBatchRequestEntry, SnsPublisherError> {
+fn to_entry(event: &Event) -> SnsPublisherResult<PublishBatchRequestEntry> {
     match event {
         Event::BusinessUnitCreated(event_data) => from_event_data(event_data),
         Event::BusinessUnitUpdated(event_data) => from_event_data(event_data),
@@ -169,7 +171,7 @@ fn to_entry(event: &Event) -> Result<PublishBatchRequestEntry, SnsPublisherError
 
 fn from_event_data<P: Serialize>(
     event_data: &ApplicationEventData<P>,
-) -> Result<PublishBatchRequestEntry, SnsPublisherError> {
+) -> SnsPublisherResult<PublishBatchRequestEntry> {
     Ok(PublishBatchRequestEntry::builder()
         .id(event_data.id())
         .message_group_id(event_data.entity_id())

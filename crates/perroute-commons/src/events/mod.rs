@@ -42,7 +42,6 @@ impl From<&Self> for EventType {
 impl EventType {
     pub fn parse(str: &str) -> Result<HashSet<Self>, ParseError> {
         str.split(",")
-            .into_iter()
             .filter(|e| !e.is_empty())
             .map(EventType::from_str)
             .collect::<Result<HashSet<_>, _>>()
