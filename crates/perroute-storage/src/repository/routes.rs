@@ -14,18 +14,20 @@ pub struct ActiveByBusinessUnitAndDispatchTypeQuery<'q> {
     pub dispatch_type: &'q DispatchType,
 }
 
+#[async_trait::async_trait]
 pub trait RouteRepository {
-    fn get(&self, query: &RouteQuery<'_>) -> impl Future<Output = RepositoryResult<Option<Route>>>;
+    async fn get(&self, query: &RouteQuery<'_>) -> RepositoryResult<Option<Route>>;
 
-    fn save(&self, route: Route) -> impl Future<Output = RepositoryResult<Route>>;
+    async fn save(&self, route: Route) -> RepositoryResult<Route>;
 
-    fn update(&self, route: Route) -> impl Future<Output = RepositoryResult<Route>>;
+    async fn update(&self, route: Route) -> RepositoryResult<Route>;
 
-    fn delete(&self, query: &RouteQuery<'_>) -> impl Future<Output = RepositoryResult<u64>>;
+    async fn delete(&self, query: &RouteQuery<'_>) -> RepositoryResult<u64>;
 
-    fn query(&self, query: &RouteQuery<'_>) -> impl Future<Output = RepositoryResult<Vec<Route>>>;
+    async fn query(&self, query: &RouteQuery<'_>) -> RepositoryResult<Vec<Route>>;
 }
 
+#[async_trait::async_trait]
 impl RouteRepository for PgRepository {
     async fn query(&self, query: &RouteQuery<'_>) -> RepositoryResult<Vec<Route>> {
         todo!()

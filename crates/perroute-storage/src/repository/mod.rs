@@ -16,7 +16,7 @@ use message_types::{MessageTypeRepository, PayloadExampleRepository};
 use perroute_commons::configuration::settings::DatabaseSettings;
 use routes::RouteRepository;
 use sqlx::{PgPool, Postgres, Transaction};
-use std::{future::Future, sync::Arc};
+use std::{fmt::Debug, sync::Arc};
 use template_assignment::TemplateAssignmentRepository;
 use tokio::sync::Mutex;
 
@@ -28,16 +28,18 @@ pub enum Error {
     Sqlx(#[from] sqlx::Error),
 
     #[error("Storage error: {0}")]
-    InvalidRepositoryState(&'static str),
+    InvalidRepositoryState(String),
 }
 
 pub type RepositoryResult<T> = Result<T, Error>;
 
+#[async_trait::async_trait]
 pub trait TransactedRepository: Repository {
-    fn commit(self) -> impl Future<Output = RepositoryResult<()>>;
-    fn rollback(self) -> impl Future<Output = RepositoryResult<()>>;
+    async fn commit(self) -> RepositoryResult<()>;
+    async fn rollback(self) -> RepositoryResult<()>;
 }
 
+#[async_trait::async_trait]
 pub trait Repository:
     BusinessUnitRepository
     + MessageTypeRepository
@@ -51,7 +53,7 @@ pub trait Repository:
 {
     type TR: TransactedRepository + Send + Sync;
 
-    fn begin(&self) -> impl Future<Output = RepositoryResult<Self::TR>>;
+    async fn begin(&self) -> RepositoryResult<Self::TR>;
 }
 
 #[derive(Clone, Debug)]
@@ -78,6 +80,7 @@ impl PgRepository {
     }
 }
 
+#[async_trait::async_trait]
 impl TransactedRepository for PgRepository {
     async fn rollback(self) -> RepositoryResult<()> {
         match self.source {
@@ -86,7 +89,9 @@ impl TransactedRepository for PgRepository {
                 tx.rollback().await?;
                 Ok(())
             }
-            _ => Err(Error::InvalidRepositoryState("Invalid repository state")),
+            _ => Err(Error::InvalidRepositoryState(
+                "Invalid repository state".to_owned(),
+            )),
         }
     }
 
@@ -97,11 +102,14 @@ impl TransactedRepository for PgRepository {
                 tx.commit().await?;
                 Ok(())
             }
-            _ => Err(Error::InvalidRepositoryState("Invalid repository state")),
+            _ => Err(Error::InvalidRepositoryState(
+                "Invalid repository state".to_owned(),
+            )),
         }
     }
 }
 
+#[async_trait::async_trait]
 impl Repository for PgRepository {
     type TR = PgRepository;
 
@@ -114,7 +122,7 @@ impl Repository for PgRepository {
                 })
             }
             Source::Tx(_) => Err(Error::InvalidRepositoryState(
-                "A transaction is already in progress",
+                "A transaction is already in progress".to_owned(),
             )),
         }
     }

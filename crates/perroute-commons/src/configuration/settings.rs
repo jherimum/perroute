@@ -17,6 +17,13 @@ pub struct Settings {
     pub template_storage: Option<AwsS3TemplateStorageSettings>,
     pub aws: Option<AwsSettings>,
     pub pooling: Option<EventPoolingSettings>,
+    pub digester: Option<DigesterSettings>,
+}
+
+#[derive(Deserialize, Clone, Debug)]
+pub struct DigesterSettings {
+    pub bucket_name: String,
+    pub queue_arn: String,
 }
 
 #[derive(Deserialize, Clone, Debug)]

@@ -1,23 +1,23 @@
-use std::future::Future;
-
 use super::{PgRepository, RepositoryResult};
 use crate::{execute, fetch_all, fetch_one, models::event::DbEvent};
 use perroute_commons::types::{id::Id, Timestamp};
 use sqlx::{query, query_as};
 
+#[async_trait::async_trait]
 pub trait EventRepository {
-    fn set_consumed(
+    async fn set_consumed(
         &self,
         events: Vec<Id>,
         skipped: bool,
         timestamp: &Timestamp,
-    ) -> impl Future<Output = RepositoryResult<()>>;
+    ) -> RepositoryResult<()>;
 
-    fn unconsumed(&self, size: usize) -> impl Future<Output = RepositoryResult<Vec<DbEvent>>>;
+    async fn unconsumed(&self, size: usize) -> RepositoryResult<Vec<DbEvent>>;
 
-    fn save(&self, event: DbEvent) -> impl Future<Output = RepositoryResult<DbEvent>>;
+    async fn save(&self, event: DbEvent) -> RepositoryResult<DbEvent>;
 }
 
+#[async_trait::async_trait]
 impl EventRepository for PgRepository {
     async fn save(&self, event: DbEvent) -> RepositoryResult<DbEvent> {
         let query = query_as(

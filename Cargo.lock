@@ -2790,24 +2790,7 @@ dependencies = [
  "aws-config",
  "aws-sdk-s3",
  "aws-sdk-sqs",
- "dotenvy",
- "futures",
- "log",
- "perroute-commons",
- "perroute-storage",
- "serde",
- "serde_json",
- "thiserror 2.0.3",
- "tokio",
-]
-
-[[package]]
-name = "perroute-dispatcher"
-version = "0.1.0"
-dependencies = [
- "aws-config",
- "aws-sdk-sqs",
- "config",
+ "bon",
  "dotenvy",
  "futures",
  "log",
@@ -2815,6 +2798,7 @@ dependencies = [
  "perroute-connectors",
  "perroute-storage",
  "serde",
+ "serde_json",
  "tap",
  "thiserror 2.0.3",
  "tokio",

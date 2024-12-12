@@ -6,8 +6,10 @@ edition = "2021"
 [dependencies]
 perroute-commons = { path = "../perroute-commons" }
 perroute-storage = { path = "../perroute-storage" }
+perroute-connectors = { path = "../perroute-connectors" }
+
 tokio = { workspace = true, features = ["full"] }
-aws-config = { workspace = true }
+aws-config = { workspace = true, features = ["behavior-version-latest"] }
 aws-sdk-sqs = { workspace = true }
 aws-sdk-s3 = { workspace = true }
 dotenvy = { workspace = true }
@@ -16,3 +18,5 @@ serde_json = { workspace = true }
 log = { workspace = true }
 thiserror = { workspace = true }
 futures = { workspace = true }
+tap = { workspace = true }
+bon = { workspace = true }

@@ -1,8 +1,6 @@
-use perroute_commons::types::{dispatch_type::DispatchType, id::Id};
-
 use super::{PgRepository, RepositoryResult};
 use crate::models::channel::Channel;
-use std::future::Future;
+use perroute_commons::types::{dispatch_type::DispatchType, id::Id};
 
 pub enum ChannelQuery<'q> {
     ById(&'q Id),
@@ -10,28 +8,24 @@ pub enum ChannelQuery<'q> {
     ActiveByIds(&'q [&'q Id]),
 }
 
+#[async_trait::async_trait]
 pub trait ChannelRepository {
-    fn save(&self, channel: Channel) -> impl Future<Output = RepositoryResult<Channel>>;
+    async fn save(&self, channel: Channel) -> RepositoryResult<Channel>;
 
-    fn update(&self, channel: Channel) -> impl Future<Output = RepositoryResult<Channel>>;
+    async fn update(&self, channel: Channel) -> RepositoryResult<Channel>;
 
-    fn exists_channel(
-        &self,
-        query: &ChannelQuery<'_>,
-    ) -> impl Future<Output = RepositoryResult<bool>>;
+    async fn exists_channel(&self, query: &ChannelQuery<'_>) -> RepositoryResult<bool>;
 
-    fn delete(&self, query: &ChannelQuery<'_>) -> impl Future<Output = RepositoryResult<i32>>;
+    async fn delete(&self, query: &ChannelQuery<'_>) -> RepositoryResult<i32>;
 
-    fn find(
-        &self,
-        query: &ChannelQuery<'_>,
-    ) -> impl Future<Output = RepositoryResult<Option<Channel>>>;
+    async fn find(&self, query: &ChannelQuery<'_>) -> RepositoryResult<Option<Channel>>;
 
-    fn query(&self, query: &ChannelQuery<'_>) -> RepositoryResult<Vec<Channel>>;
+    async fn query(&self, query: &ChannelQuery<'_>) -> RepositoryResult<Vec<Channel>>;
 }
 
+#[async_trait::async_trait]
 impl ChannelRepository for PgRepository {
-    fn query(&self, query: &ChannelQuery) -> RepositoryResult<Vec<Channel>> {
+    async fn query(&self, query: &ChannelQuery<'_>) -> RepositoryResult<Vec<Channel>> {
         todo!()
     }
 

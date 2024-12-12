@@ -30,18 +30,17 @@ pub enum MessageTypeQuery {
     All,
 }
 
+#[async_trait::async_trait]
 pub trait PayloadExampleRepository {
-    fn save_payload_examples(
+    async fn save_payload_examples(
         &self,
         examples: &[PayloadExample],
-    ) -> impl Future<Output = RepositoryResult<Vec<PayloadExample>>>;
+    ) -> RepositoryResult<Vec<PayloadExample>>;
 
-    fn delete_payload_examples(
-        &self,
-        message_type_id: &Id,
-    ) -> impl Future<Output = RepositoryResult<()>>;
+    async fn delete_payload_examples(&self, message_type_id: &Id) -> RepositoryResult<()>;
 }
 
+#[async_trait::async_trait]
 impl PayloadExampleRepository for PgRepository {
     async fn save_payload_examples(
         &self,

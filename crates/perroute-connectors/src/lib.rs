@@ -7,7 +7,7 @@ use perroute_commons::types::{
     template::{EmailTemplate, PushTemplate, SmsTemplate, Template},
     Configuration, ProviderId,
 };
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 
 #[derive(Debug, thiserror::Error)]
 pub enum ProviderPluginError {
@@ -16,17 +16,23 @@ pub enum ProviderPluginError {
 }
 
 pub fn repository() -> impl ProviderPluginRepository {
-    DefaultProviderPluginRepository {
-        plugins: HashMap::new(),
-    }
+    DefaultProviderPluginRepository::default()
 }
 
-pub trait ProviderPluginRepository {
+pub trait ProviderPluginRepository: Send + Sync {
     fn get(&self, id: &ProviderId) -> Option<&dyn ProviderPlugin>;
 }
 
 pub struct DefaultProviderPluginRepository {
-    plugins: HashMap<ProviderId, Box<dyn ProviderPlugin>>,
+    plugins: Arc<HashMap<ProviderId, Box<dyn ProviderPlugin>>>,
+}
+
+impl Default for DefaultProviderPluginRepository {
+    fn default() -> Self {
+        Self {
+            plugins: Arc::new(HashMap::new()),
+        }
+    }
 }
 
 impl ProviderPluginRepository for DefaultProviderPluginRepository {
@@ -36,11 +42,11 @@ impl ProviderPluginRepository for DefaultProviderPluginRepository {
 }
 
 #[async_trait::async_trait]
-pub trait ProviderPlugin {
+pub trait ProviderPlugin: Send + Sync {
     async fn dispatch(
         &self,
-        configuration: &Configuration,
-        request: &DispatchRequest,
+        configuration: Configuration,
+        request: DispatchRequest,
     ) -> Result<DispatchResponse, PluginDispatchError>;
 }
 

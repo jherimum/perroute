@@ -53,12 +53,10 @@ create table routes(
     enabled             boolean not null,
     channel_id          varchar(21) not null,
     message_type_id     varchar(21) not null,
-    business_unit_id    varchar(21) not null,
     created_at          timestamp not null,
     updated_at          timestamp not null,
     constraint fk_routes_channels      foreign key (channel_id) references channels(id),
-    constraint fk_routes_message_types foreign key (message_type_id) references message_types(id),
-    constraint fk_routes_business_unit foreign key (business_unit_id) references business_units(id)        
+    constraint fk_routes_message_types foreign key (message_type_id) references message_types(id)
 );
 
 create table template_assignments (

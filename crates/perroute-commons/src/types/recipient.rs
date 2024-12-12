@@ -1,6 +1,10 @@
+use serde::{Deserialize, Serialize};
+
 use super::dispatch_type::DispatchType;
 
-#[derive(Debug, Clone, PartialEq, Eq, strum::Display, derive_more::TryInto)]
+#[derive(
+    Debug, Clone, PartialEq, Eq, strum::Display, derive_more::TryInto, Serialize, Deserialize,
+)]
 pub enum Recipient {
     Sms(SmsRecipient),
     Push(PushRecipient),
@@ -17,11 +21,11 @@ impl Recipient {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SmsRecipient {}
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct EmailRecipient {}
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PushRecipient {}

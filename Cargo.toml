@@ -6,7 +6,6 @@ members = [
     "crates/perroute-commons",
     "crates/perroute-connectors",
     "crates/perroute-digester",
-    "crates/perroute-dispatcher",
     "crates/perroute-events-pooling",
     "crates/perroute-query-bus",
     "crates/perroute-storage",

@@ -17,13 +17,15 @@ pub struct QueryForDispatch<'q> {
     pub date_reference: &'q Timestamp,
 }
 
+#[async_trait::async_trait]
 pub trait TemplateAssignmentRepository {
-    fn query(
+    async fn query(
         &self,
-        query: &TemplateAssignmentQuery,
-    ) -> impl Future<Output = RepositoryResult<Vec<TemplateAssignment>>>;
+        query: &TemplateAssignmentQuery<'_>,
+    ) -> RepositoryResult<Vec<TemplateAssignment>>;
 }
 
+#[async_trait::async_trait]
 impl TemplateAssignmentRepository for PgRepository {
     async fn query(
         &self,

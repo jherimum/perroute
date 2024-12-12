@@ -10,24 +10,20 @@ pub enum MessageQuery<'q> {
     ById(&'q Id),
 }
 
+#[async_trait::async_trait]
 pub trait MessageRepository {
-    fn query(
-        &self,
-        query: &MessageQuery<'_>,
-    ) -> impl Future<Output = RepositoryResult<Option<Message>>>;
+    // fn query(&self, query: &MessageQuery<'_>) -> RepositoryResult<Option<Message>>;
 
-    fn update(&self, message: Message) -> impl Future<Output = RepositoryResult<Message>>;
+    async fn update(&self, message: Message) -> RepositoryResult<Message>;
 
-    fn find(
-        &self,
-        query: &MessageQuery<'_>,
-    ) -> impl Future<Output = RepositoryResult<Option<Message>>>;
+    async fn find(&self, query: &MessageQuery<'_>) -> RepositoryResult<Option<Message>>;
 }
 
+#[async_trait::async_trait]
 impl MessageRepository for PgRepository {
-    async fn query(&self, query: &MessageQuery<'_>) -> RepositoryResult<Option<Message>> {
-        todo!()
-    }
+    // async fn query(&self, query: &MessageQuery<'_>) -> RepositoryResult<Option<Message>> {
+    //     todo!()
+    // }
 
     async fn update(&self, message: Message) -> RepositoryResult<Message> {
         todo!()

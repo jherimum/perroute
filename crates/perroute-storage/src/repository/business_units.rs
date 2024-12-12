@@ -2,7 +2,6 @@ use super::{PgRepository, RepositoryResult};
 use crate::{execute, fetch_all, fetch_one, models::business_unit::BusinessUnit};
 use perroute_commons::types::{code::Code, id::Id};
 use sqlx::{postgres::PgQueryResult, query, query_as};
-use std::future::Future;
 
 #[derive(Debug)]
 pub enum BusinessUnitQuery {
@@ -11,39 +10,38 @@ pub enum BusinessUnitQuery {
     All,
 }
 
+#[async_trait::async_trait]
 pub trait BusinessUnitRepository {
-    fn get(&self, id: &Id) -> impl Future<Output = RepositoryResult<BusinessUnit>>;
+    async fn get(&self, id: &Id) -> RepositoryResult<BusinessUnit>;
 
-    fn find_by_id(&self, id: &Id) -> impl Future<Output = RepositoryResult<Option<BusinessUnit>>>;
+    async fn find_by_id(&self, id: &Id) -> RepositoryResult<Option<BusinessUnit>>;
 
-    fn find_business_unit(
+    async fn find_business_unit(
         &self,
         id: &BusinessUnitQuery,
-    ) -> impl Future<Output = RepositoryResult<Option<BusinessUnit>>>;
+    ) -> RepositoryResult<Option<BusinessUnit>>;
 
-    fn delete_business_unit(&self, id: &Id) -> impl Future<Output = RepositoryResult<bool>>;
+    async fn delete_business_unit(&self, id: &Id) -> RepositoryResult<bool>;
 
-    fn save_business_unit(
+    async fn save_business_unit(
         &self,
         business_unit: BusinessUnit,
-    ) -> impl Future<Output = RepositoryResult<BusinessUnit>>;
+    ) -> RepositoryResult<BusinessUnit>;
 
-    fn update_business_unit(
+    async fn update_business_unit(
         &self,
         business_unit: BusinessUnit,
-    ) -> impl Future<Output = RepositoryResult<BusinessUnit>>;
+    ) -> RepositoryResult<BusinessUnit>;
 
-    fn query_business_units(
+    async fn query_business_units(
         &self,
         query: &BusinessUnitQuery,
-    ) -> impl Future<Output = RepositoryResult<Vec<BusinessUnit>>>;
+    ) -> RepositoryResult<Vec<BusinessUnit>>;
 
-    fn exists_business_unit(
-        &self,
-        query: &BusinessUnitQuery,
-    ) -> impl Future<Output = RepositoryResult<bool>>;
+    async fn exists_business_unit(&self, query: &BusinessUnitQuery) -> RepositoryResult<bool>;
 }
 
+#[async_trait::async_trait]
 impl BusinessUnitRepository for PgRepository {
     async fn get(&self, id: &Id) -> RepositoryResult<BusinessUnit> {
         todo!()

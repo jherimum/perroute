@@ -69,6 +69,15 @@ pub enum Event {
     TemplateAssignmentDeleted(ApplicationEventData<TemplateAssignmentDeletedEvent>),
 }
 
+impl<'de> Deserialize<'de> for Event {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        todo!()
+    }
+}
+
 impl Entity for Event {
     fn id(&self) -> &Id {
         self.id()

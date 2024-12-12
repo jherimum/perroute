@@ -1,6 +1,8 @@
+use serde::{Deserialize, Serialize};
+
 use crate::template::{context::TemplateRenderContext, TemplateError, TemplateRender};
 
-#[derive(Debug, derive_more::TryInto, derive_more::From, Clone)]
+#[derive(Debug, derive_more::TryInto, derive_more::From, Clone, Serialize, Deserialize)]
 pub enum Template {
     Sms(SmsTemplate),
     Email(EmailTemplate),
@@ -8,9 +10,9 @@ pub enum Template {
 }
 
 impl Template {
-    pub fn render(
+    pub fn render<TR: TemplateRender>(
         &self,
-        template_render: &dyn TemplateRender,
+        template_render: &TR,
         context: &TemplateRenderContext,
     ) -> Result<Self, TemplateError> {
         match self {
@@ -21,7 +23,7 @@ impl Template {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SmsTemplate {
     body: String,
 }
@@ -31,16 +33,16 @@ impl SmsTemplate {
         Self { body }
     }
 
-    pub fn render(
+    pub fn render<TR: TemplateRender>(
         &self,
-        template_render: &dyn TemplateRender,
+        template_render: &TR,
         context: &TemplateRenderContext,
     ) -> Result<Self, TemplateError> {
         todo!()
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EmailTemplate {
     pub subject: String,
     pub html: String,
@@ -65,7 +67,7 @@ impl EmailTemplate {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PushTemplate {
     pub title: String,
     pub body: String,
