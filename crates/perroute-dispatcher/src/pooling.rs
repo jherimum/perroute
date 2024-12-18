@@ -96,12 +96,12 @@ where
         &self,
         event: ApplicationEventData<MessageCreatedEvent>,
     ) -> Dispatcher<R, TR, PR> {
-        Dispatcher {
-            template_render: self.template_render.clone(),
-            repository: self.repository.clone(),
-            plugin_repository: self.plugin_repository.clone(),
+        Dispatcher::new(
+            self.repository.clone(),
+            self.plugin_repository.clone(),
+            self.template_render.clone(),
             event,
-        }
+        )
     }
 
     async fn inner_run(&self) -> Result<(), PooligError> {

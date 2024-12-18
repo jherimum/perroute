@@ -1,23 +1,23 @@
 use perroute_commons::{
     events::{ApplicationEventData, MessageCreatedEvent},
-    template::{context::TemplateRenderContext, TemplateError, TemplateRender},
-    types::{id::Id, template::Template, MessageStatus, ProviderId},
+    template::{TemplateError, TemplateRender},
+    types::{id::Id, MessageStatus, ProviderId},
 };
 use perroute_connectors::{PluginDispatchError, ProviderPluginError, ProviderPluginRepository};
 use perroute_storage::{
-    models::{
-        dispatcher_log::DispatcherLog, message::Message, template_assignment::TemplateAssignment,
-    },
+    models::{dispatcher_log::DispatcherLog, message::Message},
     repository::{
+        dispatcher_log::DispatcherLogRepository,
         message::{MessageQuery, MessageRepository},
-        template_assignment::{QueryForDispatch, TemplateAssignmentRepository},
-        Repository,
+        Repository, TransactedRepository,
     },
 };
-use stack::DispatchStack;
+use stack::DispatchExecutor;
 use std::sync::Arc;
+use template::TemplateResolver;
 
 mod stack;
+mod template;
 
 type DigesterResult<T> = Result<T, DigesterError>;
 
@@ -52,13 +52,33 @@ pub enum DigesterError {
 }
 
 pub struct Dispatcher<R, TR, PR> {
-    pub template_render: Arc<TR>,
-    pub repository: Arc<R>,
-    pub plugin_repository: Arc<PR>,
-    pub event: ApplicationEventData<MessageCreatedEvent>,
+    repository: Arc<R>,
+    template_resolver: TemplateResolver<R, TR>,
+    dispatch_executor: DispatchExecutor<R, PR>,
+    event: ApplicationEventData<MessageCreatedEvent>,
 }
 
 impl<R: Repository, TR: TemplateRender, PR: ProviderPluginRepository> Dispatcher<R, TR, PR> {
+    pub fn new(
+        repository: Arc<R>,
+        plugin_repository: Arc<PR>,
+        template_render: Arc<TR>,
+        event: ApplicationEventData<MessageCreatedEvent>,
+    ) -> Self {
+        Dispatcher {
+            repository: repository.clone(),
+            event,
+            template_resolver: TemplateResolver {
+                repository: repository.clone(),
+                template_render: template_render.clone(),
+            },
+            dispatch_executor: DispatchExecutor {
+                repository,
+                plugin_repository,
+            },
+        }
+    }
+
     async fn retrieve_message(&self) -> DigesterResult<Message> {
         match MessageRepository::find(
             self.repository.as_ref(),
@@ -76,74 +96,15 @@ impl<R: Repository, TR: TemplateRender, PR: ProviderPluginRepository> Dispatcher
         }
     }
 
-    async fn render_template(&self, message: &Message) -> DigesterResult<Template> {
-        let template_assignment = self
-            .template_assignment(&message)
-            .await?
-            .ok_or(DigesterError::NoTemplateAssignmentElegible)?;
-        let template = self.template(&message, &template_assignment).await?;
-        let ctx = self.context(&message, &template_assignment).await?;
-        template
-            .render(self.template_render.as_ref(), &ctx)
-            .map_err(DigesterError::from)
-    }
-
-    async fn template_assignment(
-        &self,
-        message: &Message,
-    ) -> DigesterResult<Option<TemplateAssignment>> {
-        let query = QueryForDispatch::builder()
-            .message_type_id(message.message_type_id())
-            .business_unit_id(message.business_unit_id())
-            .dispatch_type(message.dispatch_type())
-            .reference_date(
-                message
-                    .scheduled_at()
-                    .as_ref()
-                    .unwrap_or(message.created_at()),
-            )
-            .build();
-
-        Ok(TemplateAssignmentRepository::find(self.repository.as_ref(), query.into()).await?)
-    }
-
-    async fn template(
-        &self,
-        message: &Message,
-        template_assignment: &TemplateAssignment,
-    ) -> DigesterResult<Template> {
-        todo!()
-    }
-
-    async fn context(
-        &self,
-        message: &Message,
-        template_assignment: &TemplateAssignment,
-    ) -> DigesterResult<TemplateRenderContext> {
-        todo!()
-    }
-
-    async fn stack<'s>(
-        &self,
-        message: &'s Message,
-        template: &'s Template,
-    ) -> DigesterResult<DispatchStack<'s>> {
-        let dispatchers = vec![];
-        Ok(DispatchStack {
-            message,
-            template,
-            data: dispatchers,
-        })
-    }
-
     async fn process(&self, message: &Message) -> DigesterResult<Vec<DispatcherLog>> {
-        let rendered_template = self.render_template(&message).await?;
-        let stack = self.stack(message, &rendered_template).await?;
-        Ok(stack.execute().await?)
+        let rendered_template = self.template_resolver.resolve(message).await?;
+        self.dispatch_executor
+            .execute(message, &rendered_template)
+            .await
     }
 
     pub async fn execute(self) -> DigesterResult<()> {
-        let mut message = match self.retrieve_message().await {
+        let message = match self.retrieve_message().await {
             Ok(message) => message,
             Err(DigesterError::MessageNotFound(id)) => {
                 log::warn!("Message not found: {:?}", id);
@@ -156,19 +117,36 @@ impl<R: Repository, TR: TemplateRender, PR: ProviderPluginRepository> Dispatcher
             Err(e) => return Err(e),
         };
 
-        match self.process(&message).await {
+        let (message, logs) = match self.process(&message).await {
             Ok(logs) if logs.iter().any(|l| *l.success()) => {
-                message = message.set_status(MessageStatus::Dispatched);
-                Ok(())
+                (message.set_status(MessageStatus::Dispatched), logs)
             }
 
-            Ok(logs) => {
-                message = message.set_status(MessageStatus::Failed);
-                Ok(())
-            }
+            Ok(logs) => (message.set_status(MessageStatus::Failed), logs),
             Err(e) => {
                 return Err(e);
             }
+        };
+
+        let tx = self.repository.begin().await?;
+
+        match MessageRepository::update(&tx, message).await {
+            Ok(_) => {
+                match DispatcherLogRepository::save_all(self.repository.as_ref(), logs).await {
+                    Ok(_) => {
+                        tx.commit().await?;
+                    }
+                    Err(e) => {
+                        tx.rollback().await?;
+                        return Err(e.into());
+                    }
+                }
+            }
+            Err(_) => {
+                tx.rollback().await?;
+            }
         }
+
+        Ok(())
     }
 }
