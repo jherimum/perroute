@@ -41,7 +41,9 @@ pub trait TransactedRepository: Repository {
 
 #[async_trait::async_trait]
 pub trait Repository:
-    BusinessUnitRepository
+    Send
+    + Sync
+    + BusinessUnitRepository
     + MessageTypeRepository
     + PayloadExampleRepository
     + ChannelRepository
@@ -51,7 +53,7 @@ pub trait Repository:
     + DispatcherLogRepository
     + EventRepository
 {
-    type TR: TransactedRepository + Send + Sync;
+    type TR: TransactedRepository;
 
     async fn begin(&self) -> RepositoryResult<Self::TR>;
 }

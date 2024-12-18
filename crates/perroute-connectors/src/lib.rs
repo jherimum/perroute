@@ -45,19 +45,19 @@ impl ProviderPluginRepository for DefaultProviderPluginRepository {
 pub trait ProviderPlugin: Send + Sync {
     async fn dispatch(
         &self,
-        configuration: Configuration,
-        request: DispatchRequest,
+        configuration: &Configuration,
+        request: &DispatchRequest,
     ) -> Result<DispatchResponse, PluginDispatchError>;
 }
 
-#[derive(Debug, derive_more::From)]
-pub enum DispatchRequest {
-    Sms(Request<SmsRecipient, SmsTemplate>),
-    Email(Request<EmailRecipient, EmailTemplate>),
-    Push(Request<PushRecipient, PushTemplate>),
+#[derive(Debug, derive_more::From, Clone)]
+pub enum DispatchRequest<'r> {
+    Sms(Request<'r, SmsRecipient, SmsTemplate>),
+    Email(Request<'r, EmailRecipient, EmailTemplate>),
+    Push(Request<'r, PushRecipient, PushTemplate>),
 }
 
-impl DispatchRequest {
+impl<'r> DispatchRequest<'r> {
     pub fn id(&self) -> &Id {
         match self {
             DispatchRequest::Sms(request) => &request.id,
@@ -67,42 +67,34 @@ impl DispatchRequest {
     }
 
     pub fn create(
-        id: &Id,
-        recipient: &Recipient,
-        template: &Template,
+        id: &'r Id,
+        recipient: &'r Recipient,
+        template: &'r Template,
     ) -> Result<Self, ProviderPluginError> {
         match (id, recipient, template) {
-            (id, Recipient::Sms(recipient), Template::Sms(template)) => Ok(DispatchRequest::Sms(
-                Request::sms(id.clone(), recipient.clone(), template.clone()),
-            )),
-            (id, Recipient::Email(recipient), Template::Email(template)) => {
-                Ok(DispatchRequest::Email(Request::email(
-                    id.clone(),
-                    recipient.clone(),
-                    template.clone(),
-                )))
+            (id, Recipient::Sms(recipient), Template::Sms(template)) => {
+                Ok(DispatchRequest::Sms(Request::sms(id, recipient, template)))
             }
-            (id, Recipient::Push(recipient), Template::Push(template)) => {
-                Ok(DispatchRequest::Push(Request::push(
-                    id.clone(),
-                    recipient.clone(),
-                    template.clone(),
-                )))
-            }
+            (id, Recipient::Email(recipient), Template::Email(template)) => Ok(
+                DispatchRequest::Email(Request::email(id, recipient, template)),
+            ),
+            (id, Recipient::Push(recipient), Template::Push(template)) => Ok(
+                DispatchRequest::Push(Request::push(id, recipient, template)),
+            ),
             _ => Err(ProviderPluginError::InvalidRequest),
         }
     }
 }
 
 #[derive(Debug, Clone)]
-pub struct Request<R, T> {
-    id: Id,
-    recipient: R,
-    template: T,
+pub struct Request<'r, R, T> {
+    id: &'r Id,
+    recipient: &'r R,
+    template: &'r T,
 }
 
-impl Request<SmsRecipient, SmsTemplate> {
-    pub fn sms(id: Id, recipient: SmsRecipient, template: SmsTemplate) -> Self {
+impl<'r> Request<'r, SmsRecipient, SmsTemplate> {
+    pub fn sms(id: &'r Id, recipient: &'r SmsRecipient, template: &'r SmsTemplate) -> Self {
         Self {
             id,
             recipient,
@@ -111,8 +103,8 @@ impl Request<SmsRecipient, SmsTemplate> {
     }
 }
 
-impl Request<EmailRecipient, EmailTemplate> {
-    pub fn email(id: Id, recipient: EmailRecipient, template: EmailTemplate) -> Self {
+impl<'r> Request<'r, EmailRecipient, EmailTemplate> {
+    pub fn email(id: &'r Id, recipient: &'r EmailRecipient, template: &'r EmailTemplate) -> Self {
         Self {
             id,
             recipient,
@@ -121,8 +113,8 @@ impl Request<EmailRecipient, EmailTemplate> {
     }
 }
 
-impl Request<PushRecipient, PushTemplate> {
-    pub fn push(id: Id, recipient: PushRecipient, template: PushTemplate) -> Self {
+impl<'r> Request<'r, PushRecipient, PushTemplate> {
+    pub fn push(id: &'r Id, recipient: &'r PushRecipient, template: &'r PushTemplate) -> Self {
         Self {
             id,
             recipient,

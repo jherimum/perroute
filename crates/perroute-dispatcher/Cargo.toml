@@ -1,5 +1,5 @@
 [package]
-name = "perroute-dispatcher"
+name = "perroute-digester"
 version = "0.1.0"
 edition = "2021"
 
@@ -9,12 +9,13 @@ perroute-storage = { path = "../perroute-storage" }
 perroute-connectors = { path = "../perroute-connectors" }
 
 tokio = { workspace = true, features = ["full"] }
+aws-config = { workspace = true, features = ["behavior-version-latest"] }
+aws-sdk-sqs = { workspace = true }
+dotenvy = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
 log = { workspace = true }
 thiserror = { workspace = true }
-tap = { workspace = true }
 futures = { workspace = true }
-aws-sdk-sqs = { workspace = true }
-aws-config = { workspace = true, features = ["behavior-version-latest"] }
-dotenvy = { workspace = true }
-config = { workspace = true }
-serde = { workspace = true }
+tap = { workspace = true }
+bon = { workspace = true }

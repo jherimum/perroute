@@ -11,7 +11,7 @@ pub enum TemplateError {
     RenderError(Box<dyn Error + Send + Sync>),
 }
 
-pub trait TemplateRender {
+pub trait TemplateRender: Send + Sync {
     fn render(
         &self,
         template: &str,

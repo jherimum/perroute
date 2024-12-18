@@ -1,37 +1,37 @@
-use perroute_commons::configuration::settings::Settings;
-
-use std::error::Error;
+use perroute_commons::{
+    configuration::settings::Settings, template::handlebars::HandlebarsTemplateRender,
+};
+use perroute_digester::pooling::SqsPooling;
+use perroute_storage::create_repository;
+use std::time::Duration;
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn Error>> {
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenvy::dotenv()?;
     let settings = Settings::load()?;
     let aws_settings = settings.aws.unwrap();
     let sdk_config = aws_config::load_from_env().await;
     let sqs_client = aws_sdk_sqs::Client::new(&sdk_config);
 
-    dbg!(sdk_config.region());
-    dbg!(&aws_settings.dispatch_queue_url);
+    let repository = create_repository(&settings.database.unwrap()).await?;
 
-    let messages = sqs_client
-        .receive_message()
-        .queue_url(&aws_settings.digest_queue_url)
-        .max_number_of_messages(10)
-        .send()
-        .await;
+    let template_render = template_render();
 
-    match messages {
-        Ok(output) => {
-            if let Some(messages) = output.messages {
-                for message in messages {
-                    println!("Message: {:?}", message);
-                }
-            }
-        }
-        Err(error) => {
-            eprintln!("Error: {:?}", error);
-        }
-    }
+    SqsPooling::new(
+        repository,
+        template_render,
+        sqs_client,
+        &aws_settings.digest_queue_url,
+        Duration::from_secs(1),
+        10,
+        perroute_connectors::repository(),
+    )
+    .run()
+    .await?;
 
     Ok(())
+}
+
+fn template_render<'tr>() -> HandlebarsTemplateRender<'tr> {
+    todo!("Implement template render")
 }

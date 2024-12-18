@@ -1,8 +1,6 @@
-use crate::{digestor::Digesters, MessageDigest};
-use aws_sdk_s3::{
-    config::http::HttpResponse, operation::put_object::PutObjectError, primitives::ByteStream,
-};
+use crate::dispatcher::Dispatcher;
 use aws_sdk_sqs::{
+    config::http::HttpResponse,
     error::SdkError,
     operation::receive_message::{ReceiveMessageError, ReceiveMessageOutput},
     types::Message,
@@ -30,36 +28,34 @@ pub struct SqsPooling<R, TR, PR> {
     pool_size: i32,
     sqs_client: Arc<aws_sdk_sqs::Client>,
     queue_url: String,
-    s3_client: Arc<aws_sdk_s3::Client>,
-    digesters: Digesters<R, TR, PR>,
-    bucket_name: String,
+    repository: Arc<R>,
+    template_render: Arc<TR>,
+    plugin_repository: Arc<PR>,
 }
 
 impl<R, TR, PR> SqsPooling<R, TR, PR>
 where
-    R: Repository + Clone + Send + Sync + 'static,
-    TR: TemplateRender + Send + Sync + 'static,
-    PR: ProviderPluginRepository + Send + Sync + 'static,
+    R: Repository + 'static,
+    TR: TemplateRender + 'static,
+    PR: ProviderPluginRepository + 'static,
 {
     pub fn new(
         repository: R,
         template_render: TR,
         sqs_client: aws_sdk_sqs::Client,
-        s3_client: aws_sdk_s3::Client,
         queue_url: &str,
         interval: Duration,
         pool_size: i32,
-        bucket_name: &str,
         plugin_repository: PR,
     ) -> Self {
         SqsPooling {
             sqs_client: Arc::new(sqs_client),
-            s3_client: Arc::new(s3_client),
             interval,
             pool_size,
             queue_url: queue_url.to_string(),
-            digesters: Digesters::new(repository, template_render, plugin_repository),
-            bucket_name: bucket_name.to_string(),
+            repository: Arc::new(repository),
+            template_render: Arc::new(template_render),
+            plugin_repository: Arc::new(plugin_repository),
         }
     }
 
@@ -96,23 +92,16 @@ where
             .map_err(Into::into)
     }
 
-    async fn store_message_digest(
+    fn dispatcher(
         &self,
-        data: &String,
-    ) -> Result<(), SdkError<PutObjectError, HttpResponse>> {
-        self.s3_client
-            .put_object()
-            .bucket(&self.bucket_name)
-            .body(ByteStream::from(data.as_bytes().to_vec()))
-            .send()
-            .await
-            .map(|_| ())
-    }
-
-    async fn handle_digest_result(&self, message: &Message, result: MessageDigest) {
-        let json = serde_json::to_string(&result).unwrap();
-        self.store_message_digest(&json).await.unwrap();
-        self.delete_message(message).await;
+        event: ApplicationEventData<MessageCreatedEvent>,
+    ) -> Dispatcher<R, TR, PR> {
+        Dispatcher {
+            template_render: self.template_render.clone(),
+            repository: self.repository.clone(),
+            plugin_repository: self.plugin_repository.clone(),
+            event,
+        }
     }
 
     async fn inner_run(&self) -> Result<(), PooligError> {
@@ -123,23 +112,25 @@ where
             .unwrap_or_default()
             .into_iter()
             .filter_map(|message| to_event(&message).map(|e| (message, e)))
-            .map(|(message, event)| (message, self.digesters.create(event)))
-            .map(|(message, digestor)| (message, tokio::task::spawn(digestor.execute())))
+            .map(|(message, event)| (message, self.dispatcher(event)))
+            .map(|(message, dispatcher)| (message, tokio::task::spawn(dispatcher.execute())))
             .collect::<Vec<_>>();
 
-        // for (message, task) in tasks {
-        //     match task.await {
-        //         Ok(Ok(digest)) => {
-        //             self.handle_digest_result(&message, digest).await;
-        //         }
-        //         Ok(Err(e)) => {
-        //             log::error!("Task failed: {e}");
-        //         }
-        //         Err(e) => {
-        //             log::error!("Task completation failed: {e}");
-        //         }
-        //     }
-        // }
+        for (message, task) in tasks {
+            match task.await {
+                Ok(Ok(_)) => {
+                    self.delete_message(&message).await;
+                }
+                Ok(Err(e)) => {
+                    //todo: send to a dlq?
+                    log::error!("Task failed: {e}");
+                }
+                Err(e) => {
+                    //todo: send to a dlq?
+                    log::error!("Task completation failed: {e}");
+                }
+            }
+        }
 
         Ok(())
     }
