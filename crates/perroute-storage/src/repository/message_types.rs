@@ -66,6 +66,8 @@ impl PayloadExampleRepository for PgRepository {
 }
 
 pub trait MessageTypeRepository {
+    fn get(&self, id: &Id) -> impl Future<Output = RepositoryResult<MessageType>>;
+
     fn find_by_id(&self, id: &Id) -> impl Future<Output = RepositoryResult<Option<MessageType>>>;
 
     fn delete_message_type(&self, id: &Id) -> impl Future<Output = RepositoryResult<bool>>;
@@ -92,6 +94,10 @@ pub trait MessageTypeRepository {
 }
 
 impl MessageTypeRepository for PgRepository {
+    async fn get(&self, id: &Id) -> RepositoryResult<MessageType> {
+        todo!()
+    }
+
     async fn find_by_id(&self, id: &Id) -> RepositoryResult<Option<MessageType>> {
         Ok(fetch_optional!(
             &self.source,

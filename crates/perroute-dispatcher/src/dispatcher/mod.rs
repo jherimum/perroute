@@ -23,9 +23,8 @@ type DigesterResult<T> = Result<T, DigesterError>;
 
 #[derive(Debug, thiserror::Error)]
 pub enum DigesterError {
-    #[error("{0}")]
-    RepositoryError(#[from] perroute_storage::repository::Error),
-
+    //#[error("{0}")]
+    //RepositoryError(#[from] perroute_storage::repository::Error),
     #[error("Message not found: {0}")]
     MessageNotFound(Id),
 
@@ -49,6 +48,9 @@ pub enum DigesterError {
 
     #[error("{0}")]
     ProviderPluginError(#[from] ProviderPluginError),
+
+    #[error("{0}")]
+    TemplateError(#[from] crate::dispatcher::template::Error),
 }
 
 pub struct Dispatcher<R, TR, PR> {
@@ -84,7 +86,8 @@ impl<R: Repository, TR: TemplateRender, PR: ProviderPluginRepository> Dispatcher
             self.repository.as_ref(),
             &MessageQuery::ById(self.event.entity_id()),
         )
-        .await?
+        .await
+        .unwrap()
         {
             Some(message) if *message.status() != MessageStatus::Pending => Err(
                 DigesterError::InvalidMessageStatus(message.id().clone(), message.status().clone()),
@@ -99,7 +102,7 @@ impl<R: Repository, TR: TemplateRender, PR: ProviderPluginRepository> Dispatcher
     async fn process(&self, message: &Message) -> DigesterResult<Vec<DispatcherLog>> {
         let rendered_template = self.template_resolver.resolve(message).await?;
         self.dispatch_executor
-            .execute(message, &rendered_template)
+            .execute(message, &rendered_template.unwrap())
             .await
     }
 
@@ -128,22 +131,23 @@ impl<R: Repository, TR: TemplateRender, PR: ProviderPluginRepository> Dispatcher
             }
         };
 
-        let tx = self.repository.begin().await?;
+        let tx = self.repository.begin().await.unwrap();
 
         match MessageRepository::update(&tx, message).await {
             Ok(_) => {
                 match DispatcherLogRepository::save_all(self.repository.as_ref(), logs).await {
                     Ok(_) => {
-                        tx.commit().await?;
+                        tx.commit().await.unwrap();
                     }
                     Err(e) => {
-                        tx.rollback().await?;
-                        return Err(e.into());
+                        tx.rollback().await.unwrap();
+                        todo!()
+                        //return Err(e.into());
                     }
                 }
             }
             Err(_) => {
-                tx.rollback().await?;
+                tx.rollback().await.unwrap();
             }
         }
 

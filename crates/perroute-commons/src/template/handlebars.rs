@@ -15,6 +15,6 @@ impl TemplateRender for HandlebarsTemplateRender<'_> {
         self.handlebars
             .render_template(template, context)
             .tap_err(|e| log::error!("Error rendering template: {}", e))
-            .map_err(|e| TemplateError::RenderError(Box::new(e)))
+            .map_err(|e| TemplateError::RenderError(e.to_string()))
     }
 }

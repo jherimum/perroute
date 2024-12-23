@@ -8,7 +8,7 @@ use context::TemplateRenderContext;
 #[derive(Debug, thiserror::Error)]
 pub enum TemplateError {
     #[error("Template render error: {0}")]
-    RenderError(Box<dyn Error + Send + Sync>),
+    RenderError(String),
 }
 
 pub trait TemplateRender: Send + Sync {
