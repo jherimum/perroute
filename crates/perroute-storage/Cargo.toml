@@ -23,3 +23,7 @@ bon = { workspace = true }
 futures = { workspace = true }
 tap = { workspace = true }
 log = { workspace = true }
+
+
+[lints]
+workspace = true

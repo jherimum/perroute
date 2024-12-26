@@ -28,3 +28,7 @@ derive_more = { workspace = true, features = ["full"] }
 bon = { workspace = true }
 derive-getters = { workspace = true }
 paste = "1"
+
+
+[lints]
+workspace = true

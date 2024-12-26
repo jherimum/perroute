@@ -45,22 +45,17 @@ aws-sdk-sns = "1"
 config = "0.14"
 
 
-[workspace.lints.rust]
-# https://doc.rust-lang.org/rustc/lints/listing/allowed-by-default.html#allowed-by-default-lints
-unsafe_code = "warn"
-unsafe_op_in_unsafe_fn = "warn"
-missing-abi = "warn"
-missing_docs = "warn"
-
 [workspace.lints.clippy]
 # https://rust-lang.github.io/rust-clippy/master/
 # pedantic
-pedantic = { level = "warn", priority = -1 }
+pedantic = { level = "allow", priority = -1 }
 must_use_candidate = "allow"
 missing_errors_doc = "allow"
 missing_panics_doc = "allow"
+unwrap_used = "deny"
+
 
 # restriction
-undocumented_unsafe_blocks = "warn"
-multiple_unsafe_ops_per_block = "warn"
-allow_attributes = "warn"
+undocumented_unsafe_blocks = "allow"
+multiple_unsafe_ops_per_block = "allow"
+allow_attributes = "allow"
