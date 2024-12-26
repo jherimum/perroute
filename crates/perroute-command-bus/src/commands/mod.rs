@@ -18,7 +18,11 @@ pub struct CommandWrapper<'c, C> {
 }
 
 impl<'c, C: Command> CommandWrapper<'c, C> {
-    pub fn new(command: &'c C, created_at: &'c Timestamp, actor: &'c Actor) -> Self {
+    pub fn new(
+        command: &'c C,
+        created_at: &'c Timestamp,
+        actor: &'c Actor,
+    ) -> Self {
         Self {
             command,
             created_at,

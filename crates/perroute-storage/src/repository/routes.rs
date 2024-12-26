@@ -4,7 +4,9 @@ use perroute_commons::types::{dispatch_type::DispatchType, id::Id};
 
 pub enum RouteQuery<'q> {
     ById(&'q Id),
-    ActiveByBusinessUnitAndDispatchType(&'q ActiveByBusinessUnitAndDispatchTypeQuery<'q>),
+    ActiveByBusinessUnitAndDispatchType(
+        &'q ActiveByBusinessUnitAndDispatchTypeQuery<'q>,
+    ),
 }
 
 pub struct ActiveByBusinessUnitAndDispatchTypeQuery<'q> {
@@ -15,7 +17,10 @@ pub struct ActiveByBusinessUnitAndDispatchTypeQuery<'q> {
 
 #[async_trait::async_trait]
 pub trait RouteRepository {
-    async fn get(&self, query: &RouteQuery<'_>) -> RepositoryResult<Option<Route>>;
+    async fn get(
+        &self,
+        query: &RouteQuery<'_>,
+    ) -> RepositoryResult<Option<Route>>;
 
     async fn save(&self, route: Route) -> RepositoryResult<Route>;
 
@@ -23,12 +28,18 @@ pub trait RouteRepository {
 
     async fn delete(&self, query: &RouteQuery<'_>) -> RepositoryResult<u64>;
 
-    async fn query(&self, query: &RouteQuery<'_>) -> RepositoryResult<Vec<Route>>;
+    async fn query(
+        &self,
+        query: &RouteQuery<'_>,
+    ) -> RepositoryResult<Vec<Route>>;
 }
 
 #[async_trait::async_trait]
 impl RouteRepository for PgRepository {
-    async fn query(&self, query: &RouteQuery<'_>) -> RepositoryResult<Vec<Route>> {
+    async fn query(
+        &self,
+        query: &RouteQuery<'_>,
+    ) -> RepositoryResult<Vec<Route>> {
         todo!()
     }
 
@@ -43,17 +54,23 @@ impl RouteRepository for PgRepository {
     async fn delete(&self, query: &RouteQuery<'_>) -> RepositoryResult<u64> {
         match query {
             RouteQuery::ById(id) => {
-                let query = sqlx::query("DELETE FROM routes WHERE id = $1").bind(id);
+                let query =
+                    sqlx::query("DELETE FROM routes WHERE id = $1").bind(id);
                 Ok(execute!(&self.source, query)?.rows_affected())
             }
             _ => todo!(),
         }
     }
 
-    async fn get(&self, query: &RouteQuery<'_>) -> RepositoryResult<Option<Route>> {
+    async fn get(
+        &self,
+        query: &RouteQuery<'_>,
+    ) -> RepositoryResult<Option<Route>> {
         match query {
             RouteQuery::ById(id) => {
-                let query = sqlx::query_as("SELECT * FROM routes WHERE id = $1").bind(id);
+                let query =
+                    sqlx::query_as("SELECT * FROM routes WHERE id = $1")
+                        .bind(id);
                 Ok(fetch_optional!(&self.source, query)?)
             }
             _ => todo!(),

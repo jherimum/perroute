@@ -10,7 +10,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
     env_logger::init();
 
     log::info!("Starting events pooling service...");
-    let settings = Settings::load().tap_err(|e| log::error!("Failed to load settings: {e}"))?;
+    let settings = Settings::load()
+        .tap_err(|e| log::error!("Failed to load settings: {e}"))?;
     let event_pooling_settings = settings
         .pooling
         .ok_or("Event pooling settings are missing")?;
@@ -21,7 +22,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .await
         .tap_err(|e| log::error!("Failed to create repository: {e}"))?;
 
-    let publisher = SnsPublisher::new(sns_client, event_pooling_settings.topic_arn);
+    let publisher =
+        SnsPublisher::new(sns_client, event_pooling_settings.topic_arn);
 
     let pooling = Pooling::new(
         repository.clone(),

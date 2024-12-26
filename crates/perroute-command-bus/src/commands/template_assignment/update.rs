@@ -8,7 +8,8 @@ use perroute_commons::{
     types::{id::Id, priority::Priority, vars::Vars, Timestamp},
 };
 use perroute_storage::{
-    models::template_assignment::TemplateAssignment, repository::TransactedRepository,
+    models::template_assignment::TemplateAssignment,
+    repository::TransactedRepository,
 };
 
 #[derive(Debug, thiserror::Error)]

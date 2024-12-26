@@ -9,7 +9,9 @@ use std::time::Duration;
 
 pub static MIGRATOR: sqlx::migrate::Migrator = sqlx::migrate!();
 
-pub async fn build_pool(settings: &DatabaseSettings) -> Result<PgPool, sqlx::Error> {
+pub async fn build_pool(
+    settings: &DatabaseSettings,
+) -> Result<PgPool, sqlx::Error> {
     let options = connection_options(settings);
     PgPoolOptions::new()
         .max_connections(settings.pool.max_connection)
@@ -30,12 +32,16 @@ pub async fn migrate(pool: &PgPool) -> Result<(), sqlx::Error> {
     Ok(())
 }
 
-async fn new_connection(database_settings: &DatabaseSettings) -> Result<PgConnection, sqlx::Error> {
+async fn new_connection(
+    database_settings: &DatabaseSettings,
+) -> Result<PgConnection, sqlx::Error> {
     let options = connection_options(database_settings);
     PgConnection::connect_with(&options).await
 }
 
-fn connection_options(database_settings: &DatabaseSettings) -> PgConnectOptions {
+fn connection_options(
+    database_settings: &DatabaseSettings,
+) -> PgConnectOptions {
     let ssl_mode = if database_settings.require_ssl {
         PgSslMode::Require
     } else {

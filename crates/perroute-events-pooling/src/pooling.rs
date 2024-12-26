@@ -48,48 +48,72 @@ impl<R: Repository + Send + Sync, P: Publisher + Send + Sync> Pooling<R, P> {
         }
     }
 
-    async fn set_consumed(&self, published: Vec<Id>, skipped: Vec<Id>) -> Result<(), PoolingError> {
+    async fn set_consumed(
+        &self,
+        published: Vec<Id>,
+        skipped: Vec<Id>,
+    ) -> Result<(), PoolingError> {
         match (published, skipped) {
-            (published, skipped) if published.is_empty() && skipped.is_empty() => Ok(()),
+            (published, skipped)
+                if published.is_empty() && skipped.is_empty() =>
+            {
+                Ok(())
+            }
             (published, skipped) => {
                 let tx = self.repository.begin().await?;
 
                 let consumed_at = Timestamp::now();
                 if !published.is_empty() {
-                    if let Err(e) =
-                        EventRepository::set_consumed(&tx, published, false, &consumed_at).await
+                    if let Err(e) = EventRepository::set_consumed(
+                        &tx,
+                        published,
+                        false,
+                        &consumed_at,
+                    )
+                    .await
                     {
-                        tx.rollback()
-                            .await
-                            .tap_err(|e| log::error!("Failed to rollback transaction:{e}"))?;
+                        tx.rollback().await.tap_err(|e| {
+                            log::error!("Failed to rollback transaction:{e}")
+                        })?;
                         return Err(e.into());
                     }
                 }
 
                 if !skipped.is_empty() {
-                    if let Err(e) =
-                        EventRepository::set_consumed(&tx, skipped, true, &consumed_at).await
+                    if let Err(e) = EventRepository::set_consumed(
+                        &tx,
+                        skipped,
+                        true,
+                        &consumed_at,
+                    )
+                    .await
                     {
-                        tx.rollback()
-                            .await
-                            .tap_err(|e| log::error!("Failed to rollback transaction:{e}"))?;
+                        tx.rollback().await.tap_err(|e| {
+                            log::error!("Failed to rollback transaction:{e}")
+                        })?;
                         return Err(e.into());
                     }
                 }
 
-                tx.commit()
-                    .await
-                    .tap_err(|e| log::error!("Failet co commit transaction: {e}"))?;
+                tx.commit().await.tap_err(|e| {
+                    log::error!("Failet co commit transaction: {e}")
+                })?;
 
                 Ok(())
             }
         }
     }
 
-    async fn fetch_events(&self) -> Result<Vec<DbEvent>, perroute_storage::repository::Error> {
+    async fn fetch_events(
+        &self,
+    ) -> Result<Vec<DbEvent>, perroute_storage::repository::Error> {
         EventRepository::unconsumed(&self.repository, self.max_events as usize)
             .await
-            .tap_err(|e| log::error!("Failed to retrieve uncosumed messages from database: {e}"))
+            .tap_err(|e| {
+                log::error!(
+                    "Failed to retrieve uncosumed messages from database: {e}"
+                )
+            })
     }
 
     async fn inner_run(&self) -> Result<(), PoolingError> {
@@ -107,9 +131,8 @@ impl<R: Repository + Send + Sync, P: Publisher + Send + Sync> Pooling<R, P> {
             .tap_err(|e| log::error!("Failed to fetch events from database: {e}"))?
             .into_iter()
             .map(|db_event| {
-                Event::try_from(&db_event).tap_err(|error| {
-                    log::error!("Failed to convert dbevent {db_event:?} to event: {error}")
-                })
+                Event::try_from(&db_event)
+                    .tap_err(|error| log::error!("Failed to convert dbevent {db_event:?} to event: {error}"))
             })
             .collect::<Result<Vec<_>, _>>()?
             .into_iter()

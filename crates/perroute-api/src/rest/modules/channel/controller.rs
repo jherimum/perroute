@@ -14,19 +14,31 @@ use super::{
 pub struct ChannelController<RS>(PhantomData<RS>);
 
 impl<RS: ChannelRestService> ChannelController<RS> {
-    pub async fn get(service: Data<RS>, path: Path<ChannelPath>) -> impl Responder {
+    pub async fn get(
+        service: Data<RS>,
+        path: Path<ChannelPath>,
+    ) -> impl Responder {
         HttpResponse::Ok().finish()
     }
 
-    pub async fn query(service: Data<RS>, path: Path<ChannelCollectionPath>) -> impl Responder {
+    pub async fn query(
+        service: Data<RS>,
+        path: Path<ChannelCollectionPath>,
+    ) -> impl Responder {
         HttpResponse::Ok().finish()
     }
 
-    pub async fn delete(service: Data<RS>, path: Path<ChannelPath>) -> impl Responder {
+    pub async fn delete(
+        service: Data<RS>,
+        path: Path<ChannelPath>,
+    ) -> impl Responder {
         HttpResponse::Ok().finish()
     }
 
-    pub async fn update(service: Data<RS>, path: Path<ChannelPath>) -> impl Responder {
+    pub async fn update(
+        service: Data<RS>,
+        path: Path<ChannelPath>,
+    ) -> impl Responder {
         HttpResponse::Ok().finish()
     }
 

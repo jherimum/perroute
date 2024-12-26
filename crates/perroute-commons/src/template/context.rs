@@ -9,7 +9,10 @@ pub struct TemplateRenderContext<'ctx> {
 }
 
 impl<'ctx> TemplateRenderContext<'ctx> {
-    pub fn new(payload: &'ctx Payload, vars: &'ctx Vars) -> TemplateRenderContext<'ctx> {
+    pub fn new(
+        payload: &'ctx Payload,
+        vars: &'ctx Vars,
+    ) -> TemplateRenderContext<'ctx> {
         TemplateRenderContext { payload, vars }
     }
 }

@@ -5,7 +5,10 @@ use crate::{
 };
 use perroute_commons::{
     events::MessageCreatedEvent,
-    types::{dispatch_type::DispatchType, id::Id, recipient::Recipient, Payload, Tags, Timestamp},
+    types::{
+        dispatch_type::DispatchType, id::Id, recipient::Recipient, Payload,
+        Tags, Timestamp,
+    },
 };
 use perroute_storage::{models::message::Message, repository::TransactedRepository};
 

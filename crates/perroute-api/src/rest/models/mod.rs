@@ -31,9 +31,14 @@ impl<D: ResourceBuilder> ApiResponse<D> {
 impl<D: ResourceBuilder> Responder for ApiResponse<D> {
     type Body = BoxBody;
 
-    fn respond_to(self, req: &actix_web::HttpRequest) -> actix_web::HttpResponse {
+    fn respond_to(
+        self,
+        req: &actix_web::HttpRequest,
+    ) -> actix_web::HttpResponse {
         match self {
-            Self::Ok(data) => actix_web::HttpResponse::Ok().json(data.build(req)),
+            Self::Ok(data) => {
+                actix_web::HttpResponse::Ok().json(data.build(req))
+            }
 
             Self::Created(data) => {
                 let mut b = actix_web::HttpResponse::Created();

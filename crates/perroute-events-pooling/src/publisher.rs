@@ -11,7 +11,10 @@ pub enum PublisherError {
 }
 
 pub trait Publisher {
-    fn publish<'e>(&self, events: Vec<&'e Event>) -> impl Future<Output = PublisherResult<'e>>;
+    fn publish<'e>(
+        &self,
+        events: Vec<&'e Event>,
+    ) -> impl Future<Output = PublisherResult<'e>>;
 }
 
 #[derive(Debug, Default)]

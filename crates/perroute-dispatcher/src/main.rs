@@ -1,5 +1,6 @@
 use perroute_commons::{
-    configuration::settings::Settings, template::handlebars::HandlebarsTemplateRender,
+    configuration::settings::Settings,
+    template::handlebars::HandlebarsTemplateRender,
 };
 use perroute_digester::pooling::SqsPooling;
 use perroute_storage::create_repository;

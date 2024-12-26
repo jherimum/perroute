@@ -3,7 +3,14 @@ use serde::{Deserialize, Serialize};
 use super::dispatch_type::DispatchType;
 
 #[derive(
-    Debug, Clone, PartialEq, Eq, strum::Display, derive_more::TryInto, Serialize, Deserialize,
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    strum::Display,
+    derive_more::TryInto,
+    Serialize,
+    Deserialize,
 )]
 pub enum Recipient {
     Sms(SmsRecipient),

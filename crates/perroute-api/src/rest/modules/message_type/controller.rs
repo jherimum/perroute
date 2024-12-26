@@ -1,12 +1,14 @@
 use super::{
     models::{
-        CreateMessageTypeRequest, MessageTypeCollectionPath, MessageTypeModel, MessageTypePath,
-        UpdateMessageTypeRequest,
+        CreateMessageTypeRequest, MessageTypeCollectionPath, MessageTypeModel,
+        MessageTypePath, UpdateMessageTypeRequest,
     },
     service::MessageTypeRestService,
 };
 use crate::rest::{
-    models::{resource::ResourceModel, resource::ResourceModelCollection, ApiResponse},
+    models::{
+        resource::ResourceModel, resource::ResourceModelCollection, ApiResponse,
+    },
     modules::ApiResult,
 };
 use actix_web::web::{Data, Json, Path};
@@ -35,7 +37,10 @@ impl<RS: MessageTypeRestService> MessageTypeController<RS> {
             .map(ApiResponse::ok)
     }
 
-    pub async fn delete(service: Data<RS>, path: Path<MessageTypePath>) -> ApiResult<()> {
+    pub async fn delete(
+        service: Data<RS>,
+        path: Path<MessageTypePath>,
+    ) -> ApiResult<()> {
         service
             .delete(&Actor::System, &path)
             .await

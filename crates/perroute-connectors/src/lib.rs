@@ -94,7 +94,11 @@ pub struct Request<'r, R, T> {
 }
 
 impl<'r> Request<'r, SmsRecipient, SmsTemplate> {
-    pub fn sms(id: &'r Id, recipient: &'r SmsRecipient, template: &'r SmsTemplate) -> Self {
+    pub fn sms(
+        id: &'r Id,
+        recipient: &'r SmsRecipient,
+        template: &'r SmsTemplate,
+    ) -> Self {
         Self {
             id,
             recipient,
@@ -104,7 +108,11 @@ impl<'r> Request<'r, SmsRecipient, SmsTemplate> {
 }
 
 impl<'r> Request<'r, EmailRecipient, EmailTemplate> {
-    pub fn email(id: &'r Id, recipient: &'r EmailRecipient, template: &'r EmailTemplate) -> Self {
+    pub fn email(
+        id: &'r Id,
+        recipient: &'r EmailRecipient,
+        template: &'r EmailTemplate,
+    ) -> Self {
         Self {
             id,
             recipient,
@@ -114,7 +122,11 @@ impl<'r> Request<'r, EmailRecipient, EmailTemplate> {
 }
 
 impl<'r> Request<'r, PushRecipient, PushTemplate> {
-    pub fn push(id: &'r Id, recipient: &'r PushRecipient, template: &'r PushTemplate) -> Self {
+    pub fn push(
+        id: &'r Id,
+        recipient: &'r PushRecipient,
+        template: &'r PushTemplate,
+    ) -> Self {
         Self {
             id,
             recipient,

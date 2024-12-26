@@ -37,7 +37,10 @@ pub trait PayloadExampleRepository {
         examples: &[PayloadExample],
     ) -> RepositoryResult<Vec<PayloadExample>>;
 
-    async fn delete_payload_examples(&self, message_type_id: &Id) -> RepositoryResult<()>;
+    async fn delete_payload_examples(
+        &self,
+        message_type_id: &Id,
+    ) -> RepositoryResult<()>;
 }
 
 #[async_trait::async_trait]
@@ -58,19 +61,32 @@ impl PayloadExampleRepository for PgRepository {
         Ok(result)
     }
 
-    async fn delete_payload_examples(&self, message_type_id: &Id) -> RepositoryResult<()> {
-        let query = query(DELETE_ALL_PAYLOAD_EXAMPLES_SQL).bind(message_type_id);
+    async fn delete_payload_examples(
+        &self,
+        message_type_id: &Id,
+    ) -> RepositoryResult<()> {
+        let query =
+            query(DELETE_ALL_PAYLOAD_EXAMPLES_SQL).bind(message_type_id);
         execute!(&self.source, query)?;
         Ok(())
     }
 }
 
 pub trait MessageTypeRepository {
-    fn get(&self, id: &Id) -> impl Future<Output = RepositoryResult<MessageType>>;
+    fn get(
+        &self,
+        id: &Id,
+    ) -> impl Future<Output = RepositoryResult<MessageType>>;
 
-    fn find_by_id(&self, id: &Id) -> impl Future<Output = RepositoryResult<Option<MessageType>>>;
+    fn find_by_id(
+        &self,
+        id: &Id,
+    ) -> impl Future<Output = RepositoryResult<Option<MessageType>>>;
 
-    fn delete_message_type(&self, id: &Id) -> impl Future<Output = RepositoryResult<bool>>;
+    fn delete_message_type(
+        &self,
+        id: &Id,
+    ) -> impl Future<Output = RepositoryResult<bool>>;
 
     fn save_message_type(
         &self,
@@ -98,7 +114,10 @@ impl MessageTypeRepository for PgRepository {
         todo!()
     }
 
-    async fn find_by_id(&self, id: &Id) -> RepositoryResult<Option<MessageType>> {
+    async fn find_by_id(
+        &self,
+        id: &Id,
+    ) -> RepositoryResult<Option<MessageType>> {
         Ok(fetch_optional!(
             &self.source,
             query_as(FIND_MESSAGE_TYPE).bind(id)
@@ -106,11 +125,15 @@ impl MessageTypeRepository for PgRepository {
     }
 
     async fn delete_message_type(&self, id: &Id) -> RepositoryResult<bool> {
-        let result: PgQueryResult = execute!(&self.source, query(DELETE_MESSAGE_TYPE).bind(id))?;
+        let result: PgQueryResult =
+            execute!(&self.source, query(DELETE_MESSAGE_TYPE).bind(id))?;
         Ok(result.rows_affected() > 0)
     }
 
-    async fn save_message_type(&self, message_type: MessageType) -> RepositoryResult<MessageType> {
+    async fn save_message_type(
+        &self,
+        message_type: MessageType,
+    ) -> RepositoryResult<MessageType> {
         let query = query_as(INSERT_MESSAGE_TYPE)
             .bind(message_type.id())
             .bind(message_type.code())
@@ -147,7 +170,10 @@ impl MessageTypeRepository for PgRepository {
         )?)
     }
 
-    async fn exists_message_type(&self, query: &MessageTypeQuery) -> RepositoryResult<bool> {
+    async fn exists_message_type(
+        &self,
+        query: &MessageTypeQuery,
+    ) -> RepositoryResult<bool> {
         Ok(false)
     }
 }

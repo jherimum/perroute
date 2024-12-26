@@ -5,12 +5,16 @@ use crate::{
 };
 use perroute_commons::{
     events::MessageTypeCreatedEvent,
-    types::{code::Code, id::Id, name::Name, schema::Schema, vars::Vars, Payload},
+    types::{
+        code::Code, id::Id, name::Name, schema::Schema, vars::Vars, Payload,
+    },
 };
 use perroute_storage::{
     models::message_type::{MessageType, PayloadExample},
     repository::{
-        message_types::{MessageTypeQuery, MessageTypeRepository, PayloadExampleRepository},
+        message_types::{
+            MessageTypeQuery, MessageTypeRepository, PayloadExampleRepository,
+        },
         TransactedRepository,
     },
 };
@@ -66,14 +70,23 @@ impl CommandHandler for CreateMessageTypeCommandHandler {
             .updated_at(cmd.created_at().clone())
             .build();
 
-        let message_type =
-            MessageTypeRepository::save_message_type(ctx.repository(), message_type).await?;
+        let message_type = MessageTypeRepository::save_message_type(
+            ctx.repository(),
+            message_type,
+        )
+        .await?;
 
-        let examples: Vec<PayloadExample> =
-            PayloadExamplesInput::new(message_type.id(), &cmd.inner().payload_examples).into();
+        let examples: Vec<PayloadExample> = PayloadExamplesInput::new(
+            message_type.id(),
+            &cmd.inner().payload_examples,
+        )
+        .into();
 
-        let examples =
-            PayloadExampleRepository::save_payload_examples(ctx.repository(), &examples).await?;
+        let examples = PayloadExampleRepository::save_payload_examples(
+            ctx.repository(),
+            &examples,
+        )
+        .await?;
 
         //Ok((message_type, examples))
         todo!()

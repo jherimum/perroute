@@ -1,7 +1,9 @@
 use std::marker::PhantomData;
 
 use super::{
-    models::{CreateRouteRequest, RouteCollectionPath, RoutePath, UpdateRouteRequest},
+    models::{
+        CreateRouteRequest, RouteCollectionPath, RoutePath, UpdateRouteRequest,
+    },
     service::RouteRestService,
 };
 use actix_web::{
@@ -13,15 +15,24 @@ use actix_web_validator::Path;
 pub struct RouteController<RS>(PhantomData<RS>);
 
 impl<RS: RouteRestService> RouteController<RS> {
-    pub async fn get(service: Data<RS>, path: Path<RoutePath>) -> impl Responder {
+    pub async fn get(
+        service: Data<RS>,
+        path: Path<RoutePath>,
+    ) -> impl Responder {
         HttpResponse::Ok().finish()
     }
 
-    pub async fn query(service: Data<RS>, path: Path<RouteCollectionPath>) -> impl Responder {
+    pub async fn query(
+        service: Data<RS>,
+        path: Path<RouteCollectionPath>,
+    ) -> impl Responder {
         HttpResponse::Ok().finish()
     }
 
-    pub async fn delete(service: Data<RS>, path: Path<RoutePath>) -> impl Responder {
+    pub async fn delete(
+        service: Data<RS>,
+        path: Path<RoutePath>,
+    ) -> impl Responder {
         HttpResponse::Ok().finish()
     }
 

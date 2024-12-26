@@ -14,7 +14,10 @@ pub enum BusinessUnitQuery {
 pub trait BusinessUnitRepository {
     async fn get(&self, id: &Id) -> RepositoryResult<BusinessUnit>;
 
-    async fn find_by_id(&self, id: &Id) -> RepositoryResult<Option<BusinessUnit>>;
+    async fn find_by_id(
+        &self,
+        id: &Id,
+    ) -> RepositoryResult<Option<BusinessUnit>>;
 
     async fn find_business_unit(
         &self,
@@ -38,7 +41,10 @@ pub trait BusinessUnitRepository {
         query: &BusinessUnitQuery,
     ) -> RepositoryResult<Vec<BusinessUnit>>;
 
-    async fn exists_business_unit(&self, query: &BusinessUnitQuery) -> RepositoryResult<bool>;
+    async fn exists_business_unit(
+        &self,
+        query: &BusinessUnitQuery,
+    ) -> RepositoryResult<bool>;
 }
 
 #[async_trait::async_trait]
@@ -47,7 +53,10 @@ impl BusinessUnitRepository for PgRepository {
         todo!()
     }
 
-    async fn find_by_id(&self, id: &Id) -> RepositoryResult<Option<BusinessUnit>> {
+    async fn find_by_id(
+        &self,
+        id: &Id,
+    ) -> RepositoryResult<Option<BusinessUnit>> {
         todo!()
     }
 
@@ -66,11 +75,12 @@ impl BusinessUnitRepository for PgRepository {
         &self,
         business_unit: BusinessUnit,
     ) -> RepositoryResult<BusinessUnit> {
-        let query = query_as("update business_units set name = $1, vars = $2, updated_at = $3 where id = $4 returning *")
-            .bind(business_unit.name())
-            .bind(business_unit.vars())
-            .bind(business_unit.updated_at())
-            .bind(business_unit.id());
+        let query =
+            query_as("update business_units set name = $1, vars = $2, updated_at = $3 where id = $4 returning *")
+                .bind(business_unit.name())
+                .bind(business_unit.vars())
+                .bind(business_unit.updated_at())
+                .bind(business_unit.id());
         Ok(fetch_one!(&self.source, query)?)
     }
 
@@ -97,25 +107,32 @@ impl BusinessUnitRepository for PgRepository {
         Ok(fetch_one!(&self.source, query)?)
     }
 
-    async fn exists_business_unit(&self, query: &BusinessUnitQuery) -> RepositoryResult<bool> {
+    async fn exists_business_unit(
+        &self,
+        query: &BusinessUnitQuery,
+    ) -> RepositoryResult<bool> {
         match query {
             BusinessUnitQuery::ById(id) => {
                 let result: Vec<BusinessUnit> = fetch_all!(
                     &self.source,
-                    query_as("select * from business_units where id = $1").bind(id)
+                    query_as("select * from business_units where id = $1")
+                        .bind(id)
                 )?;
                 Ok(!result.is_empty())
             }
             BusinessUnitQuery::ByCode(code) => {
                 let result: Vec<BusinessUnit> = fetch_all!(
                     &self.source,
-                    query_as("select * from business_units where code = $1").bind(code)
+                    query_as("select * from business_units where code = $1")
+                        .bind(code)
                 )?;
                 Ok(!result.is_empty())
             }
             BusinessUnitQuery::All => {
-                let result: Vec<BusinessUnit> =
-                    fetch_all!(&self.source, query_as("select * from business_units"))?;
+                let result: Vec<BusinessUnit> = fetch_all!(
+                    &self.source,
+                    query_as("select * from business_units")
+                )?;
                 Ok(!result.is_empty())
             }
         }
@@ -136,7 +153,8 @@ impl BusinessUnitRepository for PgRepository {
             )?),
             BusinessUnitQuery::ByCode(code) => Ok(fetch_all!(
                 &self.source,
-                query_as("select * from business_units where code = $1").bind(code)
+                query_as("select * from business_units where code = $1")
+                    .bind(code)
             )?),
         }
     }

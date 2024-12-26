@@ -14,18 +14,30 @@ pub trait ChannelRepository {
 
     async fn update(&self, channel: Channel) -> RepositoryResult<Channel>;
 
-    async fn exists_channel(&self, query: &ChannelQuery<'_>) -> RepositoryResult<bool>;
+    async fn exists_channel(
+        &self,
+        query: &ChannelQuery<'_>,
+    ) -> RepositoryResult<bool>;
 
     async fn delete(&self, query: &ChannelQuery<'_>) -> RepositoryResult<i32>;
 
-    async fn find(&self, query: &ChannelQuery<'_>) -> RepositoryResult<Option<Channel>>;
+    async fn find(
+        &self,
+        query: &ChannelQuery<'_>,
+    ) -> RepositoryResult<Option<Channel>>;
 
-    async fn query(&self, query: &ChannelQuery<'_>) -> RepositoryResult<Vec<Channel>>;
+    async fn query(
+        &self,
+        query: &ChannelQuery<'_>,
+    ) -> RepositoryResult<Vec<Channel>>;
 }
 
 #[async_trait::async_trait]
 impl ChannelRepository for PgRepository {
-    async fn query(&self, query: &ChannelQuery<'_>) -> RepositoryResult<Vec<Channel>> {
+    async fn query(
+        &self,
+        query: &ChannelQuery<'_>,
+    ) -> RepositoryResult<Vec<Channel>> {
         todo!()
     }
 
@@ -37,7 +49,10 @@ impl ChannelRepository for PgRepository {
         todo!()
     }
 
-    async fn exists_channel(&self, query: &ChannelQuery<'_>) -> RepositoryResult<bool> {
+    async fn exists_channel(
+        &self,
+        query: &ChannelQuery<'_>,
+    ) -> RepositoryResult<bool> {
         todo!()
     }
 
@@ -45,7 +60,10 @@ impl ChannelRepository for PgRepository {
         todo!()
     }
 
-    async fn find(&self, query: &ChannelQuery<'_>) -> RepositoryResult<Option<Channel>> {
+    async fn find(
+        &self,
+        query: &ChannelQuery<'_>,
+    ) -> RepositoryResult<Option<Channel>> {
         todo!()
     }
 }

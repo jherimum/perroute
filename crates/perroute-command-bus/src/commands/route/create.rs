@@ -65,7 +65,8 @@ impl CommandHandler for CreateRouteCommandHandler {
             .updated_at(cmd.created_at().clone())
             .build();
 
-        let route = RouteRepository::save(ctx.repository(), route.clone()).await?;
+        let route =
+            RouteRepository::save(ctx.repository(), route.clone()).await?;
 
         //Ok(route.clone())
         todo!()
@@ -96,8 +97,11 @@ async fn validate<R: TransactedRepository>(
         return Err(CreateRouteCommandError::MessageTypeNotFound.into());
     }
 
-    let channel =
-        ChannelRepository::find(ctx.repository(), &ChannelQuery::ById(&cmd.channel_id)).await?;
+    let channel = ChannelRepository::find(
+        ctx.repository(),
+        &ChannelQuery::ById(&cmd.channel_id),
+    )
+    .await?;
 
     if let Some(channel) = channel {
         if *channel.business_unit_id() == cmd.business_id {

@@ -47,9 +47,13 @@ impl Entity for DbEvent {
 impl DbEvent {
     fn actor(&self) -> Actor {
         match self.actor_type() {
-            ActorType::User => Actor::User(self.actor_id().as_ref().unwrap().clone()),
+            ActorType::User => {
+                Actor::User(self.actor_id().as_ref().unwrap().clone())
+            }
             ActorType::System => Actor::System,
-            ActorType::Service => Actor::Service(self.actor_id().as_ref().unwrap().clone()),
+            ActorType::Service => {
+                Actor::Service(self.actor_id().as_ref().unwrap().clone())
+            }
         }
     }
 }
@@ -64,10 +68,9 @@ impl<D: DeserializeOwned> TryFrom<&DbEvent> for ApplicationEventData<D> {
             .event_type(value.event_type().clone())
             .created_at(value.created_at().clone())
             .actor(value.actor())
-            .payload(
-                serde_json::from_value(value.payload().clone())
-                    .tap_err(|e| log::error!("Failed to deserialize event payload: {e}"))?,
-            )
+            .payload(serde_json::from_value(value.payload().clone()).tap_err(
+                |e| log::error!("Failed to deserialize event payload: {e}"),
+            )?)
             .build())
     }
 }
@@ -77,15 +80,15 @@ impl TryFrom<&DbEvent> for Event {
 
     fn try_from(value: &DbEvent) -> Result<Self, Self::Error> {
         Ok(match value.event_type() {
-            EventType::BusinessUnitCreated => {
-                Event::BusinessUnitCreated(ApplicationEventData::try_from(value)?)
-            }
-            EventType::BusinessUnitUpdated => {
-                Event::BusinessUnitUpdated(ApplicationEventData::try_from(value)?)
-            }
-            EventType::BusinessUnitDeleted => {
-                Event::BusinessUnitCreated(ApplicationEventData::try_from(value)?)
-            }
+            EventType::BusinessUnitCreated => Event::BusinessUnitCreated(
+                ApplicationEventData::try_from(value)?,
+            ),
+            EventType::BusinessUnitUpdated => Event::BusinessUnitUpdated(
+                ApplicationEventData::try_from(value)?,
+            ),
+            EventType::BusinessUnitDeleted => Event::BusinessUnitCreated(
+                ApplicationEventData::try_from(value)?,
+            ),
             EventType::ChannelCreated => {
                 Event::ChannelCreated(ApplicationEventData::try_from(value)?)
             }
@@ -95,29 +98,41 @@ impl TryFrom<&DbEvent> for Event {
             EventType::ChannelDeleted => {
                 Event::ChannelDeleted(ApplicationEventData::try_from(value)?)
             }
-            EventType::MessageTypeCreated => {
-                Event::MessageTypeCreated(ApplicationEventData::try_from(value)?)
+            EventType::MessageTypeCreated => Event::MessageTypeCreated(
+                ApplicationEventData::try_from(value)?,
+            ),
+            EventType::MessageTypeUpdated => Event::MessageTypeUpdated(
+                ApplicationEventData::try_from(value)?,
+            ),
+            EventType::MessageTypeDeleted => Event::MessageTypeDeleted(
+                ApplicationEventData::try_from(value)?,
+            ),
+            EventType::RouteCreated => {
+                Event::RouteCreated(ApplicationEventData::try_from(value)?)
             }
-            EventType::MessageTypeUpdated => {
-                Event::MessageTypeUpdated(ApplicationEventData::try_from(value)?)
+            EventType::RouteUpdated => {
+                Event::RouteUpdated(ApplicationEventData::try_from(value)?)
             }
-            EventType::MessageTypeDeleted => {
-                Event::MessageTypeDeleted(ApplicationEventData::try_from(value)?)
+            EventType::RouteDeleted => {
+                Event::RouteDeleted(ApplicationEventData::try_from(value)?)
             }
-            EventType::RouteCreated => Event::RouteCreated(ApplicationEventData::try_from(value)?),
-            EventType::RouteUpdated => Event::RouteUpdated(ApplicationEventData::try_from(value)?),
-            EventType::RouteDeleted => Event::RouteDeleted(ApplicationEventData::try_from(value)?),
             EventType::MessageCreated => {
                 Event::MessageCreated(ApplicationEventData::try_from(value)?)
             }
             EventType::TemplateAssignmentCreated => {
-                Event::TemplateAssignmentCreated(ApplicationEventData::try_from(value)?)
+                Event::TemplateAssignmentCreated(
+                    ApplicationEventData::try_from(value)?,
+                )
             }
             EventType::TemplateAssignmentUpdated => {
-                Event::TemplateAssignmentUpdated(ApplicationEventData::try_from(value)?)
+                Event::TemplateAssignmentUpdated(
+                    ApplicationEventData::try_from(value)?,
+                )
             }
             EventType::TemplateAssignmentDeleted => {
-                Event::TemplateAssignmentDeleted(ApplicationEventData::try_from(value)?)
+                Event::TemplateAssignmentDeleted(
+                    ApplicationEventData::try_from(value)?,
+                )
             }
         })
     }
@@ -157,10 +172,9 @@ impl<D: Serialize> TryFrom<&ApplicationEventData<D>> for DbEvent {
             .id(value.id().clone())
             .event_type(value.event_type().clone())
             .entity_id(value.entity_id().clone())
-            .payload(
-                serde_json::to_value(value.payload())
-                    .tap_err(|e| log::error!("Failed to serialize event payload: {e}"))?,
-            )
+            .payload(serde_json::to_value(value.payload()).tap_err(|e| {
+                log::error!("Failed to serialize event payload: {e}")
+            })?)
             .created_at(value.created_at().clone())
             .maybe_actor_id(value.actor().id())
             .actor_type(value.actor().actor_type().clone())

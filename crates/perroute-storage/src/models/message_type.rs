@@ -4,7 +4,8 @@ use bon::Builder;
 use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::types::{
-    code::Code, id::Id, name::Name, schema::Schema, vars::Vars, Payload, Timestamp,
+    code::Code, id::Id, name::Name, schema::Schema, vars::Vars, Payload,
+    Timestamp,
 };
 use serde_json::Value;
 use sqlx::prelude::FromRow;

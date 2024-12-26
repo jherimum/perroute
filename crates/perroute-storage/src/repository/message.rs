@@ -14,7 +14,10 @@ pub trait MessageRepository {
 
     async fn update(&self, message: Message) -> RepositoryResult<Message>;
 
-    async fn find(&self, query: &MessageQuery<'_>) -> RepositoryResult<Option<Message>>;
+    async fn find(
+        &self,
+        query: &MessageQuery<'_>,
+    ) -> RepositoryResult<Option<Message>>;
 }
 
 #[async_trait::async_trait]
@@ -27,7 +30,10 @@ impl MessageRepository for PgRepository {
         todo!()
     }
 
-    async fn find(&self, query: &MessageQuery<'_>) -> RepositoryResult<Option<Message>> {
+    async fn find(
+        &self,
+        query: &MessageQuery<'_>,
+    ) -> RepositoryResult<Option<Message>> {
         todo!()
     }
 }

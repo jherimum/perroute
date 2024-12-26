@@ -81,7 +81,9 @@ where
         }
     }
 
-    async fn receive_message(&self) -> Result<ReceiveMessageOutput, PooligError> {
+    async fn receive_message(
+        &self,
+    ) -> Result<ReceiveMessageOutput, PooligError> {
         self.sqs_client
             .receive_message()
             .queue_url(&self.queue_url)
@@ -113,7 +115,9 @@ where
             .into_iter()
             .filter_map(|message| to_event(&message).map(|e| (message, e)))
             .map(|(message, event)| (message, self.dispatcher(event)))
-            .map(|(message, dispatcher)| (message, tokio::task::spawn(dispatcher.execute())))
+            .map(|(message, dispatcher)| {
+                (message, tokio::task::spawn(dispatcher.execute()))
+            })
             .collect::<Vec<_>>();
 
         for (message, task) in tasks {
@@ -149,7 +153,9 @@ where
     }
 }
 
-fn to_event(message: &Message) -> Option<ApplicationEventData<MessageCreatedEvent>> {
+fn to_event(
+    message: &Message,
+) -> Option<ApplicationEventData<MessageCreatedEvent>> {
     message.body().as_deref().and_then(|body| {
         serde_json::from_str(body)
             .tap_err(|e| log::error!("Failed to parse message body: {e}"))

@@ -1,4 +1,6 @@
-use actix_web::{body::BoxBody, http::StatusCode, HttpResponse, Responder, ResponseError};
+use actix_web::{
+    body::BoxBody, http::StatusCode, HttpResponse, Responder, ResponseError,
+};
 use perroute_command_bus::CommandBusError;
 use perroute_commons::types::{
     code::InvalidCodeError, name::InvalidNameError, schema::InvalidSchemaError,
@@ -70,15 +72,25 @@ impl From<&ApiError> for RestError {
     fn from(value: &ApiError) -> Self {
         match value {
             ApiError::NotFound => RestError::not_found("Resource not found"),
-            ApiError::InternalServerError(_) => RestError::internal_server("Internal server error"),
+            ApiError::InternalServerError(_) => {
+                RestError::internal_server("Internal server error")
+            }
             ApiError::Conflict => RestError::conflict("Conflict"),
-            ApiError::BadRequest => RestError::bad_request("Bad request", Default::default()),
-            ApiError::CommandBusError(e) => RestError::internal_server(e.to_string()),
-            ApiError::QueryBusError(e) => RestError::internal_server(e.to_string()),
+            ApiError::BadRequest => {
+                RestError::bad_request("Bad request", Default::default())
+            }
+            ApiError::CommandBusError(e) => {
+                RestError::internal_server(e.to_string())
+            }
+            ApiError::QueryBusError(e) => {
+                RestError::internal_server(e.to_string())
+            }
             ApiError::JsonPayloadError(ref e) => {
                 RestError::bad_request(e.to_string(), Default::default())
             }
-            ApiError::PathError(ref e) => RestError::bad_request(e.to_string(), Default::default()),
+            ApiError::PathError(ref e) => {
+                RestError::bad_request(e.to_string(), Default::default())
+            }
             ApiError::QueryPayloadError(ref e) => {
                 RestError::bad_request(e.to_string(), Default::default())
             }
@@ -157,7 +169,10 @@ impl Serialize for RestError {
 impl Responder for RestError {
     type Body = BoxBody;
 
-    fn respond_to(self, _: &actix_web::HttpRequest) -> HttpResponse<Self::Body> {
+    fn respond_to(
+        self,
+        _: &actix_web::HttpRequest,
+    ) -> HttpResponse<Self::Body> {
         HttpResponse::build(self.status).json(self)
     }
 }
@@ -201,10 +216,16 @@ impl FieldError {
     }
 }
 
-fn build_errors(errors: &mut Vec<FieldError>, key: &str, kind: &ValidationErrorsKind) {
+fn build_errors(
+    errors: &mut Vec<FieldError>,
+    key: &str,
+    kind: &ValidationErrorsKind,
+) {
     match kind {
         ValidationErrorsKind::Field(field_error) => {
-            errors.extend(field_error.iter().map(|e| FieldError::from(key, e.clone())));
+            errors.extend(
+                field_error.iter().map(|e| FieldError::from(key, e.clone())),
+            );
         }
         ValidationErrorsKind::List(l) => {
             for (i, e) in l {

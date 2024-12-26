@@ -1,5 +1,8 @@
 use crate::{
-    bus::{CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult},
+    bus::{
+        CommandBusContext, CommandHandler, CommandHandlerOutput,
+        CommandHandlerResult,
+    },
     commands::Command,
     impl_command, CommandBusError,
 };

@@ -1,10 +1,11 @@
 use super::models::{
-    ChannelCollectionPath, ChannelModel, ChannelPath, CreateChannelRequest, UpdateChannelRequest,
+    ChannelCollectionPath, ChannelModel, ChannelPath, CreateChannelRequest,
+    UpdateChannelRequest,
 };
 use crate::rest::{
     error::ApiError, modules::business_unit::service::BusinessUnitRestService,
-    service::RestService, MaybeResourceModelResult, ResourceModelCollectionResult,
-    ResourceModelResult, RestServiceResult,
+    service::RestService, MaybeResourceModelResult,
+    ResourceModelCollectionResult, ResourceModelResult, RestServiceResult,
 };
 use perroute_command_bus::{
     commands::channel::{
@@ -65,7 +66,8 @@ impl<CB: CommandBus, QB: QueryBus> ChannelRestService for RestService<CB, QB> {
         path: &ChannelCollectionPath,
         payload: &CreateChannelRequest,
     ) -> ResourceModelResult<ChannelModel> {
-        BusinessUnitRestService::get(self, actor, &path.business_unit_path()).await?;
+        BusinessUnitRestService::get(self, actor, &path.business_unit_path())
+            .await?;
 
         let cmd = CreateChannelCommand::builder()
             .channel_id(Id::new())
@@ -108,7 +110,11 @@ impl<CB: CommandBus, QB: QueryBus> ChannelRestService for RestService<CB, QB> {
         Ok(route.into())
     }
 
-    async fn delete(&self, actor: &Actor, path: &ChannelPath) -> RestServiceResult<()> {
+    async fn delete(
+        &self,
+        actor: &Actor,
+        path: &ChannelPath,
+    ) -> RestServiceResult<()> {
         ChannelRestService::get(self, actor, path).await?;
         let cmd = DeleteChannelCommand::builder()
             .channel_id(path.channel_id().clone())
@@ -126,7 +132,8 @@ impl<CB: CommandBus, QB: QueryBus> ChannelRestService for RestService<CB, QB> {
         actor: &Actor,
         path: &ChannelCollectionPath,
     ) -> ResourceModelCollectionResult<ChannelModel> {
-        BusinessUnitRestService::get(self, actor, &path.business_unit_path()).await?;
+        BusinessUnitRestService::get(self, actor, &path.business_unit_path())
+            .await?;
         todo!()
     }
 
@@ -138,7 +145,11 @@ impl<CB: CommandBus, QB: QueryBus> ChannelRestService for RestService<CB, QB> {
         todo!()
     }
 
-    async fn get(&self, actor: &Actor, path: &ChannelPath) -> ResourceModelResult<ChannelModel> {
+    async fn get(
+        &self,
+        actor: &Actor,
+        path: &ChannelPath,
+    ) -> ResourceModelResult<ChannelModel> {
         self.maybe_get(actor, path).await?.ok_or(ApiError::NotFound)
     }
 }

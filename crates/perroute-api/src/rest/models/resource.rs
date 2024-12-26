@@ -74,12 +74,19 @@ impl<T> ResourceModel<T> {
         }
     }
 
-    pub fn with_link(mut self, relation: Relation, path: impl ResourcePath + 'static) -> Self {
+    pub fn with_link(
+        mut self,
+        relation: Relation,
+        path: impl ResourcePath + 'static,
+    ) -> Self {
         self.links.insert(relation, Box::new(path));
         self
     }
 
-    pub fn with_links(mut self, links: HashMap<Relation, Box<dyn ResourcePath>>) -> Self {
+    pub fn with_links(
+        mut self,
+        links: HashMap<Relation, Box<dyn ResourcePath>>,
+    ) -> Self {
         self.links.extend(links);
         self
     }
@@ -122,12 +129,19 @@ impl<T> ResourceModelCollection<T> {
         }
     }
 
-    pub fn with_link(mut self, relation: Relation, path: impl ResourcePath + 'static) -> Self {
+    pub fn with_link(
+        mut self,
+        relation: Relation,
+        path: impl ResourcePath + 'static,
+    ) -> Self {
         self.links.insert(relation, Box::new(path));
         self
     }
 
-    pub fn with_links(mut self, links: HashMap<Relation, Box<dyn ResourcePath>>) -> Self {
+    pub fn with_links(
+        mut self,
+        links: HashMap<Relation, Box<dyn ResourcePath>>,
+    ) -> Self {
         self.links.extend(links);
         self
     }

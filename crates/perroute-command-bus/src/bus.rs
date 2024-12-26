@@ -30,10 +30,15 @@ impl<O, E: ApplicationEvent> CommandHandlerOutput<O, E> {
     }
 }
 
-pub type CommandHandlerResult<O, E> = Result<CommandHandlerOutput<O, E>, CommandBusError>;
+pub type CommandHandlerResult<O, E> =
+    Result<CommandHandlerOutput<O, E>, CommandBusError>;
 
 pub trait CommandBus {
-    fn execute<C, H, O>(&self, actor: &Actor, cmd: &C) -> impl Future<Output = CommandBusResult<O>>
+    fn execute<C, H, O>(
+        &self,
+        actor: &Actor,
+        cmd: &C,
+    ) -> impl Future<Output = CommandBusResult<O>>
     where
         C: Command + 'static,
         H: CommandHandler<Command = C, Output = O> + 'static;
@@ -48,7 +53,9 @@ pub trait CommandHandler {
         &self,
         cmd: &CommandWrapper<Self::Command>,
         ctx: &CommandBusContext<'_, R>,
-    ) -> impl Future<Output = CommandHandlerResult<Self::Output, Self::ApplicationEvent>>;
+    ) -> impl Future<
+        Output = CommandHandlerResult<Self::Output, Self::ApplicationEvent>,
+    >;
 }
 
 #[derive(Clone)]
@@ -85,13 +92,19 @@ impl<R: Repository> DefaultCommandBus<R> {
     {
         let handler = self.handlers.get(&TypeId::of::<C>());
         handler.and_then(|h| h.downcast_ref::<H>()).ok_or_else(|| {
-            CommandBusError::CommandHandlerNotFound(std::any::type_name::<C>().to_string())
+            CommandBusError::CommandHandlerNotFound(
+                std::any::type_name::<C>().to_string(),
+            )
         })
     }
 }
 
 impl<R: Repository> CommandBus for DefaultCommandBus<R> {
-    async fn execute<C, H, O>(&self, actor: &Actor, command: &C) -> CommandBusResult<O>
+    async fn execute<C, H, O>(
+        &self,
+        actor: &Actor,
+        command: &C,
+    ) -> CommandBusResult<O>
     where
         C: Command + 'static,
         H: CommandHandler<Command = C, Output = O> + 'static,
@@ -114,21 +127,25 @@ impl<R: Repository> CommandBus for DefaultCommandBus<R> {
                 EventRepository::save(
                     &tx,
                     DbEvent::try_from(output.event.to_event(actor, created_at))
-                        .tap_err(|e| log::error!("Failed to convert event to DbEvent: {e}"))?,
+                        .tap_err(|e| {
+                            log::error!(
+                                "Failed to convert event to DbEvent: {e}"
+                            )
+                        })?,
                 )
                 .await
                 .tap_err(|e| log::error!("Failed to persist event: {}", e))?;
 
-                tx.commit()
-                    .await
-                    .tap_err(|e| log::error!("Failed to commit transaction: {e}"))?;
+                tx.commit().await.tap_err(|e| {
+                    log::error!("Failed to commit transaction: {e}")
+                })?;
 
                 Ok(output.output)
             }
             Err(e) => {
-                tx.rollback()
-                    .await
-                    .tap_err(|e| log::error!("Failed to rollback transaction: {e}"))?;
+                tx.rollback().await.tap_err(|e| {
+                    log::error!("Failed to rollback transaction: {e}")
+                })?;
                 Err(e)
             }
         }

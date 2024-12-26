@@ -14,8 +14,9 @@ pub mod service;
 const BUSINESS_UNIT_COLLECTION_RESOURCE_NAME: &str = "business_units";
 const BUSINESS_UNIT_RESOURCE_NAME: &str = "business_unit";
 
-pub fn scope<RS: BusinessUnitRestService + ChannelRestService + RouteRestService + 'static>(
-) -> Scope {
+pub fn scope<
+    RS: BusinessUnitRestService + ChannelRestService + RouteRestService + 'static,
+>() -> Scope {
     web::scope("/business_units")
         .service(
             web::resource("")
@@ -29,8 +30,13 @@ pub fn scope<RS: BusinessUnitRestService + ChannelRestService + RouteRestService
                     web::resource("")
                         .name(BUSINESS_UNIT_RESOURCE_NAME)
                         .route(web::get().to(BusinessUnitController::<RS>::get))
-                        .route(web::put().to(BusinessUnitController::<RS>::update))
-                        .route(web::delete().to(BusinessUnitController::<RS>::delete)),
+                        .route(
+                            web::put().to(BusinessUnitController::<RS>::update),
+                        )
+                        .route(
+                            web::delete()
+                                .to(BusinessUnitController::<RS>::delete),
+                        ),
                 )
                 .service(channel::scope::<RS>())
                 .service(route::scope::<RS>())

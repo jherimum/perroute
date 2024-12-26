@@ -1,8 +1,17 @@
 use serde::{Deserialize, Serialize};
 
-use crate::template::{context::TemplateRenderContext, TemplateError, TemplateRender};
+use crate::template::{
+    context::TemplateRenderContext, TemplateError, TemplateRender,
+};
 
-#[derive(Debug, derive_more::TryInto, derive_more::From, Clone, Serialize, Deserialize)]
+#[derive(
+    Debug,
+    derive_more::TryInto,
+    derive_more::From,
+    Clone,
+    Serialize,
+    Deserialize,
+)]
 pub enum Template {
     Sms(SmsTemplate),
     Email(EmailTemplate),
@@ -16,9 +25,15 @@ impl Template {
         context: &TemplateRenderContext,
     ) -> Result<Self, TemplateError> {
         match self {
-            Template::Sms(t) => t.render(template_render, context).map(Template::Sms),
-            Template::Email(t) => t.render(template_render, context).map(Template::Email),
-            Template::Push(t) => t.render(template_render, context).map(Template::Push),
+            Template::Sms(t) => {
+                t.render(template_render, context).map(Template::Sms)
+            }
+            Template::Email(t) => {
+                t.render(template_render, context).map(Template::Email)
+            }
+            Template::Push(t) => {
+                t.render(template_render, context).map(Template::Push)
+            }
         }
     }
 }

@@ -40,14 +40,16 @@ impl CommandHandler for UpdateRouteCommandHandler {
         cmd: &crate::commands::CommandWrapper<'_, Self::Command>,
         ctx: &CommandBusContext<'_, R>,
     ) -> CommandHandlerResult<Self::Output, Self::ApplicationEvent> {
-        let route =
-            RouteRepository::get(ctx.repository(), &RouteQuery::ById(&cmd.inner().route_id))
-                .await?
-                .ok_or(UpdateRouteCommandError::NotFound)?
-                .set_configuration(cmd.inner().configuration.clone())
-                .set_enabled(cmd.inner().enabled)
-                .set_priority(cmd.inner().priority.clone())
-                .set_updated_at(cmd.created_at().clone());
+        let route = RouteRepository::get(
+            ctx.repository(),
+            &RouteQuery::ById(&cmd.inner().route_id),
+        )
+        .await?
+        .ok_or(UpdateRouteCommandError::NotFound)?
+        .set_configuration(cmd.inner().configuration.clone())
+        .set_enabled(cmd.inner().enabled)
+        .set_priority(cmd.inner().priority.clone())
+        .set_updated_at(cmd.created_at().clone());
 
         let route = RouteRepository::update(ctx.repository(), route).await?;
 

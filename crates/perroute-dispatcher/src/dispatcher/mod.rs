@@ -3,7 +3,9 @@ use perroute_commons::{
     template::{TemplateError, TemplateRender},
     types::{id::Id, MessageStatus, ProviderId},
 };
-use perroute_connectors::{PluginDispatchError, ProviderPluginError, ProviderPluginRepository};
+use perroute_connectors::{
+    PluginDispatchError, ProviderPluginError, ProviderPluginRepository,
+};
 use perroute_storage::{
     models::{dispatcher_log::DispatcherLog, message::Message},
     repository::{
@@ -60,7 +62,9 @@ pub struct Dispatcher<R, TR, PR> {
     event: ApplicationEventData<MessageCreatedEvent>,
 }
 
-impl<R: Repository, TR: TemplateRender, PR: ProviderPluginRepository> Dispatcher<R, TR, PR> {
+impl<R: Repository, TR: TemplateRender, PR: ProviderPluginRepository>
+    Dispatcher<R, TR, PR>
+{
     pub fn new(
         repository: Arc<R>,
         plugin_repository: Arc<PR>,
@@ -89,9 +93,12 @@ impl<R: Repository, TR: TemplateRender, PR: ProviderPluginRepository> Dispatcher
         .await
         .unwrap()
         {
-            Some(message) if *message.status() != MessageStatus::Pending => Err(
-                DigesterError::InvalidMessageStatus(message.id().clone(), message.status().clone()),
-            ),
+            Some(message) if *message.status() != MessageStatus::Pending => {
+                Err(DigesterError::InvalidMessageStatus(
+                    message.id().clone(),
+                    message.status().clone(),
+                ))
+            }
             Some(message) => Ok(message),
             None => Err(DigesterError::MessageNotFound(
                 self.event.entity_id().clone(),
@@ -99,7 +106,10 @@ impl<R: Repository, TR: TemplateRender, PR: ProviderPluginRepository> Dispatcher
         }
     }
 
-    async fn process(&self, message: &Message) -> DigesterResult<Vec<DispatcherLog>> {
+    async fn process(
+        &self,
+        message: &Message,
+    ) -> DigesterResult<Vec<DispatcherLog>> {
         let rendered_template = self.template_resolver.resolve(message).await?;
         self.dispatch_executor
             .execute(message, &rendered_template.unwrap())
@@ -135,7 +145,12 @@ impl<R: Repository, TR: TemplateRender, PR: ProviderPluginRepository> Dispatcher
 
         match MessageRepository::update(&tx, message).await {
             Ok(_) => {
-                match DispatcherLogRepository::save_all(self.repository.as_ref(), logs).await {
+                match DispatcherLogRepository::save_all(
+                    self.repository.as_ref(),
+                    logs,
+                )
+                .await
+                {
                     Ok(_) => {
                         tx.commit().await.unwrap();
                     }

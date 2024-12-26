@@ -1,5 +1,8 @@
 use crate::{
-    bus::{CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult},
+    bus::{
+        CommandBusContext, CommandHandler, CommandHandlerOutput,
+        CommandHandlerResult,
+    },
     commands::Command,
     impl_command,
 };
@@ -38,7 +41,9 @@ impl CommandHandler for DeleteBusinessUnitCommandHandler {
         .await?;
 
         if !exists {
-            return Err(DeleteBusinessUnitCommandError::BusinessUnitNotFound.into());
+            return Err(
+                DeleteBusinessUnitCommandError::BusinessUnitNotFound.into()
+            );
         }
 
         BusinessUnitRepository::delete_business_unit(

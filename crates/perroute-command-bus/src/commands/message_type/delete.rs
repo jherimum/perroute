@@ -4,7 +4,9 @@ use crate::{
     impl_command,
 };
 use perroute_commons::{events::MessageTypeDeletedEvent, types::id::Id};
-use perroute_storage::repository::{message_types::MessageTypeRepository, TransactedRepository};
+use perroute_storage::repository::{
+    message_types::MessageTypeRepository, TransactedRepository,
+};
 
 #[derive(Debug, thiserror::Error)]
 pub enum DeleteMessageTypeCommandError {}

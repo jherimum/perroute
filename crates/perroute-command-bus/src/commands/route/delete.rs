@@ -28,10 +28,12 @@ impl CommandHandler for DeleteRouteCommandHandler {
         cmd: &crate::commands::CommandWrapper<'_, Self::Command>,
         ctx: &CommandBusContext<'_, R>,
     ) -> CommandHandlerResult<Self::Output, Self::ApplicationEvent> {
-        let deleted =
-            RouteRepository::delete(ctx.repository(), &RouteQuery::ById(&cmd.inner().route_id))
-                .await?
-                > 0;
+        let deleted = RouteRepository::delete(
+            ctx.repository(),
+            &RouteQuery::ById(&cmd.inner().route_id),
+        )
+        .await?
+            > 0;
 
         //Ok(())
         todo!()

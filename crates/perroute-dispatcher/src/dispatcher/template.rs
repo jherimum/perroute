@@ -1,6 +1,8 @@
 use perroute_commons::{
     template::{context::TemplateRenderContext, TemplateRender},
-    types::{dispatch_type::DispatchType, id::Id, template::Template, vars::Vars},
+    types::{
+        dispatch_type::DispatchType, id::Id, template::Template, vars::Vars,
+    },
 };
 use perroute_storage::{
     models::{message::Message, template_assignment::TemplateAssignment},
@@ -34,7 +36,10 @@ impl<R: Repository, TR> AsRef<R> for TemplateResolver<R, TR> {
 }
 
 impl<R: Repository, TR: TemplateRender> TemplateResolver<R, TR> {
-    async fn template_assignment(&self, message: &Message) -> Result<Option<TemplateAssignment>> {
+    async fn template_assignment(
+        &self,
+        message: &Message,
+    ) -> Result<Option<TemplateAssignment>> {
         let query = QueryForDispatch::builder()
             .message_type_id(message.message_type_id())
             .business_unit_id(message.business_unit_id())
@@ -47,7 +52,10 @@ impl<R: Repository, TR: TemplateRender> TemplateResolver<R, TR> {
             )
             .build();
 
-        Ok(TemplateAssignmentRepository::find(&*self.repository, query.into()).await?)
+        Ok(
+            TemplateAssignmentRepository::find(&*self.repository, query.into())
+                .await?,
+        )
     }
 
     async fn retrieve_template(&self, id: &Id) -> Result<Option<Template>> {
@@ -87,15 +95,17 @@ impl<R: Repository, TR: TemplateRender> TemplateResolver<R, TR> {
     }
 
     pub async fn resolve(&self, message: &Message) -> Result<Option<Template>> {
-        let template_assignment = match self.template_assignment(message).await? {
-            Some(template) => template,
-            None => return Ok(None),
-        };
+        let template_assignment =
+            match self.template_assignment(message).await? {
+                Some(template) => template,
+                None => return Ok(None),
+            };
 
-        let raw_template = match self.raw_template(message, &template_assignment).await? {
-            Some(template) => template,
-            None => return Ok(None),
-        };
+        let raw_template =
+            match self.raw_template(message, &template_assignment).await? {
+                Some(template) => template,
+                None => return Ok(None),
+            };
 
         let vars = self.vars(message, &template_assignment).await?;
 

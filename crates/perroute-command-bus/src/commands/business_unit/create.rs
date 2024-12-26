@@ -1,5 +1,8 @@
 use crate::{
-    bus::{CommandBusContext, CommandHandler, CommandHandlerOutput, CommandHandlerResult},
+    bus::{
+        CommandBusContext, CommandHandler, CommandHandlerOutput,
+        CommandHandlerResult,
+    },
     commands::Command,
     impl_command,
 };
@@ -46,7 +49,9 @@ impl CommandHandler for CreateBusinessUnitCommandHandler {
             &BusinessUnitQuery::ByCode(cmd.inner().code.clone()),
         )
         .await
-        .tap_err(|e| log::error!("Error checking if business unit exists: {:?}", e))?;
+        .tap_err(|e| {
+            log::error!("Error checking if business unit exists: {:?}", e)
+        })?;
 
         if exists {
             return Err(CreateBusinessUnitCommandError::CodeAlreadyExists(
@@ -64,9 +69,12 @@ impl CommandHandler for CreateBusinessUnitCommandHandler {
             .updated_at(cmd.created_at().clone())
             .build();
 
-        let bu = BusinessUnitRepository::save_business_unit(ctx.repository(), bu)
-            .await
-            .tap_err(|e| log::error!("Error saving business unit: {:?}", e))?;
+        let bu =
+            BusinessUnitRepository::save_business_unit(ctx.repository(), bu)
+                .await
+                .tap_err(|e| {
+                    log::error!("Error saving business unit: {:?}", e)
+                })?;
 
         Ok(CommandHandlerOutput::new(
             bu,

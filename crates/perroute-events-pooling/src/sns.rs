@@ -3,7 +3,9 @@ use aws_sdk_sns::{
     config::http::HttpResponse,
     error::{BuildError, SdkError},
     operation::publish_batch::{PublishBatchError, PublishBatchOutput},
-    types::{BatchResultErrorEntry, MessageAttributeValue, PublishBatchRequestEntry},
+    types::{
+        BatchResultErrorEntry, MessageAttributeValue, PublishBatchRequestEntry,
+    },
 };
 use perroute_commons::{
     events::{ApplicationEventData, Event},
@@ -136,9 +138,15 @@ fn to_entry(event: &&Event) -> SnsPublisherResult<PublishBatchRequestEntry> {
         Event::RouteUpdated(event_data) => from_event_data(event_data),
         Event::RouteDeleted(event_data) => from_event_data(event_data),
         Event::MessageCreated(event_data) => from_event_data(event_data),
-        Event::TemplateAssignmentCreated(event_data) => from_event_data(event_data),
-        Event::TemplateAssignmentUpdated(event_data) => from_event_data(event_data),
-        Event::TemplateAssignmentDeleted(event_data) => from_event_data(event_data),
+        Event::TemplateAssignmentCreated(event_data) => {
+            from_event_data(event_data)
+        }
+        Event::TemplateAssignmentUpdated(event_data) => {
+            from_event_data(event_data)
+        }
+        Event::TemplateAssignmentDeleted(event_data) => {
+            from_event_data(event_data)
+        }
     }
 }
 

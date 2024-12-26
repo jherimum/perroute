@@ -5,5 +5,6 @@ async fn get() -> impl Responder {
 }
 
 pub fn routes() -> Scope {
-    web::scope("health").service(web::resource("").name("health").route(web::get().to(get)))
+    web::scope("health")
+        .service(web::resource("").name("health").route(web::get().to(get)))
 }

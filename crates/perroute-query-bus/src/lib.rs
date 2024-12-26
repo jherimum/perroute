@@ -11,7 +11,9 @@ use std::{
     sync::Arc,
 };
 
-pub fn create_query_bus<R: Repository + Clone>(repository: R) -> impl QueryBus + Clone {
+pub fn create_query_bus<R: Repository + Clone>(
+    repository: R,
+) -> impl QueryBus + Clone {
     DefaultQueryBus::new(repository).register(QueryBusinessUnitsHandler)
 }
 
@@ -89,13 +91,19 @@ impl<R: Repository> DefaultQueryBus<R> {
     {
         let handler = self.handlers.get(&TypeId::of::<Q>());
         handler.and_then(|h| h.downcast_ref::<H>()).ok_or_else(|| {
-            QueryBusError::QueryHandlerNotFound(std::any::type_name::<Q>().to_string())
+            QueryBusError::QueryHandlerNotFound(
+                std::any::type_name::<Q>().to_string(),
+            )
         })
     }
 }
 
 impl<R: Repository + Clone> QueryBus for DefaultQueryBus<R> {
-    async fn execute<Q, H, O>(&self, actor: &Actor, query: &Q) -> QueryBusResult<O>
+    async fn execute<Q, H, O>(
+        &self,
+        actor: &Actor,
+        query: &Q,
+    ) -> QueryBusResult<O>
     where
         Q: Query + 'static,
         H: QueryHandler<Query = Q, Output = O> + 'static,

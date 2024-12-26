@@ -31,7 +31,11 @@ impl DispatcherLog {
         }
     }
 
-    pub fn build_error(message_id: Id, provider_id: ProviderId, error: DispatcherError) -> Self {
+    pub fn build_error(
+        message_id: Id,
+        provider_id: ProviderId,
+        error: DispatcherError,
+    ) -> Self {
         DispatcherLog {
             id: Id::new(),
             message_id,

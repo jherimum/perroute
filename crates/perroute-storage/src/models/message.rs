@@ -1,8 +1,8 @@
 use derive_getters::Getters;
 use derive_setters::Setters;
 use perroute_commons::types::{
-    dispatch_type::DispatchType, id::Id, recipient::Recipient, MessageStatus, Payload, Tags,
-    Timestamp,
+    dispatch_type::DispatchType, id::Id, recipient::Recipient, MessageStatus,
+    Payload, Tags, Timestamp,
 };
 use sqlx::prelude::FromRow;
 

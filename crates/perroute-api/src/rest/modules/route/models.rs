@@ -1,5 +1,6 @@
 use crate::rest::{
-    models::resource::ResourceModel, modules::business_unit::controller::BusinessUnitPath,
+    models::resource::ResourceModel,
+    modules::business_unit::controller::BusinessUnitPath,
 };
 use bon::Builder;
 use chrono::NaiveDateTime;

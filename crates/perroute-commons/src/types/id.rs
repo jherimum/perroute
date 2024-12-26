@@ -3,7 +3,9 @@ use std::fmt::Display;
 use base58::ToBase58;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, sqlx::Type, Hash)]
+#[derive(
+    Debug, Serialize, Deserialize, Clone, PartialEq, Eq, sqlx::Type, Hash,
+)]
 #[sqlx(transparent)]
 pub struct Id(String);
 

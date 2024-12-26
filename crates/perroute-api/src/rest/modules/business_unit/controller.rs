@@ -1,5 +1,7 @@
 use super::{
-    models::{BusinessUnitModel, CreateBusinessUnitRequest, UpdateBusinessUnitRequest},
+    models::{
+        BusinessUnitModel, CreateBusinessUnitRequest, UpdateBusinessUnitRequest,
+    },
     service::BusinessUnitRestService,
     BUSINESS_UNIT_COLLECTION_RESOURCE_NAME, BUSINESS_UNIT_RESOURCE_NAME,
 };
@@ -80,7 +82,10 @@ impl<RS: BusinessUnitRestService> BusinessUnitController<RS> {
         Ok(ApiResponse::ok(bus))
     }
 
-    pub async fn delete(service: Data<RS>, path: Path<BusinessUnitPath>) -> ApiResult<()> {
+    pub async fn delete(
+        service: Data<RS>,
+        path: Path<BusinessUnitPath>,
+    ) -> ApiResult<()> {
         service
             .delete(&Actor::System, &path)
             .await

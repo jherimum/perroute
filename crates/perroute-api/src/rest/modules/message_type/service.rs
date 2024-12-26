@@ -1,6 +1,7 @@
 use crate::rest::{
     modules::message_type::models::{
-        CreateMessageTypeRequest, MessageTypeModel, MessageTypePath, UpdateMessageTypeRequest,
+        CreateMessageTypeRequest, MessageTypeModel, MessageTypePath,
+        UpdateMessageTypeRequest,
     },
     service::RestService,
     ResourceModelCollectionResult, ResourceModelResult, RestServiceResult,
@@ -53,7 +54,9 @@ pub trait MessageTypeRestService {
     ) -> impl Future<Output = ResourceModelResult<MessageTypeModel>>;
 }
 
-impl<CB: CommandBus, QB: QueryBus> MessageTypeRestService for RestService<CB, QB> {
+impl<CB: CommandBus, QB: QueryBus> MessageTypeRestService
+    for RestService<CB, QB>
+{
     async fn get(
         &self,
         actor: &Actor,
@@ -70,7 +73,11 @@ impl<CB: CommandBus, QB: QueryBus> MessageTypeRestService for RestService<CB, QB
         todo!()
     }
 
-    async fn delete(&self, actor: &Actor, path: &MessageTypePath) -> RestServiceResult<()> {
+    async fn delete(
+        &self,
+        actor: &Actor,
+        path: &MessageTypePath,
+    ) -> RestServiceResult<()> {
         Ok(self
             .command_bus()
             .execute::<_, DeleteMessageTypeCommandHandler, _>(

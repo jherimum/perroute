@@ -5,7 +5,10 @@ use crate::{
 };
 use perroute_commons::{
     events::ChannelUpdatedEvent,
-    types::{dispatch_type::DispatchType, id::Id, name::Name, Configuration, ProviderId},
+    types::{
+        dispatch_type::DispatchType, id::Id, name::Name, Configuration,
+        ProviderId,
+    },
 };
 use perroute_storage::{
     models::channel::Channel,
@@ -67,7 +70,8 @@ impl CommandHandler for CreateChannelCommandHandler {
             .updated_at(cmd.created_at().clone())
             .build();
 
-        let channel = ChannelRepository::save(ctx.repository(), channel).await?;
+        let channel =
+            ChannelRepository::save(ctx.repository(), channel).await?;
 
         //Ok(channel)
         todo!()

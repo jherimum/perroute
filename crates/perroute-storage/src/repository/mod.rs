@@ -76,7 +76,9 @@ impl PgRepository {
         }
     }
 
-    pub async fn from_settings(settings: &DatabaseSettings) -> RepositoryResult<Self> {
+    pub async fn from_settings(
+        settings: &DatabaseSettings,
+    ) -> RepositoryResult<Self> {
         let pool = build_pool(settings).await?;
         Ok(Self::new(pool))
     }

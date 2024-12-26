@@ -55,7 +55,9 @@ impl From<(MessageType, Vec<PayloadExample>)> for MessageTypeModel {
     }
 }
 
-impl From<(MessageType, Vec<PayloadExample>)> for ResourceModel<MessageTypeModel> {
+impl From<(MessageType, Vec<PayloadExample>)>
+    for ResourceModel<MessageTypeModel>
+{
     fn from(value: (MessageType, Vec<PayloadExample>)) -> Self {
         ResourceModel::new(value.into())
     }
@@ -68,10 +70,15 @@ pub struct PayloadExampleModel {
 }
 
 impl PayloadExampleModel {
-    pub fn from_model(pe: &Vec<PayloadExampleModel>) -> Result<Vec<(Name, Payload)>, ApiError> {
+    pub fn from_model(
+        pe: &Vec<PayloadExampleModel>,
+    ) -> Result<Vec<(Name, Payload)>, ApiError> {
         let mut result = Vec::with_capacity(pe.len());
         for p in pe {
-            result.push((Name::try_from(&p.name)?, Payload::new(p.payload.clone())));
+            result.push((
+                Name::try_from(&p.name)?,
+                Payload::new(p.payload.clone()),
+            ));
         }
         Ok(result)
     }

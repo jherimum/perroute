@@ -60,7 +60,8 @@ impl EventRepository for PgRepository {
     async fn unconsumed(&self, size: usize) -> RepositoryResult<Vec<DbEvent>> {
         Ok(fetch_all!(
             &self.source,
-            query_as("SELECT * from event_messages where consumed_at is null ORDER BY created_at asc limit $1").bind(size as i64)
+            query_as("SELECT * from event_messages where consumed_at is null ORDER BY created_at asc limit $1")
+                .bind(size as i64)
         )?)
     }
 }

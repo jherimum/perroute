@@ -38,7 +38,10 @@ impl From<BusinessUnit> for BusinessUnitModel {
 impl From<BusinessUnit> for ResourceModel<BusinessUnitModel> {
     fn from(value: BusinessUnit) -> Self {
         ResourceModel::new(value.clone().into())
-            .with_link(Relation::Self_, BusinessUnitPath::new(value.id().as_ref()))
+            .with_link(
+                Relation::Self_,
+                BusinessUnitPath::new(value.id().as_ref()),
+            )
             .with_link(
                 Relation::Static("business_units"),
                 BusinessUnitCollectionPath,
@@ -48,8 +51,10 @@ impl From<BusinessUnit> for ResourceModel<BusinessUnitModel> {
 
 impl From<Vec<BusinessUnit>> for ResourceModelCollection<BusinessUnitModel> {
     fn from(value: Vec<BusinessUnit>) -> Self {
-        ResourceModelCollection::new(value.into_iter().map(Into::into).collect())
-            .with_link(Relation::Self_, BusinessUnitCollectionPath)
+        ResourceModelCollection::new(
+            value.into_iter().map(Into::into).collect(),
+        )
+        .with_link(Relation::Self_, BusinessUnitCollectionPath)
     }
 }
 

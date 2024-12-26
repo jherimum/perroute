@@ -2,11 +2,17 @@ use perroute_storage::repository;
 
 use crate::commands::{
     business_unit::{
-        create::CreateBusinessUnitCommandError, delete::DeleteBusinessUnitCommandError,
+        create::CreateBusinessUnitCommandError,
+        delete::DeleteBusinessUnitCommandError,
         update::UpdateBusinessUnitCommandError,
     },
-    channel::{create::CreateChannelCommandError, update::UpdateChannelCommandError},
-    message_type::{create::CreateMessageTypeCommandError, update::UpdateMessageTypeCommandError},
+    channel::{
+        create::CreateChannelCommandError, update::UpdateChannelCommandError,
+    },
+    message_type::{
+        create::CreateMessageTypeCommandError,
+        update::UpdateMessageTypeCommandError,
+    },
     route::{create::CreateRouteCommandError, update::UpdateRouteCommandError},
 };
 

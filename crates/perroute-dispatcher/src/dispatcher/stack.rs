@@ -1,6 +1,8 @@
 use super::DigesterResult;
 use perroute_commons::types::template::Template;
-use perroute_connectors::{DispatchRequest, ProviderPlugin, ProviderPluginRepository};
+use perroute_connectors::{
+    DispatchRequest, ProviderPlugin, ProviderPluginRepository,
+};
 use perroute_storage::{
     models::{
         channel::Channel,
@@ -18,7 +20,9 @@ pub(super) struct DispatchExecutor<R, PR> {
 }
 
 impl<R: Repository, PR: ProviderPluginRepository> DispatchExecutor<R, PR> {
-    async fn data(&self) -> DigesterResult<Vec<(Route, Channel, &dyn ProviderPlugin)>> {
+    async fn data(
+        &self,
+    ) -> DigesterResult<Vec<(Route, Channel, &dyn ProviderPlugin)>> {
         todo!()
     }
 
@@ -28,7 +32,11 @@ impl<R: Repository, PR: ProviderPluginRepository> DispatchExecutor<R, PR> {
         template: &Template,
     ) -> DigesterResult<Vec<DispatcherLog>> {
         let mut logs = vec![];
-        let request = DispatchRequest::create(message.id(), message.recipient(), template)?;
+        let request = DispatchRequest::create(
+            message.id(),
+            message.recipient(),
+            template,
+        )?;
         for (route, channel, plugin) in &self.data().await? {
             let cfg = channel.configuration().merge(route.configuration());
             let response = plugin.dispatch(&cfg, &request).await;

@@ -42,29 +42,43 @@ impl CommandHandler for UpdateMessageTypeCommandHandler {
         cmd: &crate::commands::CommandWrapper<'_, Self::Command>,
         ctx: &CommandBusContext<'_, R>,
     ) -> CommandHandlerResult<Self::Output, Self::ApplicationEvent> {
-        let message_type =
-            MessageTypeRepository::find_by_id(ctx.repository(), &cmd.inner().message_type_id)
-                .await?
-                .ok_or(CommandBusError::from(
-                    UpdateMessageTypeCommandError::NotFound,
-                ))?
-                .set_enabled(cmd.inner().enabled)
-                .set_name(cmd.inner().name.clone())
-                .set_schema(cmd.inner().schema.clone())
-                .set_updated_at(cmd.created_at().clone())
-                .set_vars(cmd.inner().vars.clone());
+        let message_type = MessageTypeRepository::find_by_id(
+            ctx.repository(),
+            &cmd.inner().message_type_id,
+        )
+        .await?
+        .ok_or(CommandBusError::from(
+            UpdateMessageTypeCommandError::NotFound,
+        ))?
+        .set_enabled(cmd.inner().enabled)
+        .set_name(cmd.inner().name.clone())
+        .set_schema(cmd.inner().schema.clone())
+        .set_updated_at(cmd.created_at().clone())
+        .set_vars(cmd.inner().vars.clone());
 
-        let message_type =
-            MessageTypeRepository::update_message_type(ctx.repository(), message_type).await?;
+        let message_type = MessageTypeRepository::update_message_type(
+            ctx.repository(),
+            message_type,
+        )
+        .await?;
 
-        PayloadExampleRepository::delete_payload_examples(ctx.repository(), message_type.id())
-            .await?;
+        PayloadExampleRepository::delete_payload_examples(
+            ctx.repository(),
+            message_type.id(),
+        )
+        .await?;
 
-        let examples: Vec<PayloadExample> =
-            PayloadExamplesInput::new(message_type.id(), &cmd.inner().payload_examples).into();
+        let examples: Vec<PayloadExample> = PayloadExamplesInput::new(
+            message_type.id(),
+            &cmd.inner().payload_examples,
+        )
+        .into();
 
-        let examples =
-            PayloadExampleRepository::save_payload_examples(ctx.repository(), &examples).await?;
+        let examples = PayloadExampleRepository::save_payload_examples(
+            ctx.repository(),
+            &examples,
+        )
+        .await?;
 
         //Ok((message_type.clone(), examples))
         todo!()

@@ -1,8 +1,10 @@
 use crate::rest::{
     error::ApiError,
     modules::{
-        business_unit::service::BusinessUnitRestService, channel::service::ChannelRestService,
-        message_type::service::MessageTypeRestService, route::service::RouteRestService, routes,
+        business_unit::service::BusinessUnitRestService,
+        channel::service::ChannelRestService,
+        message_type::service::MessageTypeRestService,
+        route::service::RouteRestService, routes,
     },
 };
 use actix_web::{dev::Server, middleware::Logger, web::Data, App, HttpServer};
@@ -53,9 +55,11 @@ fn json_config() -> JsonConfig {
 }
 
 fn path_config() -> PathConfig {
-    PathConfig::default().error_handler(|err, _| actix_web::Error::from(ApiError::from(err)))
+    PathConfig::default()
+        .error_handler(|err, _| actix_web::Error::from(ApiError::from(err)))
 }
 
 fn query_config() -> QueryConfig {
-    QueryConfig::default().error_handler(|err, _| actix_web::Error::from(ApiError::from(err)))
+    QueryConfig::default()
+        .error_handler(|err, _| actix_web::Error::from(ApiError::from(err)))
 }

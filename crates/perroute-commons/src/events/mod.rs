@@ -1,8 +1,8 @@
 use crate::{
     event, impl_sqlx_type,
     types::{
-        actor::Actor, code::Code, dispatch_type::DispatchType, entity::Entity, id::Id, name::Name,
-        vars::Vars, Configuration, ProviderId, Timestamp,
+        actor::Actor, code::Code, dispatch_type::DispatchType, entity::Entity,
+        id::Id, name::Name, vars::Vars, Configuration, ProviderId, Timestamp,
     },
 };
 use bon::Builder;
@@ -13,7 +13,17 @@ use strum::{EnumString, ParseError};
 
 impl_sqlx_type!(EventType as String);
 
-#[derive(Debug, Clone, PartialEq, Eq, EnumString, strum::Display, Deserialize, Serialize, Hash)]
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    EnumString,
+    strum::Display,
+    Deserialize,
+    Serialize,
+    Hash,
+)]
 pub enum EventType {
     BusinessUnitCreated,
     BusinessUnitUpdated,
@@ -64,9 +74,15 @@ pub enum Event {
     RouteUpdated(ApplicationEventData<RouteUpdatedEvent>),
     RouteDeleted(ApplicationEventData<RouteDeletedEvent>),
     MessageCreated(ApplicationEventData<MessageCreatedEvent>),
-    TemplateAssignmentCreated(ApplicationEventData<TemplateAssignmentCreatedEvent>),
-    TemplateAssignmentUpdated(ApplicationEventData<TemplateAssignmentUpdatedEvent>),
-    TemplateAssignmentDeleted(ApplicationEventData<TemplateAssignmentDeletedEvent>),
+    TemplateAssignmentCreated(
+        ApplicationEventData<TemplateAssignmentCreatedEvent>,
+    ),
+    TemplateAssignmentUpdated(
+        ApplicationEventData<TemplateAssignmentUpdatedEvent>,
+    ),
+    TemplateAssignmentDeleted(
+        ApplicationEventData<TemplateAssignmentDeletedEvent>,
+    ),
 }
 
 impl<'de> Deserialize<'de> for Event {

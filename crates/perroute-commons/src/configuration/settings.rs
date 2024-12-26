@@ -80,7 +80,10 @@ pub struct PollSettings {
 impl Settings {
     pub fn load() -> Result<Self, SettingsError> {
         let env = Environment::which();
-        log::info!("Starting to loading configuration from {} environment", env);
+        log::info!(
+            "Starting to loading configuration from {} environment",
+            env
+        );
         let settings = Config::builder()
             .add_source(
                 config::Environment::default()
@@ -92,7 +95,9 @@ impl Settings {
             .tap_err(|e| log::error!("{:?}", e))?;
         Ok(settings
             .try_deserialize::<Self>()
-            .tap_err(|e| log::error!("Failed to deserialize settings. Error: {e}"))
+            .tap_err(|e| {
+                log::error!("Failed to deserialize settings. Error: {e}")
+            })
             .tap(|s| log::debug!("Settings loaded: {s:#?}"))?)
     }
 }

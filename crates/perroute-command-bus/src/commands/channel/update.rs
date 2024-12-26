@@ -51,7 +51,8 @@ impl CommandHandler for UpdateChannelCommandHandler {
         .set_name(cmd.inner().name.clone())
         .set_updated_at(cmd.created_at().clone());
 
-        let channel = ChannelRepository::update(ctx.repository(), channel).await?;
+        let channel =
+            ChannelRepository::update(ctx.repository(), channel).await?;
 
         //Ok(channel)
         todo!()

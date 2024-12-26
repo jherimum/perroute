@@ -21,7 +21,8 @@ use perroute_query_bus::{
     queries::business_unit::QueryBusinessUnitsHandler, QueryBus, QueryBusError,
 };
 use perroute_storage::{
-    models::business_unit::BusinessUnit, repository::business_units::BusinessUnitQuery,
+    models::business_unit::BusinessUnit,
+    repository::business_units::BusinessUnitQuery,
 };
 use std::future::Future;
 
@@ -36,7 +37,9 @@ pub trait BusinessUnitRestService {
         &self,
         actor: &Actor,
         path: &BusinessUnitPath,
-    ) -> impl Future<Output = Result<Option<ResourceModel<BusinessUnitModel>>, ApiError>>;
+    ) -> impl Future<
+        Output = Result<Option<ResourceModel<BusinessUnitModel>>, ApiError>,
+    >;
 
     fn query(
         &self,
@@ -65,7 +68,9 @@ pub trait BusinessUnitRestService {
     ) -> impl Future<Output = ResourceModelResult<BusinessUnitModel>>;
 }
 
-impl<CB: CommandBus, QB: QueryBus> BusinessUnitRestService for RestService<CB, QB> {
+impl<CB: CommandBus, QB: QueryBus> BusinessUnitRestService
+    for RestService<CB, QB>
+{
     async fn get(
         &self,
         actor: &Actor,
@@ -81,7 +86,9 @@ impl<CB: CommandBus, QB: QueryBus> BusinessUnitRestService for RestService<CB, Q
         actor: &Actor,
         path: &BusinessUnitPath,
     ) -> Result<Option<ResourceModel<BusinessUnitModel>>, ApiError> {
-        let query_result = query(self.query_bus(), &BusinessUnitQuery::ById(path.id())).await?;
+        let query_result =
+            query(self.query_bus(), &BusinessUnitQuery::ById(path.id()))
+                .await?;
         Ok(query_result.first().map(|bu| bu.clone().into()))
     }
 
@@ -94,7 +101,11 @@ impl<CB: CommandBus, QB: QueryBus> BusinessUnitRestService for RestService<CB, Q
         Ok(bus.into())
     }
 
-    async fn delete(&self, actor: &Actor, path: &BusinessUnitPath) -> RestServiceResult<()> {
+    async fn delete(
+        &self,
+        actor: &Actor,
+        path: &BusinessUnitPath,
+    ) -> RestServiceResult<()> {
         Ok(self
             .command_bus()
             .execute::<_, DeleteBusinessUnitCommandHandler, _>(

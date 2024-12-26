@@ -1,6 +1,8 @@
 use derive_getters::Getters;
 use derive_setters::Setters;
-use perroute_commons::types::{id::Id, priority::Priority, Configuration, Timestamp};
+use perroute_commons::types::{
+    id::Id, priority::Priority, Configuration, Timestamp,
+};
 use sqlx::{prelude::FromRow, types::Json};
 
 #[derive(Debug, Clone, PartialEq, Eq, FromRow, Getters, Setters)]
