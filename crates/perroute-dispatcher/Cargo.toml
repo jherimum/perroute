@@ -19,7 +19,3 @@ thiserror = { workspace = true }
 futures = { workspace = true }
 tap = { workspace = true }
 bon = { workspace = true }
-
-
-[lints]
-workspace = true

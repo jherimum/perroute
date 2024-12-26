@@ -24,7 +24,3 @@ url = { workspace = true, features = ["serde"] }
 bon = { workspace = true }
 strum = { workspace = true }
 derive_more = { workspace = true, features = ["full"] }
-
-
-[lints]
-workspace = true
