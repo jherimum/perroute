@@ -15,4 +15,5 @@ target/
 .env
 dist/
 
-/.vscode/** */
+# remove .vscode folder
+.vscode/
