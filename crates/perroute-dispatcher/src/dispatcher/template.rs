@@ -5,8 +5,6 @@ use perroute_commons::{
 use perroute_storage::{
     models::{message::Message, template_assignment::TemplateAssignment},
     repository::{
-        business_units::BusinessUnitRepository,
-        message_types::MessageTypeRepository,
         template_assignment::{QueryForDispatch, TemplateAssignmentRepository},
         Repository,
     },

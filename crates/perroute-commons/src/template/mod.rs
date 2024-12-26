@@ -1,7 +1,6 @@
 pub mod context;
 pub mod handlebars;
 
-use std::error::Error;
 
 use context::TemplateRenderContext;
 

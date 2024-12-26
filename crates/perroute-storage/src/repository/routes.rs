@@ -1,7 +1,6 @@
 use super::{PgRepository, RepositoryResult};
 use crate::{execute, fetch_optional, models::route::Route};
 use perroute_commons::types::{dispatch_type::DispatchType, id::Id};
-use std::future::Future;
 
 pub enum RouteQuery<'q> {
     ById(&'q Id),
