@@ -153,7 +153,7 @@ impl<R: Repository + Send + Sync, P: Publisher + Send + Sync> Pooling<R, P> {
             .collect::<Vec<_>>();
 
         self.set_consumed(
-            published.into_iter().map(|e| e.id().to_owned()).collect(),
+            published.iter().map(|e| e.id().to_owned()).collect(),
             skipped.into_iter().map(|e| e.id().to_owned()).collect(),
         )
         .await

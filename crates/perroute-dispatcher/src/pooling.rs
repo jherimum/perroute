@@ -156,7 +156,7 @@ where
 fn to_event(
     message: &Message,
 ) -> Option<ApplicationEventData<MessageCreatedEvent>> {
-    message.body().as_deref().and_then(|body| {
+    message.body().and_then(|body| {
         serde_json::from_str(body)
             .tap_err(|e| log::error!("Failed to parse message body: {e}"))
             .ok()

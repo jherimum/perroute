@@ -31,7 +31,7 @@ pub(crate) struct TemplateResolver<R, TR> {
 
 impl<R: Repository, TR> AsRef<R> for TemplateResolver<R, TR> {
     fn as_ref(&self) -> &R {
-        &*self.repository
+        &self.repository
     }
 }
 
@@ -72,7 +72,7 @@ impl<R: Repository, TR: TemplateRender> TemplateResolver<R, TR> {
             DispatchType::Email => template_assignment.email_template_id(),
             DispatchType::Push => template_assignment.push_template_id(),
         } {
-            return Ok(self.retrieve_template(&id).await?);
+            return self.retrieve_template(id).await;
         }
 
         Ok(None)
