@@ -1,7 +1,6 @@
 pub mod context;
 pub mod handlebars;
 
-
 use context::TemplateRenderContext;
 
 #[derive(Debug, thiserror::Error)]

@@ -1,4 +1,3 @@
-
 use perroute_commons::types::id::Id;
 
 use crate::models::message::Message;
