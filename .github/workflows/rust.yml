@@ -15,8 +15,8 @@ jobs:
       - name: Fetch Repository
         uses: actions/checkout@v4
 
-      - name: Install stable toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
+      # - name: Install stable toolchain
+      #   uses: actions-rust-lang/setup-rust-toolchain@v1
 
       - name: cargo build
         run: cargo b 
