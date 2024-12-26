@@ -1,3 +1,4 @@
+//test
 GET /message_types
 POST /message_types
 GET /message_types/:id
