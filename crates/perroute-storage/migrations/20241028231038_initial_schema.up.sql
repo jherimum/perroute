@@ -64,7 +64,7 @@ create table template_assignments (
     message_type_id     varchar(21) not null,
     business_unit_id    varchar(21) not null,
     vars                jsonb null,
-    priotity            int not null,
+    priority            int not null,
     start_at            timestamp not null,
     end_at              timestamp null,
     enabled             boolean not null,

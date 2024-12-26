@@ -39,11 +39,11 @@ pub enum DigesterError {
     #[error("{0}")]
     PluginDispatchError(#[from] PluginDispatchError),
 
-    #[error("No template assignment elegible")]
-    NoTemplateAssignmentElegible,
+    #[error("No template assignment eligible")]
+    NoTemplateAssignmentEligible,
 
-    #[error("No route elegible")]
-    NoRouteElegible,
+    #[error("No route Eligible")]
+    NoRouteEligible,
 
     #[error("Provider plugin not found: {0}")]
     ProviderPluginNotFound(ProviderId),
