@@ -15,4 +15,4 @@ target/
 .env
 dist/
 
-.vscode/
+/.vscode/** */
