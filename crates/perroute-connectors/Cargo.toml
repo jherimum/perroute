@@ -1,0 +1,12 @@
+[package]
+name = "perroute-connectors"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+perroute-commons = { path = "../perroute-commons" }
+perroute-template = { path = "../perroute-template" }
+thiserror = { workspace = true }
+async-trait = { workspace = true }
+derive_more = { workspace = true, features = ["full"] }
+futures = "0.3"

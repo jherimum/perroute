@@ -1,0 +1,19 @@
+[package]
+name = "perroute-command-bus"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+perroute-storage = { path = "../perroute-storage", features = ["pgrepository"] }
+perroute-commons = { path = "../perroute-commons" }
+perroute-connectors = { path = "../perroute-connectors" }
+
+thiserror = { workspace = true }
+bon = { workspace = true }
+tap = { workspace = true }
+log = { workspace = true }
+serde_json = { workspace = true }
+
+
+[dev.dependencies]
+perroute-storage = { path = "../perroute-storage", features = ["test-mocks"] }

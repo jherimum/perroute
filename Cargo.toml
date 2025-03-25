@@ -1,0 +1,46 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/perroute-api",
+    "crates/perroute-command-bus",
+    "crates/perroute-commons",
+    "crates/perroute-connectors",
+    "crates/perroute-dispatcher",
+    "crates/perroute-events-pooling",
+    "crates/perroute-query-bus",
+    "crates/perroute-storage",
+    "crates/perroute-template",
+]
+
+[workspace.dependencies]
+uuid = "1.12.1"
+chrono = "0.4.39"
+serde = "1.0.217"
+serde_json = "1.0.137"
+sqlx = { version = "0.8.3" }
+tokio = { version = "1.43.0", features = ["full"] }
+actix-web = "4"
+actix-web-validator = "6"
+dotenvy = "0.15"
+env_logger = "0.11.6"
+tap = "1"
+strum = "0.26"
+strum_macros = "0.26"
+thiserror = "2.0.11"
+base58 = "0.2"
+async-trait = "0.1.85"
+secrecy = "0.10"
+validator = "0.18"
+url = "2.5.4"
+derive-getters = "0.5"
+derive_setters = "0.1"
+bon = "3.3.2"
+log = "0.4.25"
+derive_more = "1"
+handlebars = "6.3.0"
+futures = "0.3"
+aws-config = "1.5.15"
+aws-sdk-sqs = "1.56.0"
+aws-sdk-s3 = "1.71.0"
+aws-sdk-sns = "1.57.0"
+config = "0.15.6"

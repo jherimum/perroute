@@ -1,0 +1,27 @@
+[package]
+name = "perroute-dispatcher"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+perroute-commons = { path = "../perroute-commons" }
+perroute-storage = { path = "../perroute-storage", features = ["pgrepository"] }
+perroute-connectors = { path = "../perroute-connectors" }
+perroute-template = { path = "../perroute-template", features = [
+    "repo_aws_s3",
+    "handlebars",
+] }
+
+tokio = { workspace = true, features = ["full"] }
+aws-config = { workspace = true, features = ["behavior-version-latest"] }
+aws-sdk-sqs = { workspace = true }
+dotenvy = { workspace = true }
+serde_json = { workspace = true }
+log = { workspace = true }
+thiserror = { workspace = true }
+tap = { workspace = true }
+
+
+[dev.dependencies]
+perroute-storage = { path = "../perroute-storage", features = ["test-mocks"] }
+perroute-template = { path = "../perroute-template", features = ["test-mocks"] }

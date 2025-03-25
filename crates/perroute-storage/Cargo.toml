@@ -1,0 +1,24 @@
+[package]
+name = "perroute-storage"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+perroute-commons = { path = "../perroute-commons" }
+serde_json = { workspace = true }
+serde = { workspace = true }
+
+sqlx = { workspace = true, features = ["postgres", "macros"] }
+tokio = { workspace = true }
+thiserror = { workspace = true }
+async-trait = { workspace = true }
+secrecy = { workspace = true }
+derive-getters = { workspace = true }
+derive_setters = { workspace = true }
+bon = { workspace = true }
+tap = { workspace = true }
+log = { workspace = true }
+
+
+[features]
+pgrepository = []

@@ -1,0 +1,18 @@
+[package]
+name = "perroute-events-pooling"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+perroute-storage = { path = "../perroute-storage" }
+perroute-commons = { path = "../perroute-commons" }
+tokio = { workspace = true, features = ["full"] }
+aws-sdk-sns = { workspace = true }
+aws-config = { workspace = true }
+log = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tap = { workspace = true }
+env_logger = { workspace = true }
+dotenvy = { workspace = true }

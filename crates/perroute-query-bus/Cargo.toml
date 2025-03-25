@@ -1,0 +1,9 @@
+[package]
+name = "perroute-query-bus"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+perroute-storage = { path = "../perroute-storage" }
+perroute-commons = { path = "../perroute-commons" }
+thiserror = { workspace = true }
