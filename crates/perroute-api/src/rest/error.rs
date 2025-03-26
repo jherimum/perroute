@@ -85,13 +85,13 @@ impl From<&ApiError> for RestError {
             ApiError::QueryBusError(e) => {
                 RestError::internal_server(e.to_string())
             }
-            ApiError::JsonPayloadError(ref e) => {
+            ApiError::JsonPayloadError( e) => {
                 RestError::bad_request(e.to_string(), Default::default())
             }
-            ApiError::PathError(ref e) => {
+            ApiError::PathError( e) => {
                 RestError::bad_request(e.to_string(), Default::default())
             }
-            ApiError::QueryPayloadError(ref e) => {
+            ApiError::QueryPayloadError( e) => {
                 RestError::bad_request(e.to_string(), Default::default())
             }
             ApiError::ActixValidationError(error) => match error {
